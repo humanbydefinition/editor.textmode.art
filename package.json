@@ -35,9 +35,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.4.0",
-    "textmode.filters.js": "^1.0.1",
-    "textmode.js": "0.8.5",
-    "textmode.synth.js": "1.0.0",
+    "textmode.filters.js": "^1.1.0",
+    "textmode.js": "0.9.3-beta.2",
+    "textmode.synth.js": "1.2.0-beta.1",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
