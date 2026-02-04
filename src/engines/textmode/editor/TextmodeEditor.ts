@@ -1,6 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { BaseEditor } from '../../base/BaseEditor';
-import { type EditorOptions } from '../../base/BaseEditor';
+import { BaseEditor, type EditorOptions } from '@/core/editor/BaseEditor';
 import { typeDefinitions } from '../config/generatedTypes';
 
 // Import Monaco workers

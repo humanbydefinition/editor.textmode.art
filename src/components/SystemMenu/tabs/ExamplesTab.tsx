@@ -2,26 +2,40 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play } from 'lucide-react';
-import { PluginRegistry, type IPlugin, type Example } from '@/plugins';
+import { examples as textmodeExamples } from '@/engines/textmode/examples';
+import { examples as strudelExamples } from '@/engines/strudel/examples';
+import { useAppStore } from '@/stores/appStore';
+import type { Example } from '@/types/examples.types';
 
 export interface ExamplesTabProps {
-    onLoadExample: (code: string, pluginId: string) => void;
+    onLoadExample: (code: string, engineId: string) => void;
     onClose: () => void;
 }
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
-    const registry = PluginRegistry.getInstance();
-    const plugins = Array.from(registry.getAll().values()).filter(p => {
-        const examples = p.getExamples();
-        return Object.keys(examples).length > 0;
-    });
+    const strudelEnabled = useAppStore((state) => state.settings.strudelEnabled);
 
-    const handleSelect = (example: Example, pluginId: string) => {
-        onLoadExample(example.code, pluginId);
+    const engines = [
+        {
+            id: 'textmode',
+            displayName: 'textmode.js',
+            examples: textmodeExamples,
+        },
+        ...(strudelEnabled
+            ? [{
+                id: 'strudel',
+                displayName: 'strudel',
+                examples: strudelExamples,
+            }]
+            : []),
+    ].filter((engine) => Object.keys(engine.examples).length > 0);
+
+    const handleSelect = (example: Example, engineId: string) => {
+        onLoadExample(example.code, engineId);
         onClose();
     };
 
-    if (plugins.length === 0) {
+    if (engines.length === 0) {
         return (
             <div className="p-6 text-center text-zinc-500 italic">
                 No examples available.
@@ -30,32 +44,43 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     }
 
     return (
-        <Tabs defaultValue={plugins[0]?.id} className="h-full flex flex-col">
+        <Tabs defaultValue={engines[0]?.id} className="h-full flex flex-col">
             <div className="px-6 py-3 border-b border-white/5 bg-zinc-900/30 shrink-0">
                 <TabsList className="bg-transparent p-0 h-auto gap-2 justify-start w-full overflow-x-auto scrollbar-hide">
-                    {plugins.map(plugin => (
+                    {engines.map((engine) => (
                         <TabsTrigger
-                            key={plugin.id}
-                            value={plugin.id}
+                            key={engine.id}
+                            value={engine.id}
                             className="bg-zinc-900/50 text-zinc-400 data-[state=active]:text-emerald-400 data-[state=active]:bg-emerald-500/10 data-[state=active]:shadow-none border border-white/5 data-[state=active]:border-emerald-500/20 px-3 py-1.5 h-auto text-xs font-medium uppercase tracking-wider rounded-md transition-all"
                         >
-                            {plugin.displayName}
+                            {engine.displayName}
                         </TabsTrigger>
                     ))}
                 </TabsList>
             </div>
 
-            {plugins.map(plugin => (
-                <TabsContent key={plugin.id} value={plugin.id} className="flex-1 min-h-0 mt-0">
-                    <PluginExampleList plugin={plugin} onSelect={(ex) => handleSelect(ex, plugin.id)} />
+            {engines.map((engine) => (
+                <TabsContent key={engine.id} value={engine.id} className="flex-1 min-h-0 mt-0">
+                    <EngineExampleList
+                        engineLabel={engine.displayName}
+                        examplesByCategory={engine.examples}
+                        onSelect={(ex) => handleSelect(ex, engine.id)}
+                    />
                 </TabsContent>
             ))}
         </Tabs>
     );
 }
 
-function PluginExampleList({ plugin, onSelect }: { plugin: IPlugin; onSelect: (ex: Example) => void }) {
-    const examplesByCategory = plugin.getExamples();
+function EngineExampleList({
+    engineLabel,
+    examplesByCategory,
+    onSelect,
+}: {
+    engineLabel: string;
+    examplesByCategory: Record<string, Example[]>;
+    onSelect: (ex: Example) => void;
+}) {
     const categories = Object.keys(examplesByCategory);
 
     // Simple helper to capitalize category names
@@ -65,7 +90,7 @@ function PluginExampleList({ plugin, onSelect }: { plugin: IPlugin; onSelect: (e
         <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
                 <p className="text-sm text-zinc-400">
-                    select an example to load into {plugin.displayName}. current code will be replaced.
+                    select an example to load into {engineLabel}. current code will be replaced.
                 </p>
 
                 {categories.map((category, index) => (

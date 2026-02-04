@@ -15,8 +15,8 @@ export interface Panel {
     label: string;
 }
 
-export interface PluginState {
-    /** Last known working code for this plugin */
+export interface EngineState {
+    /** Last known working code for this engine */
     lastWorkingCode: string | null;
 
     /** Pending working code (for confirmation delay) */
@@ -25,10 +25,10 @@ export interface PluginState {
     /** Confirmation timer ID */
     confirmationTimer: number | null;
 
-    /** Custom state specific to the plugin (e.g., StrudelState) */
+    /** Custom state specific to the engine (e.g., StrudelState) */
     customState: Record<string, unknown>;
 
-    /** Whether the plugin runtime/engine is fully initialized */
+    /** Whether the runtime/engine is fully initialized */
     isInitialized: boolean;
 }
 
@@ -38,7 +38,7 @@ export interface AppState {
     settings: AppSettings;
     error: CodeError | null;
     status: StatusState;
-    pluginStates: Map<string, PluginState>;
+    engineStates: Map<string, EngineState>;
 
     // --- UI/Layout State ---
     isMobile: boolean;
@@ -52,12 +52,12 @@ export interface AppState {
     setStatus: (status: StatusState) => void;
 
     // Plugin State Actions
-    initPluginState: (pluginId: string) => void;
-    setPluginLastWorkingCode: (pluginId: string, code: string | null) => void;
-    setPluginPendingWorkingCode: (pluginId: string, code: string) => void;
-    cancelPluginPendingWorkingCode: (pluginId: string) => void;
-    setPluginCustomState: <T>(pluginId: string, key: string, value: T) => void;
-    setPluginInitialized: (pluginId: string, isInitialized: boolean) => void;
+    initEngineState: (engineId: string) => void;
+    setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
+    setEnginePendingWorkingCode: (engineId: string, code: string) => void;
+    cancelEnginePendingWorkingCode: (engineId: string) => void;
+    setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
+    setEngineInitialized: (engineId: string, isInitialized: boolean) => void;
 
     // UI Actions
     setIsMobile: (isMobile: boolean) => void;
@@ -66,8 +66,8 @@ export interface AppState {
     setEditorOrientation: (orientation: 'horizontal' | 'vertical') => void;
 }
 
-// Helper to create initial plugin state
-function createPluginState(): PluginState {
+// Helper to create initial engine state
+function createEngineState(): EngineState {
     return {
         lastWorkingCode: null,
         pendingWorkingCode: null,
@@ -80,7 +80,7 @@ function createPluginState(): PluginState {
 
 /**
  * Centralized Zustand state for the application.
- * Manages configuration, errors, status, plugin states, and UI layout.
+ * Manages configuration, errors, status, engine states, and UI layout.
  */
 
 export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) => ({
@@ -88,7 +88,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     settings: DEFAULT_SETTINGS,
     error: null,
     status: 'ready',
-    pluginStates: new Map(),
+    engineStates: new Map(),
 
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     activePanel: '',
@@ -100,27 +100,27 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     setError: (error) => set({ error }),
     setStatus: (status) => set({ status }),
 
-    initPluginState: (pluginId) => {
+    initEngineState: (engineId) => {
         set((state) => {
-            if (state.pluginStates.has(pluginId)) return state;
-            const newStates = new Map(state.pluginStates);
-            newStates.set(pluginId, createPluginState());
-            return { pluginStates: newStates };
+            if (state.engineStates.has(engineId)) return state;
+            const newStates = new Map(state.engineStates);
+            newStates.set(engineId, createEngineState());
+            return { engineStates: newStates };
         });
     },
 
-    setPluginLastWorkingCode: (pluginId, code) => {
+    setEngineLastWorkingCode: (engineId, code) => {
         set((state) => {
-            const newStates = new Map(state.pluginStates);
-            const pState = newStates.get(pluginId) || createPluginState();
-            newStates.set(pluginId, { ...pState, lastWorkingCode: code });
-            return { pluginStates: newStates };
+            const newStates = new Map(state.engineStates);
+            const pState = newStates.get(engineId) || createEngineState();
+            newStates.set(engineId, { ...pState, lastWorkingCode: code });
+            return { engineStates: newStates };
         });
     },
 
-    setPluginPendingWorkingCode: (pluginId, code) => {
+    setEnginePendingWorkingCode: (engineId, code) => {
         const state = get();
-        const pState = state.pluginStates.get(pluginId);
+        const pState = state.engineStates.get(engineId);
 
         // Clear existing timer if any
         if (pState?.confirmationTimer) {
@@ -130,59 +130,59 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
         // Set timer
         const timer = setTimeout(() => {
             const currentState = get();
-            const currentPState = currentState.pluginStates.get(pluginId);
+            const currentPState = currentState.engineStates.get(engineId);
             if (currentPState?.pendingWorkingCode) {
                 // Commit pending to last working
-                get().setPluginLastWorkingCode(pluginId, currentPState.pendingWorkingCode);
+                get().setEngineLastWorkingCode(engineId, currentPState.pendingWorkingCode);
                 // Clear pending
                 set((s) => {
-                    const ns = new Map(s.pluginStates);
-                    const ps = ns.get(pluginId);
-                    if (ps) ns.set(pluginId, { ...ps, pendingWorkingCode: null, confirmationTimer: null });
-                    return { pluginStates: ns };
+                    const ns = new Map(s.engineStates);
+                    const ps = ns.get(engineId);
+                    if (ps) ns.set(engineId, { ...ps, pendingWorkingCode: null, confirmationTimer: null });
+                    return { engineStates: ns };
                 });
             }
         }, CONFIRMATION_DELAY_MS) as unknown as number;
 
         // Update state with pending code and timer
         set((s) => {
-            const ns = new Map(s.pluginStates);
-            const ps = ns.get(pluginId) || createPluginState();
-            ns.set(pluginId, { ...ps, pendingWorkingCode: code, confirmationTimer: timer });
-            return { pluginStates: ns };
+            const ns = new Map(s.engineStates);
+            const ps = ns.get(engineId) || createEngineState();
+            ns.set(engineId, { ...ps, pendingWorkingCode: code, confirmationTimer: timer });
+            return { engineStates: ns };
         });
     },
 
-    cancelPluginPendingWorkingCode: (pluginId) => {
+    cancelEnginePendingWorkingCode: (engineId) => {
         set((state) => {
-            const newStates = new Map(state.pluginStates);
-            const pState = newStates.get(pluginId);
+            const newStates = new Map(state.engineStates);
+            const pState = newStates.get(engineId);
             if (pState) {
                 if (pState.confirmationTimer) clearTimeout(pState.confirmationTimer);
-                newStates.set(pluginId, { ...pState, pendingWorkingCode: null, confirmationTimer: null });
+                newStates.set(engineId, { ...pState, pendingWorkingCode: null, confirmationTimer: null });
             }
-            return { pluginStates: newStates };
+            return { engineStates: newStates };
         });
     },
 
-    setPluginCustomState: (pluginId, key, value) => {
+    setEngineCustomState: (engineId, key, value) => {
         set((state) => {
-            const newStates = new Map(state.pluginStates);
-            const pState = newStates.get(pluginId) || createPluginState();
-            newStates.set(pluginId, {
+            const newStates = new Map(state.engineStates);
+            const pState = newStates.get(engineId) || createEngineState();
+            newStates.set(engineId, {
                 ...pState,
                 customState: { ...pState.customState, [key]: value }
             });
-            return { pluginStates: newStates };
+            return { engineStates: newStates };
         });
     },
 
-    setPluginInitialized: (pluginId, isInitialized) => {
+    setEngineInitialized: (engineId, isInitialized) => {
         set((state) => {
-            const newStates = new Map(state.pluginStates);
-            const pState = newStates.get(pluginId) || createPluginState();
-            newStates.set(pluginId, { ...pState, isInitialized });
-            return { pluginStates: newStates };
+            const newStates = new Map(state.engineStates);
+            const pState = newStates.get(engineId) || createEngineState();
+            newStates.set(engineId, { ...pState, isInitialized });
+            return { engineStates: newStates };
         });
     },
 

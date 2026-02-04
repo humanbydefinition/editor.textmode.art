@@ -1,4 +1,4 @@
-import type { Example } from '../../types';
+import type { Example } from '@/types/examples.types';
 
 export const tutorials: Example[] = [
 	{

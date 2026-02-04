@@ -19,6 +19,8 @@ export interface AppSettings {
 	lineNumbers: boolean;
 	/** Delay in milliseconds before auto-executing code */
 	autoExecuteDelay: number;
+	/** Whether Strudel audio is enabled */
+	strudelEnabled: boolean;
 }
 
 /**
@@ -31,10 +33,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	uiVisible: true,
 	lineNumbers: false,
 	autoExecuteDelay: 500,
+	strudelEnabled: true,
 };
 
 /**
- * Host services provided by the application to managers and plugins.
+ * Host services provided by the application to managers and engines.
  * Consolidates application-level callbacks into a single interface.
  */
 export interface HostServices {
@@ -73,14 +76,3 @@ export interface CodeError {
  * - error: execution failed
  */
 export type StatusState = 'ready' | 'running' | 'updated' | 'error';
-
-/**
- * Minimal interface for providing plugin containers.
- * Used by PluginManager to get container elements for each plugin.
- * This abstracts over the React-based layout implementation.
- */
-export interface IPluginContainerProvider {
-	/** Get the container element for a specific plugin's editor. */
-	getPluginContainer(pluginId: string): HTMLElement;
-}
-

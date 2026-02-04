@@ -1,39 +1,90 @@
-import {
-	registerPlugin,
-	type PluginContext,
-	type IAudioReactivePlugin,
-	type AudioReactiveData,
-	type Example,
-} from '../';
+import type { EngineContext } from '@/types/engine.types';
+import type { Example } from '@/types/examples.types';
+import type { AudioData } from '@/services/AudioService';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import { defaultTextmodeSketch } from './defaultSketch';
 import { examples } from './examples';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
-import type { BaseControllerCallbacks } from '../types';
-import { BasePlugin } from '../base/BasePlugin';
+import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
 
 /**
- * Textmode plugin for visual live coding with textmode.js
+ * Textmode engine for visual live coding with textmode.js.
  */
-export class TextmodePlugin
-	extends BasePlugin<TextmodeEditor, TextmodeRuntime, TextmodeController>
-	implements IAudioReactivePlugin {
+export class TextmodeEngine {
 	readonly id = 'textmode';
 	readonly displayName = 'textmode.js';
 	readonly description = 'Visual live coding with ASCII/text-based graphics';
-	readonly category = 'visual' as const;
-	readonly capabilities = {
-		supportsAudioReactivity: true,
-		supportsSoftReset: true,
-		supportsPatternHighlighting: false,
-		requiresUserInteraction: false,
-		runtimeStrategy: 'sandboxed' as const,
-	};
-	readonly homepage = 'https://code.textmode.art';
-	readonly version = '0.9.0';
 
-	protected createEditor(context: PluginContext, initialCode: string): TextmodeEditor {
+	private editor: TextmodeEditor | null = null;
+	private runtime: TextmodeRuntime | null = null;
+	private controller: TextmodeController | null = null;
+	private initialized = false;
+
+	async init(context: EngineContext): Promise<void> {
+		if (this.initialized) return;
+
+		const initialCode = context.getInitialCode();
+
+		this.editor = this.createEditor(context, initialCode);
+		this.runtime = this.createRuntime(context);
+		this.controller = this.createController(context);
+
+		this.runtime.init();
+		this.initialized = true;
+	}
+
+	dispose(): void {
+		if (!this.initialized) return;
+
+		this.controller = null;
+		this.runtime?.dispose();
+		this.runtime = null;
+		this.editor?.dispose();
+		this.editor = null;
+		this.initialized = false;
+	}
+
+	getEditor(): TextmodeEditor | null {
+		return this.editor;
+	}
+
+	getController(): TextmodeController | null {
+		return this.controller;
+	}
+
+	getRuntime(): TextmodeRuntime | null {
+		return this.runtime;
+	}
+
+	isInitialized(): boolean {
+		return this.initialized;
+	}
+
+	getDefaultCode(): string {
+		return defaultTextmodeSketch;
+	}
+
+	getExamples(): Record<string, Example[]> {
+		return examples;
+	}
+
+	getCode(): string {
+		return this.editor?.getValue() ?? '';
+	}
+
+	setCode(code: string): void {
+		this.editor?.setValue(code);
+	}
+
+	/**
+	 * Send audio data to the runtime for audio-reactive visuals.
+	 */
+	sendAudioData(data: AudioData): void {
+		this.runtime?.sendAudioData(data);
+	}
+
+	private createEditor(context: EngineContext, initialCode: string): TextmodeEditor {
 		const options: TextmodeEditorOptions = {
 			container: context.editorContainer,
 			initialValue: initialCode,
@@ -53,7 +104,7 @@ export class TextmodePlugin
 		return new TextmodeEditor(options);
 	}
 
-	protected createRuntime(context: PluginContext): TextmodeRuntime {
+	private createRuntime(context: EngineContext): TextmodeRuntime {
 		this.runtime = new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: '/src/plugins/textmode/runner/index.html',
@@ -66,7 +117,7 @@ export class TextmodePlugin
 		return this.runtime;
 	}
 
-	protected createController(context: PluginContext): TextmodeController {
+	private createController(context: EngineContext): TextmodeController {
 		const callbacks: BaseControllerCallbacks = {
 			onRenderOverlay: context.callbacks.onRenderOverlay,
 			onSaveCode: context.callbacks.onSaveCode,
@@ -81,51 +132,4 @@ export class TextmodePlugin
 
 		return new TextmodeController(callbacks, deps);
 	}
-
-	getDefaultCode(): string {
-		return defaultTextmodeSketch;
-	}
-
-	getExamples(): Record<string, Example[]> {
-		return examples;
-	}
-
-	protected async initializeRuntime(): Promise<void> {
-		this.runtime?.init();
-	}
-
-	/**
-	 * Send audio data to the runtime for audio-reactive visuals.
-	 */
-	sendAudioData(data: AudioReactiveData): void {
-		this.runtime?.sendAudioData({
-			fft: Array.from(data.fft),
-			waveform: Array.from(data.waveform),
-			timestamp: data.timestamp,
-		});
-	}
-
-	/**
-	 * Trigger soft reset (reset frame count and re-run).
-	 */
-	softReset(): void {
-		this.controller?.handleSoftReset();
-	}
-
-	/**
-	 * Get current code from editor.
-	 */
-	getCode(): string {
-		return this.editor?.getValue() ?? '';
-	}
-
-	/**
-	 * Set code in editor.
-	 */
-	setCode(code: string): void {
-		this.editor?.setValue(code);
-	}
 }
-
-// Self-register the plugin
-registerPlugin('textmode', () => new TextmodePlugin());

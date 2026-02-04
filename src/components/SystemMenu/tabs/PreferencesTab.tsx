@@ -1,5 +1,5 @@
 
-import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
+import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -105,6 +105,24 @@ export function PreferencesTab({
                             id="line-numbers"
                             checked={settings.lineNumbers}
                             onCheckedChange={(checked) => onSettingsChange({ ...settings, lineNumbers: checked })}
+                        />
+                    </div>
+
+                    {/* Strudel Audio Toggle */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400">
+                                <Music2 className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <Label htmlFor="strudel-enabled" className="text-sm font-medium text-white cursor-pointer block">strudel audio</Label>
+                                <p className="text-xs text-zinc-500">enable or disable the audio engine</p>
+                            </div>
+                        </div>
+                        <Switch
+                            id="strudel-enabled"
+                            checked={settings.strudelEnabled}
+                            onCheckedChange={(checked) => onSettingsChange({ ...settings, strudelEnabled: checked })}
                         />
                     </div>
 

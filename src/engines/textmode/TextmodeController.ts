@@ -1,8 +1,7 @@
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '../../types/app.types';
-import { BaseController } from '../base/BaseController';
-import type { BaseControllerCallbacks, BaseControllerDependencies, IController } from '../types';
+import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
 import { useAppStore } from '@/stores/appStore';
 
 /**
@@ -24,8 +23,8 @@ export interface ITextmodeController extends IController {
  * Handles textmode-specific code execution and runtime events.
  */
 export class TextmodeController extends BaseController<TextmodeEditor, TextmodeRuntime> implements ITextmodeController {
-	// Plugin ID for generic state management
-	protected readonly pluginId = 'textmode';
+	// Engine ID for generic state management
+	protected readonly engineId = 'textmode';
 
 	constructor(callbacks: BaseControllerCallbacks, deps: TextmodeControllerDependencies) {
 		super(callbacks, deps);
@@ -48,7 +47,6 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.callbacks.onSaveCode(code);
 		useAppStore.getState().setError(null);
 		useAppStore.getState().setStatus('ready');
 		editor?.clearMarkers();
@@ -62,7 +60,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 */
 	handleRuntimeReady(): void {
 		useAppStore.getState().setStatus('ready');
-		useAppStore.getState().setPluginInitialized(this.pluginId, true);
+		useAppStore.getState().setEngineInitialized(this.engineId, true);
 		this.callbacks.onRenderOverlay();
 
 		// Auto-run initial code

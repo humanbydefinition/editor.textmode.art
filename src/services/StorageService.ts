@@ -1,28 +1,34 @@
 import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
-import { PluginRegistry } from '@/plugins';
+import { defaultTextmodeSketch } from '@/engines/textmode/defaultSketch';
+import { defaultStrudelSketch } from '@/engines/strudel/defaultSketch';
 
 // Storage keys
 const SETTINGS_STORAGE_KEY = 'app_settings';
 
 /**
- * Get storage key for a plugin's code.
+ * Get storage key for an engine's code.
  */
-function getPluginCodeKey(pluginId: string): string {
-	return `${pluginId}_code`;
+function getEngineCodeKey(engineId: string): string {
+	return `${engineId}_code`;
 }
+
+const DEFAULT_CODE_BY_ENGINE: Record<string, string> = {
+	textmode: defaultTextmodeSketch,
+	strudel: defaultStrudelSketch,
+};
 
 /**
  * Storage service interface.
  */
 export interface IStorageService {
-	/** Load plugin code from URL hash, localStorage, or default */
-	loadPluginCode(pluginId: string): string;
+	/** Load engine code from localStorage or default */
+	loadEngineCode(engineId: string): string;
 
-	/** Save plugin code to localStorage */
-	savePluginCode(pluginId: string, code: string): void;
+	/** Save engine code to localStorage */
+	saveEngineCode(engineId: string, code: string): void;
 
-	/** Clear plugin code from localStorage */
-	clearPluginCode(pluginId: string): void;
+	/** Clear engine code from localStorage */
+	clearEngineCode(engineId: string): void;
 
 	/** Clear all stored code (reset to defaults) */
 	clearCode(): void;
@@ -39,40 +45,37 @@ export interface IStorageService {
  */
 export class StorageService implements IStorageService {
 	/**
-	 * Load plugin code.
+	 * Load engine code.
 	 * Priority: localStorage > default sketch
 	 */
-	loadPluginCode(pluginId: string): string {
+	loadEngineCode(engineId: string): string {
 		// Check localStorage
-		const storedCode = localStorage.getItem(getPluginCodeKey(pluginId));
+		const storedCode = localStorage.getItem(getEngineCodeKey(engineId));
 		if (storedCode) return storedCode;
 
-		return (
-			PluginRegistry.getInstance().get(pluginId)?.getDefaultCode() ?? '// No default code found for this plugin'
-		);
+		return DEFAULT_CODE_BY_ENGINE[engineId] ?? '// No default code found for this engine';
 	}
 
 	/**
-	 * Save plugin code to localStorage.
+	 * Save engine code to localStorage.
 	 */
-	savePluginCode(pluginId: string, code: string): void {
-		localStorage.setItem(getPluginCodeKey(pluginId), code);
+	saveEngineCode(engineId: string, code: string): void {
+		localStorage.setItem(getEngineCodeKey(engineId), code);
 	}
 
 	/**
-	 * Clear plugin code from localStorage.
+	 * Clear engine code from localStorage.
 	 */
-	clearPluginCode(pluginId: string): void {
-		localStorage.removeItem(getPluginCodeKey(pluginId));
+	clearEngineCode(engineId: string): void {
+		localStorage.removeItem(getEngineCodeKey(engineId));
 	}
 
 	/**
-	 * Clear all known plugin code from localStorage.
+	 * Clear all known engine code from localStorage.
 	 */
 	clearCode(): void {
-		const registry = PluginRegistry.getInstance();
-		registry.getAll().forEach((plugin) => {
-			this.clearPluginCode(plugin.id);
+		Object.keys(DEFAULT_CODE_BY_ENGINE).forEach((engineId) => {
+			this.clearEngineCode(engineId);
 		});
 	}
 

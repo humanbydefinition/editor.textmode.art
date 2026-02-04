@@ -1,7 +1,49 @@
 import { useAppStore } from '@/stores/appStore';
-import type { CodeError } from '../../types/app.types';
-import type { BaseControllerCallbacks, BaseControllerDependencies, IController, IBaseRuntime } from '../types';
-import type { IEditor } from './BaseEditor';
+import type { CodeError } from '@/types/app.types';
+import type { IEditor } from '../editor/BaseEditor';
+
+/**
+ * Base runtime interface - shared methods expected by BaseController.
+ */
+export interface IBaseRuntime {
+	/** Run code immediately without debounce */
+	forceRun(code: string): void;
+}
+
+/**
+ * Controller interface for editor + runtime coordination.
+ */
+export interface IController {
+	handleCodeChange(code: string): void;
+	handleForceRun(): void;
+	handleRevertToLastWorking(): void;
+	handleError(error: CodeError): void;
+}
+
+/**
+ * Base callbacks shared by all controllers.
+ */
+export interface BaseControllerCallbacks {
+	/** Called when overlay needs re-rendering */
+	onRenderOverlay: () => void;
+	/** Called to save code to storage */
+	onSaveCode: (code: string) => void;
+}
+
+/**
+ * Base dependencies shared by all controllers.
+ * Generic over editor and runtime types.
+ */
+export interface BaseControllerDependencies<TEditor extends IEditor, TRuntime extends IBaseRuntime> {
+	/** Get editor instance (may be null during init) */
+	getEditor: () => TEditor | null;
+	/** Get runtime instance (may be null during init) */
+	getRuntime: () => TRuntime | null;
+	/** Get current auto-execute setting */
+	getAutoExecute: () => boolean;
+	/** Get current auto-execute delay in ms */
+	getAutoExecuteDelay: () => number;
+}
 
 /**
  * Abstract base controller with shared functionality.
@@ -16,17 +58,17 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	protected debounceTimer: number | null = null;
 
 	/**
-	 * Unique identifier for this controller's plugin.
+	 * Unique identifier for this controller's engine.
 	 * Used for generic state management in AppState.
 	 */
-	protected abstract readonly pluginId: string;
+	protected abstract readonly engineId: string;
 
 	/**
 	 * Source identifier for errors.
-	 * Defaults to pluginId but can be overridden for display purposes.
+	 * Defaults to engineId but can be overridden for display purposes.
 	 */
 	protected get errorSource(): string {
-		return this.pluginId;
+		return this.engineId;
 	}
 
 	constructor(callbacks: BaseControllerCallbacks, deps: BaseControllerDependencies<TEditor, TRuntime>) {
@@ -132,26 +174,26 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	/**
 	 * Get last working code for this controller.
-	 * Default implementation uses generic plugin state.
+	 * Default implementation uses generic engine state.
 	 */
 	protected getLastWorkingCode(): string | null {
-		return useAppStore.getState().pluginStates.get(this.pluginId)?.lastWorkingCode ?? null;
+		return useAppStore.getState().engineStates.get(this.engineId)?.lastWorkingCode ?? null;
 	}
 
 	/**
 	 * Set pending working code confirmation.
-	 * Default implementation uses generic plugin state.
+	 * Default implementation uses generic engine state.
 	 */
 	protected setPendingWorkingCode(code: string): void {
-		useAppStore.getState().setPluginPendingWorkingCode(this.pluginId, code);
+		useAppStore.getState().setEnginePendingWorkingCode(this.engineId, code);
 	}
 
 	/**
 	 * Cancel any pending working code confirmation.
-	 * Default implementation uses generic plugin state.
+	 * Default implementation uses generic engine state.
 	 */
 	protected cancelPendingWorkingCode(): void {
-		useAppStore.getState().cancelPluginPendingWorkingCode(this.pluginId);
+		useAppStore.getState().cancelEnginePendingWorkingCode(this.engineId);
 	}
 
 	/**

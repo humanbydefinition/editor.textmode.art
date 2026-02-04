@@ -1,7 +1,7 @@
-import { PluginRegistry, isAudioReactivePlugin } from '../plugins';
-import type { IPlugin } from '../plugins/types';
+import { PluginRegistry, isAudioReactivePlugin } from '../engines';
+import type { IPlugin } from '../engines/types';
 import { audioService } from '../services/AudioService';
-import { StrudelAudioSource } from '../plugins/strudel/audio/StrudelAudioSource';
+import { StrudelAudioSource } from '../engines/strudel/audio/StrudelAudioSource';
 import { useAppStore } from '@/stores/appStore';
 import type { IStorageService } from '../services/StorageService';
 import type { HostServices, IPluginContainerProvider } from '../types/app.types';

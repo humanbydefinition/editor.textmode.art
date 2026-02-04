@@ -50,17 +50,23 @@ export function EditorLayout({
     );
 
     // Use activePanel from store or default to first pane
-    const activePaneId = activePanel || panes[0]?.id || '';
+    const activePaneId =
+        panes.find((pane) => pane.id === activePanel)?.id ??
+        panes[0]?.id ??
+        '';
 
     // Calculate pane dimensions based on orientation
     const resizerSize = 8;
     const isHorizontal = editorOrientation === 'horizontal';
+    const hasSplit = panes.length >= 2;
 
-    const firstPaneStyle: React.CSSProperties = isMobile
+    const firstPaneStyle: React.CSSProperties = !hasSplit
         ? { width: '100%', height: '100%' }
-        : isHorizontal
-            ? { width: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' }
-            : { height: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, width: '100%', flex: 'none' };
+        : isMobile
+            ? { width: '100%', height: '100%' }
+            : isHorizontal
+                ? { width: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' }
+                : { height: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, width: '100%', flex: 'none' };
 
     const secondPaneStyle: React.CSSProperties = isMobile
         ? { width: '100%', height: '100%' }
@@ -68,9 +74,8 @@ export function EditorLayout({
             ? { width: `calc(${(1 - splitRatio) * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' }
             : { height: `calc(${(1 - splitRatio) * 100}% - ${resizerSize / 2}px)`, width: '100%', flex: 'none' };
 
-    // For now, assume exactly 2 panes (textmode, strudel)
-    const leftPane = panes[0];
-    const rightPane = panes[1];
+    const primaryPane = panes[0];
+    const secondaryPane = panes[1];
 
     return (
         <>
@@ -87,14 +92,14 @@ export function EditorLayout({
                 }}
             >
                 {/* First pane */}
-                {leftPane && (
+                {primaryPane && (
                     <div
-                        className={`layout-pane ${isMobile && leftPane.id !== activePaneId ? 'hidden' : ''}`}
+                        className={`layout-pane ${isMobile && primaryPane.id !== activePaneId ? 'hidden' : ''}`}
                         style={firstPaneStyle}
                     >
                         <EditorPane
-                            paneId={leftPane.id}
-                            pluginId={leftPane.pluginId}
+                            paneId={primaryPane.id}
+                            engineId={primaryPane.engineId}
                             hasBackdrop={editorBackdrop}
                             onContainerReady={handleContainerReady}
                         />
@@ -102,7 +107,7 @@ export function EditorLayout({
                 )}
 
                 {/* Resizer (hidden on mobile) */}
-                {!isMobile && panes.length >= 2 && (
+                {!isMobile && hasSplit && (
                     <div
                         id="split-resizer"
                         {...resizerProps}
@@ -117,14 +122,14 @@ export function EditorLayout({
                 )}
 
                 {/* Second pane */}
-                {rightPane && (
+                {secondaryPane && (
                     <div
-                        className={`layout-pane ${isMobile && rightPane.id !== activePaneId ? 'hidden' : ''}`}
+                        className={`layout-pane ${isMobile && secondaryPane.id !== activePaneId ? 'hidden' : ''}`}
                         style={secondPaneStyle}
                     >
                         <EditorPane
-                            paneId={rightPane.id}
-                            pluginId={rightPane.pluginId}
+                            paneId={secondaryPane.id}
+                            engineId={secondaryPane.engineId}
                             hasBackdrop={editorBackdrop}
                             onContainerReady={handleContainerReady}
                         />

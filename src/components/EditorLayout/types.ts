@@ -14,10 +14,8 @@ export type SplitDirection = 'horizontal' | 'vertical';
 export interface PaneConfig {
     /** Unique pane identifier */
     id: string;
-    /** Plugin ID to render in this pane */
-    pluginId: string;
-    /** Instance ID for multiple instances of same plugin */
-    instanceId?: string;
+    /** Engine ID to render in this pane */
+    engineId: string;
 }
 
 /**

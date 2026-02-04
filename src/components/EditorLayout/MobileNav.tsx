@@ -12,7 +12,7 @@ export function MobileNav() {
     const setActivePanel = useAppStore((state) => state.setActivePanel);
 
     // Don't render on desktop
-    if (!isMobile || panels.length === 0) {
+    if (!isMobile || panels.length <= 1) {
         return null;
     }
 

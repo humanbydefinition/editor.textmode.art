@@ -24,7 +24,7 @@ export interface AppShellProps {
     // Actions (Controller Logic)
     onShare: () => void;
     onClearStorage: () => void;
-    onLoadExample: (code: string, pluginId: string) => void;
+    onLoadExample: (code: string, engineId: string) => void;
     onRevertToLastWorking: () => void;
 }
 
@@ -54,7 +54,7 @@ export function AppShell({
     // Derived state (could be moved to store selector)
     const hasLastWorking = useAppStore((state) => {
         if (!state.error?.source) return false;
-        const pState = state.pluginStates.get(state.error.source);
+        const pState = state.engineStates.get(state.error.source);
         return pState?.lastWorkingCode !== null && pState?.lastWorkingCode !== undefined;
     });
 

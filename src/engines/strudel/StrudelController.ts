@@ -1,8 +1,7 @@
 import { StrudelRuntime, type StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
 import { useAppStore } from '@/stores/appStore';
-import { BaseController } from '../base/BaseController';
-import type { BaseControllerCallbacks, BaseControllerDependencies, IController } from '../types';
+import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
 
 /**
  * Strudel-specific dependencies.
@@ -36,8 +35,8 @@ export interface StrudelState {
  * StrudelController - manages Strudel audio runtime and code evaluation.
  */
 export class StrudelController extends BaseController<StrudelEditor, StrudelRuntime> implements IStrudelController {
-	// Plugin ID for generic state management
-	protected readonly pluginId = 'strudel';
+	// Engine ID for generic state management
+	protected readonly engineId = 'strudel';
 
 	private autoInitListener: (() => void) | null = null;
 
@@ -110,7 +109,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	 */
 	handleRuntimeReady(): void {
 		this.updateStrudelState({ isInitialized: true });
-		useAppStore.getState().setPluginInitialized(this.pluginId, true);
+		useAppStore.getState().setEngineInitialized(this.engineId, true);
 		this.callbacks.onRenderOverlay();
 	}
 
@@ -175,7 +174,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 	private getStrudelState(): StrudelState {
 		// Use useAppStore.getState() instead of injecting appState
-		const newState = useAppStore.getState().pluginStates.get(this.pluginId)?.customState['state'] as StrudelState | undefined;
+		const newState = useAppStore.getState().engineStates.get(this.engineId)?.customState['state'] as StrudelState | undefined;
 		return newState ?? {
 			isPlaying: false,
 			isInitialized: false,
@@ -184,6 +183,6 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 	private updateStrudelState(update: Partial<StrudelState>): void {
 		const current = this.getStrudelState();
-		useAppStore.getState().setPluginCustomState(this.pluginId, 'state', { ...current, ...update });
+		useAppStore.getState().setEngineCustomState(this.engineId, 'state', { ...current, ...update });
 	}
 }

@@ -23,7 +23,7 @@ import { useAppStore } from '@/stores/appStore';
 export interface SystemMenuProps {
     onShare: () => void;
     onClearStorage: () => void;
-    onLoadExample: (code: string, pluginId: string) => void;
+    onLoadExample: (code: string, engineId: string) => void;
 }
 
 export function SystemMenu({

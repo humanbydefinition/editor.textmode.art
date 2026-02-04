@@ -72,7 +72,7 @@ export class AudioService {
      * Set the active audio source.
      * Disconnects the previous source if any.
      */
-    setSource(source: IAudioSource): void {
+    setSource(source: IAudioSource | null): void {
         if (this.source) {
             this.source.disconnect();
         }
