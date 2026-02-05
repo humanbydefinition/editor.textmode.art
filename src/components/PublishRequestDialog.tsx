@@ -12,6 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     checkSlugAvailability,
     submitSketchRequest,
     type SocialLink,
@@ -24,8 +31,17 @@ import {
     Link2,
     AlertCircle,
     Globe,
-    Shuffle,
 } from 'lucide-react';
+
+const LICENSE_OPTIONS = [
+    'CC BY 4.0',
+    'CC BY-SA 4.0',
+    'CC BY-NC 4.0',
+    'CC0 1.0',
+    'MIT',
+    'Apache-2.0',
+    'GPL-3.0',
+] as const;
 
 export interface PublishRequestData {
     textmodeCode: string;
@@ -63,6 +79,7 @@ export function PublishRequestDialog({
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [authorName, setAuthorName] = useState('');
+    const [license, setLicense] = useState<(typeof LICENSE_OPTIONS)[number]>('CC BY 4.0');
     const [website, setWebsite] = useState('');
     const [github, setGithub] = useState('');
     const [instagram, setInstagram] = useState('');
@@ -79,6 +96,7 @@ export function PublishRequestDialog({
             setTitle('');
             setDescription('');
             setAuthorName('');
+            setLicense('CC BY 4.0');
             setWebsite('');
             setGithub('');
             setInstagram('');
@@ -150,6 +168,7 @@ export function PublishRequestDialog({
             title: title.trim(),
             description: description.trim() || null,
             authorName: authorName.trim() || null,
+            license: license || null,
             socialLinks: socialLinks.length > 0 ? socialLinks : null,
             textmodeCode: data.textmodeCode,
             strudelCode: data.strudelCode ?? null,
@@ -307,6 +326,31 @@ export function PublishRequestDialog({
                             className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
                             maxLength={80}
                         />
+                    </div>
+
+                    {/* License selection */}
+                    <div className="space-y-2">
+                        <Label className="text-sm text-zinc-300">
+                            license <span className="text-red-400">*</span>
+                        </Label>
+                        <Select
+                            value={license}
+                            onValueChange={(value: string) => setLicense(value as (typeof LICENSE_OPTIONS)[number])}
+                        >
+                            <SelectTrigger className="bg-zinc-900 border-white/10 text-white">
+                                <SelectValue placeholder="Select a license" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-950 border-white/10">
+                                {LICENSE_OPTIONS.map((option) => (
+                                    <SelectItem key={option} value={option} className="text-zinc-200">
+                                        {option}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-zinc-500">
+                            choose the license under which your sketch will be shared in the gallery.
+                        </p>
                     </div>
 
                     {/* Social links — fixed platforms */}

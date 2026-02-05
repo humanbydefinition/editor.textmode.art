@@ -20,6 +20,7 @@ model SketchRequest {
   title        String
   description  String?
   authorName   String?
+  license      String?
   socialLinks  Json?
   textmodeCode String
   strudelCode  String?

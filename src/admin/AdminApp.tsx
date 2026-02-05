@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, RefreshCw, ClipboardCopy, ShieldCheck, ExternalLink } from 'lucide-react';
+import { CheckCircle2, XCircle, RefreshCw, ClipboardCopy, ShieldCheck, ExternalLink, Globe, Github, Instagram } from 'lucide-react';
 
 const TOKEN_STORAGE_KEY = 'admin_api_token';
 
@@ -19,6 +19,7 @@ type SketchRequest = {
     title: string;
     description: string | null;
     authorName: string | null;
+    license: string | null;
     socialLinks: SocialLink[] | null;
     textmodeCode: string;
     strudelCode: string | null;
@@ -41,6 +42,53 @@ function formatDate(value?: string | null): string {
 
 function getLinks(raw: SketchRequest['socialLinks']): SocialLink[] {
     return Array.isArray(raw) ? raw : [];
+}
+
+function normalizeSocialLink(link: SocialLink): SocialLink {
+    const label = link.label.trim();
+    const url = link.url.trim();
+
+    if (label.toLowerCase() === 'mastodon') {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return link;
+        }
+
+        const handle = url.startsWith('@') ? url.slice(1) : url;
+        const [user, host] = handle.split('@');
+        if (user && host) {
+            return { ...link, url: `https://${host}/@${user}` };
+        }
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return { ...link, url: `https://${url}` };
+    }
+
+    return link;
+}
+
+function SocialIcon({ label }: { label: string }) {
+    const key = label.toLowerCase();
+
+    if (key === 'website') return <Globe className="h-3.5 w-3.5" />;
+    if (key === 'github') return <Github className="h-3.5 w-3.5" />;
+    if (key === 'instagram') return <Instagram className="h-3.5 w-3.5" />;
+    if (key === 'bluesky') {
+        return (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Bluesky">
+                <path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.785 2.627 3.585 3.493 6.18 3.254-.02.028-3.876.89-3.876 3.636 0 4.063 5.572 4.396 7.476 1.281.354-.578.598-1.258.598-2.068 0 .81.244 1.49.598 2.068 1.904 3.115 7.476 2.782 7.476-1.281 0-2.747-3.856-3.608-3.876-3.636 2.595.239 5.395-.627 6.18-3.254.246-.828.624-5.788.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C14.046 4.747 11.087 8.686 12 10.8z" />
+            </svg>
+        );
+    }
+    if (key === 'mastodon') {
+        return (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Mastodon">
+                <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z" />
+            </svg>
+        );
+    }
+
+    return <Globe className="h-3.5 w-3.5" />;
 }
 
 export function AdminApp() {
@@ -381,6 +429,10 @@ export function AdminApp() {
                                                 <span className="text-zinc-300">{request.authorName || '—'}</span>
                                             </div>
                                             <div className="flex gap-3">
+                                                <span className="text-xs uppercase tracking-wider text-zinc-500 w-16">License</span>
+                                                <span className="text-zinc-300">{request.license || '—'}</span>
+                                            </div>
+                                            <div className="flex gap-3">
                                                 <span className="text-xs uppercase tracking-wider text-zinc-500 w-16">Code</span>
                                                 <span className="text-zinc-400">
                                                     textmode: {request.textmodeCode.length.toLocaleString()} chars
@@ -391,17 +443,21 @@ export function AdminApp() {
                                                 <span className="text-xs uppercase tracking-wider text-zinc-500 w-16">Links</span>
                                                 <div className="flex flex-wrap gap-2">
                                                     {getLinks(request.socialLinks).length === 0 && <span className="text-zinc-500">—</span>}
-                                                    {getLinks(request.socialLinks).map((link) => (
+                                                    {getLinks(request.socialLinks).map((link) => {
+                                                        const normalized = normalizeSocialLink(link);
+                                                        return (
                                                         <a
-                                                            key={link.url}
-                                                            href={link.url}
+                                                            key={`${link.label}-${normalized.url}`}
+                                                            href={normalized.url}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-sky-400 hover:text-sky-300 transition-colors"
+                                                            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-zinc-900/40 px-2.5 py-1 text-xs text-sky-300 hover:text-sky-200 hover:border-white/20 transition-colors"
                                                         >
+                                                            <SocialIcon label={link.label} />
                                                             {link.label}
                                                         </a>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         </div>

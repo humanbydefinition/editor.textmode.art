@@ -9,6 +9,7 @@ export interface ApprovedSketch {
     title: string;
     description: string | null;
     authorName: string | null;
+    license: string | null;
     socialLinks: Array<{ label: string; url: string }> | null;
     textmodeCode: string;
     strudelCode: string | null;
@@ -32,6 +33,7 @@ export interface SketchRequestPayload {
     title: string;
     description?: string | null;
     authorName?: string | null;
+    license?: string | null;
     socialLinks?: SocialLink[] | null;
     textmodeCode: string;
     strudelCode?: string | null;
