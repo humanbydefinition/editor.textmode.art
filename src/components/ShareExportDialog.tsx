@@ -97,7 +97,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="px-6 py-5 space-y-5">
+				<div className="px-6 pb-5 space-y-5">
 					<div className="rounded-lg border border-white/10 bg-zinc-900/40 p-4">
 						<div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
 							<span>includes:</span>
