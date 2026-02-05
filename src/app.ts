@@ -5,6 +5,7 @@
 import { createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppShell } from './components/AppShell';
+import type { ShareExportData } from './components/ShareExportDialog';
 import { type PaneConfig } from './components/EditorLayout';
 import { type MouseSonarHandle } from './components/MouseSonar';
 import { type AppSettings } from './types/app.types';
@@ -42,6 +43,8 @@ export class App {
 	private root: Root | null = null;
 	private sonarRef = createRef<MouseSonarHandle>();
 	private initialized = false;
+	private shareExportOpen = false;
+	private shareExportData: ShareExportData | null = null;
 
 	// Layout state (managed by React, tracked for callbacks)
 	private layoutState: LayoutState = {
@@ -169,6 +172,10 @@ export class App {
 			onShareUnlockAndRun: () => this.handleShareUnlockAndRun(),
 			onShareUnlockOnly: () => this.handleShareUnlockOnly(),
 			onShareDiscard: () => this.handleShareDiscard(),
+			shareExportOpen: this.shareExportOpen,
+			shareExportData: this.shareExportData,
+			onShareExportOpenChange: (open: boolean) => this.handleShareExportOpenChange(open),
+			onShareExportCopy: (url: string) => this.handleShareExportCopy(url),
 		};
 	}
 
@@ -454,22 +461,25 @@ export class App {
 	 * Handle share button.
 	 */
 	private handleShare(): void {
-		const payload: SharePayload = {
-			v: 1,
+		this.shareExportData = {
 			createdAt: Date.now(),
-			engines: {
-				textmode: this.textmodeEngine.getCode(),
-			},
+			textmodeCode: this.textmodeEngine.getCode(),
+			strudelCode: this.strudelEngine?.getCode() ?? null,
 		};
+		this.shareExportOpen = true;
+		this.render();
+	}
 
-		if (this.strudelEngine) {
-			payload.engines.strudel = this.strudelEngine.getCode();
+	private handleShareExportOpenChange(open: boolean): void {
+		this.shareExportOpen = open;
+		if (!open) {
+			this.shareExportData = null;
 		}
+		this.render();
+	}
 
-		const encoded = ShareService.encode(payload);
-		const shareUrl = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
-
-		this.copyToClipboard(shareUrl);
+	private handleShareExportCopy(url: string): void {
+		this.copyToClipboard(url);
 	}
 
 	private copyToClipboard(value: string): void {

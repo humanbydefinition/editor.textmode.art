@@ -4,6 +4,8 @@ const SHARE_HASH_KEY = 'share';
 const SHARE_QUERY_KEY = 'share';
 const MAX_DECODED_CHARS = 300_000;
 
+export const MAX_SHARE_URL_LENGTH = 4096;
+
 function base64UrlEncode(input: string): string {
 	const bytes = new TextEncoder().encode(input);
 	let binary = '';
@@ -34,6 +36,11 @@ export class ShareService {
 	static encode(payload: SharePayload): string {
 		const json = JSON.stringify(payload);
 		return base64UrlEncode(json);
+	}
+
+	static buildShareUrl(payload: SharePayload, location: Location): string {
+		const encoded = ShareService.encode(payload);
+		return `${location.origin}${location.pathname}#${SHARE_HASH_KEY}=${encoded}`;
 	}
 
 	static decode(raw: string): SharePayload | null {

@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores/appStore';
 import { Columns2, Rows2 } from 'lucide-react';
 import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog } from './ShareConsentDialog';
+import { ShareExportDialog, type ShareExportData } from './ShareExportDialog';
 
 
 export interface AppShellProps {
@@ -30,6 +31,10 @@ export interface AppShellProps {
     onShareUnlockAndRun: () => void;
     onShareUnlockOnly: () => void;
     onShareDiscard: () => void;
+    shareExportOpen: boolean;
+    shareExportData: ShareExportData | null;
+    onShareExportOpenChange: (open: boolean) => void;
+    onShareExportCopy: (url: string) => void;
 }
 
 /**
@@ -48,6 +53,10 @@ export function AppShell({
     onShareUnlockAndRun,
     onShareUnlockOnly,
     onShareDiscard,
+    shareExportOpen,
+    shareExportData,
+    onShareExportOpenChange,
+    onShareExportCopy,
 }: AppShellProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
@@ -120,6 +129,13 @@ export function AppShell({
                         onDiscard={onShareDiscard}
                     />
                 )}
+
+                <ShareExportDialog
+                    open={shareExportOpen}
+                    data={shareExportData}
+                    onOpenChange={onShareExportOpenChange}
+                    onCopyLink={onShareExportCopy}
+                />
 
                 {/* Mouse Sonar - always rendered for cursor finding */}
                 <MouseSonar ref={sonarRef} />
