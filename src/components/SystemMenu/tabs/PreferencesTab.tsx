@@ -1,5 +1,5 @@
 
-import { Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2, Share } from 'lucide-react';
+import { Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -12,7 +12,6 @@ import type { AppSettings } from '@/types/app.types';
 export interface PreferencesTabProps {
     settings: AppSettings;
     onSettingsChange: (settings: AppSettings) => void;
-    onShare: () => void;
     onClearStorage: () => void;
     onClose: () => void;
 }
@@ -20,7 +19,6 @@ export interface PreferencesTabProps {
 export function PreferencesTab({
     settings,
     onSettingsChange,
-    onShare,
     onClearStorage,
     onClose
 }: PreferencesTabProps) {
@@ -159,23 +157,6 @@ export function PreferencesTab({
                 <div className="space-y-4">
                     <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Storage</h3>
                     <div className="flex gap-3">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 justify-center gap-2 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:text-white"
-                                    onClick={() => {
-                                        onShare();
-                                    }}
-                                >
-                                    <Share className="w-4 h-4" />
-                                    share
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>create share link</p>
-                            </TooltipContent>
-                        </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button

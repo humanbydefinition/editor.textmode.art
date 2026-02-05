@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Share } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/utils/utils';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
@@ -72,6 +73,22 @@ export function SystemMenu({
                             </Badge>
                         </div>
                         <div className="flex items-center gap-1">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => {
+                                            onShare();
+                                        }}
+                                        className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                                        aria-label="Share sketch"
+                                    >
+                                        <Share className="w-4 h-4" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>share sketch</p>
+                                </TooltipContent>
+                            </Tooltip>
                             <DialogClose className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
                                 <X className="w-4 h-4" />
                                 <span className="sr-only">Close</span>
@@ -97,7 +114,6 @@ export function SystemMenu({
                         <PreferencesTab
                             settings={settings}
                             onSettingsChange={setSettings}
-                            onShare={onShare}
                             onClearStorage={onClearStorage}
                             onClose={() => setOpen(false)}
                         />
