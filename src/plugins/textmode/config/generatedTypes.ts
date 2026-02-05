@@ -1,6 +1,6 @@
 /**
  * AUTO-GENERATED TYPE DEFINITIONS FOR MONACO INTELLISENSE
- * Generated: 2026-02-05T00:08:35.023Z
+ * Generated: 2026-02-05T18:23:05.040Z
  * Config ID: textmode
  * 
  * This file contains:
