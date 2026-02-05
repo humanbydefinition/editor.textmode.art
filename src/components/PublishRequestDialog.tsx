@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     checkSlugAvailability,
     submitSketchRequest,
@@ -19,11 +20,11 @@ import {
     Check,
     Loader2,
     X,
-    Plus,
-    Trash2,
     Send,
     Link2,
     AlertCircle,
+    Globe,
+    Shuffle,
 } from 'lucide-react';
 
 export interface PublishRequestData {
@@ -62,7 +63,11 @@ export function PublishRequestDialog({
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [authorName, setAuthorName] = useState('');
-    const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+    const [website, setWebsite] = useState('');
+    const [github, setGithub] = useState('');
+    const [instagram, setInstagram] = useState('');
+    const [bluesky, setBluesky] = useState('');
+    const [mastodon, setMastodon] = useState('');
     const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submittedSlug, setSubmittedSlug] = useState<string | null>(null);
@@ -74,7 +79,11 @@ export function PublishRequestDialog({
             setTitle('');
             setDescription('');
             setAuthorName('');
-            setSocialLinks([]);
+            setWebsite('');
+            setGithub('');
+            setInstagram('');
+            setBluesky('');
+            setMastodon('');
             setSubmitStatus('idle');
             setSubmitError(null);
             setSubmittedSlug(null);
@@ -109,24 +118,16 @@ export function PublishRequestDialog({
         setSlug((s) => ({ ...s, value, available: null, reason: undefined }));
     }, []);
 
-    const addSocialLink = useCallback(() => {
-        if (socialLinks.length < 6) {
-            setSocialLinks((links) => [...links, { label: '', url: '' }]);
-        }
-    }, [socialLinks.length]);
-
-    const removeSocialLink = useCallback((index: number) => {
-        setSocialLinks((links) => links.filter((_, i) => i !== index));
-    }, []);
-
-    const updateSocialLink = useCallback(
-        (index: number, field: 'label' | 'url', value: string) => {
-            setSocialLinks((links) =>
-                links.map((link, i) => (i === index ? { ...link, [field]: value } : link))
-            );
-        },
-        []
-    );
+    /** Build social links array from the fixed platform fields */
+    const socialLinks = useMemo((): SocialLink[] => {
+        const links: SocialLink[] = [];
+        if (website.trim()) links.push({ label: 'Website', url: website.trim().startsWith('http') ? website.trim() : `https://${website.trim()}` });
+        if (github.trim()) links.push({ label: 'GitHub', url: `https://github.com/${github.trim().replace(/^@/, '')}` });
+        if (instagram.trim()) links.push({ label: 'Instagram', url: `https://instagram.com/${instagram.trim().replace(/^@/, '')}` });
+        if (bluesky.trim()) links.push({ label: 'Bluesky', url: `https://bsky.app/profile/${bluesky.trim().replace(/^@/, '')}` });
+        if (mastodon.trim()) links.push({ label: 'Mastodon', url: mastodon.trim().startsWith('http') ? mastodon.trim() : `https://${mastodon.trim()}` });
+        return links;
+    }, [website, github, instagram, bluesky, mastodon]);
 
     const isFormValid = useMemo(() => {
         return (
@@ -134,16 +135,9 @@ export function PublishRequestDialog({
             title.trim().length > 0 &&
             title.trim().length <= 120 &&
             description.length <= 300 &&
-            authorName.length <= 80 &&
-            socialLinks.every(
-                (link) =>
-                    link.label.trim().length > 0 &&
-                    link.label.length <= 32 &&
-                    link.url.trim().length > 0 &&
-                    link.url.length <= 200
-            )
+            authorName.length <= 80
         );
-    }, [slug.available, title, description, authorName, socialLinks]);
+    }, [slug.available, title, description, authorName]);
 
     const handleSubmit = useCallback(async () => {
         if (!data || !isFormValid) return;
@@ -151,16 +145,12 @@ export function PublishRequestDialog({
         setSubmitStatus('submitting');
         setSubmitError(null);
 
-        const validLinks = socialLinks.filter(
-            (link) => link.label.trim() && link.url.trim()
-        );
-
         const result = await submitSketchRequest({
             slug: slug.normalized || slug.value,
             title: title.trim(),
             description: description.trim() || null,
             authorName: authorName.trim() || null,
-            socialLinks: validLinks.length > 0 ? validLinks : null,
+            socialLinks: socialLinks.length > 0 ? socialLinks : null,
             textmodeCode: data.textmodeCode,
             strudelCode: data.strudelCode ?? null,
         });
@@ -194,12 +184,14 @@ export function PublishRequestDialog({
                     <div className="space-y-4 pt-2">
                         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
                             <p className="text-sm text-zinc-300">
-                                your custom link request for{' '}
+                                your publish request for{' '}
                                 <span className="font-mono text-emerald-300">/s/{submittedSlug}</span>{' '}
                                 has been submitted for moderation.
                             </p>
                             <p className="text-xs text-zinc-500 mt-2">
-                                once approved, your sketch will be live at the custom URL with full SEO support.
+                                once approved, your sketch will appear in the community gallery and be
+                                discoverable via the randomize feature. it will also be live at its own
+                                SEO-friendly URL.
                             </p>
                         </div>
 
@@ -217,17 +209,19 @@ export function PublishRequestDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[560px] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden max-h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-[560px] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden h-[85vh] sm:h-[680px] flex flex-col">
                 <DialogHeader className="px-6 py-4 border-b border-white/5 text-left shrink-0">
                     <DialogTitle className="text-lg font-bold tracking-tight text-white">
-                        request custom link
+                        publish to gallery
                     </DialogTitle>
                     <DialogDescription className="text-sm text-zinc-400">
-                        submit your sketch for a short, SEO-friendly URL. requires moderation.
+                        submit your sketch to the community gallery. once approved, it will
+                        get its own SEO-friendly URL and be discoverable by others.
                     </DialogDescription>
                 </DialogHeader>
-
-                <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
+                
+                <ScrollArea className="flex-1 min-h-0">
+                    <div className="px-6 py-5 space-y-5">
                     {/* Slug input */}
                     <div className="space-y-2">
                         <Label htmlFor="slug" className="text-sm text-zinc-300">
@@ -315,59 +309,104 @@ export function PublishRequestDialog({
                         />
                     </div>
 
-                    {/* Social links */}
+                    {/* Social links — fixed platforms */}
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <Label className="text-sm text-zinc-300">
-                                social links <span className="text-zinc-500">(optional, max 6)</span>
-                            </Label>
-                            {socialLinks.length < 6 && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={addSocialLink}
-                                    className="text-xs text-zinc-400 hover:text-white"
-                                >
-                                    <Plus className="w-3 h-3 mr-1" />
-                                    add link
-                                </Button>
-                            )}
+                        <Label className="text-sm text-zinc-300">
+                            social links <span className="text-zinc-500">(all optional)</span>
+                        </Label>
+
+                        {/* Website */}
+                        <div className="flex items-center gap-2">
+                            <span className="w-7 flex justify-center shrink-0">
+                                <Globe className="w-4 h-4 text-zinc-400" />
+                            </span>
+                            <Input
+                                value={website}
+                                onChange={(e) => setWebsite(e.target.value)}
+                                placeholder="yoursite.com"
+                                className="flex-1 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                maxLength={200}
+                            />
                         </div>
 
-                        {socialLinks.map((link, index) => (
-                            <div key={index} className="flex gap-2 items-start">
+                        {/* GitHub */}
+                        <div className="flex items-center gap-2">
+                            <span className="w-7 flex justify-center shrink-0">
+                                <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                            </span>
+                            <div className="flex-1 relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">github.com/</span>
                                 <Input
-                                    value={link.label}
-                                    onChange={(e) => updateSocialLink(index, 'label', e.target.value)}
-                                    placeholder="Label"
-                                    className="w-24 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
-                                    maxLength={32}
+                                    value={github}
+                                    onChange={(e) => setGithub(e.target.value.replace(/\s/g, ''))}
+                                    placeholder="username"
+                                    className="pl-[6.5rem] bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                    maxLength={39}
                                 />
-                                <Input
-                                    value={link.url}
-                                    onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
-                                    placeholder="https://..."
-                                    className="flex-1 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
-                                    maxLength={200}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeSocialLink(index)}
-                                    className="shrink-0 text-zinc-500 hover:text-red-400"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Instagram */}
+                        <div className="flex items-center gap-2">
+                            <span className="w-7 flex justify-center shrink-0">
+                                <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                            </span>
+                            <div className="flex-1 relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">@</span>
+                                <Input
+                                    value={instagram}
+                                    onChange={(e) => setInstagram(e.target.value.replace(/[^a-zA-Z0-9._]/g, ''))}
+                                    placeholder="username"
+                                    className="pl-7 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                    maxLength={30}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Bluesky */}
+                        <div className="flex items-center gap-2">
+                            <span className="w-7 flex justify-center shrink-0">
+                                <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.785 2.627 3.585 3.493 6.18 3.254-.02.028-3.876.89-3.876 3.636 0 4.063 5.572 4.396 7.476 1.281.354-.578.598-1.258.598-2.068 0 .81.244 1.49.598 2.068 1.904 3.115 7.476 2.782 7.476-1.281 0-2.747-3.856-3.608-3.876-3.636 2.595.239 5.395-.627 6.18-3.254.246-.828.624-5.788.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C14.046 4.747 11.087 8.686 12 10.8z"/></svg>
+                            </span>
+                            <div className="flex-1 relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">@</span>
+                                <Input
+                                    value={bluesky}
+                                    onChange={(e) => setBluesky(e.target.value.replace(/\s/g, ''))}
+                                    placeholder="handle.bsky.social"
+                                    className="pl-7 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                    maxLength={100}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Mastodon */}
+                        <div className="flex items-center gap-2">
+                            <span className="w-7 flex justify-center shrink-0">
+                                <svg
+                                    className="w-4 h-4 text-zinc-400"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    role="img"
+                                    aria-label="Mastodon"
+                                >
+                                    <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z" />
+                                </svg>
+                            </span>
+                            <Input
+                                value={mastodon}
+                                onChange={(e) => setMastodon(e.target.value.replace(/\s/g, ''))}
+                                placeholder="@user@mastodon.social"
+                                className="flex-1 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                maxLength={200}
+                            />
+                        </div>
                     </div>
 
                     {/* Preview */}
                     {slug.available === true && (
                         <div className="rounded-lg border border-white/10 bg-zinc-900/40 p-3">
-                            <p className="text-xs text-zinc-500 mb-1">your sketch will be available at:</p>
+                            <p className="text-xs text-zinc-500 mb-1">your sketch will be published at:</p>
                             <p className="text-sm font-mono text-emerald-300 flex items-center gap-2">
                                 <Link2 className="w-4 h-4" />
                                 synth.textmode.art/s/{slug.normalized || slug.value}
@@ -382,7 +421,8 @@ export function PublishRequestDialog({
                             <p className="text-sm text-red-300">{submitError}</p>
                         </div>
                     )}
-                </div>
+                    </div>
+                </ScrollArea>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-white/5 shrink-0">
@@ -399,12 +439,12 @@ export function PublishRequestDialog({
                         ) : (
                             <>
                                 <Send className="w-4 h-4" />
-                                submit for review
+                                publish to gallery
                             </>
                         )}
                     </Button>
                     <p className="text-xs text-zinc-500 text-center mt-2">
-                        submissions are reviewed manually before going live
+                        submissions are reviewed manually before going live in the gallery
                     </p>
                 </div>
             </DialogContent>
