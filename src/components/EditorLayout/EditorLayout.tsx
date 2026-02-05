@@ -29,7 +29,6 @@ export function EditorLayout({
     // Get mobile state from Zustand store
     const isMobile = useAppStore((state) => state.isMobile);
     const activePanel = useAppStore((state) => state.activePanel);
-    const editorOrientation = useAppStore((state) => state.editorOrientation);
 
     // Split ratio state
     const [splitRatio, setSplitRatio] = useState(initialSplitRatio);
@@ -37,7 +36,7 @@ export function EditorLayout({
     // Split resize hook for desktop mode
     const { resizerProps, containerRef } = useSplitResize({
         initialRatio: splitRatio,
-        direction: isMobile ? 'horizontal' : editorOrientation,
+        direction: isMobile ? 'horizontal' : 'horizontal',
         onRatioChange: setSplitRatio,
     });
 
@@ -57,22 +56,19 @@ export function EditorLayout({
 
     // Calculate pane dimensions based on orientation
     const resizerSize = 8;
-    const isHorizontal = editorOrientation === 'horizontal';
+    // Always horizontal on desktop now
+    const isHorizontal = true;
     const hasSplit = panes.length >= 2;
 
     const firstPaneStyle: React.CSSProperties = !hasSplit
         ? { width: '100%', height: '100%' }
         : isMobile
             ? { width: '100%', height: '100%' }
-            : isHorizontal
-                ? { width: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' }
-                : { height: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, width: '100%', flex: 'none' };
+            : { width: `calc(${splitRatio * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' };
 
     const secondPaneStyle: React.CSSProperties = isMobile
         ? { width: '100%', height: '100%' }
-        : isHorizontal
-            ? { width: `calc(${(1 - splitRatio) * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' }
-            : { height: `calc(${(1 - splitRatio) * 100}% - ${resizerSize / 2}px)`, width: '100%', flex: 'none' };
+        : { width: `calc(${(1 - splitRatio) * 100}% - ${resizerSize / 2}px)`, height: '100%', flex: 'none' };
 
     const primaryPane = panes[0];
     const secondaryPane = panes[1];
@@ -86,7 +82,7 @@ export function EditorLayout({
                 className={`app-layout-container ${isMobile ? 'tab-layout' : ''}`}
                 style={{
                     display: 'flex',
-                    flexDirection: isMobile ? 'row' : (isHorizontal ? 'row' : 'column'),
+                    flexDirection: isMobile ? 'row' : 'row',
                     width: '100%',
                     height: '100%',
                 }}
@@ -111,12 +107,12 @@ export function EditorLayout({
                     <div
                         id="split-resizer"
                         {...resizerProps}
-                        className={`${resizerProps.className} resizer-${isHorizontal ? 'vertical' : 'horizontal'}`}
+                        className={`${resizerProps.className} resizer-vertical`}
                         style={{
                             flexShrink: 0,
-                            [isHorizontal ? 'width' : 'height']: `${resizerSize}px`,
-                            [isHorizontal ? 'height' : 'width']: '100%',
-                            cursor: isHorizontal ? 'col-resize' : 'row-resize',
+                            width: `${resizerSize}px`,
+                            height: '100%',
+                            cursor: 'col-resize',
                         }}
                     />
                 )}

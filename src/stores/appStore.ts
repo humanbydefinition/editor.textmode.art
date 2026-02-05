@@ -52,7 +52,6 @@ export interface AppState {
     isMobile: boolean;
     activePanel: string;
     panels: Panel[];
-    editorOrientation: 'horizontal' | 'vertical';
 
     // --- Actions ---
     setSettings: (settings: AppSettings) => void;
@@ -75,7 +74,6 @@ export interface AppState {
     setIsMobile: (isMobile: boolean) => void;
     setActivePanel: (panel: string) => void;
     setPanels: (panels: Panel[]) => void;
-    setEditorOrientation: (orientation: 'horizontal' | 'vertical') => void;
 }
 
 // Helper to create initial engine state
@@ -111,7 +109,6 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     activePanel: '',
     panels: [],
-    editorOrientation: 'horizontal',
 
     // Actions
     setSettings: (settings) => set({ settings }),
@@ -229,7 +226,6 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     setIsMobile: (isMobile) => set({ isMobile }),
     setActivePanel: (activePanel) => set({ activePanel }),
     setPanels: (panels) => set({ panels }),
-    setEditorOrientation: (editorOrientation) => set({ editorOrientation }),
 })));
 
 /**

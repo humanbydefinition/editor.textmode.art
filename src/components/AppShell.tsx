@@ -7,7 +7,6 @@ import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
 import { cn } from '@/utils/utils';
 import type { PaneConfig } from './EditorLayout/types';
 import { useAppStore } from '@/stores/appStore';
-import { Columns2, Rows2 } from 'lucide-react';
 import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog } from './ShareConsentDialog';
 import { ShareExportDialog, type ShareExportData } from './ShareExportDialog';
@@ -68,9 +67,6 @@ export function AppShell({
     // Store State
     const error = useAppStore((state) => state.error);
     const setError = useAppStore((state) => state.setError);
-    const isMobile = useAppStore((state) => state.isMobile);
-    const editorOrientation = useAppStore((state) => state.editorOrientation);
-    const setEditorOrientation = useAppStore((state) => state.setEditorOrientation);
     const share = useAppStore((state) => state.share);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
@@ -81,12 +77,8 @@ export function AppShell({
         return pState?.lastWorkingCode !== null && pState?.lastWorkingCode !== undefined;
     });
 
-    const onDismissError = () => setError(null);
 
-    const isHorizontal = editorOrientation === 'horizontal';
-    const toggleOrientation = () => {
-        setEditorOrientation(isHorizontal ? 'vertical' : 'horizontal');
-    };
+    const onDismissError = () => setError(null);
 
     return (
         <>
@@ -103,26 +95,7 @@ export function AppShell({
                 className="fixed inset-0 z-[100] pointer-events-none"
             >
                 {/* Orientation Toggle Button (Desktop Only) */}
-                {!isMobile && (
-                    <div className="fixed top-2 left-2 z-50 pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-200">
-                        <button
-                            onClick={toggleOrientation}
-                            className={cn(
-                                'flex items-center justify-center',
-                                'w-8 h-8 rounded-md', // Matching generic button size roughly, or make it like system menu
-                                'bg-neutral-800/40 backdrop-blur-md',
-                                'border border-white/5',
-                                'text-neutral-400',
-                                'transition-all duration-300',
-                                'hover:scale-105 hover:bg-neutral-800/60 hover:text-white',
-                                'focus:outline-none focus:ring-2 focus:ring-white/10'
-                            )}
-                            title={`switch to ${isHorizontal ? 'vertical' : 'horizontal'} layout`}
-                        >
-                            {isHorizontal ? <Rows2 size={16} /> : <Columns2 size={16} />}
-                        </button>
-                    </div>
-                )}
+                {/* Orientation Toggle Button (Desktop Only) removed */}
 
                 {/* Mobile Navigation */}
                 <MobileNav />
