@@ -1,27 +1,11 @@
 import type { SharePayload } from '@/types/share.types';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 
 const SHARE_HASH_KEY = 'share';
 const SHARE_QUERY_KEY = 'share';
 const MAX_DECODED_CHARS = 300_000;
 
 export const MAX_SHARE_URL_LENGTH = 4096;
-
-function base64UrlEncode(input: string): string {
-	const bytes = new TextEncoder().encode(input);
-	let binary = '';
-	for (const byte of bytes) {
-		binary += String.fromCharCode(byte);
-	}
-	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function base64UrlDecode(input: string): string {
-	const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
-	const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
-	const binary = atob(padded);
-	const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-	return new TextDecoder().decode(bytes);
-}
 
 function isSharePayload(value: unknown): value is SharePayload {
 	if (!value || typeof value !== 'object') return false;
@@ -35,7 +19,8 @@ function isSharePayload(value: unknown): value is SharePayload {
 export class ShareService {
 	static encode(payload: SharePayload): string {
 		const json = JSON.stringify(payload);
-		return base64UrlEncode(json);
+		const compressed = compressToEncodedURIComponent(json);
+		return compressed;
 	}
 
 	static buildShareUrl(payload: SharePayload, location: Location): string {
@@ -45,7 +30,8 @@ export class ShareService {
 
 	static decode(raw: string): SharePayload | null {
 		try {
-			const decoded = base64UrlDecode(raw);
+			const decoded = decompressFromEncodedURIComponent(raw);
+			if (!decoded) return null;
 			if (decoded.length > MAX_DECODED_CHARS) return null;
 			const parsed = JSON.parse(decoded) as unknown;
 			if (!isSharePayload(parsed)) return null;
