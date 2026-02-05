@@ -152,8 +152,8 @@ export function PublishRequestDialog({
             slug.available === true &&
             title.trim().length > 0 &&
             title.trim().length <= 120 &&
-            description.length <= 300 &&
-            authorName.length <= 80
+            description.length <= 200 &&
+            authorName.length <= 32
         );
     }, [slug.available, title, description, authorName]);
 
