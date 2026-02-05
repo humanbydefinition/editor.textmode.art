@@ -448,6 +448,7 @@ export class App {
 		useAppStore.getState().setSharePayload(null);
 		this.setEditorsReadOnly(false);
 		this.restoreLocalSketches();
+		this.runRestoredSketches();
 	}
 
 	private restoreLocalSketches(): void {
@@ -458,6 +459,10 @@ export class App {
 			const strudelCode = this.storage.loadEngineCode('strudel');
 			this.strudelEngine.setCode(strudelCode, { silent: true });
 		}
+	}
+
+	private runRestoredSketches(): void {
+		this.textmodeEngine.getController()?.handleForceRun();
 	}
 
 	private runSharedSketch(): void {
