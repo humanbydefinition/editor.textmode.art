@@ -1,5 +1,5 @@
 
-import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2, Share } from 'lucide-react';
+import { Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
