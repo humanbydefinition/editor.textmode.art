@@ -237,7 +237,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 									<p className="text-xs text-zinc-400 mt-1">
 										gallery submissions are reviewed before going live. approved sketches get a
 										short URL like <span className="font-mono text-violet-300">/s/my-sketch</span> and will be
-										discoverable via the upcoming randomize feature.
+										discoverable via the randomize feature.
 									</p>
 								</div>
 							</div>
