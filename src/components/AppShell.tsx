@@ -180,11 +180,13 @@ export function AppShell({
                         welcomeOpen ? "opacity-0" : "opacity-100"
                     )}
                 >
-                    <SystemMenu
-                        onShare={onShare}
-                        onClearStorage={onClearStorage}
-                        onLoadExample={onLoadExample}
-                    />
+                    {!showShareLock && (
+                        <SystemMenu
+                            onShare={onShare}
+                            onClearStorage={onClearStorage}
+                            onLoadExample={onLoadExample}
+                        />
+                    )}
 
                     <ErrorOverlay
                         error={error}
