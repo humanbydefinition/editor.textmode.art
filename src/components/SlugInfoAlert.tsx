@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/stores/appStore';
 import { ExternalLink, X } from 'lucide-react';
 
@@ -34,78 +35,121 @@ const LICENSE_LINKS: Record<string, string> = {
 export function SlugInfoAlert() {
     const sketch = useAppStore((state) => state.approvedSketch);
     const [dismissed, setDismissed] = useState(false);
+    const [visible, setVisible] = useState(false);
+    const alertRef = useRef<HTMLDivElement>(null);
+
+    // Animate in on mount
+    useEffect(() => {
+        if (sketch && !dismissed) {
+            const frame = requestAnimationFrame(() => setVisible(true));
+            return () => cancelAnimationFrame(frame);
+        }
+    }, [sketch, dismissed]);
 
     if (!sketch || dismissed) return null;
 
     const socialLinks = sketch.socialLinks ?? [];
 
     return (
-        <div className="fixed top-4 left-4 z-[120] max-w-[min(92vw,520px)] pointer-events-auto">
-            <Alert className="relative shadow-lg shadow-black/30">
+        <div
+            ref={alertRef}
+            className={[
+                // Safe-area-aware positioning — uses inset so total width = 100vw − insets
+                'fixed inset-x-3 top-3 sm:inset-x-auto sm:top-4 sm:left-4 z-[120] pointer-events-auto',
+                // Max width only kicks in on wider viewports where we pin to the left
+                'sm:max-w-[min(calc(100vw-2rem),520px)]',
+                // Entry animation
+                'transition-all duration-300 ease-out',
+                visible
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 -translate-y-2',
+            ].join(' ')}
+            role="region"
+            aria-label="Sketch information"
+        >
+            <Alert className="relative shadow-lg shadow-black/40 overflow-hidden">
+                {/* Close button — meets 44×44 touch target */}
                 <button
                     type="button"
-                    onClick={() => setDismissed(true)}
-                    className="absolute top-3 right-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                    aria-label="Close sketch info"
+                    onClick={() => {
+                        setVisible(false);
+                        // Wait for fade-out before unmounting
+                        setTimeout(() => setDismissed(true), 200);
+                    }}
+                    className="absolute top-2 right-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
+                    aria-label="Dismiss sketch info"
                 >
                     <X className="h-4 w-4" />
                 </button>
-                <div className="pr-9">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <AlertTitle className="text-base font-semibold">{sketch.title}</AlertTitle>
-                        <Badge className="border border-violet-400/40 bg-violet-500/15 text-violet-200">
+
+                {/* Header: title + slug badge */}
+                <div className="pr-11">
+                    <div className="flex items-baseline gap-2 min-w-0">
+                        <AlertTitle className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0 shrink">
+                            {sketch.title}
+                        </AlertTitle>
+                        <Badge className="border border-violet-400/40 bg-violet-500/15 text-violet-200 text-[11px] sm:text-xs whitespace-nowrap shrink-0">
                             /s/{sketch.slug}
                         </Badge>
                     </div>
+
+                    {/* Description — readonly scrollable textarea */}
                     {sketch.description && (
-                        <AlertDescription className="mt-2 text-sm text-zinc-300">
-                            {sketch.description}
-                        </AlertDescription>
+                        <Textarea
+                            value={sketch.description}
+                            readOnly
+                            tabIndex={-1}
+                            className="mt-2 max-h-28 min-h-0 resize-none border-white/5 bg-white/[0.03] text-xs sm:text-sm leading-relaxed text-zinc-300 cursor-default focus-visible:ring-0 focus-visible:border-white/5 shadow-none"
+                        />
                     )}
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-                    {sketch.authorName && (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-                            by {sketch.authorName}
-                        </span>
-                    )}
-                    {sketch.license && (() => {
-                        const url = LICENSE_LINKS[sketch.license];
-                        if (url) {
+
+                {/* Metadata pills — author, license, social links */}
+                {(sketch.authorName || sketch.license || socialLinks.length > 0) && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
+                        {sketch.authorName && (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 truncate max-w-[10rem]">
+                                by {sketch.authorName}
+                            </span>
+                        )}
+                        {sketch.license && (() => {
+                            const url = LICENSE_LINKS[sketch.license];
+                            if (url) {
+                                return (
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60"
+                                    >
+                                        <ExternalLink className="h-3 w-3 shrink-0" />
+                                        <span>{sketch.license}</span>
+                                    </a>
+                                );
+                            }
+                            return (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                                    {sketch.license}
+                                </span>
+                            );
+                        })()}
+                        {socialLinks.map((link) => {
+                            const display = getDisplayLink(link.label, link.url);
                             return (
                                 <a
-                                    href={url}
+                                    key={link.url}
+                                    href={link.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[9rem]"
                                 >
-                                    <ExternalLink className="h-3 w-3" />
-                                    <span>{sketch.license}</span>
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{display.label}</span>
                                 </a>
                             );
-                        }
-                        return (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-                                {sketch.license}
-                            </span>
-                        );
-                    })()}
-                    {socialLinks.map((link) => {
-                        const display = getDisplayLink(link.label, link.url);
-                        return (
-                            <a
-                                key={link.url}
-                                href={link.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
-                            >
-                                <ExternalLink className="h-3 w-3" />
-                                <span className="truncate">{display.label}</span>
-                            </a>
-                        );
-                    })}
-                </div>
+                        })}
+                    </div>
+                )}
             </Alert>
         </div>
     );
