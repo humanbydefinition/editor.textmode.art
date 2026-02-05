@@ -20,18 +20,24 @@ export class TextmodeEngine {
 	private runtime: TextmodeRuntime | null = null;
 	private controller: TextmodeController | null = null;
 	private initialized = false;
+	private initializing = false;
 
 	async init(context: EngineContext): Promise<void> {
-		if (this.initialized) return;
+		if (this.initialized || this.initializing) return;
+		this.initializing = true;
 
 		const initialCode = context.getInitialCode();
 
-		this.editor = this.createEditor(context, initialCode);
-		this.runtime = this.createRuntime(context);
-		this.controller = this.createController(context);
+		try {
+			this.editor = this.createEditor(context, initialCode);
+			this.runtime = this.createRuntime(context);
+			this.controller = this.createController(context);
 
-		this.runtime.init();
-		this.initialized = true;
+			this.runtime.init();
+			this.initialized = true;
+		} finally {
+			this.initializing = false;
+		}
 	}
 
 	dispose(): void {
@@ -43,6 +49,7 @@ export class TextmodeEngine {
 		this.editor?.dispose();
 		this.editor = null;
 		this.initialized = false;
+		this.initializing = false;
 	}
 
 	getEditor(): TextmodeEditor | null {
@@ -73,8 +80,8 @@ export class TextmodeEngine {
 		return this.editor?.getValue() ?? '';
 	}
 
-	setCode(code: string): void {
-		this.editor?.setValue(code);
+	setCode(code: string, options?: { silent?: boolean }): void {
+		this.editor?.setValue(code, options);
 	}
 
 	/**
@@ -107,7 +114,7 @@ export class TextmodeEngine {
 	private createRuntime(context: EngineContext): TextmodeRuntime {
 		this.runtime = new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
-			runnerUrl: '/src/plugins/textmode/runner/index.html',
+			runnerUrl: '/src/engines/textmode/runner/index.html',
 			onReady: () => this.controller?.handleRuntimeReady(),
 			onRunOk: () => this.controller?.handleRunOk(),
 			onRunError: (error) => this.controller?.handleRunError(error),

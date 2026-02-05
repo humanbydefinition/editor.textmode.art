@@ -11,10 +11,13 @@ export interface IEditor {
 	getValue(): string;
 
 	/** Set code value */
-	setValue(value: string): void;
+	setValue(value: string, options?: { silent?: boolean }): void;
 
 	/** Layout the editor (handle resize) */
 	layout(): void;
+
+	/** Focus the editor */
+	focus(): void;
 
 	/** Update editor options */
 	updateOptions(options: monaco.editor.IEditorOptions): void;
@@ -57,6 +60,7 @@ export abstract class BaseEditor implements IEditor {
 	readonly editor: monaco.editor.IStandaloneCodeEditor;
 	protected model: monaco.editor.ITextModel;
 	protected disposables: monaco.IDisposable[] = [];
+	private suppressChange = false;
 
 	protected options: EditorOptions;
 
@@ -162,6 +166,10 @@ export abstract class BaseEditor implements IEditor {
 	 */
 	protected setupBaseSubscriptions(): void {
 		const changeDisposable = this.model.onDidChangeContent(() => {
+			if (this.suppressChange) {
+				this.suppressChange = false;
+				return;
+			}
 			this.options.onChange?.(this.model.getValue());
 		});
 		this.disposables.push(changeDisposable);
@@ -181,12 +189,19 @@ export abstract class BaseEditor implements IEditor {
 		return this.model.getValue();
 	}
 
-	public setValue(value: string): void {
+	public setValue(value: string, options?: { silent?: boolean }): void {
+		if (options?.silent) {
+			this.suppressChange = true;
+		}
 		this.model.setValue(value);
 	}
 
 	public layout(): void {
 		this.editor.layout();
+	}
+
+	public focus(): void {
+		this.editor.focus();
 	}
 
 	public updateOptions(options: monaco.editor.IEditorOptions): void {

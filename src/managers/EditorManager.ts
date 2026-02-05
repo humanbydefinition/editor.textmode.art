@@ -49,4 +49,14 @@ export class EditorManager {
 			editor.updateEnvironment(env);
 		}
 	}
+
+	setReadOnly(readOnly: boolean): void {
+		for (const editor of this.editors.values()) {
+			editor.updateOptions({ readOnly });
+		}
+	}
+
+	focusEditor(id: string): void {
+		this.editors.get(id)?.focus();
+	}
 }

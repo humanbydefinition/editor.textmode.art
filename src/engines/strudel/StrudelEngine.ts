@@ -20,18 +20,24 @@ export class StrudelEngine {
 	private runtime: StrudelRuntime | null = null;
 	private controller: StrudelController | null = null;
 	private initialized = false;
+	private initializing = false;
 
 	async init(context: EngineContext): Promise<void> {
-		if (this.initialized) return;
+		if (this.initialized || this.initializing) return;
+		this.initializing = true;
 
 		const initialCode = context.getInitialCode();
 
-		this.editor = this.createEditor(context, initialCode);
-		this.runtime = this.createRuntime();
-		this.controller = this.createController(context);
+		try {
+			this.editor = this.createEditor(context, initialCode);
+			this.runtime = this.createRuntime();
+			this.controller = this.createController(context);
 
-		this.initializeRuntime();
-		this.initialized = true;
+			this.initializeRuntime();
+			this.initialized = true;
+		} finally {
+			this.initializing = false;
+		}
 	}
 
 	dispose(): void {
@@ -44,6 +50,7 @@ export class StrudelEngine {
 		this.editor?.dispose();
 		this.editor = null;
 		this.initialized = false;
+		this.initializing = false;
 	}
 
 	getEditor(): StrudelEditor | null {
@@ -74,8 +81,8 @@ export class StrudelEngine {
 		return this.editor?.getValue() ?? '';
 	}
 
-	setCode(code: string): void {
-		this.editor?.setValue(code);
+	setCode(code: string, options?: { silent?: boolean }): void {
+		this.editor?.setValue(code, options);
 	}
 
 	/**

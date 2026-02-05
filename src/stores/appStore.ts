@@ -6,6 +6,7 @@ import {
     type CodeError,
     type StatusState
 } from '@/types/app.types';
+import type { SharePayload } from '@/types/share.types';
 
 const MOBILE_BREAKPOINT = 768;
 const CONFIRMATION_DELAY_MS = 100;
@@ -39,6 +40,10 @@ export interface AppState {
     error: CodeError | null;
     status: StatusState;
     engineStates: Map<string, EngineState>;
+    share: {
+        payload: SharePayload | null;
+        consented: boolean;
+    };
 
     // --- UI/Layout State ---
     isMobile: boolean;
@@ -50,6 +55,8 @@ export interface AppState {
     setSettings: (settings: AppSettings) => void;
     setError: (error: CodeError | null) => void;
     setStatus: (status: StatusState) => void;
+    setSharePayload: (payload: SharePayload | null) => void;
+    setShareConsented: (consented: boolean) => void;
 
     // Plugin State Actions
     initEngineState: (engineId: string) => void;
@@ -89,6 +96,10 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     error: null,
     status: 'ready',
     engineStates: new Map(),
+    share: {
+        payload: null,
+        consented: false,
+    },
 
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     activePanel: '',
@@ -99,6 +110,18 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     setSettings: (settings) => set({ settings }),
     setError: (error) => set({ error }),
     setStatus: (status) => set({ status }),
+    setSharePayload: (payload) => set({
+        share: {
+            payload,
+            consented: false,
+        }
+    }),
+    setShareConsented: (consented) => set((state) => ({
+        share: {
+            ...state.share,
+            consented,
+        }
+    })),
 
     initEngineState: (engineId) => {
         set((state) => {

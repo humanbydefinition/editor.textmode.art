@@ -43,6 +43,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 * Resets frame count and re-runs code.
 	 */
 	handleSoftReset(): void {
+		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
 
@@ -64,6 +65,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		this.callbacks.onRenderOverlay();
 
 		// Auto-run initial code
+		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
 		if (code) {

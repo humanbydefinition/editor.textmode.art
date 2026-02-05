@@ -9,6 +9,7 @@ import type { PaneConfig } from './EditorLayout/types';
 import { useAppStore } from '@/stores/appStore';
 import { Columns2, Rows2 } from 'lucide-react';
 import { MobileNav } from './EditorLayout/MobileNav';
+import { ShareConsentDialog } from './ShareConsentDialog';
 
 
 export interface AppShellProps {
@@ -26,6 +27,9 @@ export interface AppShellProps {
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
     onRevertToLastWorking: () => void;
+    onShareUnlockAndRun: () => void;
+    onShareUnlockOnly: () => void;
+    onShareDiscard: () => void;
 }
 
 /**
@@ -41,6 +45,9 @@ export function AppShell({
     onClearStorage,
     onLoadExample,
     onRevertToLastWorking,
+    onShareUnlockAndRun,
+    onShareUnlockOnly,
+    onShareDiscard,
 }: AppShellProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
@@ -105,6 +112,14 @@ export function AppShell({
                 <MobileNav />
 
                 <WelcomeDialog onOpenChange={setWelcomeOpen} />
+
+                {!welcomeOpen && (
+                    <ShareConsentDialog
+                        onUnlockAndRun={onShareUnlockAndRun}
+                        onUnlockOnly={onShareUnlockOnly}
+                        onDiscard={onShareDiscard}
+                    />
+                )}
 
                 {/* Mouse Sonar - always rendered for cursor finding */}
                 <MouseSonar ref={sonarRef} />

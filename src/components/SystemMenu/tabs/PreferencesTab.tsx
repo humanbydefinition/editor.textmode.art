@@ -20,6 +20,7 @@ export interface PreferencesTabProps {
 export function PreferencesTab({
     settings,
     onSettingsChange,
+    onShare,
     onClearStorage,
     onClose
 }: PreferencesTabProps) {
@@ -160,19 +161,19 @@ export function PreferencesTab({
                     <div className="flex gap-3">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex-1">
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-center gap-2 bg-zinc-900/50 border-zinc-800 text-zinc-500 opacity-50 cursor-not-allowed"
-                                        disabled
-                                    >
-                                        <Copy className="w-4 h-4" />
-                                        copy link
-                                    </Button>
-                                </div>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 justify-center gap-2 bg-zinc-900/50 border-zinc-800 text-zinc-300 hover:text-white"
+                                    onClick={() => {
+                                        onShare();
+                                    }}
+                                >
+                                    <Copy className="w-4 h-4" />
+                                    copy link
+                                </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>sharing is temporarily disabled for security maintenance</p>
+                                <p>copy share link</p>
                             </TooltipContent>
                         </Tooltip>
                         <Button

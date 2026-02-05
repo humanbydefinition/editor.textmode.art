@@ -81,6 +81,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 * Saves code and optionally schedules execution based on auto-execute setting.
 	 */
 	handleCodeChange(code: string): void {
+		if (this.isExecutionLocked()) return;
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
 
@@ -97,6 +98,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 * Clears errors and immediately executes code.
 	 */
 	handleForceRun(): void {
+		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
 
@@ -113,6 +115,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 * Restores previous working code and re-executes.
 	 */
 	handleRevertToLastWorking(): void {
+		if (this.isExecutionLocked()) return;
 		const lastWorkingCode = this.getLastWorkingCode();
 		if (!lastWorkingCode) return;
 
@@ -203,6 +206,11 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 */
 	protected formatErrorMessage(message: string): string {
 		return message;
+	}
+
+	protected isExecutionLocked(): boolean {
+		const share = useAppStore.getState().share;
+		return Boolean(share.payload && !share.consented);
 	}
 
 	/**

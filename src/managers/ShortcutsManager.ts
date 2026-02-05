@@ -14,6 +14,8 @@ export interface ShortcutActions {
 	toggleUIVisibility: () => void;
 	/** Hush audio (stop Strudel) */
 	hushAudio: () => void;
+	/** Run code in the active editor */
+	runCodeForEngine: (engineId: string) => void;
 }
 
 /**
@@ -106,6 +108,20 @@ export class ShortcutsManager implements IShortcutsManager {
 		if (e.ctrlKey && e.shiftKey && e.key === 'H') {
 			e.preventDefault();
 			this.actions.toggleUIVisibility();
+		}
+
+		// Run active editor: Ctrl/Cmd + Enter
+		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+			const target = e.target as HTMLElement | null;
+			if (target?.closest('.monaco-editor')) {
+				e.preventDefault();
+				e.stopPropagation();
+				const engineHost = target.closest('[data-engine-id]');
+				const engineId = engineHost?.getAttribute('data-engine-id');
+				if (engineId) {
+					this.actions.runCodeForEngine(engineId);
+				}
+			}
 		}
 	}
 }

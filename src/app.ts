@@ -11,12 +11,14 @@ import { type AppSettings } from './types/app.types';
 import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
 import { audioService } from './services/AudioService';
+import { ShareService } from './services/ShareService';
 import { ShortcutsManager, type IShortcutsManager } from './managers/ShortcutsManager';
 import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
 import { StrudelEngine } from './engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from './engines/strudel/audio/StrudelAudioSource';
 import { useAppStore, initAppStore } from './stores/appStore';
+import type { SharePayload } from './types/share.types';
 
 /**
  * Interface for React layout state management.
@@ -39,6 +41,7 @@ export class App {
 	// React root
 	private root: Root | null = null;
 	private sonarRef = createRef<MouseSonarHandle>();
+	private initialized = false;
 
 	// Layout state (managed by React, tracked for callbacks)
 	private layoutState: LayoutState = {
@@ -58,9 +61,18 @@ export class App {
 	 * Initialize the application.
 	 */
 	async init(): Promise<void> {
+		if (this.initialized) return;
+		this.initialized = true;
+
 		// Load settings and initialize store
 		const loadedSettings = this.storage.loadSettings();
 		useAppStore.getState().setSettings(loadedSettings);
+
+		// Detect shared sketch payload early to lock execution before runtimes start
+		const sharedPayload = ShareService.getFromLocation(window.location);
+		if (sharedPayload) {
+			useAppStore.getState().setSharePayload(sharedPayload);
+		}
 
 		// Build initial panes and panels
 		this.updatePanesAndPanels(loadedSettings);
@@ -90,6 +102,7 @@ export class App {
 
 		// Apply initial settings to all editors
 		this.editorManager.applySettings(this.settings);
+		this.applySharedSketchIfPresent();
 
 		// Setup shortcuts
 		this.shortcuts = new ShortcutsManager({
@@ -106,6 +119,7 @@ export class App {
 				},
 				toggleUIVisibility: () => this.toggleUIVisibility(),
 				hushAudio: () => this.strudelEngine?.hush(),
+				runCodeForEngine: (engineId: string) => this.handleRunCodeForEngine(engineId),
 			},
 		});
 		this.shortcuts.init();
@@ -152,6 +166,9 @@ export class App {
 			onClearStorage: () => this.handleClearStorage(),
 			onLoadExample: (code: string, engineId: string) => this.handleLoadExample(code, engineId),
 			onRevertToLastWorking: handleRevert,
+			onShareUnlockAndRun: () => this.handleShareUnlockAndRun(),
+			onShareUnlockOnly: () => this.handleShareUnlockOnly(),
+			onShareDiscard: () => this.handleShareDiscard(),
 		};
 	}
 
@@ -233,6 +250,7 @@ export class App {
 		}
 
 		this.editorManager.applySettings(this.settings);
+		this.applySharedSketchIfPresent();
 		this.startAudioReactivity();
 	}
 
@@ -352,11 +370,120 @@ export class App {
 		await Promise.all(paneIds.map((id) => this.waitForPane(id)));
 	}
 
+	private applySharedSketchIfPresent(): void {
+		const share = useAppStore.getState().share;
+		if (!share.payload || share.consented) return;
+		this.applySharePayload(share.payload);
+		this.setEditorsReadOnly(true);
+	}
+
+	private applySharePayload(payload: SharePayload): void {
+		if (payload.engines.textmode !== undefined) {
+			this.textmodeEngine.setCode(payload.engines.textmode, { silent: true });
+		}
+
+		if (payload.engines.strudel !== undefined && this.strudelEngine) {
+			this.strudelEngine.setCode(payload.engines.strudel, { silent: true });
+		}
+	}
+
+	private setEditorsReadOnly(readOnly: boolean): void {
+		this.editorManager.setReadOnly(readOnly);
+	}
+
+	private handleShareUnlockAndRun(): void {
+		this.unlockSharedSketch();
+		this.runSharedSketch();
+	}
+
+	private handleShareUnlockOnly(): void {
+		this.unlockSharedSketch();
+	}
+
+	private unlockSharedSketch(): void {
+		const share = useAppStore.getState().share;
+		if (!share.payload) return;
+		useAppStore.getState().setShareConsented(true);
+		this.setEditorsReadOnly(false);
+		this.applySharePayload(share.payload);
+		this.focusSharedEditor(share.payload);
+	}
+
+	private focusSharedEditor(payload: SharePayload): void {
+		if (payload.engines.textmode !== undefined) {
+			this.editorManager.focusEditor('textmode');
+			return;
+		}
+		if (payload.engines.strudel !== undefined) {
+			this.editorManager.focusEditor('strudel');
+		}
+	}
+
+	private handleShareDiscard(): void {
+		const share = useAppStore.getState().share;
+		if (!share.payload) return;
+		useAppStore.getState().setSharePayload(null);
+		this.setEditorsReadOnly(false);
+		this.restoreLocalSketches();
+	}
+
+	private restoreLocalSketches(): void {
+		const textmodeCode = this.storage.loadEngineCode('textmode');
+		this.textmodeEngine.setCode(textmodeCode, { silent: true });
+
+		if (this.strudelEngine) {
+			const strudelCode = this.storage.loadEngineCode('strudel');
+			this.strudelEngine.setCode(strudelCode, { silent: true });
+		}
+	}
+
+	private runSharedSketch(): void {
+		const payload = useAppStore.getState().share.payload;
+		if (!payload) return;
+
+		if (payload.engines.textmode !== undefined) {
+			this.textmodeEngine.getController()?.handleForceRun();
+		}
+
+		if (payload.engines.strudel !== undefined && this.strudelEngine) {
+			this.strudelEngine.getController()?.handleForceRun();
+		}
+	}
+
 	/**
 	 * Handle share button.
 	 */
 	private handleShare(): void {
-		// TODO: Implement share functionality
+		const payload: SharePayload = {
+			v: 1,
+			createdAt: Date.now(),
+			engines: {
+				textmode: this.textmodeEngine.getCode(),
+			},
+		};
+
+		if (this.strudelEngine) {
+			payload.engines.strudel = this.strudelEngine.getCode();
+		}
+
+		const encoded = ShareService.encode(payload);
+		const shareUrl = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+
+		this.copyToClipboard(shareUrl);
+	}
+
+	private copyToClipboard(value: string): void {
+		if (navigator.clipboard?.writeText) {
+			navigator.clipboard.writeText(value).catch(() => {
+				this.fallbackCopy(value);
+			});
+			return;
+		}
+		this.fallbackCopy(value);
+	}
+
+	private fallbackCopy(value: string): void {
+		window.prompt('Copy this link to share your sketch:', value);
 	}
 
 	/**
@@ -417,6 +544,11 @@ export class App {
 			const s = this.settings;
 			useAppStore.getState().setSettings({ ...s, fontSize: newSize });
 		}
+	}
+
+	private handleRunCodeForEngine(engineId: string): void {
+		const engine = this.getEngine(engineId as EngineId);
+		engine?.getController()?.handleForceRun();
 	}
 
 	private getEngine(engineId: EngineId): TextmodeEngine | StrudelEngine | null {

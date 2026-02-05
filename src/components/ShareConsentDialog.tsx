@@ -1,0 +1,119 @@
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useAppStore } from '@/stores/appStore';
+
+interface ShareConsentDialogProps {
+	onUnlockAndRun: () => void;
+	onUnlockOnly: () => void;
+	onDiscard: () => void;
+}
+
+export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: ShareConsentDialogProps) {
+	const share = useAppStore((state) => state.share);
+	const isOpen = Boolean(share.payload && !share.consented);
+	const [checked, setChecked] = useState(false);
+	const [typed, setTyped] = useState('');
+
+	const includesStrudel = Boolean(share.payload?.engines.strudel);
+	const includesTextmode = Boolean(share.payload?.engines.textmode);
+	const engineLabel = includesTextmode || includesStrudel
+		? `${includesTextmode ? 'textmode.js' : ''}${includesTextmode && includesStrudel ? ' + ' : ''}${includesStrudel ? 'strudel' : ''}`
+		: 'unknown';
+
+	const isConfirmed = useMemo(() => {
+		const typedOk = typed.trim().toLowerCase() === 'run';
+		return checked || typedOk;
+	}, [checked, typed]);
+
+	useEffect(() => {
+		if (isOpen) {
+			setChecked(false);
+			setTyped('');
+		}
+	}, [isOpen, share.payload]);
+
+	return (
+		<Dialog open={isOpen}>
+			<DialogContent
+				showCloseButton={false}
+				className="sm:max-w-[520px] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden"
+				overlayClassName="bg-black/90 backdrop-blur-lg"
+			>
+				<DialogHeader className="px-6 py-4 border-b border-white/5 text-left">
+					<DialogTitle className="text-l font-bold tracking-tight text-white flex items-center gap-2">
+						<AlertTriangle className="w-4 h-4 text-amber-400" />
+						untrusted sketch
+					</DialogTitle>
+					<DialogDescription className="text-sm text-zinc-400">
+						this link contains code from another user. it will not run unless you explicitly unlock it.
+					</DialogDescription>
+				</DialogHeader>
+
+				<div className="px-6 py-5 space-y-4">
+					<div className="text-xs text-zinc-400 space-y-1">
+						<p>included engines:</p>
+						<p className="font-mono text-zinc-300">{engineLabel}</p>
+					</div>
+
+					<div className="space-y-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+						<label className="flex items-start gap-3 text-xs text-amber-200/80">
+							<input
+								type="checkbox"
+								checked={checked}
+								onChange={(event) => setChecked(event.target.checked)}
+								className="mt-0.5 h-4 w-4 rounded border-amber-500/30 bg-zinc-900 text-amber-400 focus:ring-amber-400/40"
+							/>
+							<span>i understand this will execute code from another user</span>
+						</label>
+
+						<div className="space-y-2">
+							<p className="text-[11px] text-amber-200/70">or type RUN to continue</p>
+							<input
+								type="text"
+								value={typed}
+								onChange={(event) => setTyped(event.target.value)}
+								placeholder="RUN"
+								className="w-full rounded-md border border-amber-500/20 bg-zinc-950/80 px-3 py-2 text-xs text-amber-100 placeholder:text-amber-200/30 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+								autoComplete="off"
+								spellCheck={false}
+							/>
+						</div>
+					</div>
+
+					<div className="flex flex-wrap gap-3">
+						<Button
+							disabled={!isConfirmed}
+							className="bg-amber-500/20 border border-amber-500/30 text-amber-200 hover:bg-amber-500/30"
+							onClick={onUnlockAndRun}
+						>
+							unlock &amp; run
+						</Button>
+						<Button
+							disabled={!isConfirmed}
+							variant="outline"
+							className="border-zinc-700 text-zinc-300 hover:text-white"
+							onClick={onUnlockOnly}
+						>
+							unlock only
+						</Button>
+						<Button
+							variant="ghost"
+							className="text-zinc-500 hover:text-zinc-200"
+							onClick={onDiscard}
+						>
+							discard sketch
+						</Button>
+					</div>
+				</div>
+			</DialogContent>
+		</Dialog>
+	);
+}
