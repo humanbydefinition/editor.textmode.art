@@ -6,6 +6,7 @@ import {
     type CodeError,
     type StatusState
 } from '@/types/app.types';
+import type { ApprovedSketch } from '@/services/SketchApiService';
 import type { SharePayload } from '@/types/share.types';
 
 const MOBILE_BREAKPOINT = 768;
@@ -45,6 +46,7 @@ export interface AppState {
         consented: boolean;
         promptOpen: boolean;
     };
+    approvedSketch: ApprovedSketch | null;
 
     // --- UI/Layout State ---
     isMobile: boolean;
@@ -59,6 +61,7 @@ export interface AppState {
     setSharePayload: (payload: SharePayload | null) => void;
     setShareConsented: (consented: boolean) => void;
     setSharePromptOpen: (open: boolean) => void;
+    setApprovedSketch: (sketch: ApprovedSketch | null) => void;
 
     // Plugin State Actions
     initEngineState: (engineId: string) => void;
@@ -103,6 +106,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
         consented: false,
         promptOpen: false,
     },
+    approvedSketch: null,
 
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     activePanel: '',
@@ -133,6 +137,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
             promptOpen: open && Boolean(state.share.payload),
         }
     })),
+    setApprovedSketch: (sketch) => set({ approvedSketch: sketch }),
 
     initEngineState: (engineId) => {
         set((state) => {

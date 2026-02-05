@@ -81,6 +81,7 @@ export class App {
 		if (detectedSlug) {
 			const sketchData = await fetchApprovedSketch(detectedSlug);
 			if (sketchData) {
+				useAppStore.getState().setApprovedSketch(sketchData);
 				const payload: SharePayload = {
 					v: 1,
 					createdAt: Date.now(),

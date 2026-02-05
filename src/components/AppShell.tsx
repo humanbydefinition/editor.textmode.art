@@ -13,6 +13,7 @@ import { ShareConsentDialog } from './ShareConsentDialog';
 import { ShareExportDialog, type ShareExportData } from './ShareExportDialog';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SlugInfoAlert } from './SlugInfoAlert';
 
 
 export interface AppShellProps {
@@ -127,6 +128,8 @@ export function AppShell({
                 <MobileNav />
 
                 <WelcomeDialog onOpenChange={setWelcomeOpen} />
+
+                <SlugInfoAlert />
 
                 {!welcomeOpen && (
                     <ShareConsentDialog
