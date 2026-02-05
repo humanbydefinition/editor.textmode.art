@@ -116,7 +116,7 @@ export function PreferencesTab({
                                 <Music2 className="w-4 h-4" />
                             </div>
                             <div>
-                                <Label htmlFor="strudel-enabled" className="text-sm font-medium text-white cursor-pointer block">strudel audio</Label>
+                                <Label htmlFor="strudel-enabled" className="text-sm font-medium text-white cursor-pointer block">strudel</Label>
                                 <p className="text-xs text-zinc-500">enable or disable the audio engine</p>
                             </div>
                         </div>
