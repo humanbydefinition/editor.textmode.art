@@ -20,6 +20,17 @@ function getDisplayLink(label: string, url: string) {
     };
 }
 
+const LICENSE_LINKS: Record<string, string> = {
+    'MIT': 'https://opensource.org/licenses/MIT',
+    'CC BY-NC-SA 4.0': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/',
+    'Apache 2.0': 'https://www.apache.org/licenses/LICENSE-2.0',
+    'Unlicense': 'https://unlicense.org/',
+    'BSD-3-Clause': 'https://opensource.org/licenses/BSD-3-Clause',
+    'GPL-3.0': 'https://www.gnu.org/licenses/gpl-3.0',
+    'WTFPL': 'http://www.wtfpl.net/',
+};
+
 export function SlugInfoAlert() {
     const sketch = useAppStore((state) => state.approvedSketch);
     const [dismissed, setDismissed] = useState(false);
@@ -58,11 +69,27 @@ export function SlugInfoAlert() {
                             by {sketch.authorName}
                         </span>
                     )}
-                    {sketch.license && (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-                            {sketch.license}
-                        </span>
-                    )}
+                    {sketch.license && (() => {
+                        const url = LICENSE_LINKS[sketch.license];
+                        if (url) {
+                            return (
+                                <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                >
+                                    <ExternalLink className="h-3 w-3" />
+                                    <span>{sketch.license}</span>
+                                </a>
+                            );
+                        }
+                        return (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                                {sketch.license}
+                            </span>
+                        );
+                    })()}
                     {socialLinks.map((link) => {
                         const display = getDisplayLink(link.label, link.url);
                         return (
