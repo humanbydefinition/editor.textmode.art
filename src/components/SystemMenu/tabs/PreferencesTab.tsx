@@ -1,5 +1,5 @@
 
-import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2 } from 'lucide-react';
+import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -168,25 +168,32 @@ export function PreferencesTab({
                                         onShare();
                                     }}
                                 >
-                                    <Copy className="w-4 h-4" />
-                                    copy link
+                                    <Share className="w-4 h-4" />
+                                    share
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>copy share link</p>
+                                <p>create share link</p>
                             </TooltipContent>
                         </Tooltip>
-                        <Button
-                            variant="destructive"
-                            className="flex-1 justify-center gap-2 bg-red-950/30 border-red-900/50 hover:bg-red-900/50 text-red-400"
-                            onClick={() => {
-                                onClearStorage();
-                                onClose();
-                            }}
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            reset code
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    className="flex-1 justify-center gap-2 bg-red-950/30 border-red-900/50 hover:bg-red-900/50 text-red-400"
+                                    onClick={() => {
+                                        onClearStorage();
+                                        onClose();
+                                    }}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    reset code
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>reset to default sketch</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
             </div>
