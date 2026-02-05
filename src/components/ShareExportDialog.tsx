@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShareService, MAX_SHARE_URL_LENGTH } from '@/services/ShareService';
 import type { SharePayload } from '@/types/share.types';
-import { Check, Link2 } from 'lucide-react';
+import { PublishRequestDialog } from './PublishRequestDialog';
+import { Check, Link2, Sparkles } from 'lucide-react';
 
 export interface ShareExportData {
 	createdAt: number;
@@ -31,6 +32,7 @@ function formatCount(value: number): string {
 
 export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: ShareExportDialogProps) {
 	const [copied, setCopied] = useState<'textmode' | 'full' | null>(null);
+	const [publishOpen, setPublishOpen] = useState(false);
 
 	const computed = useMemo(() => {
 		if (!data) return null;
@@ -225,8 +227,36 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 						)}
 					</div>
 
+					{/* Custom link section */}
+					<div className="pt-4 border-t border-white/5">
+						<div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+							<div className="flex items-start gap-3">
+								<Sparkles className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+								<div className="flex-1">
+									<p className="text-sm font-medium text-white">want a shorter link?</p>
+									<p className="text-xs text-zinc-400 mt-1">
+										request a custom URL like <span className="font-mono text-violet-300">/s/my-sketch</span> with full SEO support.
+									</p>
+								</div>
+							</div>
+							<Button
+								className="w-full mt-3 bg-violet-500/20 border border-violet-500/30 text-violet-200 hover:bg-violet-500/30"
+								onClick={() => setPublishOpen(true)}
+							>
+								<Sparkles className="w-4 h-4" />
+								request custom link
+							</Button>
+						</div>
+					</div>
+
 				</div>
 			</DialogContent>
+
+			<PublishRequestDialog
+				open={publishOpen}
+				data={data ? { textmodeCode: data.textmodeCode, strudelCode: data.strudelCode } : null}
+				onOpenChange={setPublishOpen}
+			/>
 		</Dialog>
 	);
 }

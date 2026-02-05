@@ -13,6 +13,7 @@ import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
 import { audioService } from './services/AudioService';
 import { ShareService } from './services/ShareService';
+import { fetchApprovedSketch } from './services/SketchApiService';
 import { ShortcutsManager, type IShortcutsManager } from './managers/ShortcutsManager';
 import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
@@ -72,8 +73,31 @@ export class App {
 		useAppStore.getState().setSettings(loadedSettings);
 
 		// Detect shared sketch payload early to lock execution before runtimes start
+		// Priority 1: Server-injected slug OR URL path /s/:slug (approved sketches auto-run)
+		const slugFromServer = (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__;
+		const slugFromPath = window.location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
+		const detectedSlug = slugFromServer || slugFromPath;
+
+		if (detectedSlug) {
+			const sketchData = await fetchApprovedSketch(detectedSlug);
+			if (sketchData) {
+				const payload: SharePayload = {
+					v: 1,
+					createdAt: Date.now(),
+					engines: {
+						textmode: sketchData.textmodeCode,
+						...(sketchData.strudelCode && { strudel: sketchData.strudelCode }),
+					},
+				};
+				useAppStore.getState().setSharePayload(payload);
+				// Approved sketches are trusted — auto-consent
+				useAppStore.getState().setShareConsented(true);
+			}
+		}
+
+		// Priority 2: URL hash-based share (requires user consent)
 		const sharedPayload = ShareService.getFromLocation(window.location);
-		if (sharedPayload) {
+		if (sharedPayload && !detectedSlug) {
 			useAppStore.getState().setSharePayload(sharedPayload);
 		}
 
