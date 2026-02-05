@@ -4,7 +4,10 @@ import fastify, { type FastifyInstance } from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import staticPlugin from '@fastify/static';
-import { env } from './config/env';
+import { env } from './config/env.js';
+import publicRoutes from './routes/public.js';
+import adminRoutes from './routes/admin.js';
+import slugRoutes from './routes/slug.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +24,10 @@ export function buildServer(): FastifyInstance {
   app.register(cors, {
     origin: true,
   });
+
+  app.register(publicRoutes);
+  app.register(adminRoutes);
+  app.register(slugRoutes);
 
   app.get('/api/health', async () => ({ status: 'ok' }));
 

@@ -11,6 +11,12 @@
     pointer-events: none;
 }
 
+/* Admin mode: enable normal pointer events and scrolling */
+body.admin-mode #app-container {
+    pointer-events: auto;
+    overflow: auto;
+}
+
 .layout-pane {
     flex: 1;
     position: relative;

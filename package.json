@@ -22,9 +22,9 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@fastify/cors": "^9.0.1",
+    "@fastify/cors": "^10.0.0",
     "@fastify/helmet": "^12.0.1",
-    "@fastify/static": "^7.0.4",
+    "@fastify/static": "^8.0.0",
     "@prisma/client": "^6.2.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
