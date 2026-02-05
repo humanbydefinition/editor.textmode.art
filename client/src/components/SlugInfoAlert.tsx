@@ -68,22 +68,8 @@ export function SlugInfoAlert() {
             aria-label="Sketch information"
         >
             <Alert className="relative shadow-lg shadow-black/40 overflow-hidden">
-                {/* Close button — meets 44×44 touch target */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        setVisible(false);
-                        // Wait for fade-out before unmounting
-                        setTimeout(() => setDismissed(true), 200);
-                    }}
-                    className="absolute top-2 right-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
-                    aria-label="Dismiss sketch info"
-                >
-                    <X className="h-4 w-4" />
-                </button>
-
-                {/* Header: title + slug badge */}
-                <div className="pr-11">
+                {/* Header Row: Title + Badge + Close button */}
+                <div className="flex items-start justify-between gap-2">
                     <div className="flex items-baseline gap-2 min-w-0">
                         <AlertTitle className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0 shrink">
                             {sketch.title}
@@ -93,16 +79,29 @@ export function SlugInfoAlert() {
                         </Badge>
                     </div>
 
-                    {/* Description — readonly scrollable textarea */}
-                    {sketch.description && (
-                        <Textarea
-                            value={sketch.description}
-                            readOnly
-                            tabIndex={-1}
-                            className="mt-2 max-h-28 min-h-0 resize-none border-white/5 bg-white/[0.03] text-xs sm:text-sm leading-relaxed text-zinc-300 cursor-default focus-visible:ring-0 focus-visible:border-white/5 shadow-none"
-                        />
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setVisible(false);
+                            // Wait for fade-out before unmounting
+                            setTimeout(() => setDismissed(true), 200);
+                        }}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
+                        aria-label="Dismiss sketch info"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                 </div>
+
+                {/* Description — readonly scrollable textarea */}
+                {sketch.description && (
+                    <Textarea
+                        value={sketch.description}
+                        readOnly
+                        tabIndex={-1}
+                        className="mt-2 max-h-28 min-h-0 resize-none border-white/5 bg-white/[0.03] text-xs sm:text-sm leading-relaxed text-zinc-300 cursor-default focus-visible:ring-0 focus-visible:border-white/5 shadow-none"
+                    />
+                )}
 
                 {/* Metadata pills — author, license, social links */}
                 {(sketch.authorName || sketch.license || socialLinks.length > 0) && (
