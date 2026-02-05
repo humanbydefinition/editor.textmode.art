@@ -50,7 +50,7 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="px-6 py-5 space-y-4">
+				<div className="px-6 pb-5 space-y-4">
 					<div className="text-xs text-zinc-400 space-y-1">
 						<p>included engines:</p>
 						<p className="font-mono text-zinc-300">{engineLabel}</p>
