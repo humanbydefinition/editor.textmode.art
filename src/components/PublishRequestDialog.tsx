@@ -308,7 +308,7 @@ export function PublishRequestDialog({
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="A brief description of your sketch for social previews..."
                             className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 min-h-[80px] resize-none"
-                            maxLength={300}
+                            maxLength={200}
                         />
                         <p className="text-xs text-zinc-500">{description.length}/300 characters</p>
                     </div>
@@ -324,7 +324,7 @@ export function PublishRequestDialog({
                             onChange={(e) => setAuthorName(e.target.value)}
                             placeholder="Your name or handle"
                             className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
-                            maxLength={80}
+                            maxLength={32}
                         />
                     </div>
 
