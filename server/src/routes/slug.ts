@@ -30,7 +30,7 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
             return;
         }
 
-        const baseUrl = getBaseUrl(request.hostname);
+        const baseUrl = getBaseUrl(request.hostname, request.protocol);
         const html = renderSlugPage({ sketch, baseUrl });
 
         reply.type('text/html').send(html);

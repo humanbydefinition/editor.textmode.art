@@ -114,6 +114,8 @@ export function renderSlugPage({ sketch, baseUrl }: SlugPageOptions): string {
     // Fall through to dev template if production HTML not available
   }
 
+  const devServerUrl = (env.VITE_DEV_SERVER_URL || 'http://localhost:5173').replace(/\/$/, '');
+
   // Development mode: hardcoded template for Vite dev server
   return `<!doctype html>
 <html lang="en">
@@ -135,7 +137,15 @@ ${dynamicHead}
 </head>
 <body>
   <div id="app-container"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <script type="module" src="${devServerUrl}/@vite/client"></script>
+  <script type="module">
+    import RefreshRuntime from "${devServerUrl}/@react-refresh";
+    RefreshRuntime.injectIntoGlobalHook(window);
+    window.$RefreshReg$ = () => {};
+    window.$RefreshSig$ = () => (type) => type;
+    window.__vite_plugin_react_preamble_installed__ = true;
+  </script>
+  <script type="module" src="${devServerUrl}/src/main.tsx"></script>
 </body>
 </html>`;
 }
