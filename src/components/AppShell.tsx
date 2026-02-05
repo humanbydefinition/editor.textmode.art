@@ -11,6 +11,8 @@ import { Columns2, Rows2 } from 'lucide-react';
 import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog } from './ShareConsentDialog';
 import { ShareExportDialog, type ShareExportData } from './ShareExportDialog';
+import { Lock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export interface AppShellProps {
@@ -31,6 +33,7 @@ export interface AppShellProps {
     onShareUnlockAndRun: () => void;
     onShareUnlockOnly: () => void;
     onShareDiscard: () => void;
+    onSharePromptOpen: () => void;
     shareExportOpen: boolean;
     shareExportData: ShareExportData | null;
     onShareExportOpenChange: (open: boolean) => void;
@@ -53,6 +56,7 @@ export function AppShell({
     onShareUnlockAndRun,
     onShareUnlockOnly,
     onShareDiscard,
+    onSharePromptOpen,
     shareExportOpen,
     shareExportData,
     onShareExportOpenChange,
@@ -66,6 +70,8 @@ export function AppShell({
     const isMobile = useAppStore((state) => state.isMobile);
     const editorOrientation = useAppStore((state) => state.editorOrientation);
     const setEditorOrientation = useAppStore((state) => state.setEditorOrientation);
+    const share = useAppStore((state) => state.share);
+    const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
     // Derived state (could be moved to store selector)
     const hasLastWorking = useAppStore((state) => {
@@ -136,6 +142,33 @@ export function AppShell({
                     onOpenChange={onShareExportOpenChange}
                     onCopyLink={onShareExportCopy}
                 />
+
+                {showShareLock && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={onSharePromptOpen}
+                                className={cn(
+                                    'fixed bottom-2 right-2 z-50 pointer-events-auto',
+                                    'flex items-center justify-center',
+                                    'w-6 h-6 rounded-full',
+                                    'bg-amber-500/15 backdrop-blur-md',
+                                    'border border-amber-500/30',
+                                    'text-amber-200',
+                                    'transition-all duration-200',
+                                    'hover:scale-105 hover:bg-amber-500/25',
+                                    'focus:outline-none focus:ring-2 focus:ring-amber-400/30'
+                                )}
+                                aria-label="Sketch locked (click to unlock)"
+                            >
+                                <Lock className="w-[14px] h-[14px]" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>sketch locked — click to unlock</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
 
                 {/* Mouse Sonar - always rendered for cursor finding */}
                 <MouseSonar ref={sonarRef} />

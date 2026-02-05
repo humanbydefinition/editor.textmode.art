@@ -210,7 +210,13 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	protected isExecutionLocked(): boolean {
 		const share = useAppStore.getState().share;
-		return Boolean(share.payload && !share.consented);
+		if (share.payload && !share.consented) {
+			if (!share.promptOpen) {
+				useAppStore.getState().setSharePromptOpen(true);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	/**

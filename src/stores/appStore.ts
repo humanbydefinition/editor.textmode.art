@@ -43,6 +43,7 @@ export interface AppState {
     share: {
         payload: SharePayload | null;
         consented: boolean;
+        promptOpen: boolean;
     };
 
     // --- UI/Layout State ---
@@ -57,6 +58,7 @@ export interface AppState {
     setStatus: (status: StatusState) => void;
     setSharePayload: (payload: SharePayload | null) => void;
     setShareConsented: (consented: boolean) => void;
+    setSharePromptOpen: (open: boolean) => void;
 
     // Plugin State Actions
     initEngineState: (engineId: string) => void;
@@ -99,6 +101,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     share: {
         payload: null,
         consented: false,
+        promptOpen: false,
     },
 
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
@@ -114,12 +117,20 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
         share: {
             payload,
             consented: false,
+            promptOpen: Boolean(payload),
         }
     }),
     setShareConsented: (consented) => set((state) => ({
         share: {
             ...state.share,
             consented,
+            promptOpen: consented ? false : state.share.promptOpen,
+        }
+    })),
+    setSharePromptOpen: (open) => set((state) => ({
+        share: {
+            ...state.share,
+            promptOpen: open && Boolean(state.share.payload),
         }
     })),
 

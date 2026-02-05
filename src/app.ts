@@ -106,6 +106,7 @@ export class App {
 		// Apply initial settings to all editors
 		this.editorManager.applySettings(this.settings);
 		this.applySharedSketchIfPresent();
+		this.setupShareInteractionGuards();
 
 		// Setup shortcuts
 		this.shortcuts = new ShortcutsManager({
@@ -172,6 +173,7 @@ export class App {
 			onShareUnlockAndRun: () => this.handleShareUnlockAndRun(),
 			onShareUnlockOnly: () => this.handleShareUnlockOnly(),
 			onShareDiscard: () => this.handleShareDiscard(),
+			onSharePromptOpen: () => this.openShareConsentPrompt(),
 			shareExportOpen: this.shareExportOpen,
 			shareExportData: this.shareExportData,
 			onShareExportOpenChange: (open: boolean) => this.handleShareExportOpenChange(open),
@@ -404,7 +406,7 @@ export class App {
 	}
 
 	private handleShareUnlockOnly(): void {
-		this.unlockSharedSketch();
+		this.viewSharedSketchOnly();
 	}
 
 	private unlockSharedSketch(): void {
@@ -414,6 +416,20 @@ export class App {
 		this.setEditorsReadOnly(false);
 		this.applySharePayload(share.payload);
 		this.focusSharedEditor(share.payload);
+	}
+
+	private viewSharedSketchOnly(): void {
+		const share = useAppStore.getState().share;
+		if (!share.payload) return;
+		useAppStore.getState().setSharePromptOpen(false);
+		this.setEditorsReadOnly(true);
+		this.applySharePayload(share.payload);
+	}
+
+	private openShareConsentPrompt(): void {
+		const share = useAppStore.getState().share;
+		if (!share.payload || share.consented) return;
+		useAppStore.getState().setSharePromptOpen(true);
 	}
 
 	private focusSharedEditor(payload: SharePayload): void {
@@ -560,6 +576,31 @@ export class App {
 		const engine = this.getEngine(engineId as EngineId);
 		engine?.getController()?.handleForceRun();
 	}
+
+	private setupShareInteractionGuards(): void {
+		document.addEventListener('mousedown', this.handleShareInteraction, true);
+		document.addEventListener('keydown', this.handleShareKeydown, true);
+	}
+
+	private handleShareInteraction = (event: MouseEvent): void => {
+		const share = useAppStore.getState().share;
+		if (!share.payload || share.consented || share.promptOpen) return;
+		const target = event.target as HTMLElement | null;
+		if (!target) return;
+		if (target.closest('.monaco-editor')) {
+			useAppStore.getState().setSharePromptOpen(true);
+		}
+	};
+
+	private handleShareKeydown = (event: KeyboardEvent): void => {
+		const share = useAppStore.getState().share;
+		if (!share.payload || share.consented || share.promptOpen) return;
+		const target = event.target as HTMLElement | null;
+		if (!target) return;
+		if (target.closest('.monaco-editor')) {
+			useAppStore.getState().setSharePromptOpen(true);
+		}
+	};
 
 	private getEngine(engineId: EngineId): TextmodeEngine | StrudelEngine | null {
 		if (engineId === 'textmode') return this.textmodeEngine;
