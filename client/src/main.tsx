@@ -5,7 +5,7 @@ import { AdminApp } from './admin/AdminApp';
 
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-	const adminPath = window.location.pathname.startsWith('/admin');
+	const adminPath = window.location.pathname.startsWith('/nest');
 	const container = document.getElementById('app-container');
 	if (!container) return;
 
