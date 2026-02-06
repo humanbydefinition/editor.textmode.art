@@ -63,6 +63,7 @@ export class ExecutionContext {
 				this.options.errorReporter.report(error);
 			},
 			hasDrawError: () => this.drawErrorOccurred,
+			mediaProxyUrl: getMediaProxyUrl(),
 		});
 	}
 
@@ -165,4 +166,20 @@ export class ExecutionContext {
 			this.userDispose = null;
 		}
 	}
+}
+
+function getMediaProxyUrl(): string | undefined {
+	const explicit = import.meta.env.VITE_MEDIA_PROXY_URL;
+	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
+		return explicit.trim();
+	}
+
+	const rawOrigins = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
+	if (!rawOrigins || typeof rawOrigins !== 'string') return undefined;
+	const origin = rawOrigins
+		.split(',')
+		.map((value) => value.trim())
+		.filter((value) => value.length > 0)[0];
+	if (!origin) return undefined;
+	return origin.replace(/\/$/, '') + '/api/media';
 }

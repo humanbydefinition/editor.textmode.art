@@ -2,10 +2,18 @@ import type { IErrorReporter } from '../types';
 import type { CodeError } from '../../types/app.types';
 import type { RunnerToParentMessage } from '../protocol';
 
+export type RunnerMessageSender = (msg: RunnerToParentMessage) => void;
+
 /**
  * Sends error messages to the parent window
  */
 export class ErrorReporter implements IErrorReporter {
+	private readonly sendMessage: RunnerMessageSender;
+
+	constructor(sendMessage: RunnerMessageSender) {
+		this.sendMessage = sendMessage;
+	}
+
 	/**
 	 * Report an error to the parent window
 	 */
@@ -68,7 +76,5 @@ export class ErrorReporter implements IErrorReporter {
 	/**
 	 * Send message to parent window
 	 */
-	private sendMessage(msg: RunnerToParentMessage): void {
-		window.parent.postMessage(msg, '*');
-	}
+	// sendMessage injected
 }

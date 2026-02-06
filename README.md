@@ -51,6 +51,17 @@ npm run dev
 npm run build
 ```
 
+### Sandbox configuration (recommended)
+
+To run the textmode runner on a separate origin (recommended for isolation), set:
+
+- `VITE_RUNNER_URL` (client): Full URL to the runner HTML (e.g. `https://runner.synth.textmode.art/runner/index.html`)
+- `VITE_RUNNER_PARENT_ORIGINS` (runner): Comma-separated list of allowed parent origins (e.g. `https://synth.textmode.art`)
+- `VITE_MEDIA_PROXY_URL` (runner, optional): Full URL to the media proxy endpoint (defaults to `${firstParentOrigin}/api/media` when unset)
+- `RUNNER_PUBLIC_URL` (server): Public runner origin for CSP and CORS (e.g. `https://runner.synth.textmode.art`)
+
+The media proxy endpoint is exposed at `GET /api/media?url=...` on the app server and is used as a CORS fallback for `t.loadImage`/`t.loadVideo`.
+
 ## License
 
 This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE](LICENSE) file for details.

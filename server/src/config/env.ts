@@ -12,6 +12,7 @@ const envSchema = z.object({
   ADMIN_API_TOKEN: z.string().min(1, 'ADMIN_API_TOKEN is required'),
   STATIC_DIR: z.string().optional(),
   PUBLIC_BASE_URL: z.string().url().optional(),
+  RUNNER_PUBLIC_URL: z.string().url().optional(),
   VITE_DEV_SERVER_URL: z.string().url().optional(),
 });
 

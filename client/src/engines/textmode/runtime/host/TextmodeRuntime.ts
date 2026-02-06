@@ -1,9 +1,11 @@
 
-import type { ParentToRunnerMessage, AudioDataMessage } from '@/sandbox/protocol';
-import { isRunnerMessage } from '@/sandbox/protocol';
+import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@/sandbox/protocol';
+import { isRunnerMessage, PROTOCOL_VERSION } from '@/sandbox/protocol';
 import type { IHostRuntime, HostRuntimeOptions } from '@/sandbox/types';
 import type { CodeError } from '@/types/app.types';
 import type { AudioData } from '@/services/AudioService';
+
+const HANDSHAKE_TIMEOUT_MS = 5000;
 
 /**
  * TextmodeRuntime - manages the iframe lifecycle and communication from the parent window.
@@ -15,6 +17,9 @@ export class TextmodeRuntime implements IHostRuntime {
 	private container: HTMLElement;
 	private _isReady = false;
 	private pendingCode: string | null = null;
+	private messagePort: MessagePort | null = null;
+	private runnerOrigin: string;
+	private handshakeTimer: number | null = null;
 
 	private onReadyCallback?: () => void;
 	private onRunOk?: (timestamp: number) => void;
@@ -30,9 +35,7 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.onRunOk = options.onRunOk;
 		this.onRunError = options.onRunError;
 		this.onSynthError = options.onSynthError;
-
-		// Listen for messages from iframe
-		window.addEventListener('message', this.handleMessage);
+		this.runnerOrigin = new URL(this.options.runnerUrl, window.location.origin).origin;
 	}
 
 	/**
@@ -75,8 +78,13 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Cleanup
 	 */
 	dispose(): void {
-		window.removeEventListener('message', this.handleMessage);
+		this.clearHandshakeTimer();
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
 		if (this.iframe) {
+			this.iframe.removeEventListener('load', this.handleIframeLoad);
 			this.iframe.remove();
 		}
 	}
@@ -107,32 +115,36 @@ export class TextmodeRuntime implements IHostRuntime {
 		}
 
 		this._isReady = false;
+		this.clearHandshakeTimer();
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
 
 		// Create new iframe
 		this.iframe = document.createElement('iframe');
 		this.iframe.id = 'runner-frame';
 		this.iframe.src = this.options.runnerUrl;
 
-		// Sandbox permissions: allow scripts and same-origin for imports
+		// Sandbox permissions: allow scripts only
 		this.iframe.sandbox.add('allow-scripts');
-		this.iframe.sandbox.add('allow-same-origin');
+		this.iframe.referrerPolicy = 'no-referrer';
+		this.iframe.addEventListener('load', this.handleIframeLoad);
 
 		this.container.appendChild(this.iframe);
 	}
 
 	/**
-	 * Handle messages from iframe
+	 * Handle messages from iframe via MessagePort
 	 */
-	private handleMessage = (event: MessageEvent): void => {
-		// Only handle messages from our iframe
-		if (this.iframe && event.source !== this.iframe.contentWindow) return;
-
-		const msg = event.data;
+	private handlePortMessage = (event: MessageEvent): void => {
+		const msg = event.data as unknown;
 		if (!isRunnerMessage(msg)) return;
 
 		switch (msg.type) {
 			case 'READY':
 				this._isReady = true;
+				this.clearHandshakeTimer();
 				this.onReadyCallback?.();
 				// Run pending code if any
 				if (this.pendingCode !== null) {
@@ -166,12 +178,46 @@ export class TextmodeRuntime implements IHostRuntime {
 		}
 	};
 
+	private handleIframeLoad = (): void => {
+		this.initializeMessagePort();
+	};
+
 	/**
 	 * Send message to iframe
 	 */
 	private sendMessage(msg: ParentToRunnerMessage): void {
-		if (this.iframe?.contentWindow) {
-			this.iframe.contentWindow.postMessage(msg, '*');
+		if (!this.messagePort) return;
+		this.messagePort.postMessage(msg);
+	}
+
+	private initializeMessagePort(): void {
+		if (!this.iframe?.contentWindow) return;
+
+		const channel = new MessageChannel();
+		this.messagePort = channel.port1;
+		this.messagePort.onmessage = this.handlePortMessage;
+		this.messagePort.start();
+
+		const initMessage: InitMessage = {
+			type: 'INIT',
+			v: PROTOCOL_VERSION,
+		};
+		const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
+		this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
+		this.startHandshakeTimer();
+	}
+
+	private startHandshakeTimer(): void {
+		this.clearHandshakeTimer();
+		this.handshakeTimer = window.setTimeout(() => {
+			this.createIframe();
+		}, HANDSHAKE_TIMEOUT_MS);
+	}
+
+	private clearHandshakeTimer(): void {
+		if (this.handshakeTimer) {
+			window.clearTimeout(this.handshakeTimer);
+			this.handshakeTimer = null;
 		}
 	}
 }

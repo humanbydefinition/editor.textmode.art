@@ -6,6 +6,8 @@ export interface SafeProxyOptions {
 	onDrawError: (error: Error) => void;
 	/** Whether draw errors have occurred (to skip further draw calls) */
 	hasDrawError: () => boolean;
+	/** Optional media proxy URL for CORS fallback */
+	mediaProxyUrl?: string;
 }
 
 /**
@@ -29,6 +31,14 @@ export class SafeProxyFactory {
 
 				if (prop === 'draw') {
 					return (callback: () => void) => target.draw(this.wrapDrawCallback(callback));
+				}
+
+				if (prop === 'loadImage') {
+					return (src: string) => this.wrapMediaLoad(target, value, src);
+				}
+
+				if (prop === 'loadVideo') {
+					return (src: string) => this.wrapMediaLoad(target, value, src);
 				}
 
 				if (prop === 'layers') {
@@ -101,5 +111,43 @@ export class SafeProxyFactory {
 				this.options.onDrawError(error as Error);
 			}
 		};
+	}
+
+	private wrapMediaLoad(
+		target: Textmodifier,
+		value: unknown,
+		src: string
+	): Promise<unknown> {
+		if (typeof value !== 'function') {
+			return Promise.reject(new Error('loadImage/loadVideo is not a function'));
+		}
+
+		const originalUrl = src;
+		const fallbackUrl = this.getProxyUrl(src);
+		const invoke = (url: string) => (value as (arg: string) => Promise<unknown>).call(target, url);
+
+		if (fallbackUrl && fallbackUrl !== originalUrl) {
+			return invoke(fallbackUrl);
+		}
+
+		return invoke(originalUrl);
+	}
+
+	private getProxyUrl(src: string): string | null {
+		if (!this.options.mediaProxyUrl) return null;
+		if (!src) return null;
+		if (src.startsWith('data:') || src.startsWith('blob:')) return null;
+
+		try {
+			const baseOrigin = new URL(window.location.href).origin;
+			const resolved = new URL(src, window.location.href);
+			// Only proxy absolute http(s) URLs that are cross-origin
+			if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') return null;
+			if (resolved.origin === baseOrigin) return null;
+			const encoded = encodeURIComponent(resolved.toString());
+			return `${this.options.mediaProxyUrl}?url=${encoded}`;
+		} catch {
+			return null;
+		}
 	}
 }

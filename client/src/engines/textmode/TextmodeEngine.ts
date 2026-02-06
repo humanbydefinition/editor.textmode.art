@@ -114,7 +114,7 @@ export class TextmodeEngine {
 	private createRuntime(context: EngineContext): TextmodeRuntime {
 		this.runtime = new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
-			runnerUrl: '/src/engines/textmode/runner/index.html',
+			runnerUrl: getRunnerUrl(),
 			onReady: () => this.controller?.handleRuntimeReady(),
 			onRunOk: () => this.controller?.handleRunOk(),
 			onRunError: (error) => this.controller?.handleRunError(error),
@@ -139,4 +139,14 @@ export class TextmodeEngine {
 
 		return new TextmodeController(callbacks, deps);
 	}
+}
+
+function getRunnerUrl(): string {
+	const explicit = import.meta.env.VITE_RUNNER_URL;
+	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
+		return explicit.trim();
+	}
+	return import.meta.env.DEV
+		? '/src/engines/textmode/runner/index.html'
+		: '/runner/index.html';
 }

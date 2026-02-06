@@ -5,7 +5,8 @@
 import { ErrorReporter } from './errors/ErrorReporter';
 import { FrameScheduler } from './scheduling/FrameScheduler';
 import { AudioReceiver } from './scheduling/AudioReceiver';
-import type { ParentToRunnerMessage, RunnerToParentMessage, AudioDataMessage } from './protocol';
+import type { ParentToRunnerMessage, RunnerToParentMessage, AudioDataMessage, WindowToRunnerMessage } from './protocol';
+import { isInitMessage, isParentMessage } from './protocol';
 
 /**
  * Interface that concrete runners must implement
@@ -35,8 +36,12 @@ export abstract class AbstractRunner implements RunnerImplementation {
 	/** Last successfully executed code (for reference, concrete classes might use this) */
 	protected lastWorkingCode: string | null = null;
 
+	private messagePort: MessagePort | null = null;
+	private readonly allowedParentOrigins: Set<string>;
+
 	constructor() {
-		this.errorReporter = new ErrorReporter();
+		this.allowedParentOrigins = new Set(this.getAllowedParentOrigins());
+		this.errorReporter = new ErrorReporter((msg) => this.sendMessage(msg));
 		this.audioReceiver = new AudioReceiver();
 
 		this.scheduler = new FrameScheduler({
@@ -52,8 +57,7 @@ export abstract class AbstractRunner implements RunnerImplementation {
 		this.setupErrorHandlers();
 		this.init();
 
-		window.addEventListener('message', this.handleMessage);
-		this.sendMessage({ type: 'READY' });
+		window.addEventListener('message', this.handleInitMessage);
 	}
 
 	/**
@@ -83,9 +87,9 @@ export abstract class AbstractRunner implements RunnerImplementation {
 	/**
 	 * Handle messages from parent window
 	 */
-	protected handleMessage = (event: MessageEvent<ParentToRunnerMessage>): void => {
+	protected handlePortMessage = (event: MessageEvent<ParentToRunnerMessage>): void => {
 		const msg = event.data;
-		if (!msg || typeof msg !== 'object' || !('type' in msg)) return;
+		if (!isParentMessage(msg)) return;
 
 		switch (msg.type) {
 			case 'RUN_CODE':
@@ -99,6 +103,19 @@ export abstract class AbstractRunner implements RunnerImplementation {
 				this.onAudioData(msg as AudioDataMessage);
 				break;
 		}
+	};
+
+	protected handleInitMessage = (event: MessageEvent<WindowToRunnerMessage>): void => {
+		const msg = event.data;
+		if (!isInitMessage(msg)) return;
+		if (!this.isAllowedOrigin(event.origin)) return;
+		if (event.source !== window.parent) return;
+		const port = event.ports?.[0];
+		if (!port) return;
+
+		this.attachPort(port);
+		window.removeEventListener('message', this.handleInitMessage);
+		this.sendMessage({ type: 'READY' });
 	};
 
 	/**
@@ -118,7 +135,8 @@ export abstract class AbstractRunner implements RunnerImplementation {
 	 * Send message to parent window
 	 */
 	protected sendMessage(msg: RunnerToParentMessage): void {
-		window.parent.postMessage(msg, '*');
+		if (!this.messagePort) return;
+		this.messagePort.postMessage(msg);
 	}
 
 	/**
@@ -137,5 +155,31 @@ export abstract class AbstractRunner implements RunnerImplementation {
 
 			this.errorReporter.report(reason);
 		});
+	}
+
+	private attachPort(port: MessagePort): void {
+		if (this.messagePort) {
+			this.messagePort.close();
+		}
+		this.messagePort = port;
+		this.messagePort.onmessage = this.handlePortMessage;
+		this.messagePort.start();
+	}
+
+	private isAllowedOrigin(origin: string): boolean {
+		if (this.allowedParentOrigins.has('*')) return true;
+		return this.allowedParentOrigins.has(origin);
+	}
+
+	private getAllowedParentOrigins(): string[] {
+		const raw = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
+		if (!raw || typeof raw !== 'string') {
+			if (import.meta.env.DEV) return ['*'];
+			return [];
+		}
+		return raw
+			.split(',')
+			.map((value) => value.trim())
+			.filter((value) => value.length > 0);
 	}
 }

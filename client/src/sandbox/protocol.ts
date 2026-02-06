@@ -2,6 +2,14 @@
  * Message protocol for communication between parent window and iframe runner.
  */
 
+export const PROTOCOL_VERSION = 1;
+
+// Initial handshake message (window -> runner)
+export interface InitMessage {
+	type: 'INIT';
+	v: typeof PROTOCOL_VERSION;
+}
+
 // Messages from runner to parent
 export interface ReadyMessage {
 	type: 'READY';
@@ -64,8 +72,10 @@ export interface AudioDataMessage {
 
 export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage | AudioDataMessage;
 
+export type WindowToRunnerMessage = InitMessage;
+
 // Union of all messages
-export type Message = RunnerToParentMessage | ParentToRunnerMessage;
+export type Message = RunnerToParentMessage | ParentToRunnerMessage | WindowToRunnerMessage;
 
 /**
  * Type guard for runner-to-parent messages
@@ -74,4 +84,22 @@ export function isRunnerMessage(msg: unknown): msg is RunnerToParentMessage {
 	if (typeof msg !== 'object' || msg === null) return false;
 	const m = msg as { type?: string };
 	return m.type === 'READY' || m.type === 'RUN_OK' || m.type === 'RUN_ERROR' || m.type === 'SYNTH_ERROR' || m.type === 'TOGGLE_UI';
+}
+
+/**
+ * Type guard for parent-to-runner messages
+ */
+export function isParentMessage(msg: unknown): msg is ParentToRunnerMessage {
+	if (typeof msg !== 'object' || msg === null) return false;
+	const m = msg as { type?: string };
+	return m.type === 'RUN_CODE' || m.type === 'SOFT_RESET' || m.type === 'AUDIO_DATA';
+}
+
+/**
+ * Type guard for window-to-runner init message
+ */
+export function isInitMessage(msg: unknown): msg is InitMessage {
+	if (typeof msg !== 'object' || msg === null) return false;
+	const m = msg as { type?: string; v?: number };
+	return m.type === 'INIT' && m.v === PROTOCOL_VERSION;
 }
