@@ -37,7 +37,7 @@ const CONFIGS: TypeGenerationConfig[] = [
             { name: 'textmode.js' },
             { name: 'textmode.synth.js' }
         ],
-        output: 'src/plugins/textmode/config/generatedTypes.ts',
+        output: 'src/engines/textmode/config/generatedTypes.ts',
         includeGlobals: true
     }
 ];
