@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
 
@@ -66,9 +65,6 @@ export function SlugInfoCard({
                         <h3 className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0">
                             {sketch.title}
                         </h3>
-                        <Badge className="border border-violet-400/40 bg-violet-500/15 text-violet-200 text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                            /s/{sketch.slug}
-                        </Badge>
                     </div>
                 </div>
 
@@ -90,7 +86,7 @@ export function SlugInfoCard({
                 </div>
             )}
 
-            {(sketch.authorName || sketch.license || socialLinks.length > 0) && (
+            {(sketch.authorName || sketch.license || socialLinks.length > 0 || sketch.slug) && (
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
                     {sketch.authorName && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 max-w-[10rem]">
@@ -134,6 +130,11 @@ export function SlugInfoCard({
                             </a>
                         );
                     })}
+                    {sketch.slug && (
+                        <span className="inline-flex items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
+                            /s/{sketch.slug}
+                        </span>
+                    )}
                 </div>
             )}
         </section>
