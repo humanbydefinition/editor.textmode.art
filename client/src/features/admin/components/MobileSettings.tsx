@@ -1,5 +1,16 @@
-import { XCircle } from 'lucide-react';
+import { Ban, CheckCheck, Clock, Settings2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Separator } from '@/shared/ui/separator';
 import type { StatusCounts } from '../types';
 
 type MobileSettingsProps = {
@@ -7,8 +18,9 @@ type MobileSettingsProps = {
     token: string;
     reviewerName: string;
     counts: StatusCounts;
+    loading: boolean;
     error: string | null;
-    onClose: () => void;
+    onOpenChange: (open: boolean) => void;
     onTokenChange: (value: string) => void;
     onReviewerNameChange: (value: string) => void;
     onSave: () => void;
@@ -22,56 +34,91 @@ export function MobileSettings({
     token,
     reviewerName,
     counts,
+    loading,
     error,
-    onClose,
+    onOpenChange,
     onTokenChange,
     onReviewerNameChange,
     onSave,
 }: MobileSettingsProps) {
-    if (!open) return null;
-
     return (
-        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background p-4 space-y-3 shadow-2xl animate-in slide-in-from-bottom">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-medium">Settings</h2>
-                <button type="button" onClick={onClose} className="text-muted-foreground">
-                    <XCircle className="h-5 w-5" />
-                </button>
-            </div>
-            <div className="grid gap-3">
-                <input
-                    type="password"
-                    value={token}
-                    onChange={(e) => onTokenChange(e.target.value)}
-                    placeholder="Admin token"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                    <Button onClick={onSave}>Save & Load</Button>
-                    <input
-                        type="text"
-                        value={reviewerName}
-                        onChange={(e) => onReviewerNameChange(e.target.value)}
-                        placeholder="Reviewer"
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    />
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent
+                showCloseButton={false}
+                className="top-auto bottom-0 translate-x-[-50%] translate-y-0 rounded-b-none rounded-t-2xl border-border/70 p-0 pb-[max(env(safe-area-inset-bottom),1rem)] sm:max-w-[560px]"
+            >
+                <DialogHeader className="border-b border-border/70 px-5 pt-5 pb-4">
+                    <DialogTitle className="flex items-center gap-2 text-base">
+                        <Settings2 className="h-4 w-4 text-primary" />
+                        Moderation Settings
+                    </DialogTitle>
+                    <DialogDescription>Manage credentials and monitor queue health.</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 px-5 pt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="mobile-admin-token">Admin token</Label>
+                        <Input
+                            id="mobile-admin-token"
+                            name="mobile-admin-token"
+                            type="password"
+                            autoComplete="off"
+                            value={token}
+                            onChange={(e) => onTokenChange(e.target.value)}
+                            placeholder="Enter token"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="mobile-reviewer">Reviewer name</Label>
+                        <Input
+                            id="mobile-reviewer"
+                            name="mobile-reviewer"
+                            type="text"
+                            autoComplete="nickname"
+                            value={reviewerName}
+                            onChange={(e) => onReviewerNameChange(e.target.value)}
+                            placeholder="admin"
+                        />
+                    </div>
+
+                    <Button onClick={onSave} className="w-full" disabled={loading}>
+                        {loading ? 'Syncing...' : 'Save & Sync Queue'}
+                    </Button>
+
+                    {error && (
+                        <Alert aria-live="polite" className="border-destructive/30 bg-destructive/10 py-3">
+                            <AlertDescription className="text-xs text-destructive">{error}</AlertDescription>
+                        </Alert>
+                    )}
                 </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-md bg-amber-500/10 p-2">
-                    <p className="text-lg font-bold text-amber-400">{counts.PENDING}</p>
-                    <p className="text-[10px] text-muted-foreground">Pending</p>
+
+                <div className="px-5 pb-2">
+                    <Separator />
                 </div>
-                <div className="rounded-md bg-emerald-500/10 p-2">
-                    <p className="text-lg font-bold text-emerald-400">{counts.APPROVED}</p>
-                    <p className="text-[10px] text-muted-foreground">Approved</p>
+
+                <div className="grid grid-cols-3 gap-2 px-5 pb-4 text-center">
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5">
+                        <Clock className="mx-auto h-4 w-4 text-amber-300" />
+                        <p className="mt-1 text-lg font-bold tabular-nums text-amber-200">{counts.PENDING}</p>
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Pending</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2.5">
+                        <CheckCheck className="mx-auto h-4 w-4 text-emerald-300" />
+                        <p className="mt-1 text-lg font-bold tabular-nums text-emerald-200">{counts.APPROVED}</p>
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Approved</p>
+                    </div>
+                    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5">
+                        <Ban className="mx-auto h-4 w-4 text-rose-300" />
+                        <p className="mt-1 text-lg font-bold tabular-nums text-rose-200">{counts.DENIED}</p>
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Denied</p>
+                    </div>
                 </div>
-                <div className="rounded-md bg-rose-500/10 p-2">
-                    <p className="text-lg font-bold text-rose-400">{counts.DENIED}</p>
-                    <p className="text-[10px] text-muted-foreground">Denied</p>
+
+                <div className="px-5 pb-5 text-center text-xs text-muted-foreground">
+                    Total requests: <span className="font-semibold tabular-nums">{counts.all}</span>
                 </div>
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
