@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
+import { selectShareState } from '@/state/selectors';
 import { X } from 'lucide-react';
 
 interface ShareConsentDialogProps {
@@ -21,7 +22,7 @@ interface ShareConsentDialogProps {
 }
 
 export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: ShareConsentDialogProps) {
-	const share = useAppStore((state) => state.share);
+	const share = useAppStore(selectShareState);
 	const isOpen = Boolean(share.payload && !share.consented && share.promptOpen);
 	const [checked, setChecked] = useState(false);
 

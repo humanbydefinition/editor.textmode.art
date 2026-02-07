@@ -3,9 +3,14 @@ import { AppLayout } from './EditorLayout';
 import { SystemMenu } from './SystemMenu/SystemMenu';
 import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './dialogs/WelcomeDialog';
-import { cn } from '@/utils/utils';
+import { cn } from '@/shared/lib/cn';
 import type { PaneConfig } from './EditorLayout/types';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
+import {
+    selectError,
+    selectHasLastWorkingForError,
+    selectShareState,
+} from '@/state/selectors';
 import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog } from './dialogs/ShareConsentDialog';
 import { ShareExportDialog, type ShareExportData } from './dialogs/ShareExportDialog';
@@ -63,17 +68,12 @@ export function AppShell({
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
     // Store State
-    const error = useAppStore((state) => state.error);
+    const error = useAppStore(selectError);
     const setError = useAppStore((state) => state.setError);
-    const share = useAppStore((state) => state.share);
+    const share = useAppStore(selectShareState);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
-    // Derived state (could be moved to store selector)
-    const hasLastWorking = useAppStore((state) => {
-        if (!state.error?.source) return false;
-        const pState = state.engineStates.get(state.error.source);
-        return pState?.lastWorkingCode !== null && pState?.lastWorkingCode !== undefined;
-    });
+    const hasLastWorking = useAppStore(selectHasLastWorkingForError);
 
 
     const onDismissError = () => setError(null);

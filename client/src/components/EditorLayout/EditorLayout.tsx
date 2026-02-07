@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { useSplitResize } from './useSplitResize';
 import { EditorPane } from './EditorPane';
 
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
+import { selectActivePanel, selectIsMobile } from '@/state/selectors';
 import type { PaneConfig } from './types';
 
 export interface EditorLayoutProps {
@@ -27,8 +28,8 @@ export function EditorLayout({
     onPaneReady,
 }: EditorLayoutProps) {
     // Get mobile state from Zustand store
-    const isMobile = useAppStore((state) => state.isMobile);
-    const activePanel = useAppStore((state) => state.activePanel);
+    const isMobile = useAppStore(selectIsMobile);
+    const activePanel = useAppStore(selectActivePanel);
 
     // Split ratio state
     const [splitRatio, setSplitRatio] = useState(initialSplitRatio);
@@ -36,7 +37,7 @@ export function EditorLayout({
     // Split resize hook for desktop mode
     const { resizerProps, containerRef } = useSplitResize({
         initialRatio: splitRatio,
-        direction: isMobile ? 'horizontal' : 'horizontal',
+        direction: 'horizontal',
         onRatioChange: setSplitRatio,
     });
 
@@ -80,7 +81,7 @@ export function EditorLayout({
                 className={`app-layout-container ${isMobile ? 'tab-layout' : ''}`}
                 style={{
                     display: 'flex',
-                    flexDirection: isMobile ? 'row' : 'row',
+                    flexDirection: 'row',
                     width: '100%',
                     height: '100%',
                 }}

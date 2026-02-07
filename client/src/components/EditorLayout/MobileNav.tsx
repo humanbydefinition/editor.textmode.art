@@ -1,14 +1,15 @@
-import { useAppStore } from '@/stores/appStore';
-import { cn } from '@/utils/utils';
+import { useAppStore } from '@/state/appStore';
+import { cn } from '@/shared/lib/cn';
+import { selectActivePanel, selectIsMobile, selectPanels } from '@/state/selectors';
 
 /**
  * Mobile tab bar for switching between editor panels.
  * Only renders when in mobile mode.
  */
 export function MobileNav() {
-    const isMobile = useAppStore((state) => state.isMobile);
-    const activePanel = useAppStore((state) => state.activePanel);
-    const panels = useAppStore((state) => state.panels);
+    const isMobile = useAppStore(selectIsMobile);
+    const activePanel = useAppStore(selectActivePanel);
+    const panels = useAppStore(selectPanels);
     const setActivePanel = useAppStore((state) => state.setActivePanel);
 
     // Don't render on desktop

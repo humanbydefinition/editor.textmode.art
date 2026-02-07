@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
+import { selectApprovedSketch } from '@/state/selectors';
 import { SlugInfoCard } from './SlugInfoCard';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/utils/utils';
+import { cn } from '@/shared/lib/cn';
 
 interface SlugInfoAlertProps {
     className?: string;
@@ -17,7 +18,7 @@ export function SlugInfoAlert({
     autoOpenEnabled = true,
     onShare,
 }: SlugInfoAlertProps) {
-    const sketch = useAppStore((state) => state.approvedSketch);
+    const sketch = useAppStore(selectApprovedSketch);
     const sketchSlug = sketch?.slug ?? null;
     const hasGallerySketch = Boolean(sketch);
     const buttonLabel = hasGallerySketch ? 'Gallery sketch info' : 'Share sketch';

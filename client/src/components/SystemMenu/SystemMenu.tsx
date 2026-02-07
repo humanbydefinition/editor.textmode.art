@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from '@/utils/utils';
+import { cn } from '@/shared/lib/cn';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
@@ -20,7 +20,8 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { ExamplesTab } from './tabs/ExamplesTab';
 import { SlugInfoAlert } from '@/components/SlugInfoAlert';
 
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
+import { selectSettings } from '@/state/selectors';
 
 export interface SystemMenuProps {
     onShare: () => void;
@@ -39,7 +40,7 @@ export function SystemMenu({
     onLoadExample,
     slugInfoAutoOpenEnabled = true,
 }: SystemMenuProps) {
-    const settings = useAppStore((state) => state.settings);
+    const settings = useAppStore(selectSettings);
     const setSettings = useAppStore((state) => state.setSettings);
 
     const [open, setOpen] = useState(false);
