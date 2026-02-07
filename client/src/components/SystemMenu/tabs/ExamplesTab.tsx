@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play } from 'lucide-react';
 import { examples as textmodeExamples } from '@/engines/textmode/examples';
 import { examples as strudelExamples } from '@/engines/strudel/examples';
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { selectStrudelEnabled } from '@/state/selectors';
 import type { Example } from '@/types/examples.types';
 

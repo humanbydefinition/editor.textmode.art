@@ -5,7 +5,7 @@ import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './dialogs/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import type { PaneConfig } from './EditorLayout/types';
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import {
     selectError,
     selectHasLastWorkingForError,

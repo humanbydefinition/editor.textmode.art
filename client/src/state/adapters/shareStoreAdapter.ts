@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import type { SharePayload } from '@/types/share.types';
 
 export interface ShareStoreAdapter {

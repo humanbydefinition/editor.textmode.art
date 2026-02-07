@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { selectApprovedSketch } from '@/state/selectors';
 import { SlugInfoCard } from './SlugInfoCard';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

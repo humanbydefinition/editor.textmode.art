@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/shared/lib/cn';
 import { selectActivePanel, selectIsMobile, selectPanels } from '@/state/selectors';
 

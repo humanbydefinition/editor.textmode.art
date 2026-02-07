@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { selectShareState } from '@/state/selectors';
 import { X } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import type { CodeError } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
 

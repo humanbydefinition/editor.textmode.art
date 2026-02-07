@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useSplitResize } from './useSplitResize';
 import { EditorPane } from './EditorPane';
 
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { selectActivePanel, selectIsMobile } from '@/state/selectors';
 import type { PaneConfig } from './types';
 

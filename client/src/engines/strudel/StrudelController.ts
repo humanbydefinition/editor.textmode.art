@@ -1,6 +1,6 @@
 import { StrudelRuntime, type StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
 
 /**

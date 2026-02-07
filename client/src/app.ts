@@ -21,7 +21,7 @@ import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
 import { StrudelEngine } from './engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from './engines/strudel/audio/StrudelAudioSource';
-import { useAppStore, initAppStore } from './state/appStore';
+import { useAppStore, initAppStore } from './stores/appStore';
 import type { SharePayload } from './types/share.types';
 import { PaneCoordinator } from './app/orchestration/PaneCoordinator';
 import { ShareSessionManager } from './features/share/orchestration/ShareSessionManager';

@@ -20,7 +20,7 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { ExamplesTab } from './tabs/ExamplesTab';
 import { SlugInfoAlert } from '@/components/SlugInfoAlert';
 
-import { useAppStore } from '@/state/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { selectSettings } from '@/state/selectors';
 
 export interface SystemMenuProps {
