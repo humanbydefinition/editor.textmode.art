@@ -1,6 +1,5 @@
 import { StrudelRuntime, type StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
-import { useAppStore } from '@/stores/appStore';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
 
 /**
@@ -109,7 +108,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	 */
 	handleRuntimeReady(): void {
 		this.updateStrudelState({ isInitialized: true });
-		useAppStore.getState().setEngineInitialized(this.engineId, true);
+		this.deps.store.setEngineInitialized(this.engineId, true);
 		this.callbacks.onRenderOverlay();
 	}
 
@@ -123,10 +122,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 		// Pattern evaluated successfully, clear any errors
 		editor?.clearMarkers();
-		const currentError = useAppStore.getState().error;
-		if (currentError?.source === 'strudel') {
-			useAppStore.getState().setError(null);
-		}
+		this.deps.store.setError(null);
 
 		// Start pending working code confirmation (uses BaseController default)
 		const code = editor?.getValue() ?? '';
@@ -173,8 +169,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	}
 
 	private getStrudelState(): StrudelState {
-		// Use useAppStore.getState() instead of injecting appState
-		const newState = useAppStore.getState().engineStates.get(this.engineId)?.customState['state'] as StrudelState | undefined;
+		const newState = this.deps.store.getEngineState(this.engineId)?.customState['state'] as StrudelState | undefined;
 		return newState ?? {
 			isPlaying: false,
 			isInitialized: false,
@@ -183,6 +178,6 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 	private updateStrudelState(update: Partial<StrudelState>): void {
 		const current = this.getStrudelState();
-		useAppStore.getState().setEngineCustomState(this.engineId, 'state', { ...current, ...update });
+		this.deps.store.setEngineCustomState(this.engineId, 'state', { ...current, ...update });
 	}
 }

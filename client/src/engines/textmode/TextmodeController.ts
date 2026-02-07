@@ -2,7 +2,6 @@ import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '../../types/app.types';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
-import { useAppStore } from '@/stores/appStore';
 
 /**
  * Textmode-specific dependencies.
@@ -48,8 +47,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		useAppStore.getState().setError(null);
-		useAppStore.getState().setStatus('ready');
+		this.deps.store.setError(null);
+		this.deps.store.setStatus('ready');
 		editor?.clearMarkers();
 		this.deps.getRuntime()?.softReset(code);
 		this.callbacks.onRenderOverlay();
@@ -60,8 +59,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 * Sets status and auto-runs initial code.
 	 */
 	handleRuntimeReady(): void {
-		useAppStore.getState().setStatus('ready');
-		useAppStore.getState().setEngineInitialized(this.engineId, true);
+		this.deps.store.setStatus('ready');
+		this.deps.store.setEngineInitialized(this.engineId, true);
 		this.callbacks.onRenderOverlay();
 
 		// Auto-run initial code
@@ -84,8 +83,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		// Start pending working code confirmation (uses BaseController default)
 		this.setPendingWorkingCode(code);
 
-		useAppStore.getState().setStatus('running');
-		useAppStore.getState().setError(null);
+		this.deps.store.setStatus('running');
+		this.deps.store.setError(null);
 		editor?.clearMarkers();
 		this.callbacks.onRenderOverlay();
 	}
@@ -95,7 +94,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 * Delegates to base handleError with status update.
 	 */
 	handleRunError(error: CodeError): void {
-		useAppStore.getState().setStatus('error');
+		this.deps.store.setStatus('error');
 		this.handleError(error);
 	}
 
@@ -105,8 +104,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 */
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-		useAppStore.getState().setStatus('error');
-		useAppStore.getState().setError({ ...error, source: 'textmode' });
+		this.deps.store.setStatus('error');
+		this.deps.store.setError({ ...error, source: 'textmode' });
 		this.callbacks.onRenderOverlay();
 	}
 }

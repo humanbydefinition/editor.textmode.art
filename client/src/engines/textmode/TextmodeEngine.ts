@@ -7,6 +7,7 @@ import { defaultTextmodeSketch } from './defaultSketch';
 import { examples } from './examples';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
+import { createControllerStoreAdapter } from '@/state/adapters/controllerStoreAdapter';
 
 /**
  * Textmode engine for visual live coding with textmode.js.
@@ -135,6 +136,7 @@ export class TextmodeEngine {
 			getRuntime: () => this.runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
+			store: createControllerStoreAdapter(),
 		};
 
 		return new TextmodeController(callbacks, deps);

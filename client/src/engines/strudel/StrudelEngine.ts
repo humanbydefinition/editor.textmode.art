@@ -6,7 +6,7 @@ import { defaultStrudelSketch } from './defaultSketch';
 import { examples } from './examples';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
-import { useAppStore } from '@/stores/appStore';
+import { createControllerStoreAdapter } from '@/state/adapters/controllerStoreAdapter';
 
 /**
  * Strudel engine for audio live coding with Strudel/TidalCycles patterns.
@@ -19,6 +19,7 @@ export class StrudelEngine {
 	private editor: StrudelEditor | null = null;
 	private runtime: StrudelRuntime | null = null;
 	private controller: StrudelController | null = null;
+	private readonly storeAdapter = createControllerStoreAdapter();
 	private initialized = false;
 	private initializing = false;
 
@@ -153,6 +154,7 @@ export class StrudelEngine {
 			getRuntime: () => this.runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
+			store: this.storeAdapter,
 		};
 
 		return new StrudelController(callbacks, deps);
@@ -160,7 +162,7 @@ export class StrudelEngine {
 
 	private initializeRuntime(): void {
 		// Initialize state defaults
-		useAppStore.getState().setEngineCustomState(this.id, 'state', {
+		this.storeAdapter.setEngineCustomState(this.id, 'state', {
 			isPlaying: false,
 			isInitialized: false,
 		});
