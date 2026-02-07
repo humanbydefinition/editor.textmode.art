@@ -1,6 +1,6 @@
 import type { CodeError, StatusState } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
-import type { EngineState } from '@/stores/appStore';
+import type { EngineState } from '@/platform/state/appStore';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 
 /** Delay before pending code is confirmed as 'last working' */
@@ -35,7 +35,7 @@ export interface BaseControllerCallbacks {
 }
 
 /**
- * Store adapter — thin facade over the Zustand store.
+ * Store adapter - thin facade over the Zustand store.
  * Injected into controllers so they never import the store directly.
  */
 export interface ControllerStoreAdapter {

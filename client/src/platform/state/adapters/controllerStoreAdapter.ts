@@ -1,4 +1,4 @@
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/platform/state/appStore';
 import type { ControllerStoreAdapter } from '@/core/controller/BaseController';
 
 /**

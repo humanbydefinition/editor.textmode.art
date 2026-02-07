@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react';
 import { useSplitResize } from './useSplitResize';
 import { EditorPane } from './EditorPane';
 
-import { useAppStore } from '@/stores/appStore';
-import { selectActivePanel, selectIsMobile } from '@/state/selectors';
+import { useAppStore } from '@/platform/state/appStore';
+import { selectActivePanel, selectIsMobile } from '@/platform/state/selectors';
 import type { PaneConfig } from './types';
 
 export interface EditorLayoutProps {

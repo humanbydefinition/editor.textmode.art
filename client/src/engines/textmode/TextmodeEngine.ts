@@ -7,7 +7,7 @@ import { defaultTextmodeSketch } from './defaultSketch';
 import { examples } from './examples';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
-import { createControllerStoreAdapter } from '@/state/adapters/controllerStoreAdapter';
+import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 
 /**
  * Textmode engine for visual live coding with textmode.js.

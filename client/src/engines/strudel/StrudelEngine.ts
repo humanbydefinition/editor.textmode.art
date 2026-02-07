@@ -6,7 +6,7 @@ import { defaultStrudelSketch } from './defaultSketch';
 import { examples } from './examples';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
-import { createControllerStoreAdapter } from '@/state/adapters/controllerStoreAdapter';
+import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 
 /**
  * Strudel engine for audio live coding with Strudel/TidalCycles patterns.

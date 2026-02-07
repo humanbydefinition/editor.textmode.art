@@ -1,6 +1,6 @@
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/platform/state/appStore';
 import { cn } from '@/shared/lib/cn';
-import { selectActivePanel, selectIsMobile, selectPanels } from '@/state/selectors';
+import { selectActivePanel, selectIsMobile, selectPanels } from '@/platform/state/selectors';
 
 /**
  * Mobile tab bar for switching between editor panels.

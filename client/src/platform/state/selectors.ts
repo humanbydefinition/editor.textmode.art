@@ -1,4 +1,4 @@
-import type { AppState } from '@/stores/appStore';
+import type { AppState } from '@/platform/state/appStore';
 
 export const selectSettings = (state: AppState) => state.settings;
 export const selectShareState = (state: AppState) => state.share;
