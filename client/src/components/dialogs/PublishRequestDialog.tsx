@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SlugInfoCard } from '@/components/SlugInfoCard';
 import {
     Select,
     SelectContent,
@@ -156,6 +157,19 @@ export function PublishRequestDialog({
             authorName.length <= 32
         );
     }, [slug.available, title, description, authorName]);
+
+    const previewSketch = useMemo(() => {
+        const normalizedPreviewSlug = (slug.normalized || slug.value || 'your-sketch')
+            .replace(/^-+|-+$/g, '');
+        return {
+            slug: normalizedPreviewSlug || 'your-sketch',
+            title: title.trim() || 'untitled sketch',
+            description: description.trim() || null,
+            authorName: authorName.trim() || null,
+            license: license || null,
+            socialLinks: socialLinks.length > 0 ? socialLinks : null,
+        };
+    }, [slug.normalized, slug.value, title, description, authorName, license, socialLinks]);
 
     const handleSubmit = useCallback(async () => {
         if (!data || !isFormValid) return;
@@ -448,15 +462,25 @@ export function PublishRequestDialog({
                     </div>
 
                     {/* Preview */}
-                    {slug.available === true && (
+                    <div className="space-y-2">
+                        <Label className="text-sm text-zinc-300">slug info preview</Label>
                         <div className="rounded-lg border border-white/10 bg-zinc-900/40 p-3">
-                            <p className="text-xs text-zinc-500 mb-1">your sketch will be published at:</p>
-                            <p className="text-sm font-mono text-emerald-300 flex items-center gap-2">
+                            <p className="text-xs text-zinc-500 mb-2">how this card appears once approved:</p>
+                            <p className="text-sm font-mono text-emerald-300 flex items-center gap-2 mb-3">
                                 <Link2 className="w-4 h-4" />
-                                synth.textmode.art/s/{slug.normalized || slug.value}
+                                synth.textmode.art/s/{previewSketch.slug}
                             </p>
+                            <div className="rounded-md border border-white/5 bg-zinc-950/40 p-3">
+                                <div className="w-full max-w-[360px]">
+                                    <SlugInfoCard
+                                        sketch={previewSketch}
+                                        showDismiss
+                                        onDismiss={() => undefined}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Error message */}
                     {submitStatus === 'error' && submitError && (
