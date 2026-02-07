@@ -5,7 +5,7 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppShell } from './components/AppShell';
-import type { ShareExportData } from './components/ShareExportDialog';
+import type { ShareExportData } from './components/dialogs/ShareExportDialog';
 import { type PaneConfig } from './components/EditorLayout';
 import { type AppSettings } from './types/app.types';
 import { type EngineId } from './types/engine.types';
