@@ -1,0 +1,33 @@
+{
+  "name": "@synth.textmode.art/contracts",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check-types": "tsc -p tsconfig.json --noEmit"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.ts",
+      "default": "./dist/admin.js"
+    },
+    "./share": {
+      "types": "./dist/share.d.ts",
+      "default": "./dist/share.js"
+    },
+    "./sketch": {
+      "types": "./dist/sketch.d.ts",
+      "default": "./dist/sketch.js"
+    }
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}
