@@ -34,19 +34,21 @@ const LICENSE_LINKS: Record<string, string> = {
 
 export function SlugInfoAlert() {
     const sketch = useAppStore((state) => state.approvedSketch);
-    const [dismissed, setDismissed] = useState(false);
+    const [dismissedSlug, setDismissedSlug] = useState<string | null>(null);
     const [visible, setVisible] = useState(false);
     const alertRef = useRef<HTMLDivElement>(null);
+    const isDismissed = sketch ? dismissedSlug === sketch.slug : false;
 
     // Animate in on mount
     useEffect(() => {
-        if (sketch && !dismissed) {
+        if (sketch && !isDismissed) {
+            setVisible(false);
             const frame = requestAnimationFrame(() => setVisible(true));
             return () => cancelAnimationFrame(frame);
         }
-    }, [sketch, dismissed]);
+    }, [sketch, isDismissed]);
 
-    if (!sketch || dismissed) return null;
+    if (!sketch || isDismissed) return null;
 
     const socialLinks = sketch.socialLinks ?? [];
 
@@ -84,7 +86,7 @@ export function SlugInfoAlert() {
                         onClick={() => {
                             setVisible(false);
                             // Wait for fade-out before unmounting
-                            setTimeout(() => setDismissed(true), 200);
+                            setTimeout(() => setDismissedSlug(sketch.slug), 200);
                         }}
                         className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60"
                         aria-label="Dismiss sketch info"
