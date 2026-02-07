@@ -1,51 +1,81 @@
 import { useEffect, useRef, useState } from 'react';
+import { Info } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { SlugInfoCard } from './SlugInfoCard';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/utils/utils';
 
-export function SlugInfoAlert() {
+interface SlugInfoAlertProps {
+    className?: string;
+    autoOpenEnabled?: boolean;
+}
+
+export function SlugInfoAlert({
+    className,
+    autoOpenEnabled = true,
+}: SlugInfoAlertProps) {
     const sketch = useAppStore((state) => state.approvedSketch);
-    const [dismissedSlug, setDismissedSlug] = useState<string | null>(null);
-    const [visible, setVisible] = useState(false);
-    const alertRef = useRef<HTMLDivElement>(null);
-    const isDismissed = sketch ? dismissedSlug === sketch.slug : false;
+    const sketchSlug = sketch?.slug ?? null;
+    const buttonLabel = sketch ? 'Gallery sketch info' : 'Gallery sketch info unavailable';
+    const [open, setOpen] = useState(false);
+    const previousSlugRef = useRef<string | null>(null);
 
-    // Animate in on mount
     useEffect(() => {
-        if (sketch && !isDismissed) {
-            setVisible(false);
-            const frame = requestAnimationFrame(() => setVisible(true));
-            return () => cancelAnimationFrame(frame);
+        if (!autoOpenEnabled) {
+            previousSlugRef.current = null;
+            setOpen(false);
+            return;
         }
-    }, [sketch, isDismissed]);
 
-    if (!sketch || isDismissed) return null;
+        if (!sketchSlug) {
+            previousSlugRef.current = null;
+            setOpen(false);
+            return;
+        }
+
+        if (previousSlugRef.current !== sketchSlug) {
+            setOpen(true);
+            previousSlugRef.current = sketchSlug;
+        }
+    }, [autoOpenEnabled, sketchSlug]);
 
     return (
-        <div
-            ref={alertRef}
-            className={[
-                // Safe-area-aware positioning — uses inset so total width = 100vw − insets
-                'fixed inset-x-3 top-3 sm:inset-x-auto sm:top-4 sm:left-4 z-[120] pointer-events-auto',
-                // Max width only kicks in on wider viewports where we pin to the left
-                'sm:max-w-[min(calc(100vw-2rem),360px)]',
-                // Entry animation
-                'transition-all duration-300 ease-out',
-                visible
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 -translate-y-2',
-            ].join(' ')}
-            role="region"
-            aria-label="Sketch information"
-        >
-            <SlugInfoCard
-                sketch={sketch}
-                showDismiss
-                onDismiss={() => {
-                    setVisible(false);
-                    // Wait for fade-out before unmounting
-                    setTimeout(() => setDismissedSlug(sketch.slug), 200);
-                }}
-            />
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    disabled={!sketch}
+                    className={cn(
+                        'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
+                        'border border-white/5',
+                        'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
+                        'disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100',
+                        className
+                    )}
+                    aria-label={buttonLabel}
+                    title={buttonLabel}
+                    aria-expanded={sketch ? open : undefined}
+                >
+                    <Info className="h-[14px] w-[14px]" />
+                </button>
+            </PopoverTrigger>
+
+            {sketch && (
+                <PopoverContent
+                    align="end"
+                    side="bottom"
+                    sideOffset={8}
+                    className="w-[min(calc(100vw-1rem),360px)] border-white/10 bg-zinc-950/95 p-0 shadow-xl shadow-black/50"
+                >
+                    <SlugInfoCard
+                        sketch={sketch}
+                        showDismiss
+                        onDismiss={() => setOpen(false)}
+                        className="rounded-none border-0 bg-transparent shadow-none"
+                    />
+                </PopoverContent>
+            )}
+        </Popover>
     );
 }

@@ -11,7 +11,6 @@ import { ShareConsentDialog } from './dialogs/ShareConsentDialog';
 import { ShareExportDialog, type ShareExportData } from './dialogs/ShareExportDialog';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SlugInfoAlert } from './SlugInfoAlert';
 
 
 export interface AppShellProps {
@@ -105,8 +104,6 @@ export function AppShell({
 
                 <WelcomeDialog onOpenChange={setWelcomeOpen} />
 
-                <SlugInfoAlert />
-
                 {!welcomeOpen && (
                     <ShareConsentDialog
                         onUnlockAndRun={onShareUnlockAndRun}
@@ -187,6 +184,7 @@ export function AppShell({
                             randomizeLoading={randomizeLoading}
                             onClearStorage={onClearStorage}
                             onLoadExample={onLoadExample}
+                            slugInfoAutoOpenEnabled={!welcomeOpen}
                         />
                     )}
 

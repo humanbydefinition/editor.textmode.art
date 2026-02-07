@@ -18,6 +18,7 @@ import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { ExamplesTab } from './tabs/ExamplesTab';
+import { SlugInfoAlert } from '@/components/SlugInfoAlert';
 
 import { useAppStore } from '@/stores/appStore';
 
@@ -27,6 +28,7 @@ export interface SystemMenuProps {
     randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
+    slugInfoAutoOpenEnabled?: boolean;
 }
 
 export function SystemMenu({
@@ -35,6 +37,7 @@ export function SystemMenu({
     randomizeLoading,
     onClearStorage,
     onLoadExample,
+    slugInfoAutoOpenEnabled = true,
 }: SystemMenuProps) {
     const settings = useAppStore((state) => state.settings);
     const setSettings = useAppStore((state) => state.setSettings);
@@ -43,6 +46,13 @@ export function SystemMenu({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
+            <SlugInfoAlert
+                autoOpenEnabled={slugInfoAutoOpenEnabled}
+                className={cn(
+                    'fixed top-2 right-[4.5rem] z-50 pointer-events-auto'
+                )}
+            />
+
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button

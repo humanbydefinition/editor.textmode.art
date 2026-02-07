@@ -474,8 +474,6 @@ export function PublishRequestDialog({
                                 <div className="w-full max-w-[360px]">
                                     <SlugInfoCard
                                         sketch={previewSketch}
-                                        showDismiss
-                                        onDismiss={() => undefined}
                                     />
                                 </div>
                             </div>

@@ -1,6 +1,4 @@
-import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
 
@@ -21,19 +19,14 @@ interface SlugInfoCardProps {
 }
 
 function getDisplayLink(label: string, url: string) {
-    const cleanLabel = label.trim().toLowerCase();
-    const host = (() => {
-        try {
-            return new URL(url).hostname.replace(/^www\./, '');
-        } catch {
-            return url;
-        }
-    })();
+    const cleanLabel = label.trim();
+    if (cleanLabel) return cleanLabel;
 
-    return {
-        label: cleanLabel || host,
-        host,
-    };
+    try {
+        return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+        return url;
+    }
 }
 
 const LICENSE_LINKS: Record<string, string> = {
@@ -60,16 +53,23 @@ export function SlugInfoCard({
     const socialLinks = sketch.socialLinks ?? [];
 
     return (
-        <Alert className={cn('relative shadow-lg shadow-black/40 overflow-hidden', className)}>
-            {/* Header Row: Title + Badge + Close button */}
+        <section
+            className={cn(
+                'relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950/95 p-3 shadow-lg shadow-black/40',
+                className
+            )}
+            aria-label="Sketch information"
+        >
             <div className="flex items-start justify-between gap-2">
-                <div className="flex items-baseline gap-2 min-w-0">
-                    <AlertTitle className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0 shrink">
-                        {sketch.title}
-                    </AlertTitle>
-                    <Badge className="border border-violet-400/40 bg-violet-500/15 text-violet-200 text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                        /s/{sketch.slug}
-                    </Badge>
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <h3 className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0">
+                            {sketch.title}
+                        </h3>
+                        <Badge className="border border-violet-400/40 bg-violet-500/15 text-violet-200 text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                            /s/{sketch.slug}
+                        </Badge>
+                    </div>
                 </div>
 
                 {showDismiss && (
@@ -84,17 +84,12 @@ export function SlugInfoCard({
                 )}
             </div>
 
-            {/* Description — readonly scrollable textarea */}
             {sketch.description && (
-                <Textarea
-                    value={sketch.description}
-                    readOnly
-                    tabIndex={-1}
-                    className="mt-2 max-h-28 min-h-0 resize-none border-white/5 bg-white/[0.03] text-xs sm:text-sm leading-relaxed text-zinc-300 cursor-default focus-visible:ring-0 focus-visible:border-white/5 shadow-none"
-                />
+                <div className="mt-2 max-h-28 overflow-auto rounded-md border border-white/5 bg-white/[0.03] px-2.5 py-2 text-xs sm:text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap break-words">
+                    {sketch.description}
+                </div>
             )}
 
-            {/* Metadata pills — author, license, social links */}
             {(sketch.authorName || sketch.license || socialLinks.length > 0) && (
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
                     {sketch.authorName && (
@@ -110,7 +105,7 @@ export function SlugInfoCard({
                                 <a
                                     href={url}
                                     target="_blank"
-                                    rel="noreferrer"
+                                    rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60"
                                 >
                                     <ExternalLink className="h-3 w-3 shrink-0" />
@@ -125,22 +120,22 @@ export function SlugInfoCard({
                         );
                     })()}
                     {socialLinks.map((link) => {
-                        const display = getDisplayLink(link.label, link.url);
+                        const displayLabel = getDisplayLink(link.label, link.url);
                         return (
                             <a
                                 key={link.url}
                                 href={link.url}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[9rem]"
                             >
                                 <ExternalLink className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{display.label}</span>
+                                <span className="truncate">{displayLabel}</span>
                             </a>
                         );
                     })}
                 </div>
             )}
-        </Alert>
+        </section>
     );
 }
