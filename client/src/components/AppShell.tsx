@@ -35,8 +35,6 @@ export interface AppShellProps {
     shareExportData: ShareExportData | null;
     onShareExportOpenChange: (open: boolean) => void;
     onShareExportCopy: (url: string) => void;
-    showSafariActivationPrompt: boolean;
-    onSafariActivation: () => void;
 }
 
 /**
@@ -61,8 +59,6 @@ export function AppShell({
     shareExportData,
     onShareExportOpenChange,
     onShareExportCopy,
-    showSafariActivationPrompt,
-    onSafariActivation,
 }: AppShellProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
@@ -144,30 +140,6 @@ export function AppShell({
                             <p>sketch locked — click to unlock</p>
                         </TooltipContent>
                     </Tooltip>
-                )}
-
-                {!welcomeOpen && showSafariActivationPrompt && (
-                    <div
-                        className={cn(
-                            'fixed bottom-2 left-1/2 -translate-x-1/2 z-50 pointer-events-auto',
-                            'flex items-center gap-2',
-                            'rounded-md border border-zinc-700/70 bg-zinc-950/85 px-2 py-1.5 backdrop-blur-sm'
-                        )}
-                    >
-                        <span className="text-[11px] text-zinc-200">
-                            Safari may cap visuals at 30 FPS.
-                        </span>
-                        <button
-                            onClick={onSafariActivation}
-                            className={cn(
-                                'rounded-sm border border-emerald-500/50 px-2 py-0.5 text-[11px] text-emerald-200',
-                                'hover:bg-emerald-500/20',
-                                'focus:outline-none focus:ring-2 focus:ring-emerald-400/30'
-                            )}
-                        >
-                            unlock canvas
-                        </button>
-                    </div>
                 )}
 
                 {/* Main UI - hidden when welcome modal is open, with smooth transition */}

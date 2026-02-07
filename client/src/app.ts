@@ -25,7 +25,6 @@ import { useAppStore, initAppStore } from './state/appStore';
 import type { SharePayload } from './types/share.types';
 import { PaneCoordinator } from './app/orchestration/PaneCoordinator';
 import { ShareSessionManager } from './features/share/orchestration/ShareSessionManager';
-import { SafariActivationController } from './app/orchestration/SafariActivationController';
 import { createPaneStoreAdapter } from './state/adapters/paneStoreAdapter';
 import { createShareStoreAdapter } from './state/adapters/shareStoreAdapter';
 
@@ -35,8 +34,7 @@ export class App {
 	private readonly editorManager = new EditorManager();
 	private readonly paneCoordinator = new PaneCoordinator();
 	private readonly shareSession: ShareSessionManager;
-	private readonly safariActivation: SafariActivationController;
-
+	
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private storeInitCleanup: (() => void) | null = null;
@@ -68,13 +66,6 @@ export class App {
 			restoreLocalSketches: () => this.restoreLocalSketches(),
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: (payload) => this.runSharedSketch(payload),
-		});
-
-		this.safariActivation = new SafariActivationController({
-			onActivateRuntime: () => {
-				this.textmodeEngine.getRuntime()?.activateFromUserGesture();
-			},
-			onStateChange: () => this.render(),
 		});
 	}
 
@@ -119,7 +110,6 @@ export class App {
 		await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
 
 		await this.initTextmodeEngine();
-		this.safariActivation.setPromptVisible(SafariActivationController.shouldOfferPrompt());
 		this.render();
 
 		if (loadedSettings.strudelEnabled) {
@@ -179,8 +169,7 @@ export class App {
 		this.shortcuts = null;
 
 		this.shareSession.dispose();
-		this.safariActivation.dispose();
-
+		
 		for (const unsubscribe of this.storeUnsubscribers) {
 			unsubscribe();
 		}
@@ -226,9 +215,7 @@ export class App {
 			shareExportData: this.shareExportData,
 			onShareExportOpenChange: (open: boolean) => this.handleShareExportOpenChange(open),
 			onShareExportCopy: (url: string) => this.handleShareExportCopy(url),
-			showSafariActivationPrompt: this.safariActivation.isPromptVisible,
-			onSafariActivation: () => this.safariActivation.beginActivation(),
-		};
+			};
 	}
 
 	private render(): void {
@@ -262,8 +249,6 @@ export class App {
 			toggleUI: () => this.toggleUIVisibility(),
 			changeFontSize: (delta: number) => this.handleFontSizeChange(delta),
 		});
-
-		this.textmodeEngine.getRuntime()?.setOnUserInteraction(() => this.safariActivation.handleRunnerInteraction());
 
 		const editor = this.textmodeEngine.getEditor();
 		if (editor) {
