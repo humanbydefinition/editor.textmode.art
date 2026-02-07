@@ -1,12 +1,11 @@
 /**
- * Main application - orchestrates engines, React UI, and state.
- * Uses a single textmode.js engine for visuals and an optional Strudel engine for audio.
+ * Main application composition root.
+ * Wires engines, state, and specialized workflow controllers.
  */
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppShell } from './components/AppShell';
 import type { ShareExportData } from './components/dialogs/ShareExportDialog';
-import { type PaneConfig } from './components/EditorLayout';
 import { type AppSettings } from './types/app.types';
 import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
@@ -22,24 +21,28 @@ import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
 import { StrudelEngine } from './engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from './engines/strudel/audio/StrudelAudioSource';
-import { useAppStore, initAppStore } from './stores/appStore';
+import { useAppStore, initAppStore } from './state/appStore';
 import type { SharePayload } from './types/share.types';
-
-/**
- * Interface for React layout state management.
- */
-interface LayoutState {
-	paneContainers: Map<string, HTMLElement>;
-}
+import { PaneCoordinator } from './app/orchestration/PaneCoordinator';
+import { ShareSessionManager } from './features/share/orchestration/ShareSessionManager';
+import { SafariActivationController } from './app/orchestration/SafariActivationController';
+import { createPaneStoreAdapter } from './state/adapters/paneStoreAdapter';
+import { createShareStoreAdapter } from './state/adapters/shareStoreAdapter';
 
 export class App {
 	// Core services
-	private storage: IStorageService = storageService;
+	private readonly storage: IStorageService = storageService;
+	private readonly editorManager = new EditorManager();
+	private readonly paneCoordinator = new PaneCoordinator();
+	private readonly shareSession: ShareSessionManager;
+	private readonly safariActivation: SafariActivationController;
+
 	private shortcuts: IShortcutsManager | null = null;
-	private editorManager = new EditorManager();
+	private storeUnsubscribers: Array<() => void> = [];
+	private storeInitCleanup: (() => void) | null = null;
 
 	// Engines
-	private textmodeEngine = new TextmodeEngine();
+	private readonly textmodeEngine = new TextmodeEngine();
 	private strudelEngine: StrudelEngine | null = null;
 	private audioUnsubscribe: (() => void) | null = null;
 
@@ -50,47 +53,46 @@ export class App {
 	private shareExportData: ShareExportData | null = null;
 	private randomizeLoading = false;
 	private pendingApprovedSketch: ApprovedSketch | null = null;
-	private showSafariActivationPrompt = false;
-	private safariActivationPending = false;
-	private safariActivationCancelHandler: ((event: KeyboardEvent) => void) | null = null;
-	private safariActivationOverlay: HTMLElement | null = null;
-	private appContainerDisplayBeforeActivation: string | null = null;
 
-	// Layout state (managed by React, tracked for callbacks)
-	private layoutState: LayoutState = {
-		paneContainers: new Map(),
-	};
-	private paneReadyResolvers = new Map<string, (container: HTMLElement) => void>();
+	constructor() {
+		const shareStore = createShareStoreAdapter();
 
-	// Pane configurations (generated from enabled engines)
-	private paneConfigs: PaneConfig[] = [];
+		this.shareSession = new ShareSessionManager({
+			getShareState: shareStore.getShareState,
+			setSharePayload: shareStore.setSharePayload,
+			setShareConsented: shareStore.setShareConsented,
+			setSharePromptOpen: shareStore.setSharePromptOpen,
+			setEditorsReadOnly: (readOnly) => this.editorManager.setReadOnly(readOnly),
+			applyPayload: (payload) => this.applySharePayload(payload),
+			focusEditor: (engineId) => this.editorManager.focusEditor(engineId),
+			restoreLocalSketches: () => this.restoreLocalSketches(),
+			runRestoredSketches: () => this.runRestoredSketches(),
+			runSharedSketch: (payload) => this.runSharedSketch(payload),
+		});
 
-	// Convenience accessors
+		this.safariActivation = new SafariActivationController({
+			onActivateRuntime: () => {
+				this.textmodeEngine.getRuntime()?.activateFromUserGesture();
+			},
+			onStateChange: () => this.render(),
+		});
+	}
+
 	private get settings(): AppSettings {
 		return useAppStore.getState().settings;
 	}
 
-	/**
-	 * Initialize the application.
-	 */
 	async init(): Promise<void> {
 		if (this.initialized) return;
 		this.initialized = true;
 
-		// Load settings and initialize store
 		const loadedSettings = this.storage.loadSettings();
 		useAppStore.getState().setSettings(loadedSettings);
 
-		// Detect shared sketch payload early to lock execution before runtimes start
-		// SECURITY: Check for share hash FIRST. If present, it MUST go through consent dialog.
-		// This prevents malicious URLs like /s/trusted-slug#share=malicious from bypassing security.
 		const sharedPayload = ShareService.getFromLocation(window.location);
-
 		if (sharedPayload) {
-			// URL hash-based share always requires user consent, regardless of slug path
 			useAppStore.getState().setSharePayload(sharedPayload);
 		} else {
-			// Only process slug if there's NO share hash
 			const slugFromServer = (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__;
 			const slugFromPath = window.location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
 			const detectedSlug = slugFromServer || slugFromPath;
@@ -103,13 +105,9 @@ export class App {
 			}
 		}
 
-		// Build initial panes and panels
-		this.updatePanesAndPanels(loadedSettings);
+		this.paneCoordinator.sync(loadedSettings, createPaneStoreAdapter());
+		this.storeInitCleanup = initAppStore();
 
-		// Initialize UI store with resize listener
-		initAppStore();
-
-		// Create React root
 		const appContainer = document.getElementById('app-container');
 		if (!appContainer) {
 			console.error('App container #app-container not found');
@@ -117,27 +115,22 @@ export class App {
 		}
 		this.root = createRoot(appContainer);
 
-		// Render and wait for pane containers
 		this.render();
-		await this.waitForPanes(this.paneConfigs.map((pane) => pane.id));
+		await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
 
-		// Initialize textmode engine (always on)
 		await this.initTextmodeEngine();
-		this.showSafariActivationPrompt = this.shouldOfferSafariActivation();
+		this.safariActivation.setPromptVisible(SafariActivationController.shouldOfferPrompt());
 		this.render();
 
-		// Initialize Strudel if enabled
 		if (loadedSettings.strudelEnabled) {
 			await this.enableStrudel();
 		}
 
-		// Apply initial settings to all editors
 		this.editorManager.applySettings(this.settings);
-		this.applySharedSketchIfPresent();
+		this.shareSession.applyInitialShareIfPresent();
 		this.applyPendingApprovedSketchIfPresent();
-		this.setupShareInteractionGuards();
+		this.shareSession.attachInteractionGuards();
 
-		// Setup shortcuts
 		this.shortcuts = new ShortcutsManager({
 			actions: {
 				changeFontSize: (delta) => this.handleFontSizeChange(delta),
@@ -156,8 +149,7 @@ export class App {
 		});
 		this.shortcuts.init();
 
-		// Subscribe to settings changes
-		useAppStore.subscribe(
+		const settingsUnsubscribe = useAppStore.subscribe(
 			(state) => state.settings,
 			(settings, previous) => {
 				this.storage.saveSettings(settings);
@@ -169,8 +161,7 @@ export class App {
 			}
 		);
 
-		// Subscribe to UI visibility changes to toggle app container
-		useAppStore.subscribe(
+		const uiVisibilityUnsubscribe = useAppStore.subscribe(
 			(state) => state.settings.uiVisible,
 			(uiVisible) => {
 				const container = document.getElementById('app-container');
@@ -179,11 +170,38 @@ export class App {
 				}
 			}
 		);
+
+		this.storeUnsubscribers.push(settingsUnsubscribe, uiVisibilityUnsubscribe);
 	}
 
-	/**
-	 * Get props for the shell UI layer.
-	 */
+	dispose(): void {
+		this.shortcuts?.dispose();
+		this.shortcuts = null;
+
+		this.shareSession.dispose();
+		this.safariActivation.dispose();
+
+		for (const unsubscribe of this.storeUnsubscribers) {
+			unsubscribe();
+		}
+		this.storeUnsubscribers = [];
+
+		if (this.storeInitCleanup) {
+			this.storeInitCleanup();
+			this.storeInitCleanup = null;
+		}
+
+		this.stopAudioReactivity();
+		this.strudelEngine?.dispose();
+		this.strudelEngine = null;
+		this.textmodeEngine.dispose();
+
+		this.paneCoordinator.clearPendingResolvers();
+		this.root?.unmount();
+		this.root = null;
+		this.initialized = false;
+	}
+
 	private getShellProps() {
 		const errorSource = useAppStore.getState().error?.source;
 
@@ -200,48 +218,37 @@ export class App {
 			onClearStorage: () => this.handleClearStorage(),
 			onLoadExample: (code: string, engineId: string) => this.handleLoadExample(code, engineId),
 			onRevertToLastWorking: handleRevert,
-			onShareUnlockAndRun: () => this.handleShareUnlockAndRun(),
-			onShareUnlockOnly: () => this.handleShareUnlockOnly(),
-			onShareDiscard: () => this.handleShareDiscard(),
-			onSharePromptOpen: () => this.openShareConsentPrompt(),
+			onShareUnlockAndRun: () => this.shareSession.unlockAndRun(),
+			onShareUnlockOnly: () => this.shareSession.unlockOnly(),
+			onShareDiscard: () => this.shareSession.discard(),
+			onSharePromptOpen: () => this.shareSession.openPrompt(),
 			shareExportOpen: this.shareExportOpen,
 			shareExportData: this.shareExportData,
 			onShareExportOpenChange: (open: boolean) => this.handleShareExportOpenChange(open),
 			onShareExportCopy: (url: string) => this.handleShareExportCopy(url),
-			showSafariActivationPrompt: this.showSafariActivationPrompt,
-			onSafariActivation: () => this.beginSafariActivation(),
+			showSafariActivationPrompt: this.safariActivation.isPromptVisible,
+			onSafariActivation: () => this.safariActivation.beginActivation(),
 		};
 	}
 
-	/**
-	 * Render the unified React app.
-	 */
 	private render(): void {
 		if (!this.root) return;
 
 		this.root.render(
 			createElement(AppShell, {
-				panes: this.paneConfigs,
+				panes: this.paneCoordinator.getPaneConfigs(),
 				editorBackdrop: this.settings.editorBackdrop,
 				onPaneReady: (paneId: string, container: HTMLElement) => {
-					this.layoutState.paneContainers.set(paneId, container);
-					const resolver = this.paneReadyResolvers.get(paneId);
-					if (resolver) {
-						resolver(container);
-						this.paneReadyResolvers.delete(paneId);
-					}
+					this.paneCoordinator.onPaneReady(paneId, container);
 				},
 				...this.getShellProps(),
 			})
 		);
 	}
 
-	/**
-	 * Initialize the textmode engine.
-	 */
 	private async initTextmodeEngine(): Promise<void> {
 		useAppStore.getState().initEngineState('textmode');
-		const container = await this.waitForPane('textmode');
+		const container = await this.paneCoordinator.waitForPane('textmode');
 
 		await this.textmodeEngine.init({
 			editorContainer: container,
@@ -256,7 +263,7 @@ export class App {
 			changeFontSize: (delta: number) => this.handleFontSizeChange(delta),
 		});
 
-		this.textmodeEngine.getRuntime()?.setOnUserInteraction(() => this.handleRunnerUserInteraction());
+		this.textmodeEngine.getRuntime()?.setOnUserInteraction(() => this.safariActivation.handleRunnerInteraction());
 
 		const editor = this.textmodeEngine.getEditor();
 		if (editor) {
@@ -264,14 +271,11 @@ export class App {
 		}
 	}
 
-	/**
-	 * Enable the Strudel engine (creates editor + runtime).
-	 */
 	private async enableStrudel(): Promise<void> {
 		if (this.strudelEngine) return;
 
 		useAppStore.getState().initEngineState('strudel');
-		const container = await this.waitForPane('strudel');
+		const container = await this.paneCoordinator.waitForPane('strudel');
 
 		this.strudelEngine = new StrudelEngine();
 		await this.strudelEngine.init({
@@ -292,7 +296,8 @@ export class App {
 		}
 
 		this.editorManager.applySettings(this.settings);
-		this.applySharedSketchIfPresent();
+		this.shareSession.applyInitialShareIfPresent();
+
 		const approvedSketch = useAppStore.getState().approvedSketch;
 		if (approvedSketch?.strudelCode) {
 			this.strudelEngine.setCode(approvedSketch.strudelCode, { silent: true });
@@ -303,9 +308,6 @@ export class App {
 		this.startAudioReactivity();
 	}
 
-	/**
-	 * Disable the Strudel engine and stop audio reactivity.
-	 */
 	private disableStrudel(): void {
 		if (!this.strudelEngine) return;
 
@@ -315,7 +317,7 @@ export class App {
 		this.editorManager.unregisterEditor('strudel');
 		this.strudelEngine.dispose();
 		this.strudelEngine = null;
-		this.layoutState.paneContainers.delete('strudel');
+		this.paneCoordinator.removePane('strudel');
 		useAppStore.getState().setEngineInitialized('strudel', false);
 		useAppStore.getState().setEngineCustomState('strudel', 'state', {
 			isPlaying: false,
@@ -323,137 +325,18 @@ export class App {
 		});
 	}
 
-	/**
-	 * Toggle Strudel on/off without requiring a refresh.
-	 */
 	private async setStrudelEnabled(enabled: boolean): Promise<void> {
-		this.updatePanesAndPanels(this.settings);
+		this.paneCoordinator.sync(this.settings, createPaneStoreAdapter());
 		this.render();
 
 		if (enabled) {
-			await this.waitForPanes(this.paneConfigs.map((pane) => pane.id));
+			await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
 			await this.enableStrudel();
 		} else {
 			this.disableStrudel();
 		}
 	}
 
-	/**
-	 * Update pane configs + panel labels based on settings.
-	 */
-	private updatePanesAndPanels(settings: AppSettings): void {
-		this.paneConfigs = this.buildPaneConfigs(settings);
-
-		const panels = [
-			{ id: 'textmode', label: 'textmode.js' },
-			...(settings.strudelEnabled ? [{ id: 'strudel', label: 'strudel' }] : []),
-		];
-		useAppStore.getState().setPanels(panels);
-
-		const activePanel = useAppStore.getState().activePanel;
-		if (!panels.find((panel) => panel.id === activePanel)) {
-			useAppStore.getState().setActivePanel(panels[0]?.id ?? '');
-		}
-	}
-
-	private buildPaneConfigs(settings: AppSettings): PaneConfig[] {
-		const panes: PaneConfig[] = [
-			{ id: 'textmode', engineId: 'textmode' },
-		];
-
-		if (settings.strudelEnabled) {
-			panes.push({ id: 'strudel', engineId: 'strudel' });
-		}
-
-		return panes;
-	}
-
-	private shouldOfferSafariActivation(): boolean {
-		const ua = navigator.userAgent;
-		const isWebKit = /AppleWebKit/i.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR/i.test(ua);
-		const isMacOS = /Macintosh/i.test(ua);
-		return isWebKit && isMacOS;
-	}
-
-	private beginSafariActivation(): void {
-		if (this.safariActivationPending) return;
-
-		this.safariActivationPending = true;
-		this.mountSafariActivationOverlay();
-		this.hideAppContainerForActivation();
-		this.render();
-		this.safariActivationCancelHandler = (event: KeyboardEvent): void => {
-			if (event.key !== 'Escape') return;
-			this.endSafariActivation({ activated: false });
-		};
-		window.addEventListener('keydown', this.safariActivationCancelHandler, true);
-	}
-
-	private handleRunnerUserInteraction(): void {
-		if (!this.safariActivationPending) return;
-		this.textmodeEngine.getRuntime()?.activateFromUserGesture();
-		this.endSafariActivation({ activated: true });
-	}
-
-	private endSafariActivation(options: { activated: boolean }): void {
-		if (this.safariActivationCancelHandler) {
-			window.removeEventListener('keydown', this.safariActivationCancelHandler, true);
-			this.safariActivationCancelHandler = null;
-		}
-		this.unmountSafariActivationOverlay();
-		this.restoreAppContainerAfterActivation();
-		this.safariActivationPending = false;
-		if (options.activated) {
-			this.showSafariActivationPrompt = false;
-		}
-		this.render();
-	}
-
-	private mountSafariActivationOverlay(): void {
-		if (this.safariActivationOverlay) return;
-
-		const overlay = document.createElement('div');
-		overlay.id = 'safari-activation-overlay';
-		overlay.innerHTML = [
-			'<div class="safari-activation-overlay-card">',
-			'<div class="safari-activation-overlay-kicker">safari canvas setup</div>',
-			'<div class="safari-activation-overlay-title">click the background once to unlock smooth rendering</div>',
-			'<div class="safari-activation-overlay-body">the ui is temporarily hidden so your click goes directly to the moving canvas.</div>',
-			'<div class="safari-activation-overlay-hint">if motion still feels capped, click the background one more time.</div>',
-			'<div class="safari-activation-overlay-shortcut">tip: press ctrl+shift+h any time to hide editors and click the canvas manually.</div>',
-			'<div class="safari-activation-overlay-meta">press esc to cancel</div>',
-			'</div>',
-		].join('');
-
-		document.body.appendChild(overlay);
-		this.safariActivationOverlay = overlay;
-	}
-
-	private unmountSafariActivationOverlay(): void {
-		if (!this.safariActivationOverlay) return;
-		this.safariActivationOverlay.remove();
-		this.safariActivationOverlay = null;
-	}
-
-	private hideAppContainerForActivation(): void {
-		const appContainer = document.getElementById('app-container');
-		if (!appContainer) return;
-
-		this.appContainerDisplayBeforeActivation = appContainer.style.display;
-		appContainer.style.display = 'none';
-	}
-
-	private restoreAppContainerAfterActivation(): void {
-		const appContainer = document.getElementById('app-container');
-		if (!appContainer) return;
-
-		appContainer.style.display = this.appContainerDisplayBeforeActivation ?? '';
-		this.appContainerDisplayBeforeActivation = null;
-	}
-
-	/**
-	 * Start audio reactivity pipeline (Strudel -> Textmode).
-	 */
 	private startAudioReactivity(): void {
 		if (this.audioUnsubscribe) return;
 		const source = new StrudelAudioSource();
@@ -464,9 +347,6 @@ export class App {
 		audioService.start();
 	}
 
-	/**
-	 * Stop audio reactivity and clear audio globals.
-	 */
 	private stopAudioReactivity(): void {
 		if (this.audioUnsubscribe) {
 			this.audioUnsubscribe();
@@ -483,25 +363,6 @@ export class App {
 		});
 	}
 
-	/**
-	 * Wait for a specific pane container.
-	 */
-	private waitForPane(paneId: string): Promise<HTMLElement> {
-		const container = this.layoutState.paneContainers.get(paneId);
-		if (container) return Promise.resolve(container);
-
-		return new Promise((resolve) => {
-			this.paneReadyResolvers.set(paneId, resolve);
-		});
-	}
-
-	/**
-	 * Wait for multiple panes to be ready.
-	 */
-	private async waitForPanes(paneIds: string[]): Promise<void> {
-		await Promise.all(paneIds.map((id) => this.waitForPane(id)));
-	}
-
 	private applyPendingApprovedSketchIfPresent(): void {
 		if (!this.pendingApprovedSketch) return;
 		const sketch = this.pendingApprovedSketch;
@@ -511,10 +372,7 @@ export class App {
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
 		const store = useAppStore.getState();
-		if (store.share.payload) {
-			store.setSharePayload(null);
-			this.setEditorsReadOnly(false);
-		}
+		this.shareSession.clearShareLockIfPresent();
 
 		store.setApprovedSketch(sketch);
 		store.setError(null);
@@ -553,13 +411,6 @@ export class App {
 		}
 	}
 
-	private applySharedSketchIfPresent(): void {
-		const share = useAppStore.getState().share;
-		if (!share.payload || share.consented) return;
-		this.applySharePayload(share.payload);
-		this.setEditorsReadOnly(true);
-	}
-
 	private applySharePayload(payload: SharePayload): void {
 		if (payload.engines.textmode !== undefined) {
 			this.textmodeEngine.setCode(payload.engines.textmode, { silent: true });
@@ -568,61 +419,6 @@ export class App {
 		if (payload.engines.strudel !== undefined && this.strudelEngine) {
 			this.strudelEngine.setCode(payload.engines.strudel, { silent: true });
 		}
-	}
-
-	private setEditorsReadOnly(readOnly: boolean): void {
-		this.editorManager.setReadOnly(readOnly);
-	}
-
-	private handleShareUnlockAndRun(): void {
-		this.unlockSharedSketch();
-		this.runSharedSketch();
-	}
-
-	private handleShareUnlockOnly(): void {
-		this.viewSharedSketchOnly();
-	}
-
-	private unlockSharedSketch(): void {
-		const share = useAppStore.getState().share;
-		if (!share.payload) return;
-		useAppStore.getState().setShareConsented(true);
-		this.setEditorsReadOnly(false);
-		this.applySharePayload(share.payload);
-		this.focusSharedEditor(share.payload);
-	}
-
-	private viewSharedSketchOnly(): void {
-		const share = useAppStore.getState().share;
-		if (!share.payload) return;
-		useAppStore.getState().setSharePromptOpen(false);
-		this.setEditorsReadOnly(true);
-		this.applySharePayload(share.payload);
-	}
-
-	private openShareConsentPrompt(): void {
-		const share = useAppStore.getState().share;
-		if (!share.payload || share.consented) return;
-		useAppStore.getState().setSharePromptOpen(true);
-	}
-
-	private focusSharedEditor(payload: SharePayload): void {
-		if (payload.engines.textmode !== undefined) {
-			this.editorManager.focusEditor('textmode');
-			return;
-		}
-		if (payload.engines.strudel !== undefined) {
-			this.editorManager.focusEditor('strudel');
-		}
-	}
-
-	private handleShareDiscard(): void {
-		const share = useAppStore.getState().share;
-		if (!share.payload) return;
-		useAppStore.getState().setSharePayload(null);
-		this.setEditorsReadOnly(false);
-		this.restoreLocalSketches();
-		this.runRestoredSketches();
 	}
 
 	private restoreLocalSketches(): void {
@@ -639,10 +435,7 @@ export class App {
 		this.textmodeEngine.getController()?.handleForceRun();
 	}
 
-	private runSharedSketch(): void {
-		const payload = useAppStore.getState().share.payload;
-		if (!payload) return;
-
+	private runSharedSketch(payload: SharePayload): void {
 		if (payload.engines.textmode !== undefined) {
 			this.textmodeEngine.getController()?.handleForceRun();
 		}
@@ -652,9 +445,6 @@ export class App {
 		}
 	}
 
-	/**
-	 * Handle share button.
-	 */
 	private handleShare(): void {
 		this.shareExportData = {
 			createdAt: Date.now(),
@@ -691,17 +481,11 @@ export class App {
 		window.prompt('Copy this link to share your sketch:', value);
 	}
 
-	/**
-	 * Handle clear storage.
-	 */
 	private handleClearStorage(): void {
 		this.storage.clearCode();
 		this.resetAll();
 	}
 
-	/**
-	 * Handle loading an example sketch.
-	 */
 	private handleLoadExample(code: string, engineId: string): void {
 		const engine = this.getEngine(engineId as EngineId);
 		if (!engine) return;
@@ -716,9 +500,6 @@ export class App {
 		}
 	}
 
-	/**
-	 * Reset engines to defaults and hush audio.
-	 */
 	private resetAll(): void {
 		useAppStore.getState().setEngineLastWorkingCode('textmode', null);
 		this.textmodeEngine.setCode(this.textmodeEngine.getDefaultCode());
@@ -730,18 +511,12 @@ export class App {
 		}
 	}
 
-	/**
-	 * Toggle UI visibility.
-	 */
 	private toggleUIVisibility(): void {
 		const newVisibility = !this.settings.uiVisible;
 		const s = this.settings;
 		useAppStore.getState().setSettings({ ...s, uiVisible: newVisibility });
 	}
 
-	/**
-	 * Handle font size change.
-	 */
 	private handleFontSizeChange(delta: number): void {
 		const currentSize = this.settings.fontSize;
 		const newSize = Math.min(32, Math.max(10, currentSize + delta));
@@ -755,31 +530,6 @@ export class App {
 		const engine = this.getEngine(engineId as EngineId);
 		engine?.getController()?.handleForceRun();
 	}
-
-	private setupShareInteractionGuards(): void {
-		document.addEventListener('mousedown', this.handleShareInteraction, true);
-		document.addEventListener('keydown', this.handleShareKeydown, true);
-	}
-
-	private handleShareInteraction = (event: MouseEvent): void => {
-		const share = useAppStore.getState().share;
-		if (!share.payload || share.consented || share.promptOpen) return;
-		const target = event.target as HTMLElement | null;
-		if (!target) return;
-		if (target.closest('.monaco-editor')) {
-			useAppStore.getState().setSharePromptOpen(true);
-		}
-	};
-
-	private handleShareKeydown = (event: KeyboardEvent): void => {
-		const share = useAppStore.getState().share;
-		if (!share.payload || share.consented || share.promptOpen) return;
-		const target = event.target as HTMLElement | null;
-		if (!target) return;
-		if (target.closest('.monaco-editor')) {
-			useAppStore.getState().setSharePromptOpen(true);
-		}
-	};
 
 	private getEngine(engineId: EngineId): TextmodeEngine | StrudelEngine | null {
 		if (engineId === 'textmode') return this.textmodeEngine;

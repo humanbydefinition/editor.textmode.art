@@ -1,0 +1,10 @@
+import { useAppStore } from '@/state/appStore';
+import type { PaneStoreAdapter } from '@/app/orchestration/PaneCoordinator';
+
+export function createPaneStoreAdapter(): PaneStoreAdapter {
+	return {
+		setPanels: (panels) => useAppStore.getState().setPanels(panels),
+		getActivePanel: () => useAppStore.getState().activePanel,
+		setActivePanel: (panelId) => useAppStore.getState().setActivePanel(panelId),
+	};
+}
