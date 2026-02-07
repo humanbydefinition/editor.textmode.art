@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X, Share } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -23,12 +23,16 @@ import { useAppStore } from '@/stores/appStore';
 
 export interface SystemMenuProps {
     onShare: () => void;
+    onRandomize: () => void;
+    randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
 }
 
 export function SystemMenu({
     onShare,
+    onRandomize,
+    randomizeLoading,
     onClearStorage,
     onLoadExample,
 }: SystemMenuProps) {
@@ -39,6 +43,37 @@ export function SystemMenu({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        onClick={onRandomize}
+                        disabled={randomizeLoading}
+                        className={cn(
+                            'fixed top-2 right-10 z-50 pointer-events-auto',
+                            'flex items-center justify-center',
+                            'w-6 h-6 rounded-full',
+                            'bg-zinc-900/40 backdrop-blur-md',
+                            'border border-white/5',
+                            'text-zinc-400',
+                            'transition-all duration-300',
+                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                            'focus:outline-none focus:ring-2 focus:ring-white/10',
+                            'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100'
+                        )}
+                        aria-label="Load random approved sketch"
+                    >
+                        {randomizeLoading ? (
+                            <Loader2 className="w-[14px] h-[14px] animate-spin" />
+                        ) : (
+                            <Shuffle className="w-[14px] h-[14px]" />
+                        )}
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random approved sketch'}</p>
+                </TooltipContent>
+            </Tooltip>
+
             <DialogTrigger asChild>
                 <button
                     className={cn(
