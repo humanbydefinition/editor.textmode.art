@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { AppLayout } from './EditorLayout';
-import { SystemMenu } from './SystemMenu/SystemMenu';
+import { SystemMenu } from '@/features/system-menu';
 import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './dialogs/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import type { PaneConfig } from './EditorLayout/types';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/platform/state/appStore';
 import {
     selectError,
     selectHasLastWorkingForError,
     selectShareState,
-} from '@/state/selectors';
+} from '@/platform/state/selectors';
 import { MobileNav } from './EditorLayout/MobileNav';
-import { ShareConsentDialog } from './dialogs/ShareConsentDialog';
-import { ShareExportDialog, type ShareExportData } from './dialogs/ShareExportDialog';
+import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { Lock } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 
 
 export interface AppShellProps {
@@ -137,7 +136,7 @@ export function AppShell({
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>sketch locked — click to unlock</p>
+                            <p>sketch locked - click to unlock</p>
                         </TooltipContent>
                     </Tooltip>
                 )}

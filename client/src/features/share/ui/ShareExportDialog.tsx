@@ -5,12 +5,12 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { Badge } from '@/shared/ui/badge';
 import { ShareService, MAX_SHARE_URL_LENGTH } from '@/services/ShareService';
 import type { SharePayload } from '@/types/share.types';
-import { PublishRequestDialog } from './PublishRequestDialog';
+import { PublishRequestDialog } from '@/features/publish';
 import { Check, Link2, Sparkles } from 'lucide-react';
 
 export interface ShareExportData {
@@ -104,11 +104,11 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 						<div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
 							<span>includes:</span>
 							<Badge variant="outline" className="border-zinc-700 text-zinc-300">
-								textmode.js · {formatCount(computed.textmodeLength)} chars
+								textmode.js - {formatCount(computed.textmodeLength)} chars
 							</Badge>
 							{hasStrudel && (
 								<Badge variant="outline" className="border-zinc-700 text-zinc-300">
-									strudel · {formatCount(computed.strudelLength)} chars
+									strudel - {formatCount(computed.strudelLength)} chars
 								</Badge>
 							)}
 						</div>
@@ -186,7 +186,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 								</div>
 
 								<div className="text-xs text-zinc-400">
-									link size: {computed.fullUrl ? formatCount(computed.fullUrl.length) : '—'}
+									link size: {computed.fullUrl ? formatCount(computed.fullUrl.length) : '-'}
 								</div>
 								<div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
 									<div

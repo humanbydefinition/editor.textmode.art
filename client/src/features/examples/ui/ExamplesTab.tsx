@@ -1,12 +1,11 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/shared/ui/scroll-area";
+import { Separator } from "@/shared/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Play } from 'lucide-react';
-import { examples as textmodeExamples } from '@/engines/textmode/examples';
-import { examples as strudelExamples } from '@/engines/strudel/examples';
-import { useAppStore } from '@/stores/appStore';
-import { selectStrudelEnabled } from '@/state/selectors';
+import { useAppStore } from '@/platform/state/appStore';
+import { selectStrudelEnabled } from '@/platform/state/selectors';
 import type { Example } from '@/types/examples.types';
+import { getExampleEngineCatalog } from '../model/exampleCatalog';
 
 export interface ExamplesTabProps {
     onLoadExample: (code: string, engineId: string) => void;
@@ -16,20 +15,7 @@ export interface ExamplesTabProps {
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     const strudelEnabled = useAppStore(selectStrudelEnabled);
 
-    const engines = [
-        {
-            id: 'textmode',
-            displayName: 'textmode.js',
-            examples: textmodeExamples,
-        },
-        ...(strudelEnabled
-            ? [{
-                id: 'strudel',
-                displayName: 'strudel',
-                examples: strudelExamples,
-            }]
-            : []),
-    ].filter((engine) => Object.keys(engine.examples).length > 0);
+    const engines = getExampleEngineCatalog(strudelEnabled);
 
     const handleSelect = (example: Example, engineId: string) => {
         onLoadExample(example.code, engineId);

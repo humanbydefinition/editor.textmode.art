@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
-import { useAppStore } from '@/stores/appStore';
-import { selectApprovedSketch } from '@/state/selectors';
+import { useAppStore } from '@/platform/state/appStore';
+import { selectApprovedSketch } from '@/platform/state/selectors';
 import { SlugInfoCard } from './SlugInfoCard';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
 
 interface SlugInfoAlertProps {

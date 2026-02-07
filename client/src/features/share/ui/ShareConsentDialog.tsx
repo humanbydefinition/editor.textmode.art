@@ -7,12 +7,12 @@ import {
 	DialogTitle,
 	DialogDescription,
 	DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/stores/appStore';
-import { selectShareState } from '@/state/selectors';
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { Badge } from '@/shared/ui/badge';
+import { useAppStore } from '@/platform/state/appStore';
+import { selectShareState } from '@/platform/state/selectors';
 import { X } from 'lucide-react';
 
 interface ShareConsentDialogProps {

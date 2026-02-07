@@ -1,7 +1,7 @@
 import { CheckCircle2, XCircle, ClipboardCopy, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Badge } from '@/shared/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import type { SketchRequest } from '../types';
 import { formatDate, getLinks, normalizeSocialLink } from '../utils';
 import { SocialIcon } from './SocialIcon';
@@ -89,11 +89,11 @@ export function RequestCard({
                     <div className="grid gap-3 text-sm content-start">
                         <div className="grid grid-cols-[80px_1fr] gap-2 items-start">
                             <span className="text-xs uppercase tracking-wider text-muted-foreground">Author</span>
-                            <span className="break-all">{request.authorName || '—'}</span>
+                            <span className="break-all">{request.authorName || 'â€”'}</span>
                         </div>
                         <div className="grid grid-cols-[80px_1fr] gap-2 items-start">
                             <span className="text-xs uppercase tracking-wider text-muted-foreground">License</span>
-                            <span>{request.license || '—'}</span>
+                            <span>{request.license || 'â€”'}</span>
                         </div>
                         <div className="grid grid-cols-[80px_1fr] gap-2 items-start">
                             <span className="text-xs uppercase tracking-wider text-muted-foreground">Code</span>
@@ -105,7 +105,7 @@ export function RequestCard({
                         <div className="grid grid-cols-[80px_1fr] gap-2 items-start">
                             <span className="text-xs uppercase tracking-wider text-muted-foreground">Links</span>
                             <div className="flex flex-wrap gap-1.5">
-                                {links.length === 0 && <span className="text-muted-foreground">—</span>}
+                                {links.length === 0 && <span className="text-muted-foreground">â€”</span>}
                                 {links.map((link) => {
                                     const normalized = normalizeSocialLink(link);
                                     return (

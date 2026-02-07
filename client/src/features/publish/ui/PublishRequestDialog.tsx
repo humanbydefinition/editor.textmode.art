@@ -5,12 +5,12 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
+import { Input } from '@/shared/ui/input';
+import { Textarea } from '@/shared/ui/textarea';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 import { SlugInfoCard } from '@/components/SlugInfoCard';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
 import {
@@ -19,7 +19,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
+} from '@/shared/ui/select';
 import {
     checkSlugAvailability,
     submitSketchRequest,
@@ -339,7 +339,7 @@ export function PublishRequestDialog({
                         </p>
                     </div>
 
-                    {/* Social links — fixed platforms */}
+                    {/* Social links - fixed platforms */}
                     <div className="space-y-3">
                         <Label className="text-sm text-zinc-300">
                             social links <span className="text-zinc-500">(all optional)</span>

@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/shared/ui/card';
 import type { SketchRequest } from '../types';
 import { RequestCard } from './RequestCard';
 

@@ -5,7 +5,7 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppShell } from './components/AppShell';
-import type { ShareExportData } from './components/dialogs/ShareExportDialog';
+import type { ShareExportData } from '@/features/share';
 import { type AppSettings } from './types/app.types';
 import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
@@ -21,12 +21,12 @@ import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
 import { StrudelEngine } from './engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from './engines/strudel/audio/StrudelAudioSource';
-import { useAppStore, initAppStore } from './stores/appStore';
+import { useAppStore, initAppStore } from './platform/state/appStore';
 import type { SharePayload } from './types/share.types';
 import { PaneCoordinator } from './app/orchestration/PaneCoordinator';
 import { ShareSessionManager } from './features/share/orchestration/ShareSessionManager';
-import { createPaneStoreAdapter } from './state/adapters/paneStoreAdapter';
-import { createShareStoreAdapter } from './state/adapters/shareStoreAdapter';
+import { createPaneStoreAdapter } from './platform/state/adapters/paneStoreAdapter';
+import { createShareStoreAdapter } from './platform/state/adapters/shareStoreAdapter';
 
 export class AppRuntime {
 	// Core services

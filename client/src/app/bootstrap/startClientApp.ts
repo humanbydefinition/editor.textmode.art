@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppRuntime } from '@/app';
-import { AdminApp } from '@/admin/AdminApp';
+import { AdminApp } from '@/features/admin';
 
 /**
  * Boots either the main live-coding app or admin app based on the URL path.

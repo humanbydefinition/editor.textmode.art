@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Github, ExternalLink, Heart } from 'lucide-react';
 
 const CodebergIcon = ({ className }: { className?: string }) => (

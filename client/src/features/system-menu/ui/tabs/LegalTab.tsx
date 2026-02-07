@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/ui/scroll-area";
 import { ChevronDown } from "lucide-react";
 import { cn } from '@/shared/lib/cn';
 
@@ -50,10 +50,10 @@ export function LegalTab() {
                         </div>
 
                         <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Responsible for the content according to §5 TMG and §55 Abs.2 RStV</h4>
+                            <h4 className="font-medium text-zinc-200 mb-2">Responsible for the content according to Â§5 TMG and Â§55 Abs.2 RStV</h4>
                             <p>
                                 Christopher Dietrich<br />
-                                Herler Straße 70/72<br />
+                                Herler StraÃŸe 70/72<br />
                                 51067 Cologne<br />
                                 Germany
                             </p>
@@ -69,7 +69,7 @@ export function LegalTab() {
                         <div>
                             <h4 className="font-medium text-zinc-200 mb-2">Disclaimer of Liability</h4>
                             <p className="text-zinc-500">
-                                The contents of our pages have been created with the utmost care. However, we cannot guarantee the contents' accuracy, completeness or topicality. As a service provider, we are responsible for our own content on these web pages according to § 7 Abs.1 TMG, but not for the content of external links according to § 8 TMG. The providers or operators of linked sites are solely responsible for their content.
+                                The contents of our pages have been created with the utmost care. However, we cannot guarantee the contents' accuracy, completeness or topicality. As a service provider, we are responsible for our own content on these web pages according to Â§ 7 Abs.1 TMG, but not for the content of external links according to Â§ 8 TMG. The providers or operators of linked sites are solely responsible for their content.
                             </p>
                         </div>
                     </div>
@@ -163,7 +163,7 @@ export function LegalTab() {
                                 Under the GDPR, you have various rights regarding the processing of your personal data. For any questions about our data practices, please contact us at <a href="mailto:hello@textmode.art" className="text-emerald-400 hover:text-emerald-300 transition-colors">hello@textmode.art</a>.
                             </p>
                             <p className="text-zinc-500 mt-2">
-                                The competent supervisory authority is: <a href="https://www.ldi.nrw.de/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen</a>.
+                                The competent supervisory authority is: <a href="https://www.ldi.nrw.de/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Landesbeauftragte fÃ¼r Datenschutz und Informationsfreiheit Nordrhein-Westfalen</a>.
                             </p>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import { XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import type { StatusCounts } from '../types';
 
 type MobileSettingsProps = {

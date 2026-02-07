@@ -8,20 +8,20 @@ import {
     DialogTrigger,
     DialogDescription,
     DialogClose,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from '@/shared/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { Badge } from "@/shared/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { cn } from '@/shared/lib/cn';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
-import { ExamplesTab } from './tabs/ExamplesTab';
+import { ExamplesTab } from '@/features/examples';
 import { SlugInfoAlert } from '@/components/SlugInfoAlert';
 
-import { useAppStore } from '@/stores/appStore';
-import { selectSettings } from '@/state/selectors';
+import { useAppStore } from '@/platform/state/appStore';
+import { selectSettings } from '@/platform/state/selectors';
 
 export interface SystemMenuProps {
     onShare: () => void;

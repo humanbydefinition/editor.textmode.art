@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
-import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
 
 export interface PublishRequestSuccessDialogProps {
     submittedSlug: string | null;
