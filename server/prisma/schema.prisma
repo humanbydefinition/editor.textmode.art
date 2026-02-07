@@ -15,7 +15,7 @@ enum SketchStatus {
 
 model SketchRequest {
   id           String       @id @default(uuid())
-  slug         String       @unique
+  slug         String
   status       SketchStatus @default(PENDING)
   title        String
   description  String?

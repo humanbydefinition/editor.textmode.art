@@ -24,6 +24,36 @@ export const approvedSketchSchema = z.object({
 });
 export type ApprovedSketch = z.infer<typeof approvedSketchSchema>;
 
+const publicSketchAccessBaseSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  authorName: z.string().nullable(),
+  license: z.string().nullable(),
+  textmodeCode: z.string(),
+  strudelCode: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const publicApprovedSketchAccessSchema = publicSketchAccessBaseSchema.extend({
+  status: z.literal('APPROVED'),
+  socialLinks: z.array(socialLinkSchema).nullable(),
+  ogImageUrl: z.string().nullable(),
+});
+export type PublicApprovedSketchAccess = z.infer<typeof publicApprovedSketchAccessSchema>;
+
+export const publicPendingSketchAccessSchema = publicSketchAccessBaseSchema.extend({
+  status: z.literal('PENDING'),
+});
+export type PublicPendingSketchAccess = z.infer<typeof publicPendingSketchAccessSchema>;
+
+export const publicSketchAccessSchema = z.discriminatedUnion('status', [
+  publicApprovedSketchAccessSchema,
+  publicPendingSketchAccessSchema,
+]);
+export type PublicSketchAccess = z.infer<typeof publicSketchAccessSchema>;
+
 export const createSketchRequestSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1).max(120),
