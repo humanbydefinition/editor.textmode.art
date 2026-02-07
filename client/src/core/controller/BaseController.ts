@@ -1,6 +1,10 @@
-import { useAppStore } from '@/stores/appStore';
-import type { CodeError } from '@/types/app.types';
+import type { CodeError, StatusState } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
+import type { EngineState } from '@/stores/appStore';
+import type { ApprovedSketch } from '@/services/SketchApiService';
+
+/** Delay before pending code is confirmed as 'last working' */
+const CONFIRMATION_DELAY_MS = 100;
 
 /**
  * Base runtime interface - shared methods expected by BaseController.
@@ -31,6 +35,32 @@ export interface BaseControllerCallbacks {
 }
 
 /**
+ * Store adapter — thin facade over the Zustand store.
+ * Injected into controllers so they never import the store directly.
+ */
+export interface ControllerStoreAdapter {
+	// Error / status
+	setError: (error: CodeError | null) => void;
+	setStatus: (status: StatusState) => void;
+
+	// Engine state
+	getEngineState: (engineId: string) => EngineState | undefined;
+	setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
+	setEnginePendingWorkingCode: (engineId: string, code: string) => void;
+	cancelEnginePendingWorkingCode: (engineId: string) => void;
+	setEngineInitialized: (engineId: string, initialized: boolean) => void;
+	setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
+
+	// Share
+	getShareState: () => { payload: unknown | null; consented: boolean; promptOpen: boolean };
+	setSharePromptOpen: (open: boolean) => void;
+
+	// Approved sketch
+	getApprovedSketch: () => ApprovedSketch | null;
+	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
+}
+
+/**
  * Base dependencies shared by all controllers.
  * Generic over editor and runtime types.
  */
@@ -43,6 +73,8 @@ export interface BaseControllerDependencies<TEditor extends IEditor, TRuntime ex
 	getAutoExecute: () => boolean;
 	/** Get current auto-execute delay in ms */
 	getAutoExecuteDelay: () => number;
+	/** Store adapter for state access */
+	store: ControllerStoreAdapter;
 }
 
 /**
@@ -56,6 +88,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	protected readonly callbacks: BaseControllerCallbacks;
 	protected readonly deps: BaseControllerDependencies<TEditor, TRuntime>;
 	protected debounceTimer: number | null = null;
+	private confirmationTimer: number | null = null;
 
 	/**
 	 * Unique identifier for this controller's engine.
@@ -104,7 +137,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		useAppStore.getState().setError(null);
+		this.deps.store.setError(null);
 		editor?.clearMarkers();
 
 		this.forceExecute(code);
@@ -123,7 +156,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const editor = this.deps.getEditor();
 		editor?.setValue(lastWorkingCode);
 		this.callbacks.onSaveCode(lastWorkingCode);
-		useAppStore.getState().setError(null);
+		this.deps.store.setError(null);
 		editor?.clearMarkers();
 
 		this.revertExecute(lastWorkingCode);
@@ -145,7 +178,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			source: this.errorSource,
 		};
 
-		useAppStore.getState().setError(errorInfo);
+		this.deps.store.setError(errorInfo);
 
 		this.callbacks.onRenderOverlay();
 	}
@@ -181,23 +214,41 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 * Default implementation uses generic engine state.
 	 */
 	protected getLastWorkingCode(): string | null {
-		return useAppStore.getState().engineStates.get(this.engineId)?.lastWorkingCode ?? null;
+		return this.deps.store.getEngineState(this.engineId)?.lastWorkingCode ?? null;
 	}
 
 	/**
 	 * Set pending working code confirmation.
-	 * Default implementation uses generic engine state.
+	 * Starts a timer that promotes pending code to last working after a delay.
 	 */
 	protected setPendingWorkingCode(code: string): void {
-		useAppStore.getState().setEnginePendingWorkingCode(this.engineId, code);
+		// Clear existing timer if any
+		if (this.confirmationTimer !== null) {
+			window.clearTimeout(this.confirmationTimer);
+		}
+
+		this.deps.store.setEnginePendingWorkingCode(this.engineId, code);
+
+		this.confirmationTimer = window.setTimeout(() => {
+			this.confirmationTimer = null;
+			const pending = this.deps.store.getEngineState(this.engineId)?.pendingWorkingCode;
+			if (pending) {
+				this.deps.store.setEngineLastWorkingCode(this.engineId, pending);
+				this.deps.store.cancelEnginePendingWorkingCode(this.engineId);
+			}
+		}, CONFIRMATION_DELAY_MS);
 	}
 
 	/**
 	 * Cancel any pending working code confirmation.
-	 * Default implementation uses generic engine state.
+	 * Clears both the local timer and the store state.
 	 */
 	protected cancelPendingWorkingCode(): void {
-		useAppStore.getState().cancelEnginePendingWorkingCode(this.engineId);
+		if (this.confirmationTimer !== null) {
+			window.clearTimeout(this.confirmationTimer);
+			this.confirmationTimer = null;
+		}
+		this.deps.store.cancelEnginePendingWorkingCode(this.engineId);
 	}
 
 	/**
@@ -210,10 +261,10 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	}
 
 	protected isExecutionLocked(): boolean {
-		const share = useAppStore.getState().share;
+		const share = this.deps.store.getShareState();
 		if (share.payload && !share.consented) {
 			if (!share.promptOpen) {
-				useAppStore.getState().setSharePromptOpen(true);
+				this.deps.store.setSharePromptOpen(true);
 			}
 			return true;
 		}
@@ -221,8 +272,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	}
 
 	private clearApprovedSketchIfCustomized(code: string): void {
-		const store = useAppStore.getState();
-		const approvedSketch = store.approvedSketch;
+		const approvedSketch = this.deps.store.getApprovedSketch();
 		if (!approvedSketch) return;
 
 		const approvedCodeForEngine =
@@ -231,7 +281,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 				: approvedSketch.textmodeCode;
 
 		if (code !== approvedCodeForEngine) {
-			store.setApprovedSketch(null);
+			this.deps.store.setApprovedSketch(null);
 		}
 	}
 
