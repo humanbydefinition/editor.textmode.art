@@ -56,8 +56,6 @@ export function EditorLayout({
 
     // Calculate pane dimensions based on orientation
     const resizerSize = 8;
-    // Always horizontal on desktop now
-    const isHorizontal = true;
     const hasSplit = panes.length >= 2;
 
     const firstPaneStyle: React.CSSProperties = !hasSplit
