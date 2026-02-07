@@ -25,6 +25,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	private onRunOk?: (timestamp: number) => void;
 	private onRunError?: (error: CodeError) => void;
 	private onSynthError?: (error: CodeError) => void;
+	private onUserInteractionCallback?: () => void;
 
 	private options: HostRuntimeOptions;
 
@@ -72,6 +73,26 @@ export class TextmodeRuntime implements IHostRuntime {
 			return;
 		}
 		this.sendMessage({ type: 'SOFT_RESET', code });
+	}
+
+	setOnUserInteraction(callback: (() => void) | undefined): void {
+		this.onUserInteractionCallback = callback;
+	}
+
+	/**
+	 * Trigger iframe activation from a trusted user gesture (e.g. click).
+	 * Safari/WebKit may unlock full requestAnimationFrame cadence after this.
+	 */
+	activateFromUserGesture(): void {
+		if (!this.iframe) return;
+		this.iframe.tabIndex = -1;
+		this.focusElement(this.iframe);
+
+		try {
+			this.iframe.contentWindow?.focus();
+		} catch {
+			// Ignore focus errors; element focus still helps on Safari.
+		}
 	}
 
 	/**
@@ -175,6 +196,10 @@ export class TextmodeRuntime implements IHostRuntime {
 			case 'TOGGLE_UI':
 				this.options.onToggleUI?.();
 				break;
+
+			case 'USER_INTERACTION':
+				this.onUserInteractionCallback?.();
+				break;
 		}
 	};
 
@@ -218,6 +243,14 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (this.handshakeTimer) {
 			window.clearTimeout(this.handshakeTimer);
 			this.handshakeTimer = null;
+		}
+	}
+
+	private focusElement(element: HTMLElement): void {
+		try {
+			element.focus({ preventScroll: true });
+		} catch {
+			element.focus();
 		}
 	}
 }

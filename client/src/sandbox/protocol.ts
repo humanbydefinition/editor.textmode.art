@@ -43,7 +43,17 @@ export interface ToggleUIMessage {
 	type: 'TOGGLE_UI';
 }
 
-export type RunnerToParentMessage = ReadyMessage | RunOkMessage | RunErrorMessage | SynthErrorMessage | ToggleUIMessage;
+export interface UserInteractionMessage {
+	type: 'USER_INTERACTION';
+}
+
+export type RunnerToParentMessage =
+	| ReadyMessage
+	| RunOkMessage
+	| RunErrorMessage
+	| SynthErrorMessage
+	| ToggleUIMessage
+	| UserInteractionMessage;
 
 // Messages from parent to runner
 export interface RunCodeMessage {
@@ -83,7 +93,14 @@ export type Message = RunnerToParentMessage | ParentToRunnerMessage | WindowToRu
 export function isRunnerMessage(msg: unknown): msg is RunnerToParentMessage {
 	if (typeof msg !== 'object' || msg === null) return false;
 	const m = msg as { type?: string };
-	return m.type === 'READY' || m.type === 'RUN_OK' || m.type === 'RUN_ERROR' || m.type === 'SYNTH_ERROR' || m.type === 'TOGGLE_UI';
+	return (
+		m.type === 'READY' ||
+		m.type === 'RUN_OK' ||
+		m.type === 'RUN_ERROR' ||
+		m.type === 'SYNTH_ERROR' ||
+		m.type === 'TOGGLE_UI' ||
+		m.type === 'USER_INTERACTION'
+	);
 }
 
 /**

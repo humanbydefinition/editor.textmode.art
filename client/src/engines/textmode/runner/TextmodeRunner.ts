@@ -26,6 +26,12 @@ export class TextmodeRunner extends AbstractRunner {
 	init(): void {
 		this.textmode.init();
 
+		const reportInteraction = (): void => {
+			this.sendMessage({ type: 'USER_INTERACTION' });
+		};
+
+		window.addEventListener('pointerdown', reportInteraction, { passive: true });
+
 		// Listen for shortcuts (forward to host)
 		window.addEventListener('keydown', (e) => {
 			// Toggle UI: Ctrl + Shift + H

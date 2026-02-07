@@ -31,6 +31,59 @@ html {
     z-index: 0;
 }
 
+/* Safari activation helper overlay (mounted outside #app-container) */
+#safari-activation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(1px);
+}
+
+.safari-activation-overlay-card {
+    width: min(520px, calc(100vw - 32px));
+    border: 1px solid rgba(110, 231, 183, 0.5);
+    border-radius: 10px;
+    background: rgba(10, 10, 10, 0.96);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+    text-align: center;
+    padding: 16px 20px;
+    color: #f4f4f5;
+}
+
+.safari-activation-overlay-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #a7f3d0;
+}
+
+.safari-activation-overlay-body {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.safari-activation-overlay-hint {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #d4d4d8;
+}
+
+.safari-activation-overlay-meta {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+}
+
 /* ===== SHADCN THEME VARIABLES ===== */
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
