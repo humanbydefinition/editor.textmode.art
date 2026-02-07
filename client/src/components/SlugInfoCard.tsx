@@ -1,5 +1,5 @@
 import { ExternalLink, User, X } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/shared/lib/cn';
 
 export interface SlugInfoCardSketch {
     slug: string;

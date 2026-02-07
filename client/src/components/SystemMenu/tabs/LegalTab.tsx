@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/utils/utils";
+import { cn } from '@/shared/lib/cn';
 
 export function LegalTab() {
     const [openSection, setOpenSection] = useState<"imprint" | "privacy" | null>(null);

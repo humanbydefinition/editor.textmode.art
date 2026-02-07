@@ -2,7 +2,7 @@ import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '../../types/app.types';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '@/state/appStore';
 
 /**
  * Textmode-specific dependencies.
