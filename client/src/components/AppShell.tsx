@@ -148,7 +148,7 @@ export function AppShell({
                 {!welcomeOpen && showSafariActivationPrompt && (
                     <div
                         className={cn(
-                            'fixed bottom-2 left-2 z-50 pointer-events-auto',
+                            'fixed bottom-2 left-1/2 -translate-x-1/2 z-50 pointer-events-auto',
                             'flex items-center gap-2',
                             'rounded-md border border-zinc-700/70 bg-zinc-950/85 px-2 py-1.5 backdrop-blur-sm'
                         )}
