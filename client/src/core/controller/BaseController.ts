@@ -82,6 +82,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 */
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
+		this.clearApprovedSketchIfCustomized(code);
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
 
@@ -217,6 +218,21 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			return true;
 		}
 		return false;
+	}
+
+	private clearApprovedSketchIfCustomized(code: string): void {
+		const store = useAppStore.getState();
+		const approvedSketch = store.approvedSketch;
+		if (!approvedSketch) return;
+
+		const approvedCodeForEngine =
+			this.engineId === 'strudel'
+				? approvedSketch.strudelCode ?? ''
+				: approvedSketch.textmodeCode;
+
+		if (code !== approvedCodeForEngine) {
+			store.setApprovedSketch(null);
+		}
 	}
 
 	/**
