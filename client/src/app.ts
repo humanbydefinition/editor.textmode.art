@@ -28,7 +28,7 @@ import { ShareSessionManager } from './features/share/orchestration/ShareSession
 import { createPaneStoreAdapter } from './state/adapters/paneStoreAdapter';
 import { createShareStoreAdapter } from './state/adapters/shareStoreAdapter';
 
-export class App {
+export class AppRuntime {
 	// Core services
 	private readonly storage: IStorageService = storageService;
 	private readonly editorManager = new EditorManager();
@@ -522,3 +522,6 @@ export class App {
 		return null;
 	}
 }
+
+// Backward-compatible alias while callers migrate to AppRuntime naming.
+export { AppRuntime as App };
