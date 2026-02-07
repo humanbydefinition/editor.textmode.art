@@ -12,7 +12,11 @@ import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
 import { audioService } from './services/AudioService';
 import { ShareService } from './services/ShareService';
-import { fetchApprovedSketch } from './services/SketchApiService';
+import {
+	fetchApprovedSketch,
+	fetchRandomApprovedSketch,
+	type ApprovedSketch,
+} from './services/SketchApiService';
 import { ShortcutsManager, type IShortcutsManager } from './managers/ShortcutsManager';
 import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
@@ -44,6 +48,8 @@ export class App {
 	private initialized = false;
 	private shareExportOpen = false;
 	private shareExportData: ShareExportData | null = null;
+	private randomizeLoading = false;
+	private pendingApprovedSketch: ApprovedSketch | null = null;
 	private showSafariActivationPrompt = false;
 	private safariActivationPending = false;
 	private safariActivationCancelHandler: ((event: KeyboardEvent) => void) | null = null;
@@ -92,18 +98,7 @@ export class App {
 			if (detectedSlug) {
 				const sketchData = await fetchApprovedSketch(detectedSlug);
 				if (sketchData) {
-					useAppStore.getState().setApprovedSketch(sketchData);
-					const payload: SharePayload = {
-						v: 1,
-						createdAt: Date.now(),
-						engines: {
-							textmode: sketchData.textmodeCode,
-							...(sketchData.strudelCode && { strudel: sketchData.strudelCode }),
-						},
-					};
-					useAppStore.getState().setSharePayload(payload);
-					// Approved sketches are trusted — auto-consent
-					useAppStore.getState().setShareConsented(true);
+					this.pendingApprovedSketch = sketchData;
 				}
 			}
 		}
@@ -139,6 +134,7 @@ export class App {
 		// Apply initial settings to all editors
 		this.editorManager.applySettings(this.settings);
 		this.applySharedSketchIfPresent();
+		this.applyPendingApprovedSketchIfPresent();
 		this.setupShareInteractionGuards();
 
 		// Setup shortcuts
@@ -199,6 +195,8 @@ export class App {
 
 		return {
 			onShare: () => this.handleShare(),
+			onRandomize: () => void this.handleRandomize(),
+			randomizeLoading: this.randomizeLoading,
 			onClearStorage: () => this.handleClearStorage(),
 			onLoadExample: (code: string, engineId: string) => this.handleLoadExample(code, engineId),
 			onRevertToLastWorking: handleRevert,
@@ -295,6 +293,13 @@ export class App {
 
 		this.editorManager.applySettings(this.settings);
 		this.applySharedSketchIfPresent();
+		const approvedSketch = useAppStore.getState().approvedSketch;
+		if (approvedSketch?.strudelCode) {
+			this.strudelEngine.setCode(approvedSketch.strudelCode, { silent: true });
+			this.strudelEngine.getRuntime()?.forceRun(approvedSketch.strudelCode);
+		} else if (approvedSketch) {
+			this.strudelEngine.hush();
+		}
 		this.startAudioReactivity();
 	}
 
@@ -411,9 +416,11 @@ export class App {
 		overlay.id = 'safari-activation-overlay';
 		overlay.innerHTML = [
 			'<div class="safari-activation-overlay-card">',
-			'<div class="safari-activation-overlay-title">one more step to unlock full fps</div>',
-			'<div class="safari-activation-overlay-body">click once on the moving background canvas now.</div>',
-			'<div class="safari-activation-overlay-hint">if nothing changes, click directly on the visual area again.</div>',
+			'<div class="safari-activation-overlay-kicker">safari canvas setup</div>',
+			'<div class="safari-activation-overlay-title">click the background once to unlock smooth rendering</div>',
+			'<div class="safari-activation-overlay-body">the ui is temporarily hidden so your click goes directly to the moving canvas.</div>',
+			'<div class="safari-activation-overlay-hint">if motion still feels capped, click the background one more time.</div>',
+			'<div class="safari-activation-overlay-shortcut">tip: press ctrl+shift+h any time to hide editors and click the canvas manually.</div>',
 			'<div class="safari-activation-overlay-meta">press esc to cancel</div>',
 			'</div>',
 		].join('');
@@ -493,6 +500,57 @@ export class App {
 	 */
 	private async waitForPanes(paneIds: string[]): Promise<void> {
 		await Promise.all(paneIds.map((id) => this.waitForPane(id)));
+	}
+
+	private applyPendingApprovedSketchIfPresent(): void {
+		if (!this.pendingApprovedSketch) return;
+		const sketch = this.pendingApprovedSketch;
+		this.pendingApprovedSketch = null;
+		this.applyApprovedSketch(sketch);
+	}
+
+	private applyApprovedSketch(sketch: ApprovedSketch): void {
+		const store = useAppStore.getState();
+		if (store.share.payload) {
+			store.setSharePayload(null);
+			this.setEditorsReadOnly(false);
+		}
+
+		store.setApprovedSketch(sketch);
+		store.setError(null);
+		this.textmodeEngine.setCode(sketch.textmodeCode, { silent: true });
+		this.textmodeEngine.getRuntime()?.forceRun(sketch.textmodeCode);
+
+		if (this.strudelEngine) {
+			if (sketch.strudelCode) {
+				this.strudelEngine.setCode(sketch.strudelCode, { silent: true });
+				this.strudelEngine.getRuntime()?.forceRun(sketch.strudelCode);
+			} else {
+				this.strudelEngine.hush();
+			}
+		}
+
+		if (store.isMobile) {
+			store.setActivePanel('textmode');
+			this.render();
+		}
+	}
+
+	private async handleRandomize(): Promise<void> {
+		if (this.randomizeLoading) return;
+
+		this.randomizeLoading = true;
+		this.render();
+
+		try {
+			const currentSlug = useAppStore.getState().approvedSketch?.slug;
+			const sketch = await fetchRandomApprovedSketch(currentSlug);
+			if (!sketch) return;
+			this.applyApprovedSketch(sketch);
+		} finally {
+			this.randomizeLoading = false;
+			this.render();
+		}
 	}
 
 	private applySharedSketchIfPresent(): void {
