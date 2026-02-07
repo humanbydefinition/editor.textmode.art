@@ -73,6 +73,26 @@ export async function fetchApprovedSketch(slug: string): Promise<ApprovedSketch 
 }
 
 /**
+ * Fetch a random approved sketch.
+ * Optionally exclude a specific slug from selection.
+ */
+export async function fetchRandomApprovedSketch(excludeSlug?: string): Promise<ApprovedSketch | null> {
+    try {
+        const query = excludeSlug
+            ? `?excludeSlug=${encodeURIComponent(excludeSlug)}`
+            : '';
+        const response = await fetch(`${getApiBase()}/api/sketches/random${query}`);
+        if (!response.ok) {
+            return null;
+        }
+        return (await response.json()) as ApprovedSketch;
+    } catch {
+        console.warn('[SketchApiService] Failed to fetch random sketch');
+        return null;
+    }
+}
+
+/**
  * Check if a slug is available for use.
  */
 export async function checkSlugAvailability(slug: string): Promise<SlugAvailabilityResult> {
