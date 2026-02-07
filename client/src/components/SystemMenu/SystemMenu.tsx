@@ -48,6 +48,7 @@ export function SystemMenu({
         <Dialog open={open} onOpenChange={setOpen}>
             <SlugInfoAlert
                 autoOpenEnabled={slugInfoAutoOpenEnabled}
+                onShare={onShare}
                 className={cn(
                     'fixed top-2 right-[4.5rem] z-50 pointer-events-auto'
                 )}
