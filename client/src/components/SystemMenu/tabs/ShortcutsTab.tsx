@@ -25,7 +25,6 @@ export function ShortcutsTab() {
                 { keys: ["Ctrl", "-"], description: "decrease font size" },
                 { keys: ["Ctrl", "B"], description: "toggle text background" },
                 { keys: ["Ctrl", "Shift", "H"], description: "hide / show ui" },
-                { keys: ["Shake Mouse", "2x Ctrl"], description: "find my cursor (sonar ping)" },
             ]
         },
         {

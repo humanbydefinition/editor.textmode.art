@@ -2,12 +2,11 @@
  * Main application - orchestrates engines, React UI, and state.
  * Uses a single textmode.js engine for visuals and an optional Strudel engine for audio.
  */
-import { createElement, createRef } from 'react';
+import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppShell } from './components/AppShell';
 import type { ShareExportData } from './components/ShareExportDialog';
 import { type PaneConfig } from './components/EditorLayout';
-import { type MouseSonarHandle } from './components/MouseSonar';
 import { type AppSettings } from './types/app.types';
 import { type EngineId } from './types/engine.types';
 import { storageService, type IStorageService } from './services/StorageService';
@@ -42,10 +41,14 @@ export class App {
 
 	// React root
 	private root: Root | null = null;
-	private sonarRef = createRef<MouseSonarHandle>();
 	private initialized = false;
 	private shareExportOpen = false;
 	private shareExportData: ShareExportData | null = null;
+	private showSafariActivationPrompt = false;
+	private safariActivationPending = false;
+	private safariActivationCancelHandler: ((event: KeyboardEvent) => void) | null = null;
+	private safariActivationOverlay: HTMLElement | null = null;
+	private appContainerDisplayBeforeActivation: string | null = null;
 
 	// Layout state (managed by React, tracked for callbacks)
 	private layoutState: LayoutState = {
@@ -125,6 +128,8 @@ export class App {
 
 		// Initialize textmode engine (always on)
 		await this.initTextmodeEngine();
+		this.showSafariActivationPrompt = this.shouldOfferSafariActivation();
+		this.render();
 
 		// Initialize Strudel if enabled
 		if (loadedSettings.strudelEnabled) {
@@ -139,7 +144,6 @@ export class App {
 		// Setup shortcuts
 		this.shortcuts = new ShortcutsManager({
 			actions: {
-				triggerSonarPing: () => this.sonarRef.current?.ping(),
 				changeFontSize: (delta) => this.handleFontSizeChange(delta),
 				toggleAutoExecute: () => {
 					const s = this.settings;
@@ -206,6 +210,8 @@ export class App {
 			shareExportData: this.shareExportData,
 			onShareExportOpenChange: (open: boolean) => this.handleShareExportOpenChange(open),
 			onShareExportCopy: (url: string) => this.handleShareExportCopy(url),
+			showSafariActivationPrompt: this.showSafariActivationPrompt,
+			onSafariActivation: () => this.beginSafariActivation(),
 		};
 	}
 
@@ -228,7 +234,6 @@ export class App {
 					}
 				},
 				...this.getShellProps(),
-				sonarRef: this.sonarRef,
 			})
 		);
 	}
@@ -252,6 +257,8 @@ export class App {
 			toggleUI: () => this.toggleUIVisibility(),
 			changeFontSize: (delta: number) => this.handleFontSizeChange(delta),
 		});
+
+		this.textmodeEngine.getRuntime()?.setOnUserInteraction(() => this.handleRunnerUserInteraction());
 
 		const editor = this.textmodeEngine.getEditor();
 		if (editor) {
@@ -354,6 +361,87 @@ export class App {
 		}
 
 		return panes;
+	}
+
+	private shouldOfferSafariActivation(): boolean {
+		const ua = navigator.userAgent;
+		const isWebKit = /AppleWebKit/i.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR/i.test(ua);
+		const isMacOS = /Macintosh/i.test(ua);
+		return isWebKit && isMacOS;
+	}
+
+	private beginSafariActivation(): void {
+		if (this.safariActivationPending) return;
+
+		this.safariActivationPending = true;
+		this.mountSafariActivationOverlay();
+		this.hideAppContainerForActivation();
+		this.render();
+		this.safariActivationCancelHandler = (event: KeyboardEvent): void => {
+			if (event.key !== 'Escape') return;
+			this.endSafariActivation({ activated: false });
+		};
+		window.addEventListener('keydown', this.safariActivationCancelHandler, true);
+	}
+
+	private handleRunnerUserInteraction(): void {
+		if (!this.safariActivationPending) return;
+		this.textmodeEngine.getRuntime()?.activateFromUserGesture();
+		this.endSafariActivation({ activated: true });
+	}
+
+	private endSafariActivation(options: { activated: boolean }): void {
+		if (this.safariActivationCancelHandler) {
+			window.removeEventListener('keydown', this.safariActivationCancelHandler, true);
+			this.safariActivationCancelHandler = null;
+		}
+		this.unmountSafariActivationOverlay();
+		this.restoreAppContainerAfterActivation();
+		this.safariActivationPending = false;
+		if (options.activated) {
+			this.showSafariActivationPrompt = false;
+		}
+		this.render();
+	}
+
+	private mountSafariActivationOverlay(): void {
+		if (this.safariActivationOverlay) return;
+
+		const overlay = document.createElement('div');
+		overlay.id = 'safari-activation-overlay';
+		overlay.innerHTML = [
+			'<div class="safari-activation-overlay-card">',
+			'<div class="safari-activation-overlay-title">one more step to unlock full fps</div>',
+			'<div class="safari-activation-overlay-body">click once on the moving background canvas now.</div>',
+			'<div class="safari-activation-overlay-hint">if nothing changes, click directly on the visual area again.</div>',
+			'<div class="safari-activation-overlay-meta">press esc to cancel</div>',
+			'</div>',
+		].join('');
+
+		document.body.appendChild(overlay);
+		this.safariActivationOverlay = overlay;
+	}
+
+	private unmountSafariActivationOverlay(): void {
+		if (!this.safariActivationOverlay) return;
+		this.safariActivationOverlay.remove();
+		this.safariActivationOverlay = null;
+	}
+
+	private hideAppContainerForActivation(): void {
+		const appContainer = document.getElementById('app-container');
+		if (!appContainer) return;
+
+		this.appContainerDisplayBeforeActivation = appContainer.style.display;
+		appContainer.style.display = 'none';
+	}
+
+	private restoreAppContainerAfterActivation(): void {
+		const appContainer = document.getElementById('app-container');
+		if (!appContainer) return;
+
+		appContainer.style.display = this.appContainerDisplayBeforeActivation ?? '';
+		this.appContainerDisplayBeforeActivation = null;
 	}
 
 	/**

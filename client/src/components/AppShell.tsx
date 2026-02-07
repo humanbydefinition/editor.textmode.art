@@ -1,9 +1,8 @@
-import { useState, type RefObject } from 'react';
+import { useState } from 'react';
 import { AppLayout } from './EditorLayout';
 import { SystemMenu } from './SystemMenu/SystemMenu';
 import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './dialogs/WelcomeDialog';
-import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
 import { cn } from '@/utils/utils';
 import type { PaneConfig } from './EditorLayout/types';
 import { useAppStore } from '@/stores/appStore';
@@ -22,9 +21,6 @@ export interface AppShellProps {
     editorBackdrop: boolean;
     /** Callback when a pane container is ready */
     onPaneReady: (paneId: string, container: HTMLElement) => void;
-    /** Ref for the mouse sonar */
-    sonarRef: RefObject<MouseSonarHandle | null>;
-
     // Actions (Controller Logic)
     onShare: () => void;
     onClearStorage: () => void;
@@ -38,6 +34,8 @@ export interface AppShellProps {
     shareExportData: ShareExportData | null;
     onShareExportOpenChange: (open: boolean) => void;
     onShareExportCopy: (url: string) => void;
+    showSafariActivationPrompt: boolean;
+    onSafariActivation: () => void;
 }
 
 /**
@@ -48,7 +46,6 @@ export function AppShell({
     panes,
     editorBackdrop,
     onPaneReady,
-    sonarRef,
     onShare,
     onClearStorage,
     onLoadExample,
@@ -61,6 +58,8 @@ export function AppShell({
     shareExportData,
     onShareExportOpenChange,
     onShareExportCopy,
+    showSafariActivationPrompt,
+    onSafariActivation,
 }: AppShellProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
@@ -146,8 +145,29 @@ export function AppShell({
                     </Tooltip>
                 )}
 
-                {/* Mouse Sonar - always rendered for cursor finding */}
-                <MouseSonar ref={sonarRef} />
+                {!welcomeOpen && showSafariActivationPrompt && (
+                    <div
+                        className={cn(
+                            'fixed bottom-2 left-2 z-50 pointer-events-auto',
+                            'flex items-center gap-2',
+                            'rounded-md border border-zinc-700/70 bg-zinc-950/85 px-2 py-1.5 backdrop-blur-sm'
+                        )}
+                    >
+                        <span className="text-[11px] text-zinc-200">
+                            Safari may cap visuals at 30 FPS.
+                        </span>
+                        <button
+                            onClick={onSafariActivation}
+                            className={cn(
+                                'rounded-sm border border-emerald-500/50 px-2 py-0.5 text-[11px] text-emerald-200',
+                                'hover:bg-emerald-500/20',
+                                'focus:outline-none focus:ring-2 focus:ring-emerald-400/30'
+                            )}
+                        >
+                            activate canvas
+                        </button>
+                    </div>
+                )}
 
                 {/* Main UI - hidden when welcome modal is open, with smooth transition */}
                 <div

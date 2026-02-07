@@ -2,8 +2,6 @@
  * Actions that can be triggered by keyboard shortcuts.
  */
 export interface ShortcutActions {
-	/** Trigger mouse sonar ping (double-Ctrl) */
-	triggerSonarPing: () => void;
 	/** Change font size by delta (+1 or -1) */
 	changeFontSize: (delta: number) => void;
 	/** Toggle auto-execute setting */
@@ -34,8 +32,6 @@ export interface IShortcutsManager {
 export interface ShortcutsManagerOptions {
 	/** Actions to trigger on shortcuts */
 	actions: ShortcutActions;
-	/** Double-tap threshold in milliseconds (default: 400) */
-	doubleTapThreshold?: number;
 }
 
 /**
@@ -43,13 +39,10 @@ export interface ShortcutsManagerOptions {
  */
 export class ShortcutsManager implements IShortcutsManager {
 	private readonly actions: ShortcutActions;
-	private readonly doubleTapThreshold: number;
-	private lastCtrlPressTime = 0;
 	private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
 	constructor(options: ShortcutsManagerOptions) {
 		this.actions = options.actions;
-		this.doubleTapThreshold = options.doubleTapThreshold ?? 400;
 	}
 
 	/**
@@ -74,17 +67,6 @@ export class ShortcutsManager implements IShortcutsManager {
 	 * Handle keydown events.
 	 */
 	private handleKeydown(e: KeyboardEvent): void {
-		// Double-tap Ctrl: Trigger mouse sonar ping
-		if (e.key === 'Control' && !e.repeat) {
-			const now = Date.now();
-			if (now - this.lastCtrlPressTime < this.doubleTapThreshold) {
-				this.actions.triggerSonarPing();
-				this.lastCtrlPressTime = 0;
-			} else {
-				this.lastCtrlPressTime = now;
-			}
-		}
-
 		// Font size shortcuts: Ctrl + Shift + +/-
 		if (e.ctrlKey && e.shiftKey && (e.key === '+' || e.key === '=' || e.key === '_' || e.key === '-')) {
 			e.preventDefault();
