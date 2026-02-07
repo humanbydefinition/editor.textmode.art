@@ -1,5 +1,13 @@
 import type { AdminSketchRequest } from '@synth.textmode.art/contracts/admin';
-import type { ApprovedSketch, SketchRequestResult, SketchStatus, SocialLink } from '@synth.textmode.art/contracts/sketch';
+import type {
+  ApprovedSketch,
+  PublicApprovedSketchAccess,
+  PublicPendingSketchAccess,
+  PublicSketchAccess,
+  SketchRequestResult,
+  SketchStatus,
+  SocialLink,
+} from '@synth.textmode.art/contracts/sketch';
 
 type SketchStatusLike = SketchStatus | 'PENDING' | 'APPROVED' | 'DENIED';
 
@@ -79,6 +87,40 @@ export function toApprovedSketch(sketch: SketchRecord): ApprovedSketch {
     ogImageUrl: sketch.ogImageUrl,
     createdAt: toIsoDate(sketch.createdAt),
   };
+}
+
+export function toPublicSketchAccess(sketch: SketchRecord): PublicSketchAccess {
+  const base = {
+    id: sketch.id,
+    slug: sketch.slug,
+    title: sketch.title,
+    description: sketch.description,
+    authorName: sketch.authorName,
+    license: sketch.license,
+    textmodeCode: sketch.textmodeCode,
+    strudelCode: sketch.strudelCode,
+    createdAt: toIsoDate(sketch.createdAt),
+  };
+
+  if (sketch.status === 'APPROVED') {
+    const approved: PublicApprovedSketchAccess = {
+      ...base,
+      status: 'APPROVED',
+      socialLinks: toSocialLinks(sketch.socialLinks),
+      ogImageUrl: sketch.ogImageUrl,
+    };
+    return approved;
+  }
+
+  if (sketch.status !== 'PENDING') {
+    throw new Error(`Cannot map sketch with status ${sketch.status} to public access payload`);
+  }
+
+  const pending: PublicPendingSketchAccess = {
+    ...base,
+    status: 'PENDING',
+  };
+  return pending;
 }
 
 export function toAdminSketchRequest(sketch: SketchRecord): AdminSketchRequest {

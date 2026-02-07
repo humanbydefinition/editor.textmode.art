@@ -6,7 +6,7 @@ import { renderSlugPage, getBaseUrl } from '../templates/slug-page.js';
 const slugRoutes: FastifyPluginAsync = async (app) => {
     /**
      * GET /s/:slug
-     * Server-rendered HTML page for approved sketches with SEO meta tags.
+     * Server-rendered HTML page for pending and approved sketches.
      */
     app.get('/s/:slug', async (request, reply) => {
         const slugParam = (request.params as { slug: string }).slug ?? '';
@@ -21,7 +21,7 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
         const sketch = await prisma.sketchRequest.findFirst({
             where: {
                 slug: normalizedSlug,
-                status: 'APPROVED',
+                status: { in: ['PENDING', 'APPROVED'] },
             },
         });
 
@@ -31,7 +31,8 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
         }
 
         const baseUrl = getBaseUrl(request.hostname, request.protocol);
-        const html = renderSlugPage({ sketch, baseUrl });
+        const renderMode = sketch.status === 'PENDING' ? 'pending' : 'approved';
+        const html = renderSlugPage({ sketch, baseUrl, renderMode });
 
         reply.type('text/html').send(html);
     });

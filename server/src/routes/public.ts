@@ -1,14 +1,22 @@
 import type { FastifyPluginAsync } from 'fastify';
+import { Prisma } from '@prisma/client';
 import {
   createSketchRequestSchema,
   randomSketchQuerySchema,
   slugAvailabilityQuerySchema,
   type SketchRequestPayload,
+  type SketchStatus,
   type SlugAvailabilityResult,
 } from '@synth.textmode.art/contracts/sketch';
 import { prisma } from '../db.js';
 import { normalizeSlug, validateSlug } from '../utils/slug.js';
-import { toApprovedSketch, toSketchRequestResult } from '../contracts/sketchMappers.js';
+import { toApprovedSketch, toPublicSketchAccess, toSketchRequestResult } from '../contracts/sketchMappers.js';
+
+const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
 
 const publicRoutes: FastifyPluginAsync = async (app) => {
   app.post('/api/sketch-requests', async (request, reply) => {
@@ -27,26 +35,39 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const existing = await prisma.sketchRequest.findUnique({ where: { slug: normalizedSlug } });
+    const existing = await prisma.sketchRequest.findFirst({
+      where: {
+        slug: normalizedSlug,
+        status: { in: ACTIVE_SKETCH_STATUSES },
+      },
+    });
     if (existing) {
       reply.status(409).send({ error: 'Slug already in use', slug: normalizedSlug });
       return;
     }
 
-    const created = await prisma.sketchRequest.create({
-      data: {
-        slug: normalizedSlug,
-        title: payload.title,
-        description: payload.description ?? null,
-        authorName: payload.authorName ?? null,
-        license: payload.license ?? null,
-        socialLinks: payload.socialLinks ?? undefined,
-        textmodeCode: payload.textmodeCode,
-        strudelCode: payload.strudelCode ?? null,
-      },
-    });
+    try {
+      const created = await prisma.sketchRequest.create({
+        data: {
+          slug: normalizedSlug,
+          title: payload.title,
+          description: payload.description ?? null,
+          authorName: payload.authorName ?? null,
+          license: payload.license ?? null,
+          socialLinks: payload.socialLinks ?? undefined,
+          textmodeCode: payload.textmodeCode,
+          strudelCode: payload.strudelCode ?? null,
+        },
+      });
 
-    reply.status(201).send(toSketchRequestResult(created));
+      reply.status(201).send(toSketchRequestResult(created));
+    } catch (error) {
+      if (isUniqueConstraintViolation(error)) {
+        reply.status(409).send({ error: 'Slug already in use', slug: normalizedSlug });
+        return;
+      }
+      throw error;
+    }
   });
 
   app.get('/api/sketch-requests/slug-available', async (request, reply) => {
@@ -64,7 +85,12 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const existing = await prisma.sketchRequest.findUnique({ where: { slug: normalizedSlug } });
+    const existing = await prisma.sketchRequest.findFirst({
+      where: {
+        slug: normalizedSlug,
+        status: { in: ACTIVE_SKETCH_STATUSES },
+      },
+    });
     const response: SlugAvailabilityResult = { available: !existing, slug: normalizedSlug };
     reply.status(200).send(response);
   });
@@ -138,6 +164,30 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     }
 
     reply.send(toApprovedSketch(sketch));
+  });
+
+  app.get('/api/sketches/:slug/access', async (request, reply) => {
+    const slugParam = (request.params as { slug: string }).slug ?? '';
+    const normalizedSlug = normalizeSlug(slugParam);
+    const slugValidation = validateSlug(normalizedSlug);
+    if (!slugValidation.valid) {
+      reply.status(404).send({ error: 'Sketch not found' });
+      return;
+    }
+
+    const sketch = await prisma.sketchRequest.findFirst({
+      where: {
+        slug: normalizedSlug,
+        status: { in: ACTIVE_SKETCH_STATUSES },
+      },
+    });
+
+    if (!sketch) {
+      reply.status(404).send({ error: 'Sketch not found' });
+      return;
+    }
+
+    reply.send(toPublicSketchAccess(sketch));
   });
 };
 

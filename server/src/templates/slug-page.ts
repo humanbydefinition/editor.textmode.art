@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 export interface SlugPageOptions {
   sketch: SketchRequest;
   baseUrl: string;
+  renderMode?: 'approved' | 'pending';
 }
 
 // Cache for the production HTML template
@@ -58,21 +59,29 @@ function escapeHtml(str: string): string {
  * In production: reads dist/index.html and injects dynamic meta tags.
  * In development: uses a hardcoded template pointing to Vite dev server.
  */
-export function renderSlugPage({ sketch, baseUrl }: SlugPageOptions): string {
-  const title = `${sketch.title} | synth.textmode.art`;
-  const description = sketch.description || 'A live coding sketch on synth.textmode.art';
+export function renderSlugPage({ sketch, baseUrl, renderMode = 'approved' }: SlugPageOptions): string {
+  const isPending = renderMode === 'pending';
+  const title = isPending
+    ? 'Sketch Pending Review | synth.textmode.art'
+    : `${sketch.title} | synth.textmode.art`;
+  const description = isPending
+    ? 'This sketch is pending moderation review on synth.textmode.art.'
+    : (sketch.description || 'A live coding sketch on synth.textmode.art');
   const canonicalUrl = `${baseUrl}/s/${sketch.slug}`;
-  const ogImage = sketch.ogImageUrl || `${baseUrl}/og-default.png`;
+  const ogImage = isPending
+    ? `${baseUrl}/og-default.png`
+    : (sketch.ogImageUrl || `${baseUrl}/og-default.png`);
 
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
   const safeSlug = escapeHtml(sketch.slug);
+  const robotsMeta = isPending ? '  <meta name="robots" content="noindex, nofollow" />\n' : '';
 
   // Dynamic meta tags to inject
   const dynamicHead = `
   <title>${safeTitle}</title>
   <meta name="description" content="${safeDescription}" />
-  <link rel="canonical" href="${canonicalUrl}" />
+${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
@@ -102,6 +111,7 @@ export function renderSlugPage({ sketch, baseUrl }: SlugPageOptions): string {
       let html = productionHtml
         .replace(/<title>.*?<\/title>/i, '')
         .replace(/<meta\s+name="description"[^>]*>/gi, '')
+        .replace(/<meta\s+name="robots"[^>]*>/gi, '')
         .replace(/<link\s+rel="canonical"[^>]*>/gi, '')
         .replace(/<meta\s+property="og:[^"]*"[^>]*>/gi, '')
         .replace(/<meta\s+(?:name|property)="twitter:[^"]*"[^>]*>/gi, '');
