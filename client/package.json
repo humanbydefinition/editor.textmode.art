@@ -33,9 +33,9 @@
         "react-dom": "^19.2.0",
         "tailwind-merge": "^3.4.0",
         "tailwindcss-animate": "^1.0.7",
-        "textmode.filters.js": "^1.1.0",
-        "textmode.js": "0.9.3-beta.2",
-        "textmode.synth.js": "1.2.0-beta.1",
+        "textmode.filters.js": "^1.1.1",
+        "textmode.js": "0.10.0",
+        "textmode.synth.js": "1.5.1",
         "zod": "^3.24.1",
         "zustand": "^5.0.10"
     },
