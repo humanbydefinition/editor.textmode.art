@@ -84,11 +84,11 @@ export class TextmodeManager implements ITextmodeManager {
 
 		this.clearAllSynths();
 
-		try {
-			this.instance.layers.clear();
-		} catch (e) {
-			// console.warn('Error clearing layers:', e);
-		}
+			try {
+				this.instance.layers.clear();
+			} catch {
+				// Ignore layer clear errors during teardown
+			}
 
 		// For soft reset, also reset frame count
 		if (isSoftReset) {
