@@ -1,31 +1,14 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
+import {
+  createSketchRequestSchema,
+  randomSketchQuerySchema,
+  slugAvailabilityQuerySchema,
+  type SketchRequestPayload,
+  type SlugAvailabilityResult,
+} from '@synth.textmode.art/contracts/sketch';
 import { prisma } from '../db.js';
 import { normalizeSlug, validateSlug } from '../utils/slug.js';
-
-const socialLinkSchema = z.object({
-  label: z.string().min(1).max(32),
-  url: z.string().url().max(200),
-});
-
-const createSketchRequestSchema = z.object({
-  slug: z.string().min(1),
-  title: z.string().min(1).max(120),
-  description: z.string().max(300).optional().nullable(),
-  authorName: z.string().max(80).optional().nullable(),
-  license: z.string().max(120).optional().nullable(),
-  socialLinks: z.array(socialLinkSchema).max(6).optional().nullable(),
-  textmodeCode: z.string().min(1).max(300_000),
-  strudelCode: z.string().max(300_000).optional().nullable(),
-});
-
-const slugAvailabilitySchema = z.object({
-  slug: z.string().min(1),
-});
-
-const randomSketchQuerySchema = z.object({
-  excludeSlug: z.string().min(1).optional(),
-});
+import { toApprovedSketch, toSketchRequestResult } from '../contracts/sketchMappers.js';
 
 const publicRoutes: FastifyPluginAsync = async (app) => {
   app.post('/api/sketch-requests', async (request, reply) => {
@@ -35,7 +18,9 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const normalizedSlug = normalizeSlug(parsed.data.slug);
+    const payload: SketchRequestPayload = parsed.data;
+
+    const normalizedSlug = normalizeSlug(payload.slug);
     const slugValidation = validateSlug(normalizedSlug);
     if (!slugValidation.valid) {
       reply.status(400).send({ error: slugValidation.reason, slug: normalizedSlug });
@@ -51,26 +36,21 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     const created = await prisma.sketchRequest.create({
       data: {
         slug: normalizedSlug,
-        title: parsed.data.title,
-        description: parsed.data.description ?? null,
-        authorName: parsed.data.authorName ?? null,
-        license: parsed.data.license ?? null,
-        socialLinks: parsed.data.socialLinks ?? undefined,
-        textmodeCode: parsed.data.textmodeCode,
-        strudelCode: parsed.data.strudelCode ?? null,
+        title: payload.title,
+        description: payload.description ?? null,
+        authorName: payload.authorName ?? null,
+        license: payload.license ?? null,
+        socialLinks: payload.socialLinks ?? undefined,
+        textmodeCode: payload.textmodeCode,
+        strudelCode: payload.strudelCode ?? null,
       },
     });
 
-    reply.status(201).send({
-      id: created.id,
-      slug: created.slug,
-      status: created.status,
-      createdAt: created.createdAt,
-    });
+    reply.status(201).send(toSketchRequestResult(created));
   });
 
   app.get('/api/sketch-requests/slug-available', async (request, reply) => {
-    const parsed = slugAvailabilitySchema.safeParse(request.query);
+    const parsed = slugAvailabilityQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
       return;
@@ -79,12 +59,14 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     const normalizedSlug = normalizeSlug(parsed.data.slug);
     const slugValidation = validateSlug(normalizedSlug);
     if (!slugValidation.valid) {
-      reply.status(200).send({ available: false, reason: slugValidation.reason, slug: normalizedSlug });
+      const response: SlugAvailabilityResult = { available: false, reason: slugValidation.reason, slug: normalizedSlug };
+      reply.status(200).send(response);
       return;
     }
 
     const existing = await prisma.sketchRequest.findUnique({ where: { slug: normalizedSlug } });
-    reply.status(200).send({ available: !existing, slug: normalizedSlug });
+    const response: SlugAvailabilityResult = { available: !existing, slug: normalizedSlug };
+    reply.status(200).send(response);
   });
 
   app.get('/api/sketches/random', async (request, reply) => {
@@ -131,19 +113,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    reply.send({
-      id: sketch.id,
-      slug: sketch.slug,
-      title: sketch.title,
-      description: sketch.description,
-      authorName: sketch.authorName,
-      license: sketch.license,
-      socialLinks: sketch.socialLinks,
-      textmodeCode: sketch.textmodeCode,
-      strudelCode: sketch.strudelCode,
-      ogImageUrl: sketch.ogImageUrl,
-      createdAt: sketch.createdAt,
-    });
+    reply.send(toApprovedSketch(sketch));
   });
 
   app.get('/api/sketches/:slug', async (request, reply) => {
@@ -167,19 +137,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    reply.send({
-      id: sketch.id,
-      slug: sketch.slug,
-      title: sketch.title,
-      description: sketch.description,
-      authorName: sketch.authorName,
-      license: sketch.license,
-      socialLinks: sketch.socialLinks,
-      textmodeCode: sketch.textmodeCode,
-      strudelCode: sketch.strudelCode,
-      ogImageUrl: sketch.ogImageUrl,
-      createdAt: sketch.createdAt,
-    });
+    reply.send(toApprovedSketch(sketch));
   });
 };
 

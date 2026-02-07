@@ -1,10 +1,1 @@
-export interface SharePayloadV1 {
-	v: 1;
-	createdAt: number;
-	engines: {
-		textmode?: string;
-		strudel?: string;
-	};
-}
-
-export type SharePayload = SharePayloadV1;
+export type { SharePayload, SharePayloadV1 } from '@synth.textmode.art/contracts/share';

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { SharePayload } from '@/types/share.types';
-import type { ApprovedSketch } from '@/services/SketchApiService';
+import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { AppState } from '../appStore';
 
 export interface ShareSlice {

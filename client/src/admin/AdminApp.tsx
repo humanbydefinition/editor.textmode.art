@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { AdminSketchListResponse } from '@synth.textmode.art/contracts/admin';
 
 import {
     type SketchRequest,
@@ -82,7 +83,7 @@ export function AdminApp() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) throw new Error(await response.text() || 'Failed to load');
-            const data = (await response.json()) as { items: SketchRequest[] };
+            const data = (await response.json()) as AdminSketchListResponse;
             setRequests(data.items ?? []);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load requests');

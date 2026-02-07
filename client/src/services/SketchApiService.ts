@@ -3,48 +3,12 @@
  * Handles fetching approved sketches and submitting publish requests.
  */
 
-export interface ApprovedSketch {
-    id: string;
-    slug: string;
-    title: string;
-    description: string | null;
-    authorName: string | null;
-    license: string | null;
-    socialLinks: Array<{ label: string; url: string }> | null;
-    textmodeCode: string;
-    strudelCode: string | null;
-    ogImageUrl: string | null;
-    createdAt: string;
-}
-
-export interface SlugAvailabilityResult {
-    available: boolean;
-    slug: string;
-    reason?: string;
-}
-
-export interface SocialLink {
-    label: string;
-    url: string;
-}
-
-export interface SketchRequestPayload {
-    slug: string;
-    title: string;
-    description?: string | null;
-    authorName?: string | null;
-    license?: string | null;
-    socialLinks?: SocialLink[] | null;
-    textmodeCode: string;
-    strudelCode?: string | null;
-}
-
-export interface SketchRequestResult {
-    id: string;
-    slug: string;
-    status: 'PENDING' | 'APPROVED' | 'DENIED';
-    createdAt: string;
-}
+import type {
+    ApprovedSketch,
+    SketchRequestPayload,
+    SketchRequestResult,
+    SlugAvailabilityResult,
+} from '@synth.textmode.art/contracts/sketch';
 
 function getApiBase(): string {
     // In production, API is served from same origin

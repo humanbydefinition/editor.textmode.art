@@ -1,21 +1,17 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
+import {
+  adminQueryStatusSchema,
+  adminUpdateSchema,
+  type AdminSketchListResponse,
+  type AdminUpdateRequestPayload,
+} from '@synth.textmode.art/contracts/admin';
 import { prisma } from '../db.js';
 import { requireAdmin } from '../middleware/adminAuth.js';
-
-const statusQuerySchema = z.object({
-  status: z.string().optional(),
-});
-
-const adminUpdateSchema = z.object({
-  status: z.enum(['APPROVED', 'DENIED']),
-  denialReason: z.string().max(300).optional().nullable(),
-  reviewedBy: z.string().max(80).optional().nullable(),
-});
+import { toAdminSketchRequest } from '../contracts/sketchMappers.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/admin/sketch-requests', { preHandler: requireAdmin }, async (request, reply) => {
-    const parsed = statusQuerySchema.safeParse(request.query);
+    const parsed = adminQueryStatusSchema.safeParse(request.query);
     if (!parsed.success) {
       reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
       return;
@@ -31,9 +27,11 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    reply.send({
-      items: requests,
-    });
+    const response: AdminSketchListResponse = {
+      items: requests.map(toAdminSketchRequest),
+    };
+
+    reply.send(response);
   });
 
   app.patch('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
@@ -43,7 +41,8 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const { status, denialReason, reviewedBy } = parsed.data;
+    const payload: AdminUpdateRequestPayload = parsed.data;
+    const { status, denialReason, reviewedBy } = payload;
     if (status === 'DENIED' && !denialReason) {
       reply.status(400).send({ error: 'Denial reason is required when denying a request.' });
       return;
@@ -62,7 +61,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
         },
       });
 
-      reply.send(updated);
+      reply.send(toAdminSketchRequest(updated));
     } catch {
       reply.status(404).send({ error: 'Sketch request not found' });
     }

@@ -1,7 +1,7 @@
 import type { CodeError, StatusState } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
 import type { EngineState } from '@/stores/appStore';
-import type { ApprovedSketch } from '@/services/SketchApiService';
+import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;

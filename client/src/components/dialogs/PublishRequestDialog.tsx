@@ -23,8 +23,8 @@ import {
 import {
     checkSlugAvailability,
     submitSketchRequest,
-    type SocialLink,
 } from '@/services/SketchApiService';
+import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
 import {
     Check,
     Loader2,

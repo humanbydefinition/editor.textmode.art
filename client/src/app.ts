@@ -14,8 +14,8 @@ import { ShareService } from './services/ShareService';
 import {
 	fetchApprovedSketch,
 	fetchRandomApprovedSketch,
-	type ApprovedSketch,
 } from './services/SketchApiService';
+import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import { ShortcutsManager, type IShortcutsManager } from './managers/ShortcutsManager';
 import { EditorManager } from './managers/EditorManager';
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
