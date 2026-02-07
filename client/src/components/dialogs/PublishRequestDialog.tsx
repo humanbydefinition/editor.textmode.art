@@ -199,20 +199,22 @@ export function PublishRequestDialog({
     }, [data, isFormValid, slug, title, description, authorName, socialLinks]);
 
     if (!data) return null;
-
-    if (submitStatus === 'success') {
-        return (
-            <PublishRequestSuccessDialog
-                open={open}
-                submittedSlug={submittedSlug}
-                onOpenChange={onOpenChange}
-            />
-        );
-    }
+    const isSuccess = submitStatus === 'success';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[560px] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden h-[85vh] sm:h-[680px] flex flex-col">
+            <DialogContent className={
+                isSuccess
+                    ? 'sm:max-w-[480px] bg-zinc-950/98 backdrop-blur-2xl border-white/10'
+                    : 'sm:max-w-[560px] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden h-[85vh] sm:h-[680px] flex flex-col'
+            }>
+                {isSuccess ? (
+                    <PublishRequestSuccessDialog
+                        submittedSlug={submittedSlug}
+                        onClose={() => onOpenChange(false)}
+                    />
+                ) : (
+                    <>
                 <DialogHeader className="px-6 py-4 border-b border-white/5 text-left shrink-0">
                     <DialogTitle className="text-lg font-bold tracking-tight text-white">
                         publish to gallery
@@ -483,6 +485,8 @@ export function PublishRequestDialog({
                         submissions are reviewed manually before going live in the gallery
                     </p>
                 </div>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );
