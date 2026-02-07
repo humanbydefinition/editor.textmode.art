@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppLayout } from './EditorLayout';
 import { SystemMenu } from '@/features/system-menu';
 import { ErrorOverlay } from './ErrorOverlay';
-import { WelcomeDialog } from './dialogs/WelcomeDialog';
+import { WelcomeDialog } from './WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import type { PaneConfig } from './EditorLayout/types';
 import { useAppStore } from '@/platform/state/appStore';
