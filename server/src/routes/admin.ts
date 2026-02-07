@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { prisma } from '../db';
-import { requireAdmin } from '../middleware/adminAuth';
+import { prisma } from '../db.js';
+import { requireAdmin } from '../middleware/adminAuth.js';
 
 const statusQuerySchema = z.object({
   status: z.string().optional(),
@@ -63,7 +63,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       });
 
       reply.send(updated);
-    } catch (error) {
+    } catch {
       reply.status(404).send({ error: 'Sketch request not found' });
     }
   });

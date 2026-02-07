@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { isPublicHost } from '../utils/net';
+import { isPublicHost } from '../utils/net.js';
 
 const mediaQuerySchema = z.object({
   url: z.string().url().max(2000),

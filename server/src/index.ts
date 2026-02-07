@@ -1,5 +1,5 @@
-import { buildServer } from './app';
-import { env } from './config/env';
+import { buildServer } from './app.js';
+import { env } from './config/env.js';
 
 async function start() {
   const app = buildServer();

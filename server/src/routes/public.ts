@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { prisma } from '../db';
-import { normalizeSlug, validateSlug } from '../utils/slug';
+import { prisma } from '../db.js';
+import { normalizeSlug, validateSlug } from '../utils/slug.js';
 
 const socialLinkSchema = z.object({
   label: z.string().min(1).max(32),
@@ -55,7 +55,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
         description: parsed.data.description ?? null,
         authorName: parsed.data.authorName ?? null,
         license: parsed.data.license ?? null,
-        socialLinks: parsed.data.socialLinks ?? null,
+        socialLinks: parsed.data.socialLinks ?? undefined,
         textmodeCode: parsed.data.textmodeCode,
         strudelCode: parsed.data.strudelCode ?? null,
       },

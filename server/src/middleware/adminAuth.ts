@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 export async function requireAdmin(request: FastifyRequest, reply: FastifyReply) {
   const authHeader = request.headers.authorization ?? '';
