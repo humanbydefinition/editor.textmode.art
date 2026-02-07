@@ -11,6 +11,6 @@ export const selectStrudelEnabled = (state: AppState) => state.settings.strudelE
 
 export const selectHasLastWorkingForError = (state: AppState): boolean => {
 	if (!state.error?.source) return false;
-	const engineState = state.engineStates.get(state.error.source);
+	const engineState = state.engineStates[state.error.source];
 	return engineState?.lastWorkingCode !== null && engineState?.lastWorkingCode !== undefined;
 };
