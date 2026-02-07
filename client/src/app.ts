@@ -73,33 +73,36 @@ export class App {
 		useAppStore.getState().setSettings(loadedSettings);
 
 		// Detect shared sketch payload early to lock execution before runtimes start
-		// Priority 1: Server-injected slug OR URL path /s/:slug (approved sketches auto-run)
-		const slugFromServer = (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__;
-		const slugFromPath = window.location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
-		const detectedSlug = slugFromServer || slugFromPath;
-
-		if (detectedSlug) {
-			const sketchData = await fetchApprovedSketch(detectedSlug);
-			if (sketchData) {
-				useAppStore.getState().setApprovedSketch(sketchData);
-				const payload: SharePayload = {
-					v: 1,
-					createdAt: Date.now(),
-					engines: {
-						textmode: sketchData.textmodeCode,
-						...(sketchData.strudelCode && { strudel: sketchData.strudelCode }),
-					},
-				};
-				useAppStore.getState().setSharePayload(payload);
-				// Approved sketches are trusted — auto-consent
-				useAppStore.getState().setShareConsented(true);
-			}
-		}
-
-		// Priority 2: URL hash-based share (requires user consent)
+		// SECURITY: Check for share hash FIRST. If present, it MUST go through consent dialog.
+		// This prevents malicious URLs like /s/trusted-slug#share=malicious from bypassing security.
 		const sharedPayload = ShareService.getFromLocation(window.location);
-		if (sharedPayload && !detectedSlug) {
+
+		if (sharedPayload) {
+			// URL hash-based share always requires user consent, regardless of slug path
 			useAppStore.getState().setSharePayload(sharedPayload);
+		} else {
+			// Only process slug if there's NO share hash
+			const slugFromServer = (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__;
+			const slugFromPath = window.location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
+			const detectedSlug = slugFromServer || slugFromPath;
+
+			if (detectedSlug) {
+				const sketchData = await fetchApprovedSketch(detectedSlug);
+				if (sketchData) {
+					useAppStore.getState().setApprovedSketch(sketchData);
+					const payload: SharePayload = {
+						v: 1,
+						createdAt: Date.now(),
+						engines: {
+							textmode: sketchData.textmodeCode,
+							...(sketchData.strudelCode && { strudel: sketchData.strudelCode }),
+						},
+					};
+					useAppStore.getState().setSharePayload(payload);
+					// Approved sketches are trusted — auto-consent
+					useAppStore.getState().setShareConsented(true);
+				}
+			}
 		}
 
 		// Build initial panes and panels
