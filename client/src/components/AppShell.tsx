@@ -23,6 +23,8 @@ export interface AppShellProps {
     onPaneReady: (paneId: string, container: HTMLElement) => void;
     // Actions (Controller Logic)
     onShare: () => void;
+    onRandomize: () => void;
+    randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
     onRevertToLastWorking: () => void;
@@ -47,6 +49,8 @@ export function AppShell({
     editorBackdrop,
     onPaneReady,
     onShare,
+    onRandomize,
+    randomizeLoading,
     onClearStorage,
     onLoadExample,
     onRevertToLastWorking,
@@ -164,7 +168,7 @@ export function AppShell({
                                 'focus:outline-none focus:ring-2 focus:ring-emerald-400/30'
                             )}
                         >
-                            activate canvas
+                            unlock canvas
                         </button>
                     </div>
                 )}
@@ -179,6 +183,8 @@ export function AppShell({
                     {!showShareLock && (
                         <SystemMenu
                             onShare={onShare}
+                            onRandomize={onRandomize}
+                            randomizeLoading={randomizeLoading}
                             onClearStorage={onClearStorage}
                             onLoadExample={onLoadExample}
                         />
