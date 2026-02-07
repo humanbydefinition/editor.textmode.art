@@ -3,14 +3,16 @@
     "private": true,
     "version": "1.0.0",
     "type": "module",
-    "scripts": {
-        "dev": "tsx watch src/index.ts",
-        "build": "tsc",
-        "start": "node dist/index.js",
-        "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
-        "prisma:studio": "prisma studio"
-    },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint .",
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
     "dependencies": {
         "@fastify/cors": "^10.0.0",
         "@fastify/helmet": "^12.0.1",
