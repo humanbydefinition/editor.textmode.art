@@ -25,7 +25,9 @@ export class ShareService {
 
 	static buildShareUrl(payload: SharePayload, location: Location): string {
 		const encoded = ShareService.encode(payload);
-		return `${location.origin}${location.pathname}#${SHARE_HASH_KEY}=${encoded}`;
+		// Always use root path to prevent share URLs from inheriting slug paths.
+		// This ensures lz-string encoded sketches always go through the consent dialog.
+		return `${location.origin}/#${SHARE_HASH_KEY}=${encoded}`;
 	}
 
 	static decode(raw: string): SharePayload | null {
