@@ -71,7 +71,7 @@ export function SystemMenu({
                             'focus:outline-none focus:ring-2 focus:ring-white/10',
                             'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100'
                         )}
-                        aria-label="Load random approved sketch"
+                        aria-label="Load random sketch"
                     >
                         {randomizeLoading ? (
                             <Loader2 className="w-[14px] h-[14px] animate-spin" />
@@ -81,7 +81,7 @@ export function SystemMenu({
                     </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random approved sketch'}</p>
+                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random sketch'}</p>
                 </TooltipContent>
             </Tooltip>
 
