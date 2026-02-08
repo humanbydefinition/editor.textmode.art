@@ -194,14 +194,16 @@ export class AppRuntime {
 	}
 
 	private makeRandomChange(): void {
-		const isMobile = useAppStore.getState().isMobile;
-		let targetId = this.editorManager.getFocusedEditorId();
+		const { isMobile, activePanel } = useAppStore.getState();
+		const focusedEditorId = this.editorManager.getFocusedEditorId();
+		const candidateTargets = isMobile
+			? [activePanel, focusedEditorId, 'textmode', 'strudel']
+			: [focusedEditorId, activePanel, 'textmode', 'strudel'];
 
-		// If no editor has focus, default to a sensible choice
-		if (!targetId) {
-			// Prioritize Textmode as it's the main visual engine
-			targetId = 'textmode';
-		}
+		const targetId = candidateTargets.find(
+			(id): id is string => Boolean(id) && Boolean(this.engineLifecycle.getEngine(id as EngineId))
+		);
+		if (!targetId) return;
 
 		const engine = this.engineLifecycle.getEngine(targetId as EngineId);
 		if (engine) {
