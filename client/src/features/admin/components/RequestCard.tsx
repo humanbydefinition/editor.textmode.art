@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, ClipboardCopy, ExternalLink, Link2, UserRound, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, ClipboardCopy, ExternalLink, Link2, UserRound, XCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -26,7 +26,7 @@ type RequestCardProps = {
     onDenyDraftChange: (value: string) => void;
     onApprove: () => void;
     onDeny: () => void;
-    onCopySlug: () => void;
+    onCopySlug: () => Promise<boolean>;
 };
 
 const statusStyles: Record<SketchRequest['status'], string> = {
@@ -60,7 +60,14 @@ export function RequestCard({
 }: RequestCardProps) {
     const links = getLinks(request.socialLinks);
     const [denyConfirmOpen, setDenyConfirmOpen] = useState(false);
+    const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const hasDenialReason = denyDraft.trim().length > 0;
+
+    const handleCopySlug = async () => {
+        const copied = await onCopySlug();
+        setCopyState(copied ? 'copied' : 'failed');
+        window.setTimeout(() => setCopyState('idle'), 1200);
+    };
 
     return (
         <>
@@ -83,9 +90,24 @@ export function RequestCard({
                         </div>
 
                         <div className="flex shrink-0 gap-2">
-                            <Button variant="outline" size="sm" className="border-2 border-border" onClick={onCopySlug}>
-                                <ClipboardCopy className="h-3.5 w-3.5" />
-                                Copy slug
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className={`border-2 transition-colors ${
+                                    copyState === 'copied'
+                                        ? 'border-emerald-500 bg-emerald-950/30 text-emerald-300 motion-safe:animate-pulse'
+                                        : copyState === 'failed'
+                                          ? 'border-destructive bg-destructive/10 text-destructive motion-safe:animate-pulse'
+                                          : 'border-border'
+                                }`}
+                                onClick={() => void handleCopySlug()}
+                            >
+                                {copyState === 'copied' ? (
+                                    <Check className="h-3.5 w-3.5" />
+                                ) : (
+                                    <ClipboardCopy className="h-3.5 w-3.5" />
+                                )}
+                                {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy slug'}
                             </Button>
                             {request.status === 'APPROVED' ? (
                                 <Button variant="outline" size="sm" className="border-2 border-border" asChild>

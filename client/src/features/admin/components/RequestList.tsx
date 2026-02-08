@@ -13,7 +13,7 @@ type RequestListProps = {
     onDenyDraftChange: (requestId: string, value: string) => void;
     onApprove: (request: SketchRequest) => void;
     onDeny: (request: SketchRequest) => void;
-    onCopySlug: (slug: string) => void;
+    onCopySlug: (slug: string) => Promise<boolean>;
 };
 
 /**

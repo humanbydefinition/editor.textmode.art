@@ -37,7 +37,7 @@ export function AdminHeader({
                     </div>
                     <div className="min-w-0">
                         <p className="truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                            synth.textmode.art moderation
+                            synth.textmode.art
                         </p>
                         <h1 className="truncate text-sm font-semibold sm:text-base">das nest</h1>
                     </div>

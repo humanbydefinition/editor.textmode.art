@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Settings2, Sparkles } from 'lucide-react';
-import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import type { AdminSessionResponse, AdminSketchListResponse } from '@synth.textmode.art/contracts/admin';
+import { toast } from 'sonner';
 
 import {
     type FilterOption,
@@ -21,6 +21,7 @@ import { FilterTabs } from './components/FilterTabs';
 import { MobileSettings } from './components/MobileSettings';
 import { RequestList } from './components/RequestList';
 import { getApiErrorMessage } from './utils';
+import { Toaster } from '@/shared/ui/sonner';
 
 type AuthenticateOptions = {
     silent?: boolean;
@@ -56,8 +57,6 @@ export function AdminApp() {
     const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
     const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [notice, setNotice] = useState<string | null>(null);
     const [denyDrafts, setDenyDrafts] = useState<Record<string, string>>({});
 
     const restoreAttemptedRef = useRef(false);
@@ -69,12 +68,6 @@ export function AdminApp() {
             document.body.style.overflow = previousOverflow;
         };
     }, []);
-
-    useEffect(() => {
-        if (!notice) return undefined;
-        const timeoutId = window.setTimeout(() => setNotice(null), 2800);
-        return () => window.clearTimeout(timeoutId);
-    }, [notice]);
 
     const counts: StatusCounts = useMemo(() => {
         return requests.reduce(
@@ -113,8 +106,7 @@ export function AdminApp() {
             setActiveToken('');
             setTokenInput('');
             setAuthError(message);
-            setError(null);
-            setNotice(null);
+            toast.error(message);
             resetDashboardState();
         },
         [resetDashboardState]
@@ -157,7 +149,6 @@ export function AdminApp() {
             setReviewerDraft(normalizedReviewer);
             setTokenInput(trimmedToken);
             setAuthError(null);
-            setError(null);
             return true;
         } catch (err) {
             localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -196,12 +187,11 @@ export function AdminApp() {
         const trimmedToken = authToken.trim();
         if (!trimmedToken) {
             setRequests([]);
-            setError('Your admin session is not active.');
+            toast.error('Your admin session is not active.');
             return;
         }
 
         setLoading(true);
-        setError(null);
 
         try {
             const response = await fetch('/api/admin/sketch-requests', {
@@ -220,7 +210,7 @@ export function AdminApp() {
             setRequests(data.items ?? []);
             setLastSyncedAt(new Date());
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load requests');
+            toast.error(err instanceof Error ? err.message : 'Failed to load requests');
         } finally {
             setLoading(false);
         }
@@ -253,26 +243,22 @@ export function AdminApp() {
         setActiveToken('');
         setTokenInput('');
         setAuthError(null);
-        setError(null);
-        setNotice(null);
         resetDashboardState();
     }, [resetDashboardState]);
 
     const updateRequestStatus = async (request: SketchRequest, nextStatus: SketchStatus) => {
         if (!isAuthenticated || !activeToken.trim()) {
-            setError('Your admin session is not active.');
+            toast.error('Your admin session is not active.');
             return;
         }
 
         const denialReason = denyDrafts[request.id]?.trim();
         if (nextStatus === 'DENIED' && !denialReason) {
-            setError('Add a denial reason before denying a request.');
+            toast.error('Add a denial reason before denying a request.');
             return;
         }
 
         setUpdatingRequestId(request.id);
-        setError(null);
-        setNotice(null);
 
         try {
             const response = await fetch(`/api/admin/sketch-requests/${request.id}`, {
@@ -298,35 +284,38 @@ export function AdminApp() {
 
             const updated = (await response.json()) as SketchRequest;
             setRequests((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-            setNotice(`${updated.slug} marked as ${updated.status.toLowerCase()}.`);
+            toast.success(`${updated.slug} marked as ${updated.status.toLowerCase()}.`);
             setLastSyncedAt(new Date());
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update request');
+            toast.error(err instanceof Error ? err.message : 'Failed to update request');
         } finally {
             setUpdatingRequestId(null);
         }
     };
 
-    const copySlug = async (slug: string) => {
+    const copySlug = async (slug: string): Promise<boolean> => {
         try {
             await navigator.clipboard.writeText(slug);
-            setNotice(`Copied "${slug}" to clipboard.`);
+            return true;
         } catch {
-            setError('Unable to copy to clipboard.');
+            return false;
         }
     };
 
     if (!isAuthenticated) {
         return (
-            <AdminLoginPage
-                token={tokenInput}
-                reviewerName={reviewerDraft}
-                loading={authenticating || restoringSession}
-                error={authError}
-                onTokenChange={setTokenInput}
-                onReviewerNameChange={setReviewerDraft}
-                onSubmit={handleLoginSubmit}
-            />
+            <>
+                <AdminLoginPage
+                    token={tokenInput}
+                    reviewerName={reviewerDraft}
+                    loading={authenticating || restoringSession}
+                    error={authError}
+                    onTokenChange={setTokenInput}
+                    onReviewerNameChange={setReviewerDraft}
+                    onSubmit={handleLoginSubmit}
+                />
+                <Toaster position="top-right" />
+            </>
         );
     }
 
@@ -370,18 +359,6 @@ export function AdminApp() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {notice && (
-                                    <Alert aria-live="polite" className="rounded-lg border-2 border-emerald-500 bg-background py-3">
-                                        <AlertDescription className="text-sm text-emerald-200">{notice}</AlertDescription>
-                                    </Alert>
-                                )}
-
-                                {error && (
-                                    <Alert aria-live="polite" className="rounded-lg border-2 border-destructive bg-background py-3">
-                                        <AlertDescription className="text-sm text-destructive">{error}</AlertDescription>
-                                    </Alert>
-                                )}
-
                                 <FilterTabs value={statusFilter} counts={counts} onChange={setStatusFilter} />
                             </CardContent>
                         </Card>
@@ -395,7 +372,7 @@ export function AdminApp() {
                             onDenyDraftChange={(id, value) => setDenyDrafts((prev) => ({ ...prev, [id]: value }))}
                             onApprove={(request) => void updateRequestStatus(request, 'APPROVED')}
                             onDeny={(request) => void updateRequestStatus(request, 'DENIED')}
-                            onCopySlug={(slug) => void copySlug(slug)}
+                            onCopySlug={(slug) => copySlug(slug)}
                         />
                     </div>
                 </main>
@@ -420,7 +397,7 @@ export function AdminApp() {
                 onReviewerNameChange={handleReviewerNameChange}
                 onSignOut={handleSignOut}
             />
+            <Toaster position="top-right" />
         </div>
     );
 }
-
