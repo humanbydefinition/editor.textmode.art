@@ -86,7 +86,14 @@ export class StorageService implements IStorageService {
 		try {
 			const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
 			if (stored) {
-				return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+				const parsed = JSON.parse(stored) as Partial<AppSettings>;
+				delete parsed.strudelTransport;
+				return {
+					...DEFAULT_SETTINGS,
+					...parsed,
+					// Transport is runtime-only and must start paused on each page load.
+					strudelTransport: DEFAULT_SETTINGS.strudelTransport,
+				};
 			}
 		} catch {
 			// Ignore parse errors, return defaults
@@ -98,7 +105,9 @@ export class StorageService implements IStorageService {
 	 * Save settings to localStorage.
 	 */
 	saveSettings(settings: AppSettings): void {
-		localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+		const persisted: Partial<AppSettings> = { ...settings };
+		delete persisted.strudelTransport;
+		localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(persisted));
 	}
 }
 
