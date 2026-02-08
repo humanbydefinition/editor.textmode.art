@@ -65,6 +65,13 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const payload: SketchRequestPayload = parsed.data;
+    if (payload.publishConsent.policyVersion !== env.PUBLISH_CONSENT_POLICY_VERSION) {
+      reply.status(400).send({
+        error: 'Consent policy version mismatch. Please refresh and review the consent text again.',
+      });
+      return;
+    }
+
     const proofResult = antiSpamGuard.verifyAndConsumeSubmissionProof(payload);
     if (!('ok' in proofResult)) {
       reply.status(proofResult.statusCode).send({ error: proofResult.error });
@@ -114,6 +121,9 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
           socialLinks: payload.socialLinks ?? undefined,
           textmodeCode: payload.textmodeCode,
           strudelCode: payload.strudelCode ?? null,
+          publishConsentAccepted: payload.publishConsent.accepted,
+          publishConsentAcceptedAt: new Date(),
+          publishConsentPolicyVersion: payload.publishConsent.policyVersion,
         },
       });
 

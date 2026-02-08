@@ -28,6 +28,9 @@ interface SketchRecord {
   reviewedAt?: Date | string | null;
   reviewedBy?: string | null;
   denialReason?: string | null;
+  publishConsentAccepted?: boolean;
+  publishConsentAcceptedAt?: Date | string | null;
+  publishConsentPolicyVersion?: string | null;
 }
 
 function toIsoDate(value: Date | string): string {
@@ -131,5 +134,8 @@ export function toAdminSketchRequest(sketch: SketchRecord): AdminSketchRequest {
     reviewedAt: sketch.reviewedAt ? toIsoDate(sketch.reviewedAt) : null,
     reviewedBy: sketch.reviewedBy ?? null,
     denialReason: sketch.denialReason ?? null,
+    publishConsentAccepted: sketch.publishConsentAccepted ?? false,
+    publishConsentAcceptedAt: sketch.publishConsentAcceptedAt ? toIsoDate(sketch.publishConsentAcceptedAt) : null,
+    publishConsentPolicyVersion: sketch.publishConsentPolicyVersion ?? null,
   };
 }
