@@ -102,6 +102,7 @@ export const createSketchRequestSchema = z.object({
   textmodeCode: z.string().min(1).max(300_000),
   strudelCode: z.string().max(300_000).optional().nullable(),
   publishConsent: publishConsentSchema,
+  turnstileToken: z.string().min(1).max(4096),
   antiSpam: antiSpamProofSchema,
 });
 export type SketchRequestPayload = z.infer<typeof createSketchRequestSchema>;
