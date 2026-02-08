@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectApprovedSketch } from '@/platform/state/selectors';
+import { selectShareState, selectSlugSketchInfo } from '@/platform/state/selectors';
 import { SlugInfoCard } from './SlugInfoCard';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
@@ -18,15 +18,18 @@ export function SlugInfoAlert({
     autoOpenEnabled = true,
     onShare,
 }: SlugInfoAlertProps) {
-    const sketch = useAppStore(selectApprovedSketch);
+    const sketch = useAppStore(selectSlugSketchInfo);
+    const share = useAppStore(selectShareState);
+    const isPendingSketch = sketch?.status === 'PENDING';
+    const pendingUnlocked = !isPendingSketch || share.consented;
     const sketchSlug = sketch?.slug ?? null;
-    const hasGallerySketch = Boolean(sketch);
+    const hasGallerySketch = Boolean(sketch && pendingUnlocked);
     const buttonLabel = hasGallerySketch ? 'Gallery sketch info' : 'Share sketch';
     const [open, setOpen] = useState(false);
     const previousSlugRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (!autoOpenEnabled) {
+        if (!autoOpenEnabled || isPendingSketch) {
             previousSlugRef.current = null;
             setOpen(false);
             return;
@@ -42,7 +45,11 @@ export function SlugInfoAlert({
             setOpen(true);
             previousSlugRef.current = sketchSlug;
         }
-    }, [autoOpenEnabled, sketchSlug]);
+    }, [autoOpenEnabled, sketchSlug, isPendingSketch]);
+
+    if (isPendingSketch && !pendingUnlocked) {
+        return null;
+    }
 
     if (!hasGallerySketch) {
         return (

@@ -30,12 +30,10 @@ export function PublishRequestSuccessDialog({
                     <p className="text-sm text-zinc-300">
                         your publish request for{' '}
                         <span className="font-mono text-emerald-300">/s/{slug}</span>{' '}
-                        has been submitted for moderation.
+                        has been submitted for moderation and is immediately viewable behind the code consent prompt.
                     </p>
                     <p className="text-xs text-zinc-500 mt-2">
-                        once approved, your sketch will appear in the community gallery and be
-                        discoverable via the randomize feature. it will also be live at its own
-                        SEO-friendly URL.
+                        once approved, your sketch will appear in the community gallery, be discoverable via randomize, and show social links.
                     </p>
                 </div>
 

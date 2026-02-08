@@ -1,7 +1,9 @@
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { Badge } from '@/shared/ui/badge';
 
 export interface SlugInfoCardSketch {
+    status?: 'PENDING' | 'APPROVED';
     slug: string;
     title: string;
     description: string | null;
@@ -49,7 +51,8 @@ export function SlugInfoCard({
     onDismiss,
     className,
 }: SlugInfoCardProps) {
-    const socialLinks = sketch.socialLinks ?? [];
+    const isPending = sketch.status === 'PENDING';
+    const socialLinks = isPending ? [] : (sketch.socialLinks ?? []);
 
     return (
         <section
@@ -65,6 +68,14 @@ export function SlugInfoCard({
                         <h3 className="text-sm sm:text-base font-semibold leading-snug break-words min-w-0">
                             {sketch.title}
                         </h3>
+                        {isPending && (
+                            <Badge
+                                variant="outline"
+                                className="border-amber-500/30 bg-amber-500/10 text-amber-200"
+                            >
+                                pending review
+                            </Badge>
+                        )}
                     </div>
                 </div>
 
@@ -83,6 +94,12 @@ export function SlugInfoCard({
             {sketch.description && (
                 <div className="mt-2 max-h-28 overflow-auto rounded-md border border-white/5 bg-white/[0.03] px-2.5 py-2 text-xs sm:text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap break-words">
                     {sketch.description}
+                </div>
+            )}
+
+            {isPending && (
+                <div className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-200/90">
+                    Social links will be added after approval.
                 </div>
             )}
 
