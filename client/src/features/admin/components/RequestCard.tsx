@@ -62,6 +62,10 @@ export function RequestCard({
     const [denyConfirmOpen, setDenyConfirmOpen] = useState(false);
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const hasDenialReason = denyDraft.trim().length > 0;
+    const hasConsentEvidence =
+        request.publishConsentAccepted === true &&
+        Boolean(request.publishConsentAcceptedAt) &&
+        Boolean(request.publishConsentPolicyVersion?.trim());
 
     const handleCopySlug = async () => {
         const copied = await onCopySlug();
@@ -188,6 +192,40 @@ export function RequestCard({
                                         );
                                     })}
                                 </div>
+                            </div>
+
+                            <div className="rounded-lg border-2 border-border bg-background p-3">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Publish Consent</p>
+                                {hasConsentEvidence ? (
+                                    <div className="mt-2 space-y-2 text-sm">
+                                        <Badge
+                                            variant="outline"
+                                            className="border-2 border-emerald-600 bg-emerald-950/20 text-emerald-300"
+                                        >
+                                            Consent recorded
+                                        </Badge>
+                                        <p className="text-muted-foreground">
+                                            Accepted at {formatDate(request.publishConsentAcceptedAt)}
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            Policy version{' '}
+                                            <span className="font-mono text-foreground">{request.publishConsentPolicyVersion}</span>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="mt-2 space-y-2">
+                                        <Badge
+                                            variant="outline"
+                                            className="border-2 border-amber-600 bg-amber-950/20 text-amber-300"
+                                        >
+                                            Missing consent evidence
+                                        </Badge>
+                                        <p className="text-sm text-muted-foreground">
+                                            This is likely a legacy submission created before consent tracking was enforced.
+                                            Review manually before approval.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </section>
 
