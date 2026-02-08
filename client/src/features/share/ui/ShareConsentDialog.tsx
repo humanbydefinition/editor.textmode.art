@@ -12,7 +12,7 @@ import { Button } from '@/shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Badge } from '@/shared/ui/badge';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectShareState, selectSlugSketchInfo } from '@/platform/state/selectors';
+import { selectShareState } from '@/platform/state/selectors';
 import { X } from 'lucide-react';
 
 interface ShareConsentDialogProps {
@@ -23,10 +23,8 @@ interface ShareConsentDialogProps {
 
 export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: ShareConsentDialogProps) {
 	const share = useAppStore(selectShareState);
-	const slugSketchInfo = useAppStore(selectSlugSketchInfo);
 	const isOpen = Boolean(share.payload && !share.consented && share.promptOpen);
 	const [checked, setChecked] = useState(false);
-	const isPendingGallerySketch = slugSketchInfo?.status === 'PENDING';
 
 	const includesStrudel = Boolean(share.payload?.engines.strudel);
 	const includesTextmode = Boolean(share.payload?.engines.textmode);
