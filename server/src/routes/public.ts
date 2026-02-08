@@ -13,6 +13,7 @@ import { normalizeSlug, validateSlug } from '../utils/slug.js';
 import { toApprovedSketch, toPublicSketchAccess, toSketchRequestResult } from '../contracts/sketchMappers.js';
 import { env } from '../config/env.js';
 import { NoPiiAntiSpamGuard } from '../security/noPiiAntiSpam.js';
+import { verifyTurnstileToken } from '../security/turnstile.js';
 
 const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
@@ -69,6 +70,17 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       reply.status(400).send({
         error: 'Consent policy version mismatch. Please refresh and review the consent text again.',
       });
+      return;
+    }
+
+    const turnstileResult = await verifyTurnstileToken({
+      secretKey: env.TURNSTILE_SECRET_KEY ?? '',
+      token: payload.turnstileToken,
+      verifyUrl: env.TURNSTILE_VERIFY_URL,
+      remoteIp: request.ip,
+    });
+    if (!('ok' in turnstileResult)) {
+      reply.status(turnstileResult.statusCode).send({ error: turnstileResult.error });
       return;
     }
 

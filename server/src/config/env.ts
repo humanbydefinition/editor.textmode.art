@@ -22,6 +22,8 @@ const envSchema = z.object({
   ANTI_SPAM_MAX_SUBMISSIONS_PER_MINUTE: z.coerce.number().int().min(1).max(500).default(60),
   ANTI_SPAM_MAX_PENDING_REQUESTS: z.coerce.number().int().min(10).max(100000).default(5000),
   ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(600),
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -30,6 +32,9 @@ const parsedEnv = envSchema.parse(process.env);
 
 if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.ANTI_SPAM_SECRET) {
   throw new Error('ANTI_SPAM_SECRET must be set in production and be at least 32 characters long.');
+}
+if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.TURNSTILE_SECRET_KEY) {
+  throw new Error('TURNSTILE_SECRET_KEY must be set in production.');
 }
 
 export const env: Env = {
