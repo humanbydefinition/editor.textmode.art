@@ -1,14 +1,21 @@
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { SketchRequest } from '@prisma/client';
 import { env } from '../config/env.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export interface SlugPageSketch {
+  slug: string;
+  status: string;
+  title: string;
+  description: string | null;
+  ogImageUrl: string | null;
+}
+
 export interface SlugPageOptions {
-  sketch: SketchRequest;
+  sketch: SlugPageSketch;
   baseUrl: string;
   devServerUrl?: string;
   renderMode?: 'approved' | 'pending';
