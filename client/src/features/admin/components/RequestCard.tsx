@@ -219,6 +219,18 @@ export function RequestCard({
                             <AlertDescription className="text-rose-100/90">{request.denialReason}</AlertDescription>
                         </Alert>
                     )}
+
+                    {request.status === 'DENIED' && (
+                        <Alert className="border-amber-500/40 bg-amber-500/10">
+                            <AlertTitle className="text-amber-200">Slug reusable</AlertTitle>
+                            <AlertDescription className="text-amber-100/90">
+                                <code className="rounded border border-amber-300/30 bg-amber-300/10 px-1.5 py-0.5 font-mono">
+                                    /s/{request.slug}
+                                </code>{' '}
+                                can now be claimed by a new submission.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                 </CardContent>
             </Card>
 
