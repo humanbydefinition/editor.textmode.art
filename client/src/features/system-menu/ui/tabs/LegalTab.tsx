@@ -4,9 +4,9 @@ import { ScrollArea } from "@/shared/ui/scroll-area";
 import { cn } from "@/shared/lib/cn";
 
 export function LegalTab() {
-    const [openSection, setOpenSection] = useState<"imprint" | "privacy" | null>(null);
+    const [openSection, setOpenSection] = useState<"imprint" | "terms" | "privacy" | null>(null);
 
-    const toggleSection = (section: "imprint" | "privacy") => {
+    const toggleSection = (section: "imprint" | "terms" | "privacy") => {
         setOpenSection(openSection === section ? null : section);
     };
 
@@ -128,6 +128,130 @@ export function LegalTab() {
             </div>
 
             <button
+                onClick={() => toggleSection("terms")}
+                className={cn(
+                    "flex items-center justify-between w-full px-4 py-3 text-sm shrink-0",
+                    "border border-white/5 rounded-lg",
+                    "transition-colors duration-200",
+                    openSection === "terms"
+                        ? "text-white bg-zinc-800/60 rounded-b-none border-b-0"
+                        : "text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50"
+                )}
+            >
+                <span className="font-medium">Terms & Acceptable Use</span>
+                <ChevronDown
+                    className={cn(
+                        "w-4 h-4 transition-transform duration-300 ease-out",
+                        openSection === "terms" && "rotate-180"
+                    )}
+                />
+            </button>
+
+            <div
+                className={cn(
+                    "overflow-hidden transition-all duration-300 ease-out -mt-3",
+                    "border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20",
+                    openSection === "terms" ? "flex-1 min-h-0 opacity-100" : "h-0 opacity-0 border-0"
+                )}
+            >
+                <ScrollArea className="h-full">
+                    <div className="p-4 space-y-4 text-sm text-zinc-400 leading-relaxed">
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Scope</h4>
+                            <p className="text-zinc-500">
+                                These terms apply to the use of synth.textmode.art and related features, including sketch sharing,
+                                gallery submission, and moderation workflows.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Nature of Service</h4>
+                            <p className="text-zinc-500">
+                                The platform is provided for creative coding and community sharing. Availability, performance, and
+                                compatibility may change over time. There is no guarantee that specific features are continuously
+                                available.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Acceptable Use</h4>
+                            <p className="text-zinc-500">You must not use the service to:</p>
+                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
+                                <li>upload or distribute unlawful, infringing, or abusive content</li>
+                                <li>attempt unauthorized access, scraping abuse, or security bypasses</li>
+                                <li>disrupt service operation (for example by automated spam or denial patterns)</li>
+                                <li>misrepresent identity, rights ownership, or moderation history</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">User Content and Rights</h4>
+                            <p className="text-zinc-500">
+                                You remain responsible for the content you submit. By submitting to the gallery, you confirm that
+                                you have the required rights to publish code/text/media references and that publication does not
+                                violate third-party rights or applicable law.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Moderation and Enforcement</h4>
+                            <p className="text-zinc-500">
+                                We may review, deny, unpublish, or remove submissions where required for legal compliance, platform
+                                integrity, abuse prevention, or community safety. Queue limits and anti-spam controls may block or
+                                delay submissions when capacity is reached.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Unreviewed Sketches and Execution Risk</h4>
+                            <p className="text-zinc-500">
+                                Shared sketches can contain unreviewed third-party code. Running such code may trigger audio output,
+                                performance-heavy loops, or external network requests. You decide whether to execute shared code and
+                                should review it first.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Liability</h4>
+                            <p className="text-zinc-500">
+                                We are liable under statutory law. To the extent legally permitted, liability for slight negligence
+                                is limited to foreseeable, typical damages. Liability limitations do not apply in cases of intent,
+                                gross negligence, injury to life/body/health, mandatory statutory liability (including product
+                                liability), or where liability cannot be excluded under applicable law.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Applicable Law</h4>
+                            <p className="text-zinc-500">
+                                German law applies, without prejudice to mandatory consumer protection provisions that may apply in
+                                your country of residence.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Reporting and Contact</h4>
+                            <p className="text-zinc-500">
+                                For legal notices, rights claims, or abuse reports, contact{" "}
+                                <a
+                                    href="mailto:hello@textmode.art"
+                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                                >
+                                    hello@textmode.art
+                                </a>
+                                .
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Last Updated</h4>
+                            <p className="text-zinc-500">2026-02-08</p>
+                        </div>
+                    </div>
+                </ScrollArea>
+            </div>
+
+            <button
                 onClick={() => toggleSection("privacy")}
                 className={cn(
                     "flex items-center justify-between w-full px-4 py-3 text-sm shrink-0",
@@ -243,14 +367,55 @@ export function LegalTab() {
                                 challenge + proof-of-work, idempotency guards, and global queue limits.
                             </p>
                             <p className="text-zinc-500 mt-2">
-                                Turnstile is provided by Cloudflare and may process technical connection metadata as part of
-                                bot detection. For details, see Cloudflare documentation and privacy information.
+                                Cloudflare Turnstile may process technical signals required for bot detection (for example IP
+                                address, TLS fingerprint, user-agent, and sitekey/origin context). In this setup, Turnstile
+                                verification is used only for security/abuse prevention in publish requests.
                             </p>
                             <p className="text-zinc-500 mt-2">
                                 Purpose: protect availability and moderation capacity.
                                 <br />
                                 Legal basis: Art. 6(1)(f) GDPR.
                             </p>
+                            <p className="text-zinc-500 mt-2">
+                                For device storage/access rules under German law, processing is performed as technically
+                                necessary to provide a user-requested secure submission flow (Section 25(2) no. 2 TDDDG).
+                            </p>
+                            <p className="text-zinc-500 mt-2">
+                                Recipient/processor: Cloudflare, Inc. (USA). We rely on Cloudflare's DPA and transfer
+                                safeguards (including DPF/SCC mechanisms where applicable).
+                            </p>
+                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
+                                <li>
+                                    <a
+                                        href="https://www.cloudflare.com/turnstile-privacy-policy/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                                    >
+                                        Cloudflare Turnstile Privacy Addendum
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="https://www.cloudflare.com/cloudflare-customer-dpa/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                                    >
+                                        Cloudflare Customer DPA
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="https://www.cloudflare.com/gdpr/subprocessors/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                                    >
+                                        Cloudflare Subprocessors
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
 
                         <div>
@@ -319,10 +484,20 @@ export function LegalTab() {
                             </p>
                             <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
                                 <li>technical log data: limited retention for security and operations</li>
+                                <li>anti-spam challenge state: short-lived, automatically expiring in memory</li>
+                                <li>turnstile verification tokens: processed for verification and not stored long-term</li>
                                 <li>submission and moderation data: until moderation purpose ends or deletion is requested</li>
                                 <li>approved gallery entries: until removed by us or by justified deletion request</li>
                                 <li>local storage data: until you delete it in your browser</li>
                             </ul>
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium text-zinc-200 mb-2">Share-Link Execution Consent</h4>
+                            <p className="text-zinc-500">
+                                Before unreviewed shared code can run, users must explicitly confirm in the untrusted-sketch
+                                dialog.
+                            </p>
                         </div>
 
                         <div>

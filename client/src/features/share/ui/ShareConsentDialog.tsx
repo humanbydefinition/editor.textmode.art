@@ -68,7 +68,7 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 						</DialogClose>
 					</div>
 					<DialogDescription className="text-sm text-zinc-400">
-						this link contains code from another user. it will not run unless you explicitly unlock it.
+						this link contains unreviewed third-party code. it will not run unless you explicitly unlock it.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -90,17 +90,24 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 						</div>
 					</div>
 
-					<div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-						<label className="flex items-center gap-3 text-xs text-amber-200/80">
+						<div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+							<ul className="list-disc list-outside pl-5 space-y-1 text-xs text-amber-200/90 mb-3">
+							<li>may execute expensive loops, audio, and external requests</li>
+							<li>may contain illegal, offensive, or unsafe content</li>
+							<li>no warranty for safety, legality, or fitness of unapproved sketches</li>
+						</ul>
+							<label className="flex items-center gap-3 text-xs text-amber-200/80">
 							<input
 								type="checkbox"
 								checked={checked}
 								onChange={(event) => setChecked(event.target.checked)}
 								className="h-4 w-4 rounded border-amber-500/30 bg-zinc-900 text-amber-400 focus:ring-amber-400/40"
 							/>
-							<span>i understand this will execute code from another user</span>
-						</label>
-					</div>
+							<span>
+								i understand i am executing third-party code at my own responsibility
+							</span>
+							</label>
+						</div>
 
 					<div className="flex flex-wrap gap-3">
 						<Button
