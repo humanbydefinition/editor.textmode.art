@@ -11,6 +11,7 @@ import { Label } from '@/shared/ui/label';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { SlugInfoCard } from '@/components/SlugInfoCard';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
 import {
@@ -44,6 +45,14 @@ const LICENSE_OPTIONS = [
     'Apache-2.0',
     'GPL-3.0',
 ] as const;
+const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-08';
+
+function getPublishConsentPolicyVersion(): string {
+    const fromEnv = String(import.meta.env.VITE_PUBLISH_CONSENT_POLICY_VERSION ?? '').trim();
+    return fromEnv.length > 0 ? fromEnv : DEFAULT_PUBLISH_CONSENT_POLICY_VERSION;
+}
+
+const PUBLISH_CONSENT_POLICY_VERSION = getPublishConsentPolicyVersion();
 
 export interface PublishRequestData {
     textmodeCode: string;
@@ -87,6 +96,7 @@ export function PublishRequestDialog({
     const [instagram, setInstagram] = useState('');
     const [bluesky, setBluesky] = useState('');
     const [mastodon, setMastodon] = useState('');
+    const [publishConsentAccepted, setPublishConsentAccepted] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submittedSlug, setSubmittedSlug] = useState<string | null>(null);
@@ -104,6 +114,7 @@ export function PublishRequestDialog({
             setInstagram('');
             setBluesky('');
             setMastodon('');
+            setPublishConsentAccepted(false);
             setSubmitStatus('idle');
             setSubmitError(null);
             setSubmittedSlug(null);
@@ -155,9 +166,10 @@ export function PublishRequestDialog({
             title.trim().length > 0 &&
             title.trim().length <= 120 &&
             description.length <= 200 &&
-            authorName.length <= 32
+            authorName.length <= 32 &&
+            publishConsentAccepted
         );
-    }, [slug.available, title, description, authorName]);
+    }, [slug.available, title, description, authorName, publishConsentAccepted]);
 
     const previewSketch = useMemo(() => {
         const normalizedPreviewSlug = (slug.normalized || slug.value || 'your-sketch')
@@ -187,6 +199,10 @@ export function PublishRequestDialog({
             socialLinks: socialLinks.length > 0 ? socialLinks : null,
             textmodeCode: data.textmodeCode,
             strudelCode: data.strudelCode ?? null,
+            publishConsent: {
+                accepted: true,
+                policyVersion: PUBLISH_CONSENT_POLICY_VERSION,
+            },
         });
 
         if (result.success) {
@@ -196,7 +212,7 @@ export function PublishRequestDialog({
             setSubmitStatus('error');
             setSubmitError(result.error);
         }
-    }, [data, isFormValid, slug, title, description, authorName, socialLinks]);
+    }, [data, isFormValid, slug, title, description, authorName, license, socialLinks]);
 
     if (!data) return null;
     const isSuccess = submitStatus === 'success';
@@ -448,6 +464,30 @@ export function PublishRequestDialog({
                                         sketch={previewSketch}
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Publish consent */ }
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                            <Checkbox
+                                id="publish-consent"
+                                checked={publishConsentAccepted}
+                                onChange={(event) => setPublishConsentAccepted(event.currentTarget.checked)}
+                                className="mt-0.5"
+                            />
+                            <div className="space-y-1">
+                                <Label htmlFor="publish-consent" className="text-sm text-zinc-200 cursor-pointer">
+                                    I confirm publication consent <span className="text-red-400">*</span>
+                                </Label>
+                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                    If approved, this submission can be publicly listed in the gallery and shared via a public
+                                    URL. Any optional author name or social links I provide may be shown publicly.
+                                </p>
+                                <p className="text-[11px] text-zinc-500">
+                                    Policy version: <span className="font-mono text-zinc-400">{PUBLISH_CONSENT_POLICY_VERSION}</span>
+                                </p>
                             </div>
                         </div>
                     </div>
