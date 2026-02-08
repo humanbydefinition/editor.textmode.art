@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "prisma migrate deploy && tsx watch src/index.ts",
     "lint": "eslint .",
-    "build": "tsc",
-    "check-types": "tsc --noEmit",
+    "build": "prisma generate && tsc",
+    "check-types": "prisma generate && tsc --noEmit",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
