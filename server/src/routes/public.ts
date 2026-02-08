@@ -20,6 +20,22 @@ import { verifyTurnstileToken } from '../security/turnstile.js';
 const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
+/** Prisma select: only the columns public API responses need (excludes review/denial/consent metadata) */
+const publicSketchSelect = {
+  id: true,
+  slug: true,
+  status: true,
+  title: true,
+  description: true,
+  authorName: true,
+  license: true,
+  socialLinks: true,
+  textmodeCode: true,
+  strudelCode: true,
+  ogImageUrl: true,
+  createdAt: true,
+};
+
 const antiSpamGuard = new NoPiiAntiSpamGuard({
   secret: env.ANTI_SPAM_SECRET ?? '',
   difficulty: env.ANTI_SPAM_POW_DIFFICULTY,
@@ -130,6 +146,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
         slug: normalizedSlug,
         status: { in: ACTIVE_SKETCH_STATUSES },
       },
+      select: { id: true },
     });
     if (existing) {
       reply.status(409).send({ error: 'Slug already in use' });
@@ -151,6 +168,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
           publishConsentAcceptedAt: new Date(),
           publishConsentPolicyVersion: payload.publishConsent.policyVersion,
         },
+        select: { id: true, slug: true, status: true, createdAt: true },
       });
 
       reply.status(201).send(toSketchRequestResult(created));
@@ -183,6 +201,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
         slug: normalizedSlug,
         status: { in: ACTIVE_SKETCH_STATUSES },
       },
+      select: { id: true },
     });
     const response: SlugAvailabilityResult = { available: !existing, slug: normalizedSlug };
     reply.status(200).send(response);
@@ -225,6 +244,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       where: whereClause,
       orderBy: { createdAt: 'asc' },
       skip: randomIndex,
+      select: publicSketchSelect,
     });
 
     if (!sketch) {
@@ -249,6 +269,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
         slug: normalizedSlug,
         status: 'APPROVED',
       },
+      select: publicSketchSelect,
     });
 
     if (!sketch) {
@@ -273,6 +294,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
         slug: normalizedSlug,
         status: { in: ACTIVE_SKETCH_STATUSES },
       },
+      select: publicSketchSelect,
     });
 
     if (!sketch) {
