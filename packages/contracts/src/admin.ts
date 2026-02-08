@@ -36,6 +36,9 @@ export const adminSketchRequestSchema = z.object({
   reviewedAt: z.string().nullable(),
   reviewedBy: z.string().nullable(),
   denialReason: z.string().nullable(),
+  publishConsentAccepted: z.boolean().optional(),
+  publishConsentAcceptedAt: z.string().nullable().optional(),
+  publishConsentPolicyVersion: z.string().nullable().optional(),
 });
 export type AdminSketchRequest = z.infer<typeof adminSketchRequestSchema>;
 

@@ -4,6 +4,12 @@ export const sketchStatusSchema = z.enum(['PENDING', 'APPROVED', 'DENIED']);
 export type SketchStatus = z.infer<typeof sketchStatusSchema>;
 export const antiSpamAlgorithmSchema = z.literal('sha256-leading-zero-bits-v1');
 export type AntiSpamAlgorithm = z.infer<typeof antiSpamAlgorithmSchema>;
+export const publishConsentPolicyVersionSchema = z.string().min(1).max(64);
+export const publishConsentSchema = z.object({
+  accepted: z.literal(true),
+  policyVersion: publishConsentPolicyVersionSchema,
+});
+export type PublishConsent = z.infer<typeof publishConsentSchema>;
 
 export const socialLinkSchema = z.object({
   label: z.string().min(1).max(32),
@@ -82,6 +88,7 @@ export const sketchRequestHashPayloadSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(6).nullable(),
   textmodeCode: z.string().min(1).max(300_000),
   strudelCode: z.string().max(300_000).nullable(),
+  publishConsent: publishConsentSchema,
 });
 export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
 
@@ -94,6 +101,7 @@ export const createSketchRequestSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(6).optional().nullable(),
   textmodeCode: z.string().min(1).max(300_000),
   strudelCode: z.string().max(300_000).optional().nullable(),
+  publishConsent: publishConsentSchema,
   antiSpam: antiSpamProofSchema,
 });
 export type SketchRequestPayload = z.infer<typeof createSketchRequestSchema>;
@@ -110,6 +118,7 @@ export function toSketchRequestHashPayload(
     socialLinks: payload.socialLinks ?? null,
     textmodeCode: payload.textmodeCode,
     strudelCode: payload.strudelCode ?? null,
+    publishConsent: payload.publishConsent,
   };
 }
 
