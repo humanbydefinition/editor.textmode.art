@@ -26,5 +26,7 @@ export function createControllerStoreAdapter(): ControllerStoreAdapter {
         // Approved sketch
         getApprovedSketch: () => useAppStore.getState().approvedSketch,
         setApprovedSketch: (sketch) => useAppStore.getState().setApprovedSketch(sketch),
+        getSlugSketchInfo: () => useAppStore.getState().slugSketchInfo,
+        setSlugSketchInfo: (info) => useAppStore.getState().setSlugSketchInfo(info),
     };
 }

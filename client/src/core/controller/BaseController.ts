@@ -2,6 +2,8 @@ import type { CodeError, StatusState } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
 import type { EngineState } from '@/platform/state/appStore';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
+import type { SharePayload } from '@/types/share.types';
+import type { SlugSketchInfo } from '@/platform/state/slices/shareSlice';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -58,6 +60,8 @@ export interface ControllerStoreAdapter {
 	// Approved sketch
 	getApprovedSketch: () => ApprovedSketch | null;
 	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
+	getSlugSketchInfo: () => SlugSketchInfo | null;
+	setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
 }
 
 /**
@@ -273,16 +277,40 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	private clearApprovedSketchIfCustomized(code: string): void {
 		const approvedSketch = this.deps.store.getApprovedSketch();
-		if (!approvedSketch) return;
+		if (approvedSketch) {
+			const approvedCodeForEngine =
+				this.engineId === 'strudel'
+					? approvedSketch.strudelCode ?? ''
+					: approvedSketch.textmodeCode;
 
-		const approvedCodeForEngine =
-			this.engineId === 'strudel'
-				? approvedSketch.strudelCode ?? ''
-				: approvedSketch.textmodeCode;
-
-		if (code !== approvedCodeForEngine) {
-			this.deps.store.setApprovedSketch(null);
+			if (code !== approvedCodeForEngine) {
+				this.deps.store.setApprovedSketch(null);
+				this.deps.store.setSlugSketchInfo(null);
+			}
+			return;
 		}
+
+		const slugSketchInfo = this.deps.store.getSlugSketchInfo();
+		if (!slugSketchInfo || slugSketchInfo.status !== 'PENDING') return;
+
+		const sharedCodeForEngine = this.getSharePayloadCodeForEngine(this.deps.store.getShareState().payload);
+		if (sharedCodeForEngine === null) return;
+
+		if (code !== sharedCodeForEngine) {
+			this.deps.store.setSlugSketchInfo(null);
+		}
+	}
+
+	private getSharePayloadCodeForEngine(payload: unknown): string | null {
+		if (!payload || typeof payload !== 'object') return null;
+		const candidate = payload as SharePayload;
+		if (!candidate.engines || typeof candidate.engines !== 'object') return null;
+
+		if (this.engineId === 'strudel') {
+			return candidate.engines.strudel ?? '';
+		}
+
+		return candidate.engines.textmode ?? '';
 	}
 
 	/**
