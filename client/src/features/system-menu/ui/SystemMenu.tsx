@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play, Heart } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -10,7 +10,6 @@ import {
     DialogClose,
 } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { Badge } from "@/shared/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { cn } from '@/shared/lib/cn';
 import { PreferencesTab } from './tabs/PreferencesTab';
@@ -189,11 +188,24 @@ export function SystemMenu({
                             <DialogTitle className="text-l font-bold tracking-tight text-white flex items-center gap-2">
                                 synth.textmode.art
                             </DialogTitle>
-                            <Badge variant="outline" className="text-zinc-400 border-zinc-700 font-mono text-[10px] tracking-wider uppercase relative -top-2">
-                                Beta
-                            </Badge>
                         </div>
                         <div className="flex items-center gap-1">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <a
+                                        href="https://code.textmode.art/docs/support"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-pink-400 hover:bg-pink-500/10 transition-all"
+                                        aria-label="Support the project"
+                                    >
+                                        <Heart className="w-4 h-4" />
+                                    </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>support the project</p>
+                                </TooltipContent>
+                            </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button

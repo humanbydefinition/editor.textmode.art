@@ -58,9 +58,6 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                             <DialogTitle className="text-l font-bold tracking-tight text-white flex items-center gap-2">
                                 synth.textmode.art
                             </DialogTitle>
-                            <Badge variant="outline" className="text-zinc-400 border-zinc-700 font-mono text-[10px] tracking-wider uppercase relative -top-2">
-                                Beta
-                            </Badge>
                         </div>
                         <div className="flex items-center gap-1">
 

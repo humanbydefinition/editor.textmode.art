@@ -93,7 +93,7 @@ export function AboutTab() {
                 {/* Social / Connect Section */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Connect</h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <a
                             href="https://discord.gg/sjrw8QXNks"
                             target="_blank"
@@ -113,15 +113,6 @@ export function AboutTab() {
                         >
                             <Github className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0" />
                             <span className="text-sm text-zinc-400 group-hover:text-white">github</span>
-                        </a>
-                        <a
-                            href="https://code.textmode.art/docs/support"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/30 border border-white/5 hover:bg-pink-500/10 hover:border-pink-500/20 transition-all group w-full"
-                        >
-                            <Heart className="w-4 h-4 text-pink-400 group-hover:text-pink-300 shrink-0" />
-                            <span className="text-sm text-zinc-400 group-hover:text-pink-300">support</span>
                         </a>
                     </div>
                 </div>
