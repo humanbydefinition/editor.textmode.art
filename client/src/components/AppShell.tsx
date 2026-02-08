@@ -15,6 +15,7 @@ import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import type { StrudelTransportState } from '@/types/app.types';
 
 
 export interface AppShellProps {
@@ -27,7 +28,10 @@ export interface AppShellProps {
     // Actions (Controller Logic)
     onShare: () => void;
     onRandomize: () => void;
+    onToggleStrudelTransport: () => void;
     onMakeRandomChange: () => void;
+    strudelEnabled: boolean;
+    strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
@@ -52,7 +56,10 @@ export function AppShell({
     onPaneReady,
     onShare,
     onRandomize,
+    onToggleStrudelTransport,
     onMakeRandomChange,
+    strudelEnabled,
+    strudelTransport,
     randomizeLoading,
     onClearStorage,
     onLoadExample,
@@ -154,7 +161,10 @@ export function AppShell({
                         <SystemMenu
                             onShare={onShare}
                             onRandomize={onRandomize}
+                            onToggleStrudelTransport={onToggleStrudelTransport}
                             onMakeRandomChange={onMakeRandomChange}
+                            strudelEnabled={strudelEnabled}
+                            strudelTransport={strudelTransport}
                             randomizeLoading={randomizeLoading}
                             onClearStorage={onClearStorage}
                             onLoadExample={onLoadExample}

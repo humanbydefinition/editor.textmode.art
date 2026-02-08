@@ -10,8 +10,8 @@ export interface ShortcutActions {
 	toggleEditorBackdrop: () => void;
 	/** Toggle UI visibility */
 	toggleUIVisibility: () => void;
-	/** Hush audio (stop Strudel) */
-	hushAudio: () => void;
+	/** Toggle Strudel transport play/pause */
+	toggleStrudelAudio: () => void;
 	/** Run code in the active editor */
 	runCodeForEngine: (engineId: string) => void;
 }
@@ -90,6 +90,13 @@ export class ShortcutsManager implements IShortcutsManager {
 		if (e.ctrlKey && e.shiftKey && e.key === 'H') {
 			e.preventDefault();
 			this.actions.toggleUIVisibility();
+		}
+
+		// Toggle Strudel audio transport: Ctrl/Cmd + .
+		if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === '.') {
+			e.preventDefault();
+			e.stopPropagation();
+			this.actions.toggleStrudelAudio();
 		}
 
 		// Run active editor: Ctrl/Cmd + Enter

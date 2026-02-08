@@ -6,6 +6,8 @@
 /**
  * Application settings persisted to localStorage.
  */
+export type StrudelTransportState = 'paused' | 'playing';
+
 export interface AppSettings {
 	/** Run code automatically on changes */
 	autoExecute: boolean;
@@ -21,6 +23,8 @@ export interface AppSettings {
 	autoExecuteDelay: number;
 	/** Whether Strudel audio is enabled */
 	strudelEnabled: boolean;
+	/** Whether Strudel transport should currently play audio */
+	strudelTransport: StrudelTransportState;
 }
 
 /**
@@ -34,6 +38,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	lineNumbers: false,
 	autoExecuteDelay: 500,
 	strudelEnabled: true,
+	strudelTransport: 'paused',
 };
 
 /**

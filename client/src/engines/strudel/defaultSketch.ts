@@ -1,5 +1,5 @@
 export const defaultStrudelSketch = `// Live coding with strudel
-// Ctrl+Enter = run · Ctrl+. = stop (hush)
+// Ctrl+Enter = run · Ctrl+. = toggle play/pause
 // Docs: https://strudel.cc
 
 // Load a custom sample from a URL

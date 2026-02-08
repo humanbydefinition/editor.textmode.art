@@ -19,6 +19,12 @@ export function ShortcutsTab() {
             ]
         },
         {
+            title: "Audio Transport",
+            shortcuts: [
+                { keys: ["Ctrl", "."], description: "toggle strudel play / pause" },
+            ]
+        },
+        {
             title: "Appearance",
             shortcuts: [
                 { keys: ["Ctrl", "+"], description: "increase font size" },

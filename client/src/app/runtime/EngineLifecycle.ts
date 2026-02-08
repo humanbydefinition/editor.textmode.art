@@ -8,7 +8,7 @@ import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import { useAppStore } from '@/platform/state/appStore';
-import type { AppSettings } from '@/types/app.types';
+import type { AppSettings, StrudelTransportState } from '@/types/app.types';
 import type { EngineId } from '@/types/engine.types';
 import type { SharePayload } from '@/types/share.types';
 
@@ -33,6 +33,7 @@ export class EngineLifecycle {
 	private readonly deps: EngineLifecycleDependencies;
 	private readonly textmodeEngine = new TextmodeEngine();
 	private strudelEngine: StrudelEngine | null = null;
+	private enableStrudelPromise: Promise<void> | null = null;
 	private audioUnsubscribe: (() => void) | null = null;
 
 	constructor(deps: Omit<EngineLifecycleDependencies, 'createAudioSource'> & { createAudioSource?: () => IAudioSource }) {
@@ -67,7 +68,17 @@ export class EngineLifecycle {
 
 	async enableStrudel(): Promise<boolean> {
 		if (this.strudelEngine) return false;
-		await this.enableStrudelInternal();
+		if (this.enableStrudelPromise) {
+			await this.enableStrudelPromise;
+			return false;
+		}
+
+		this.enableStrudelPromise = this.enableStrudelInternal();
+		try {
+			await this.enableStrudelPromise;
+		} finally {
+			this.enableStrudelPromise = null;
+		}
 		return true;
 	}
 
@@ -91,12 +102,21 @@ export class EngineLifecycle {
 		return false;
 	}
 
+	setStrudelTransport(transport: StrudelTransportState): void {
+		if (!this.strudelEngine) return;
+		if (transport === 'playing') {
+			this.strudelEngine.getController()?.handleForceRun();
+			return;
+		}
+		this.pauseStrudelPlayback();
+	}
+
 	applyEditorSettings(): void {
 		this.deps.editorManager.applySettings(this.deps.getSettings());
 	}
 
 	hushStrudel(): void {
-		this.strudelEngine?.hush();
+		this.pauseStrudelPlayback();
 	}
 
 	getCode(engineId: EngineId): string {
@@ -111,12 +131,27 @@ export class EngineLifecycle {
 	}
 
 	runEngine(engineId: EngineId): void {
+		if (engineId === 'strudel' && !this.shouldRunStrudel()) {
+			this.pauseStrudelPlayback();
+			return;
+		}
 		this.getEngine(engineId)?.getController()?.handleForceRun();
 	}
 
 	loadExample(engineId: EngineId, code: string): boolean {
 		const engine = this.getEngine(engineId);
 		if (!engine) return false;
+
+		if (engineId === 'strudel' && this.strudelEngine) {
+			this.strudelEngine.setCode(code, { silent: true });
+			this.deps.storage.saveEngineCode(engineId, code);
+			if (this.shouldRunStrudel()) {
+				this.strudelEngine.getController()?.handleForceRun();
+			} else {
+				this.pauseStrudelPlayback();
+			}
+			return true;
+		}
 
 		engine.setCode(code);
 		this.deps.storage.saveEngineCode(engineId, code);
@@ -154,7 +189,11 @@ export class EngineLifecycle {
 		}
 
 		if (payload.engines.strudel !== undefined && this.strudelEngine) {
-			this.strudelEngine.getController()?.handleForceRun();
+			if (this.shouldRunStrudel()) {
+				this.strudelEngine.getController()?.handleForceRun();
+			} else {
+				this.pauseStrudelPlayback();
+			}
 		}
 	}
 
@@ -168,10 +207,14 @@ export class EngineLifecycle {
 		if (!this.strudelEngine) return;
 		if (sketch.strudelCode) {
 			this.strudelEngine.setCode(sketch.strudelCode, { silent: true });
-			this.strudelEngine.getRuntime()?.forceRun(sketch.strudelCode);
+			if (this.shouldRunStrudel()) {
+				this.strudelEngine.getController()?.handleForceRun();
+			} else {
+				this.pauseStrudelPlayback();
+			}
 			return;
 		}
-		this.strudelEngine.hush();
+		this.pauseStrudelPlayback();
 	}
 
 	resetAll(): void {
@@ -180,8 +223,12 @@ export class EngineLifecycle {
 
 		useAppStore.getState().setEngineLastWorkingCode('strudel', null);
 		if (this.strudelEngine) {
-			this.strudelEngine.setCode(this.strudelEngine.getDefaultCode());
-			this.strudelEngine.hush();
+			this.strudelEngine.setCode(this.strudelEngine.getDefaultCode(), { silent: true });
+			if (this.shouldRunStrudel()) {
+				this.strudelEngine.getController()?.handleForceRun();
+			} else {
+				this.pauseStrudelPlayback();
+			}
 		}
 	}
 
@@ -223,7 +270,7 @@ export class EngineLifecycle {
 	private disableStrudelInternal(): void {
 		if (!this.strudelEngine) return;
 
-		this.strudelEngine.hush();
+		this.pauseStrudelPlayback();
 		this.stopAudioReactivity();
 
 		this.deps.editorManager.unregisterEditor('strudel');
@@ -237,6 +284,19 @@ export class EngineLifecycle {
 			isPlaying: false,
 			isInitialized: false,
 		});
+	}
+
+	private shouldRunStrudel(): boolean {
+		return this.deps.getSettings().strudelTransport === 'playing';
+	}
+
+	private pauseStrudelPlayback(): void {
+		const controller = this.strudelEngine?.getController();
+		if (controller) {
+			controller.handleTransportPause();
+			return;
+		}
+		this.strudelEngine?.hush();
 	}
 
 	private startAudioReactivity(): void {
