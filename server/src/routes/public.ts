@@ -3,8 +3,10 @@ import { Prisma } from '@prisma/client';
 import {
   createSketchRequestSchema,
   randomSketchQuerySchema,
+  sketchSubmissionQueueStatusSchema,
   slugAvailabilityQuerySchema,
   type SketchRequestPayload,
+  type SketchSubmissionQueueStatus,
   type SketchStatus,
   type SlugAvailabilityResult,
 } from '@synth.textmode.art/contracts/sketch';
@@ -52,6 +54,18 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     reply.status(200).send(challengeOrError);
   });
 
+  app.get('/api/sketch-requests/queue-status', async (_request, reply) => {
+    const pending = await prisma.sketchRequest.count({
+      where: { status: 'PENDING' },
+    });
+
+    const response: SketchSubmissionQueueStatus = {
+      full: pending >= env.ANTI_SPAM_MAX_PENDING_REQUESTS,
+    };
+
+    reply.status(200).send(sketchSubmissionQueueStatusSchema.parse(response));
+  });
+
   app.post('/api/sketch-requests', async (request, reply) => {
     const idempotencyKey = getIdempotencyKey(request.headers['x-idempotency-key']);
     if (!idempotencyKey) {
@@ -61,7 +75,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
 
     const parsed = createSketchRequestSchema.safeParse(request.body);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 
@@ -107,7 +121,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     const normalizedSlug = normalizeSlug(payload.slug);
     const slugValidation = validateSlug(normalizedSlug);
     if (!slugValidation.valid) {
-      reply.status(400).send({ error: slugValidation.reason, slug: normalizedSlug });
+      reply.status(400).send({ error: slugValidation.reason });
       return;
     }
 
@@ -118,7 +132,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       },
     });
     if (existing) {
-      reply.status(409).send({ error: 'Slug already in use', slug: normalizedSlug });
+      reply.status(409).send({ error: 'Slug already in use' });
       return;
     }
 
@@ -142,7 +156,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
       reply.status(201).send(toSketchRequestResult(created));
     } catch (error) {
       if (isUniqueConstraintViolation(error)) {
-        reply.status(409).send({ error: 'Slug already in use', slug: normalizedSlug });
+        reply.status(409).send({ error: 'Slug already in use' });
         return;
       }
       throw error;
@@ -152,7 +166,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/sketch-requests/slug-available', async (request, reply) => {
     const parsed = slugAvailabilityQuerySchema.safeParse(request.query);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 
@@ -177,7 +191,7 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/sketches/random', async (request, reply) => {
     const parsed = randomSketchQuerySchema.safeParse(request.query);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 

@@ -20,7 +20,7 @@ const envSchema = z.object({
   ANTI_SPAM_CHALLENGE_TTL_SECONDS: z.coerce.number().int().min(30).max(900).default(180),
   ANTI_SPAM_MAX_CHALLENGES_PER_MINUTE: z.coerce.number().int().min(10).max(5000).default(600),
   ANTI_SPAM_MAX_SUBMISSIONS_PER_MINUTE: z.coerce.number().int().min(1).max(500).default(60),
-  ANTI_SPAM_MAX_PENDING_REQUESTS: z.coerce.number().int().min(10).max(100000).default(5000),
+  ANTI_SPAM_MAX_PENDING_REQUESTS: z.coerce.number().int().min(2).max(100000).default(5000),
   ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(600),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),

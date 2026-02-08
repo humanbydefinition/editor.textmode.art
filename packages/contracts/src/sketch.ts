@@ -142,6 +142,11 @@ export const slugAvailabilityResultSchema = z.object({
 });
 export type SlugAvailabilityResult = z.infer<typeof slugAvailabilityResultSchema>;
 
+export const sketchSubmissionQueueStatusSchema = z.object({
+  full: z.boolean(),
+});
+export type SketchSubmissionQueueStatus = z.infer<typeof sketchSubmissionQueueStatusSchema>;
+
 export const slugAvailabilityQuerySchema = z.object({
   slug: z.string().min(1),
 });

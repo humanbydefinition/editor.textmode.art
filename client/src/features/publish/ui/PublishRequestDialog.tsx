@@ -24,6 +24,7 @@ import {
 } from '@/shared/ui/select';
 import {
     checkSlugAvailability,
+    fetchSketchSubmissionQueueStatus,
     submitSketchRequest,
 } from '@/services/SketchApiService';
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
@@ -78,6 +79,11 @@ interface SlugState {
     reason?: string;
 }
 
+interface SubmissionQueueState {
+    loading: boolean;
+    full: boolean;
+}
+
 export function PublishRequestDialog({
     open,
     data,
@@ -106,6 +112,10 @@ export function PublishRequestDialog({
     const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submittedSlug, setSubmittedSlug] = useState<string | null>(null);
+    const [submissionQueue, setSubmissionQueue] = useState<SubmissionQueueState>({
+        loading: false,
+        full: false,
+    });
 
     // Reset form when dialog opens
     useEffect(() => {
@@ -127,6 +137,26 @@ export function PublishRequestDialog({
             setSubmitStatus('idle');
             setSubmitError(null);
             setSubmittedSlug(null);
+            setSubmissionQueue({
+                loading: true,
+                full: false,
+            });
+
+            void (async () => {
+                const queueStatus = await fetchSketchSubmissionQueueStatus();
+                if (!queueStatus) {
+                    setSubmissionQueue({
+                        loading: false,
+                        full: false,
+                    });
+                    return;
+                }
+
+                setSubmissionQueue({
+                    loading: false,
+                    full: queueStatus.full,
+                });
+            })();
         }
     }, [open]);
 
@@ -178,9 +208,10 @@ export function PublishRequestDialog({
             authorName.length <= 32 &&
             publishConsentAccepted &&
             TURNSTILE_CONFIGURED &&
-            Boolean(turnstileToken)
+            Boolean(turnstileToken) &&
+            !submissionQueue.full
         );
-    }, [slug.available, title, description, authorName, publishConsentAccepted, turnstileToken]);
+    }, [slug.available, title, description, authorName, publishConsentAccepted, turnstileToken, submissionQueue.full]);
 
     const previewSketch = useMemo(() => {
         const normalizedPreviewSlug = (slug.normalized || slug.value || 'your-sketch')
@@ -262,6 +293,14 @@ export function PublishRequestDialog({
                 
                 <ScrollArea className="flex-1 min-h-0">
                     <div className="px-6 py-5 space-y-5">
+                    {submissionQueue.full && (
+                        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+                            <p className="text-sm text-red-300">
+                                submission queue is currently full. please try again later.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Slug input */}
                     <div className="space-y-2">
                         <Label htmlFor="slug" className="text-sm text-zinc-300">

@@ -10,6 +10,7 @@ import type {
     PublicSketchAccess,
     SketchRequestPayload,
     SketchRequestResult,
+    SketchSubmissionQueueStatus,
     SlugAvailabilityResult,
     SketchRequestHashPayload,
 } from '@synth.textmode.art/contracts/sketch';
@@ -100,6 +101,22 @@ export async function checkSlugAvailability(slug: string): Promise<SlugAvailabil
         return (await response.json()) as SlugAvailabilityResult;
     } catch {
         return { available: false, slug, reason: 'Network error' };
+    }
+}
+
+/**
+ * Fetch current gallery submission queue status.
+ */
+export async function fetchSketchSubmissionQueueStatus(): Promise<SketchSubmissionQueueStatus | null> {
+    try {
+        const response = await fetch(`${getApiBase()}/api/sketch-requests/queue-status`);
+        if (!response.ok) {
+            return null;
+        }
+
+        return (await response.json()) as SketchSubmissionQueueStatus;
+    } catch {
+        return null;
     }
 }
 
