@@ -3,6 +3,16 @@ import type { SharePayload } from '@/types/share.types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { AppState } from '../appStore';
 
+export interface SlugSketchInfo {
+    status: 'PENDING' | 'APPROVED';
+    slug: string;
+    title: string;
+    description: string | null;
+    authorName: string | null;
+    license: string | null;
+    socialLinks: Array<{ label: string; url: string }> | null;
+}
+
 export interface ShareSlice {
     share: {
         payload: SharePayload | null;
@@ -10,11 +20,13 @@ export interface ShareSlice {
         promptOpen: boolean;
     };
     approvedSketch: ApprovedSketch | null;
+    slugSketchInfo: SlugSketchInfo | null;
 
     setSharePayload: (payload: SharePayload | null) => void;
     setShareConsented: (consented: boolean) => void;
     setSharePromptOpen: (open: boolean) => void;
     setApprovedSketch: (sketch: ApprovedSketch | null) => void;
+    setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
 }
 
 export const createShareSlice: StateCreator<
@@ -29,6 +41,7 @@ export const createShareSlice: StateCreator<
         promptOpen: false,
     },
     approvedSketch: null,
+    slugSketchInfo: null,
 
     setSharePayload: (payload) => set({
         share: {
@@ -51,4 +64,5 @@ export const createShareSlice: StateCreator<
         },
     })),
     setApprovedSketch: (sketch) => set({ approvedSketch: sketch }),
+    setSlugSketchInfo: (info) => set({ slugSketchInfo: info }),
 });

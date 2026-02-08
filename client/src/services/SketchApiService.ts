@@ -5,6 +5,7 @@
 
 import type {
     ApprovedSketch,
+    PublicSketchAccess,
     SketchRequestPayload,
     SketchRequestResult,
     SlugAvailabilityResult,
@@ -32,6 +33,23 @@ export async function fetchApprovedSketch(slug: string): Promise<ApprovedSketch 
         return (await response.json()) as ApprovedSketch;
     } catch {
         console.warn(`[SketchApiService] Failed to fetch sketch: ${slug}`);
+        return null;
+    }
+}
+
+/**
+ * Fetch a slug-access sketch payload (approved or pending).
+ * Returns null if not found.
+ */
+export async function fetchSketchBySlugAccess(slug: string): Promise<PublicSketchAccess | null> {
+    try {
+        const response = await fetch(`${getApiBase()}/api/sketches/${encodeURIComponent(slug)}/access`);
+        if (!response.ok) {
+            return null;
+        }
+        return (await response.json()) as PublicSketchAccess;
+    } catch {
+        console.warn(`[SketchApiService] Failed to fetch slug access sketch: ${slug}`);
         return null;
     }
 }

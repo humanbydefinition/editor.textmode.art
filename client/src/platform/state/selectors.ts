@@ -7,6 +7,7 @@ export const selectIsMobile = (state: AppState) => state.isMobile;
 export const selectActivePanel = (state: AppState) => state.activePanel;
 export const selectPanels = (state: AppState) => state.panels;
 export const selectApprovedSketch = (state: AppState) => state.approvedSketch;
+export const selectSlugSketchInfo = (state: AppState) => state.slugSketchInfo;
 export const selectStrudelEnabled = (state: AppState) => state.settings.strudelEnabled;
 
 export const selectHasLastWorkingForError = (state: AppState): boolean => {
