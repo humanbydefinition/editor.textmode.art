@@ -239,10 +239,12 @@ export function LegalTab() {
                         <div>
                             <h4 className="font-medium text-zinc-200 mb-2">Anti-Spam and Abuse Prevention</h4>
                             <p className="text-zinc-500">
-                                We use a no-PII anti-spam mechanism for gallery submissions (challenge + proof-of-work +
-                                idempotency + global queue limits). The anti-spam proof does not require storing persistent
-                                user identity such as account IDs, device fingerprints, or raw IP profiles in the anti-spam
-                                state itself.
+                                We use layered anti-spam controls for gallery submissions: Cloudflare Turnstile verification,
+                                challenge + proof-of-work, idempotency guards, and global queue limits.
+                            </p>
+                            <p className="text-zinc-500 mt-2">
+                                Turnstile is provided by Cloudflare and may process technical connection metadata as part of
+                                bot detection. For details, see Cloudflare documentation and privacy information.
                             </p>
                             <p className="text-zinc-500 mt-2">
                                 Purpose: protect availability and moderation capacity.
