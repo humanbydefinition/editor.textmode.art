@@ -70,9 +70,7 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 						</DialogClose>
 					</div>
 					<DialogDescription className="text-sm text-zinc-400">
-						{isPendingGallerySketch
-							? 'this gallery sketch is pending review and contains code from another user. it will not run unless you explicitly unlock it.'
-							: 'this link contains code from another user. it will not run unless you explicitly unlock it.'}
+						this link contains code from another user. it will not run unless you explicitly unlock it.
 					</DialogDescription>
 				</DialogHeader>
 
