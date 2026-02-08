@@ -24,6 +24,9 @@ model SketchRequest {
   socialLinks  Json?
   textmodeCode String
   strudelCode  String?
+  publishConsentAccepted      Boolean   @default(false)
+  publishConsentAcceptedAt    DateTime?
+  publishConsentPolicyVersion String?
   ogImageUrl   String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
