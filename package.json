@@ -17,7 +17,8 @@
     "server:build": "npm run build -w @synth.textmode.art/contracts && npm run build -w server",
     "lint": "npm run lint -w client && npm run lint -w server",
     "format": "prettier --write \"**/*.{ts,js}\"",
-    "format:check": "prettier --check \"**/*.{ts,js}\""
+    "format:check": "prettier --check \"**/*.{ts,js}\"",
+    "extract-types": "npm run extract-types -w client"
   },
   "devDependencies": {
     "prettier": "^3.7.4"

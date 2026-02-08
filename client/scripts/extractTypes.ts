@@ -13,6 +13,9 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // ============================================================================
 // Configuration
@@ -35,7 +38,8 @@ const CONFIGS: TypeGenerationConfig[] = [
         id: 'textmode',
         libraries: [
             { name: 'textmode.js' },
-            { name: 'textmode.synth.js' }
+            { name: 'textmode.synth.js' },
+            { name: 'textmode.filters.js' }
         ],
         output: 'src/engines/textmode/config/generatedTypes.ts',
         includeGlobals: true
@@ -323,20 +327,38 @@ function findAllDtsFiles(dir: string): string[] {
 }
 
 /**
- * Get the types directory for a package
+ * Get the types directory for a package.
+ * Uses require.resolve to locate the package regardless of hoisting.
  */
 function getTypesDir(packageName: string): string | null {
-    const packageJsonPath = path.join('node_modules', packageName, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) return null;
+    let packageDir: string;
+    try {
+        // Resolve the main entry point, then walk up to find package.json
+        const mainEntry = require.resolve(packageName);
+        let dir = path.dirname(mainEntry);
+        while (dir !== path.dirname(dir)) {
+            if (fs.existsSync(path.join(dir, 'package.json'))) {
+                const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+                if (pkg.name === packageName) {
+                    packageDir = dir;
+                    break;
+                }
+            }
+            dir = path.dirname(dir);
+        }
+        if (!packageDir!) return null;
+    } catch {
+        return null;
+    }
 
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    const packageJson = JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf-8'));
 
     const typesEntry = packageJson.types || packageJson.typings;
     if (typesEntry) {
-        return path.join('node_modules', packageName, path.dirname(typesEntry));
+        return path.join(packageDir, path.dirname(typesEntry));
     }
 
-    const distTypesPath = path.join('node_modules', packageName, 'dist', 'types');
+    const distTypesPath = path.join(packageDir, 'dist', 'types');
     if (fs.existsSync(distTypesPath)) return distTypesPath;
 
     return null;
@@ -412,11 +434,25 @@ function processConfig(config: TypeGenerationConfig) {
     for (const [filePath, { virtualPath, content, lib }] of fileContents) {
         let processedContent = content;
 
-        // Check if this library is the target of any augmentations
-        const libraryAugs = augmentations.get(lib);
-        if (libraryAugs && libraryAugs.size > 0) {
+        // Collect augmentations from all module names that belong to this library.
+        // Augmentation keys can be the exact library name (e.g. 'textmode.js')
+        // or subpath exports (e.g. 'textmode.js/layering'), so we match both.
+        const mergedAugs = new Map<string, InterfaceAugmentation>();
+        for (const [moduleName, interfaces] of augmentations) {
+            if (moduleName === lib || moduleName.startsWith(lib + '/')) {
+                for (const [ifaceName, aug] of interfaces) {
+                    if (mergedAugs.has(ifaceName)) {
+                        mergedAugs.get(ifaceName)!.members += '\n' + aug.members;
+                    } else {
+                        mergedAugs.set(ifaceName, { members: aug.members });
+                    }
+                }
+            }
+        }
+
+        if (mergedAugs.size > 0) {
             const before = processedContent.length;
-            processedContent = injectAugmentations(processedContent, libraryAugs);
+            processedContent = injectAugmentations(processedContent, mergedAugs);
             const after = processedContent.length;
             if (before !== after) {
                 console.log(`   💉 Injected augmentations into ${path.basename(filePath)} (${after - before} chars added)`);
