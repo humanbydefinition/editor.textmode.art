@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export const sketchStatusSchema = z.enum(['PENDING', 'APPROVED', 'DENIED']);
 export type SketchStatus = z.infer<typeof sketchStatusSchema>;
+export const antiSpamAlgorithmSchema = z.literal('sha256-leading-zero-bits-v1');
+export type AntiSpamAlgorithm = z.infer<typeof antiSpamAlgorithmSchema>;
 
 export const socialLinkSchema = z.object({
   label: z.string().min(1).max(32),
@@ -53,6 +55,35 @@ export const publicSketchAccessSchema = z.discriminatedUnion('status', [
   publicPendingSketchAccessSchema,
 ]);
 export type PublicSketchAccess = z.infer<typeof publicSketchAccessSchema>;
+export const antiSpamChallengeSchema = z.object({
+  algorithm: antiSpamAlgorithmSchema,
+  challengeId: z.string().regex(/^[a-f0-9]{32}$/),
+  difficulty: z.number().int().min(8).max(24),
+  expiresAt: z.string(),
+  token: z.string().min(32).max(1024),
+});
+export type AntiSpamChallenge = z.infer<typeof antiSpamChallengeSchema>;
+
+export const antiSpamProofSchema = z.object({
+  algorithm: antiSpamAlgorithmSchema,
+  challengeId: z.string().regex(/^[a-f0-9]{32}$/),
+  nonce: z.string().regex(/^\d{1,12}$/),
+  payloadHash: z.string().regex(/^[a-f0-9]{64}$/),
+  token: z.string().min(32).max(1024),
+});
+export type AntiSpamProof = z.infer<typeof antiSpamProofSchema>;
+
+export const sketchRequestHashPayloadSchema = z.object({
+  slug: z.string().min(1),
+  title: z.string().min(1).max(120),
+  description: z.string().max(300).nullable(),
+  authorName: z.string().max(80).nullable(),
+  license: z.string().max(120).nullable(),
+  socialLinks: z.array(socialLinkSchema).max(6).nullable(),
+  textmodeCode: z.string().min(1).max(300_000),
+  strudelCode: z.string().max(300_000).nullable(),
+});
+export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
 
 export const createSketchRequestSchema = z.object({
   slug: z.string().min(1),
@@ -63,8 +94,28 @@ export const createSketchRequestSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(6).optional().nullable(),
   textmodeCode: z.string().min(1).max(300_000),
   strudelCode: z.string().max(300_000).optional().nullable(),
+  antiSpam: antiSpamProofSchema,
 });
 export type SketchRequestPayload = z.infer<typeof createSketchRequestSchema>;
+
+export function toSketchRequestHashPayload(
+  payload: Omit<SketchRequestPayload, 'antiSpam'> | SketchRequestPayload
+): SketchRequestHashPayload {
+  return {
+    slug: payload.slug,
+    title: payload.title,
+    description: payload.description ?? null,
+    authorName: payload.authorName ?? null,
+    license: payload.license ?? null,
+    socialLinks: payload.socialLinks ?? null,
+    textmodeCode: payload.textmodeCode,
+    strudelCode: payload.strudelCode ?? null,
+  };
+}
+
+export function serializeSketchRequestForAntiSpam(payload: SketchRequestHashPayload): string {
+  return JSON.stringify(payload);
+}
 
 export const sketchRequestResultSchema = z.object({
   id: z.string(),

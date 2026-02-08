@@ -11,15 +11,53 @@ import {
 import { prisma } from '../db.js';
 import { normalizeSlug, validateSlug } from '../utils/slug.js';
 import { toApprovedSketch, toPublicSketchAccess, toSketchRequestResult } from '../contracts/sketchMappers.js';
+import { env } from '../config/env.js';
+import { NoPiiAntiSpamGuard } from '../security/noPiiAntiSpam.js';
 
 const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
+const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+const antiSpamGuard = new NoPiiAntiSpamGuard({
+  secret: env.ANTI_SPAM_SECRET ?? '',
+  difficulty: env.ANTI_SPAM_POW_DIFFICULTY,
+  challengeTtlMs: env.ANTI_SPAM_CHALLENGE_TTL_SECONDS * 1000,
+  maxChallengesPerMinute: env.ANTI_SPAM_MAX_CHALLENGES_PER_MINUTE,
+  maxSubmissionsPerMinute: env.ANTI_SPAM_MAX_SUBMISSIONS_PER_MINUTE,
+  idempotencyTtlMs: env.ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS * 1000,
+});
 
 function isUniqueConstraintViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
+function getIdempotencyKey(headerValue: string | string[] | undefined): string | null {
+  if (!headerValue) return null;
+  const raw = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+  const normalized = raw.trim();
+  if (!IDEMPOTENCY_KEY_PATTERN.test(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
 const publicRoutes: FastifyPluginAsync = async (app) => {
+  app.get('/api/sketch-requests/challenge', async (_request, reply) => {
+    const challengeOrError = antiSpamGuard.issueChallenge();
+    if ('error' in challengeOrError) {
+      reply.status(challengeOrError.statusCode).send({ error: challengeOrError.error });
+      return;
+    }
+
+    reply.status(200).send(challengeOrError);
+  });
+
   app.post('/api/sketch-requests', async (request, reply) => {
+    const idempotencyKey = getIdempotencyKey(request.headers['x-idempotency-key']);
+    if (!idempotencyKey) {
+      reply.status(400).send({ error: 'A valid x-idempotency-key header is required.' });
+      return;
+    }
+
     const parsed = createSketchRequestSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
@@ -27,6 +65,25 @@ const publicRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const payload: SketchRequestPayload = parsed.data;
+    const proofResult = antiSpamGuard.verifyAndConsumeSubmissionProof(payload);
+    if (!('ok' in proofResult)) {
+      reply.status(proofResult.statusCode).send({ error: proofResult.error });
+      return;
+    }
+
+    const idempotencyResult = antiSpamGuard.consumeIdempotencyKey(idempotencyKey);
+    if (!('ok' in idempotencyResult)) {
+      reply.status(idempotencyResult.statusCode).send({ error: idempotencyResult.error });
+      return;
+    }
+
+    const pendingCount = await prisma.sketchRequest.count({
+      where: { status: 'PENDING' },
+    });
+    if (pendingCount >= env.ANTI_SPAM_MAX_PENDING_REQUESTS) {
+      reply.status(503).send({ error: 'Submission queue is currently full. Please try again later.' });
+      return;
+    }
 
     const normalizedSlug = normalizeSlug(payload.slug);
     const slugValidation = validateSlug(normalizedSlug);

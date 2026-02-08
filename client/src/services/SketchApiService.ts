@@ -4,12 +4,23 @@
  */
 
 import type {
+    AntiSpamChallenge,
+    AntiSpamProof,
     ApprovedSketch,
     PublicSketchAccess,
     SketchRequestPayload,
     SketchRequestResult,
     SlugAvailabilityResult,
+    SketchRequestHashPayload,
 } from '@synth.textmode.art/contracts/sketch';
+import {
+    serializeSketchRequestForAntiSpam,
+    toSketchRequestHashPayload,
+} from '@synth.textmode.art/contracts/sketch';
+
+const POW_ALGORITHM = 'sha256-leading-zero-bits-v1';
+const POW_MAX_NONCE = 3_000_000;
+const POW_YIELD_INTERVAL = 250;
 
 function getApiBase(): string {
     // In production, API is served from same origin
@@ -95,15 +106,21 @@ export async function checkSlugAvailability(slug: string): Promise<SlugAvailabil
  * Submit a new sketch request for moderation.
  */
 export async function submitSketchRequest(
-    payload: SketchRequestPayload
+    payload: Omit<SketchRequestPayload, 'antiSpam'>
 ): Promise<{ success: true; data: SketchRequestResult } | { success: false; error: string }> {
     try {
+        const antiSpamProof = await buildAntiSpamProof(payload);
+        if (!antiSpamProof) {
+            return { success: false, error: 'Unable to complete anti-spam verification. Please try again.' };
+        }
+
         const response = await fetch(`${getApiBase()}/api/sketch-requests`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-idempotency-key': generateIdempotencyKey(),
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, antiSpam: antiSpamProof }),
         });
 
         if (!response.ok) {
@@ -116,4 +133,98 @@ export async function submitSketchRequest(
     } catch {
         return { success: false, error: 'Network error' };
     }
+}
+
+interface AntiSpamChallengeResponse extends AntiSpamChallenge {}
+
+async function fetchAntiSpamChallenge(): Promise<AntiSpamChallengeResponse | null> {
+    try {
+        const response = await fetch(`${getApiBase()}/api/sketch-requests/challenge`);
+        if (!response.ok) {
+            return null;
+        }
+
+        return (await response.json()) as AntiSpamChallengeResponse;
+    } catch {
+        return null;
+    }
+}
+
+function generateIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID().replace(/-/g, '');
+    }
+    return `${Date.now()}${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`.slice(0, 32);
+}
+
+async function buildAntiSpamProof(payload: Omit<SketchRequestPayload, 'antiSpam'>): Promise<AntiSpamProof | null> {
+    const challenge = await fetchAntiSpamChallenge();
+    if (!challenge) return null;
+    if (challenge.algorithm !== POW_ALGORITHM) return null;
+
+    const payloadForHash = toSketchRequestHashPayload(payload) satisfies SketchRequestHashPayload;
+    const payloadHash = await sha256Hex(serializeSketchRequestForAntiSpam(payloadForHash));
+
+    const nonce = await solveProofOfWork(challenge, payloadHash);
+    if (!nonce) return null;
+
+    return {
+        algorithm: POW_ALGORITHM,
+        challengeId: challenge.challengeId,
+        nonce,
+        payloadHash,
+        token: challenge.token,
+    };
+}
+
+async function solveProofOfWork(challenge: AntiSpamChallenge, payloadHash: string): Promise<string | null> {
+    const now = Date.now();
+    const challengeExpiry = Date.parse(challenge.expiresAt);
+    if (!Number.isFinite(challengeExpiry) || challengeExpiry <= now) {
+        return null;
+    }
+
+    for (let nonce = 0; nonce < POW_MAX_NONCE; nonce += 1) {
+        if (Date.now() >= challengeExpiry) {
+            return null;
+        }
+
+        const digest = await sha256Bytes(`${challenge.challengeId}:${payloadHash}:${nonce}`);
+        if (hasLeadingZeroBits(digest, challenge.difficulty)) {
+            return String(nonce);
+        }
+
+        if (nonce > 0 && nonce % POW_YIELD_INTERVAL === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+    }
+
+    return null;
+}
+
+async function sha256Bytes(input: string): Promise<Uint8Array> {
+    const encoded = new TextEncoder().encode(input);
+    const digest = await crypto.subtle.digest('SHA-256', encoded);
+    return new Uint8Array(digest);
+}
+
+async function sha256Hex(input: string): Promise<string> {
+    const digest = await sha256Bytes(input);
+    return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function hasLeadingZeroBits(bytes: Uint8Array, bits: number): boolean {
+    const fullBytes = Math.floor(bits / 8);
+    const remainderBits = bits % 8;
+
+    for (let i = 0; i < fullBytes; i += 1) {
+        if (bytes[i] !== 0) return false;
+    }
+
+    if (remainderBits === 0) {
+        return true;
+    }
+
+    const mask = 0xff << (8 - remainderBits);
+    return (bytes[fullBytes] & mask) === 0;
 }
