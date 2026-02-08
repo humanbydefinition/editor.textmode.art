@@ -23,11 +23,12 @@ const POW_MAX_NONCE = 3_000_000;
 const POW_YIELD_INTERVAL = 250;
 
 function getApiBase(): string {
-    // In production, API is served from same origin
-    // In dev, we might need to proxy or use the server port
-    if (import.meta.env.DEV) {
-        return 'http://localhost:3000';
+    const envBase = import.meta.env.VITE_API_BASE_URL as string | undefined;
+    if (envBase?.trim()) {
+        return envBase.replace(/\/$/, '');
     }
+
+    // Default to same-origin so Vite dev proxy (/api) also works from real mobile devices.
     return '';
 }
 
@@ -135,7 +136,7 @@ export async function submitSketchRequest(
     }
 }
 
-interface AntiSpamChallengeResponse extends AntiSpamChallenge {}
+type AntiSpamChallengeResponse = AntiSpamChallenge;
 
 async function fetchAntiSpamChallenge(): Promise<AntiSpamChallengeResponse | null> {
     try {
