@@ -43,6 +43,7 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
                 slug: normalizedSlug,
                 status: { in: ['PENDING', 'APPROVED'] },
             },
+            select: { slug: true, status: true, title: true, description: true, ogImageUrl: true },
         });
 
         if (!sketch) {
