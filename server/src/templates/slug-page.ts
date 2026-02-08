@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 export interface SlugPageOptions {
   sketch: SketchRequest;
   baseUrl: string;
+  devServerUrl?: string;
   renderMode?: 'approved' | 'pending';
 }
 
@@ -59,7 +60,12 @@ function escapeHtml(str: string): string {
  * In production: reads dist/index.html and injects dynamic meta tags.
  * In development: uses a hardcoded template pointing to Vite dev server.
  */
-export function renderSlugPage({ sketch, baseUrl, renderMode = 'approved' }: SlugPageOptions): string {
+export function renderSlugPage({
+  sketch,
+  baseUrl,
+  devServerUrl: devServerUrlOverride,
+  renderMode = 'approved',
+}: SlugPageOptions): string {
   const isPending = renderMode === 'pending';
   const title = isPending
     ? 'Sketch Pending Review | synth.textmode.art'
@@ -124,7 +130,7 @@ ${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
     // Fall through to dev template if production HTML not available
   }
 
-  const devServerUrl = (env.VITE_DEV_SERVER_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const devServerUrl = (devServerUrlOverride || env.VITE_DEV_SERVER_URL || 'http://localhost:5173').replace(/\/$/, '');
 
   // Development mode: hardcoded template for Vite dev server
   return `<!doctype html>
@@ -170,4 +176,3 @@ export function getBaseUrl(requestHost: string, protocol = 'https'): string {
   }
   return `${protocol}://${requestHost}`;
 }
-
