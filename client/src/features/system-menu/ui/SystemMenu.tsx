@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Menu, Shuffle, X, Share } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -26,6 +26,7 @@ import { selectSettings } from '@/platform/state/selectors';
 export interface SystemMenuProps {
     onShare: () => void;
     onRandomize: () => void;
+    onMakeRandomChange?: () => void;
     randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
@@ -35,6 +36,7 @@ export interface SystemMenuProps {
 export function SystemMenu({
     onShare,
     onRandomize,
+    onMakeRandomChange,
     randomizeLoading,
     onClearStorage,
     onLoadExample,
@@ -51,9 +53,35 @@ export function SystemMenu({
                 autoOpenEnabled={slugInfoAutoOpenEnabled}
                 onShare={onShare}
                 className={cn(
-                    'fixed top-2 right-[4.5rem] z-50 pointer-events-auto'
+                    'fixed top-2 right-[6.5rem] z-50 pointer-events-auto'
                 )}
             />
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        onClick={onMakeRandomChange}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className={cn(
+                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
+                            'flex items-center justify-center',
+                            'w-6 h-6 rounded-full',
+                            'bg-zinc-900/40 backdrop-blur-md',
+                            'border border-white/5',
+                            'text-zinc-400',
+                            'transition-all duration-300',
+                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                            'focus:outline-none focus:ring-2 focus:ring-white/10'
+                        )}
+                        aria-label="Make random change"
+                    >
+                        <Dices className="w-[14px] h-[14px]" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>make random change</p>
+                </TooltipContent>
+            </Tooltip>
 
             <Tooltip>
                 <TooltipTrigger asChild>

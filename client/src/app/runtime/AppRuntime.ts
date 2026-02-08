@@ -8,6 +8,7 @@ import { AppShell } from '@/components/AppShell';
 import { ShareSessionManager } from '@/features/share/orchestration/ShareSessionManager';
 import { EditorManager } from '@/managers/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/managers/ShortcutsManager';
+import { CodeRandomizer } from '@/services/CodeRandomizer';
 import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAdapter';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/services/StorageService';
@@ -192,6 +193,29 @@ export class AppRuntime {
 		}
 	}
 
+	private makeRandomChange(): void {
+		let targetId = this.editorManager.getFocusedEditorId();
+
+		// If no editor has focus, default to a sensible choice
+		if (!targetId) {
+			// Prioritize Textmode as it's the main visual engine
+			targetId = 'textmode';
+		}
+
+		const engine = this.engineLifecycle.getEngine(targetId as EngineId);
+		if (engine) {
+			const code = engine.getCode();
+			const newCode = CodeRandomizer.replaceRandomNumber(code);
+
+			if (code !== newCode) {
+				engine.setCode(newCode);
+				engine.getController()?.handleForceRun();
+				// Restore focus to editor to allow seamless workflow
+				this.editorManager.focusEditor(targetId);
+			}
+		}
+	}
+
 	private render(): void {
 		if (!this.root) return;
 
@@ -203,6 +227,7 @@ export class AppRuntime {
 				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
 				onShare: () => this.uiActions.openShareExport(),
 				onRandomize: () => void this.shareWorkflow.randomize(),
+				onMakeRandomChange: () => this.makeRandomChange(),
 				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
 				onClearStorage: () => this.uiActions.clearStorage(),
 				onLoadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),

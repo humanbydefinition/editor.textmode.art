@@ -27,6 +27,7 @@ export interface AppShellProps {
     // Actions (Controller Logic)
     onShare: () => void;
     onRandomize: () => void;
+    onMakeRandomChange: () => void;
     randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
@@ -51,6 +52,7 @@ export function AppShell({
     onPaneReady,
     onShare,
     onRandomize,
+    onMakeRandomChange,
     randomizeLoading,
     onClearStorage,
     onLoadExample,
@@ -152,6 +154,7 @@ export function AppShell({
                         <SystemMenu
                             onShare={onShare}
                             onRandomize={onRandomize}
+                            onMakeRandomChange={onMakeRandomChange}
                             randomizeLoading={randomizeLoading}
                             onClearStorage={onClearStorage}
                             onLoadExample={onLoadExample}

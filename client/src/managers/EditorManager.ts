@@ -59,4 +59,16 @@ export class EditorManager {
 	focusEditor(id: string): void {
 		this.editors.get(id)?.focus();
 	}
+
+	/**
+	 * Get the ID of the editor that currently has focus.
+	 */
+	getFocusedEditorId(): string | null {
+		for (const [id, editor] of this.editors) {
+			if (editor.editor.hasTextFocus()) {
+				return id;
+			}
+		}
+		return null;
+	}
 }
