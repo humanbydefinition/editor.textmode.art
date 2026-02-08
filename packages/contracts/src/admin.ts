@@ -13,6 +13,12 @@ export const adminUpdateSchema = z.object({
 });
 export type AdminUpdateRequestPayload = z.infer<typeof adminUpdateSchema>;
 
+export const adminSessionResponseSchema = z.object({
+  authenticated: z.literal(true),
+  serverTime: z.string(),
+});
+export type AdminSessionResponse = z.infer<typeof adminSessionResponseSchema>;
+
 export const adminSketchRequestSchema = z.object({
   id: z.string(),
   slug: z.string(),

@@ -1,36 +1,55 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Settings2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
-import type { AdminSketchListResponse } from '@synth.textmode.art/contracts/admin';
+import type { AdminSessionResponse, AdminSketchListResponse } from '@synth.textmode.art/contracts/admin';
 
 import {
     type FilterOption,
     type SketchRequest,
     type SketchStatus,
+    REVIEWER_STORAGE_KEY,
     type StatusCounts,
     TOKEN_STORAGE_KEY,
 } from './types';
 import { AdminHeader } from './components/AdminHeader';
+import { AdminLoginPage } from './components/AdminLoginPage';
 import { AdminSidebar } from './components/AdminSidebar';
 import { FilterTabs } from './components/FilterTabs';
 import { MobileSettings } from './components/MobileSettings';
 import { RequestList } from './components/RequestList';
+import { getApiErrorMessage } from './utils';
 
-const REVIEWER_STORAGE_KEY = 'admin_reviewer_name';
+type AuthenticateOptions = {
+    silent?: boolean;
+};
+
+function normalizeReviewerName(value: string): string {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : 'admin';
+}
 
 /**
  * Admin dashboard for reviewing sketch requests
  */
 export function AdminApp() {
-    const initialToken = localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
-    const initialReviewer = localStorage.getItem(REVIEWER_STORAGE_KEY) ?? 'admin';
+    const [tokenInput, setTokenInput] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? '');
+    const [reviewerDraft, setReviewerDraft] = useState(() =>
+        normalizeReviewerName(localStorage.getItem(REVIEWER_STORAGE_KEY) ?? 'admin')
+    );
+    const [activeToken, setActiveToken] = useState('');
+    const [reviewerName, setReviewerName] = useState(() =>
+        normalizeReviewerName(localStorage.getItem(REVIEWER_STORAGE_KEY) ?? 'admin')
+    );
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [authenticating, setAuthenticating] = useState(false);
+    const [restoringSession, setRestoringSession] = useState(() =>
+        Boolean((localStorage.getItem(TOKEN_STORAGE_KEY) ?? '').trim())
+    );
+    const [authError, setAuthError] = useState<string | null>(null);
 
-    const [tokenInput, setTokenInput] = useState(initialToken);
-    const [activeToken, setActiveToken] = useState(initialToken);
-    const [reviewerName, setReviewerName] = useState(initialReviewer);
     const [requests, setRequests] = useState<SketchRequest[]>([]);
     const [statusFilter, setStatusFilter] = useState<FilterOption>('pending');
     const [loading, setLoading] = useState(false);
@@ -41,6 +60,8 @@ export function AdminApp() {
     const [notice, setNotice] = useState<string | null>(null);
     const [denyDrafts, setDenyDrafts] = useState<Record<string, string>>({});
 
+    const restoreAttemptedRef = useRef(false);
+
     useEffect(() => {
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'auto';
@@ -48,10 +69,6 @@ export function AdminApp() {
             document.body.style.overflow = previousOverflow;
         };
     }, []);
-
-    useEffect(() => {
-        localStorage.setItem(REVIEWER_STORAGE_KEY, reviewerName);
-    }, [reviewerName]);
 
     useEffect(() => {
         if (!notice) return undefined;
@@ -80,11 +97,106 @@ export function AdminApp() {
         return requests.filter((request) => request.status === statusMap[statusFilter]);
     }, [requests, statusFilter]);
 
+    const resetDashboardState = useCallback(() => {
+        setRequests([]);
+        setDenyDrafts({});
+        setUpdatingRequestId(null);
+        setLastSyncedAt(null);
+        setSettingsOpen(false);
+        setLoading(false);
+    }, []);
+
+    const handleSessionExpired = useCallback(
+        (message = 'Your admin session expired. Sign in again.') => {
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            setIsAuthenticated(false);
+            setActiveToken('');
+            setTokenInput('');
+            setAuthError(message);
+            setError(null);
+            setNotice(null);
+            resetDashboardState();
+        },
+        [resetDashboardState]
+    );
+
+    const authenticate = useCallback(async (tokenCandidate: string, reviewerCandidate: string, options?: AuthenticateOptions) => {
+        const trimmedToken = tokenCandidate.trim();
+        const normalizedReviewer = normalizeReviewerName(reviewerCandidate);
+
+        if (!trimmedToken) {
+            setAuthError('Enter your admin token to continue.');
+            return false;
+        }
+
+        setAuthenticating(true);
+        if (!options?.silent) {
+            setAuthError(null);
+        }
+
+        try {
+            const response = await fetch('/api/admin/session', {
+                headers: { Authorization: `Bearer ${trimmedToken}` },
+            });
+
+            if (!response.ok) {
+                throw new Error(await getApiErrorMessage(response, 'Authentication failed.'));
+            }
+
+            const session = (await response.json()) as AdminSessionResponse;
+            if (!session.authenticated) {
+                throw new Error('Authentication failed.');
+            }
+
+            localStorage.setItem(TOKEN_STORAGE_KEY, trimmedToken);
+            localStorage.setItem(REVIEWER_STORAGE_KEY, normalizedReviewer);
+
+            setIsAuthenticated(true);
+            setActiveToken(trimmedToken);
+            setReviewerName(normalizedReviewer);
+            setReviewerDraft(normalizedReviewer);
+            setTokenInput(trimmedToken);
+            setAuthError(null);
+            setError(null);
+            return true;
+        } catch (err) {
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            setIsAuthenticated(false);
+            setActiveToken('');
+            setRequests([]);
+
+            if (options?.silent) {
+                setTokenInput('');
+                setAuthError('Saved admin session is no longer valid. Sign in again.');
+            } else {
+                setAuthError(err instanceof Error ? err.message : 'Authentication failed.');
+            }
+            return false;
+        } finally {
+            setAuthenticating(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (restoreAttemptedRef.current) return;
+        restoreAttemptedRef.current = true;
+
+        const storedToken = tokenInput.trim();
+        if (!storedToken) {
+            setRestoringSession(false);
+            return;
+        }
+
+        void authenticate(storedToken, reviewerDraft, { silent: true }).finally(() => {
+            setRestoringSession(false);
+        });
+    }, [authenticate, tokenInput, reviewerDraft]);
+
     const fetchRequests = useCallback(async (authToken: string) => {
         const trimmedToken = authToken.trim();
         if (!trimmedToken) {
             setRequests([]);
-            setError('Add your admin token to load requests.');
+            setError('Your admin session is not active.');
             return;
         }
 
@@ -95,8 +207,13 @@ export function AdminApp() {
             const response = await fetch('/api/admin/sketch-requests', {
                 headers: { Authorization: `Bearer ${trimmedToken}` },
             });
+
             if (!response.ok) {
-                throw new Error((await response.text()) || 'Failed to load requests');
+                if (response.status === 401) {
+                    handleSessionExpired();
+                    return;
+                }
+                throw new Error(await getApiErrorMessage(response, 'Failed to load requests'));
             }
 
             const data = (await response.json()) as AdminSketchListResponse;
@@ -107,44 +224,43 @@ export function AdminApp() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [handleSessionExpired]);
 
     useEffect(() => {
-        if (activeToken.trim()) {
+        if (isAuthenticated && activeToken.trim()) {
             void fetchRequests(activeToken);
         }
-    }, [activeToken, fetchRequests]);
+    }, [isAuthenticated, activeToken, fetchRequests]);
 
-    const handleTokenSave = () => {
-        const trimmedToken = tokenInput.trim();
-        const tokenUnchanged = trimmedToken === activeToken;
+    const handleReviewerNameChange = (value: string) => {
+        const normalizedReviewer = normalizeReviewerName(value);
+        localStorage.setItem(REVIEWER_STORAGE_KEY, normalizedReviewer);
+        setReviewerName(normalizedReviewer);
+        setReviewerDraft(normalizedReviewer);
+    };
 
-        localStorage.setItem(TOKEN_STORAGE_KEY, trimmedToken);
-        setActiveToken(trimmedToken);
-        setError(null);
-
-        if (!trimmedToken) {
-            setRequests([]);
-            setError('Add your admin token to load requests.');
-            return;
-        }
-
-        if (tokenUnchanged) {
-            void fetchRequests(trimmedToken);
-        }
+    const handleLoginSubmit = () => {
+        void authenticate(tokenInput, reviewerDraft);
     };
 
     const handleRefresh = () => {
-        if (!activeToken.trim()) {
-            setError('Add your admin token to load requests.');
-            return;
-        }
         void fetchRequests(activeToken);
     };
 
+    const handleSignOut = useCallback(() => {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        setIsAuthenticated(false);
+        setActiveToken('');
+        setTokenInput('');
+        setAuthError(null);
+        setError(null);
+        setNotice(null);
+        resetDashboardState();
+    }, [resetDashboardState]);
+
     const updateRequestStatus = async (request: SketchRequest, nextStatus: SketchStatus) => {
-        if (!activeToken.trim()) {
-            setError('Add your admin token to update requests.');
+        if (!isAuthenticated || !activeToken.trim()) {
+            setError('Your admin session is not active.');
             return;
         }
 
@@ -168,12 +284,16 @@ export function AdminApp() {
                 body: JSON.stringify({
                     status: nextStatus,
                     denialReason: nextStatus === 'DENIED' ? denialReason : null,
-                    reviewedBy: reviewerName || null,
+                    reviewedBy: normalizeReviewerName(reviewerName),
                 }),
             });
 
             if (!response.ok) {
-                throw new Error((await response.text()) || 'Failed to update request');
+                if (response.status === 401) {
+                    handleSessionExpired();
+                    return;
+                }
+                throw new Error(await getApiErrorMessage(response, 'Failed to update request'));
             }
 
             const updated = (await response.json()) as SketchRequest;
@@ -196,13 +316,22 @@ export function AdminApp() {
         }
     };
 
-    return (
-        <div className="relative min-h-screen w-full bg-background text-foreground">
-            <div className="pointer-events-none fixed inset-0">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(59,130,246,0.14),transparent_36%),radial-gradient(circle_at_90%_100%,rgba(34,197,94,0.10),transparent_34%)]" />
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent_0,transparent_calc(100%-1px),rgba(255,255,255,0.04)_100%),linear-gradient(to_bottom,transparent_0,transparent_calc(100%-1px),rgba(255,255,255,0.03)_100%)] bg-[size:28px_28px]" />
-            </div>
+    if (!isAuthenticated) {
+        return (
+            <AdminLoginPage
+                token={tokenInput}
+                reviewerName={reviewerDraft}
+                loading={authenticating || restoringSession}
+                error={authError}
+                onTokenChange={setTokenInput}
+                onReviewerNameChange={setReviewerDraft}
+                onSubmit={handleLoginSubmit}
+            />
+        );
+    }
 
+    return (
+        <div className="min-h-screen w-full bg-background text-foreground">
             <AdminHeader
                 loading={loading}
                 reviewerName={reviewerName}
@@ -210,30 +339,27 @@ export function AdminApp() {
                 totalCount={counts.all}
                 lastSyncedAt={lastSyncedAt}
                 onRefresh={handleRefresh}
+                onSignOut={handleSignOut}
             />
 
-            <div className="relative z-10 mx-auto flex w-full max-w-[1600px]">
+            <div className="mx-auto flex w-full max-w-[1600px]">
                 <AdminSidebar
-                    token={tokenInput}
                     reviewerName={reviewerName}
                     counts={counts}
-                    loading={loading}
-                    error={error}
-                    onTokenChange={setTokenInput}
-                    onReviewerNameChange={setReviewerName}
-                    onSave={handleTokenSave}
+                    onReviewerNameChange={handleReviewerNameChange}
+                    onSignOut={handleSignOut}
                 />
 
                 <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
                     <div className="space-y-6">
-                        <Card className="border-border/70 bg-card/70 backdrop-blur motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2">
+                        <Card className="rounded-none border-2 border-border bg-card">
                             <CardHeader className="gap-2 pb-4">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                                    <Badge variant="outline" className="rounded-none border-2 border-primary bg-background text-primary">
                                         <Sparkles className="h-3 w-3" />
                                         Curated Gallery Queue
                                     </Badge>
-                                    <Badge variant="outline" className="border-border/70 bg-muted/40 text-muted-foreground">
+                                    <Badge variant="outline" className="rounded-none border-2 border-border bg-background text-muted-foreground">
                                         {counts.PENDING} pending
                                     </Badge>
                                 </div>
@@ -245,13 +371,13 @@ export function AdminApp() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {notice && (
-                                    <Alert aria-live="polite" className="border-emerald-500/30 bg-emerald-500/10 py-3">
+                                    <Alert aria-live="polite" className="rounded-none border-2 border-emerald-500 bg-background py-3">
                                         <AlertDescription className="text-sm text-emerald-200">{notice}</AlertDescription>
                                     </Alert>
                                 )}
 
                                 {error && (
-                                    <Alert aria-live="polite" className="border-destructive/30 bg-destructive/10 py-3">
+                                    <Alert aria-live="polite" className="rounded-none border-2 border-destructive bg-background py-3">
                                         <AlertDescription className="text-sm text-destructive">{error}</AlertDescription>
                                     </Alert>
                                 )}
@@ -263,7 +389,6 @@ export function AdminApp() {
                         <RequestList
                             requests={filteredRequests}
                             loading={loading}
-                            hasToken={Boolean(activeToken.trim())}
                             statusFilter={statusFilter}
                             updatingRequestId={updatingRequestId}
                             denyDrafts={denyDrafts}
@@ -271,7 +396,6 @@ export function AdminApp() {
                             onApprove={(request) => void updateRequestStatus(request, 'APPROVED')}
                             onDeny={(request) => void updateRequestStatus(request, 'DENIED')}
                             onCopySlug={(slug) => void copySlug(slug)}
-                            onSaveCredentials={handleTokenSave}
                         />
                     </div>
                 </main>
@@ -280,7 +404,7 @@ export function AdminApp() {
             <div className="fixed right-4 bottom-4 z-40 lg:hidden">
                 <Button
                     size="icon"
-                    className="h-12 w-12 rounded-full border border-border/70 shadow-xl"
+                    className="h-12 w-12 rounded-none border-2 border-border shadow-none"
                     aria-label="Open moderation settings"
                     onClick={() => setSettingsOpen(true)}
                 >
@@ -290,15 +414,11 @@ export function AdminApp() {
 
             <MobileSettings
                 open={settingsOpen}
-                token={tokenInput}
                 reviewerName={reviewerName}
                 counts={counts}
-                loading={loading}
-                error={error}
                 onOpenChange={setSettingsOpen}
-                onTokenChange={setTokenInput}
-                onReviewerNameChange={setReviewerName}
-                onSave={handleTokenSave}
+                onReviewerNameChange={handleReviewerNameChange}
+                onSignOut={handleSignOut}
             />
         </div>
     );

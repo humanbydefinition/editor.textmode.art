@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import {
   adminQueryStatusSchema,
+  type AdminSessionResponse,
   adminUpdateSchema,
   type AdminSketchListResponse,
   type AdminUpdateRequestPayload,
@@ -10,6 +11,15 @@ import { requireAdmin } from '../middleware/adminAuth.js';
 import { toAdminSketchRequest } from '../contracts/sketchMappers.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
+  app.get('/api/admin/session', { preHandler: requireAdmin }, async (_request, reply) => {
+    const response: AdminSessionResponse = {
+      authenticated: true,
+      serverTime: new Date().toISOString(),
+    };
+
+    reply.send(response);
+  });
+
   app.get('/api/admin/sketch-requests', { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = adminQueryStatusSchema.safeParse(request.query);
     if (!parsed.success) {

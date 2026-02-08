@@ -54,3 +54,29 @@ export function normalizeSocialLink(link: SocialLink): SocialLink {
 
     return link;
 }
+
+/**
+ * Extract a readable API error message from either JSON or plain text responses.
+ */
+export async function getApiErrorMessage(response: Response, fallback: string): Promise<string> {
+    try {
+        const payload = (await response.clone().json()) as { error?: unknown; message?: unknown };
+        const message = typeof payload.error === 'string' ? payload.error : payload.message;
+        if (typeof message === 'string' && message.trim().length > 0) {
+            return message;
+        }
+    } catch {
+        // Fall through to text response parsing.
+    }
+
+    try {
+        const text = (await response.text()).trim();
+        if (text.length > 0) {
+            return text;
+        }
+    } catch {
+        // Ignore and return fallback.
+    }
+
+    return fallback;
+}
