@@ -71,7 +71,7 @@ export function SystemMenu({
                         disabled={!strudelEnabled}
                         onMouseDown={(e) => e.preventDefault()}
                         className={cn(
-                            'fixed top-2 right-[6.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-10 z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             strudelTransport === 'playing'
@@ -109,7 +109,7 @@ export function SystemMenu({
                         onClick={onMakeRandomChange}
                         onMouseDown={(e) => e.preventDefault()}
                         className={cn(
-                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-[6.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',
@@ -135,7 +135,7 @@ export function SystemMenu({
                         onClick={onRandomize}
                         disabled={randomizeLoading}
                         className={cn(
-                            'fixed top-2 right-10 z-50 pointer-events-auto',
+                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',
