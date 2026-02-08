@@ -23,7 +23,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/admin/sketch-requests', { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = adminQueryStatusSchema.safeParse(request.query);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 
@@ -47,7 +47,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   app.patch('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = adminUpdateSchema.safeParse(request.body);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 

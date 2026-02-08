@@ -18,7 +18,7 @@ const mediaRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/media', async (request, reply) => {
     const parsed = mediaQuerySchema.safeParse(request.query);
     if (!parsed.success) {
-      reply.status(400).send({ error: 'Validation failed', issues: parsed.error.flatten() });
+      reply.status(400).send({ error: 'Validation failed' });
       return;
     }
 
