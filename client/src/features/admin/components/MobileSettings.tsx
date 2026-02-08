@@ -36,7 +36,7 @@ export function MobileSettings({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 showCloseButton={false}
-                className="top-auto bottom-0 translate-x-[-50%] translate-y-0 rounded-none border-2 border-border p-0 pb-[max(env(safe-area-inset-bottom),1rem)] sm:max-w-[560px]"
+                className="top-auto bottom-0 translate-x-[-50%] translate-y-0 rounded-b-none rounded-t-2xl border-2 border-border p-0 pb-[max(env(safe-area-inset-bottom),1rem)] sm:max-w-[560px]"
             >
                 <DialogHeader className="border-b-2 border-border px-5 pt-5 pb-4">
                     <DialogTitle className="flex items-center gap-2 text-base">
@@ -57,11 +57,11 @@ export function MobileSettings({
                             value={reviewerName}
                             onChange={(e) => onReviewerNameChange(e.target.value)}
                             placeholder="admin"
-                            className="h-10 rounded-none border-2 border-input bg-background"
+                            className="h-10 border-2 border-input bg-background"
                         />
                     </div>
 
-                    <Button onClick={onSignOut} variant="outline" className="h-10 w-full rounded-none border-2 border-border">
+                    <Button onClick={onSignOut} variant="outline" className="h-10 w-full border-2 border-border">
                         Sign out
                     </Button>
                 </div>
@@ -71,17 +71,17 @@ export function MobileSettings({
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 px-5 pb-4 text-center">
-                    <div className="border-2 border-border bg-background p-2.5">
+                    <div className="rounded-lg border-2 border-border bg-background p-2.5">
                         <Clock className="mx-auto h-4 w-4 text-muted-foreground" />
                         <p className="mt-1 text-lg font-bold tabular-nums">{counts.PENDING}</p>
                         <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Pending</p>
                     </div>
-                    <div className="border-2 border-border bg-background p-2.5">
+                    <div className="rounded-lg border-2 border-border bg-background p-2.5">
                         <CheckCheck className="mx-auto h-4 w-4 text-muted-foreground" />
                         <p className="mt-1 text-lg font-bold tabular-nums">{counts.APPROVED}</p>
                         <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Approved</p>
                     </div>
-                    <div className="border-2 border-border bg-background p-2.5">
+                    <div className="rounded-lg border-2 border-border bg-background p-2.5">
                         <Ban className="mx-auto h-4 w-4 text-muted-foreground" />
                         <p className="mt-1 text-lg font-bold tabular-nums">{counts.DENIED}</p>
                         <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Denied</p>
@@ -95,3 +95,4 @@ export function MobileSettings({
         </Dialog>
     );
 }
+

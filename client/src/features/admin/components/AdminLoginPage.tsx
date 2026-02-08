@@ -30,7 +30,7 @@ export function AdminLoginPage({
     return (
         <div className="min-h-screen w-full bg-background text-foreground">
             <div className="grid min-h-screen w-full gap-4 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-8 lg:px-8">
-                <section className="order-2 border-2 border-border bg-card p-5 lg:order-1 lg:p-8">
+                <section className="order-2 rounded-2xl border-2 border-border bg-card p-5 lg:order-1 lg:p-8">
                     <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">Das Nest</p>
                     <h1 className="mt-3 text-2xl leading-tight font-semibold sm:text-3xl">
                         Admin moderation login
@@ -40,10 +40,10 @@ export function AdminLoginPage({
                         before authentication succeeds.
                     </p>
                     <div className="mt-5 grid gap-2 text-xs text-muted-foreground sm:text-sm">
-                        <p className="border-2 border-border bg-background px-3 py-2">
+                        <p className="rounded-md border-2 border-border bg-background px-3 py-2">
                             Access is validated through <code>/api/admin/session</code>.
                         </p>
-                        <p className="border-2 border-border bg-background px-3 py-2">
+                        <p className="rounded-md border-2 border-border bg-background px-3 py-2">
                             Reviewer name is saved and attached to moderation actions.
                         </p>
                     </div>
@@ -77,7 +77,7 @@ export function AdminLoginPage({
                                     onChange={(event) => onTokenChange(event.target.value)}
                                     placeholder="Enter ADMIN_API_TOKEN"
                                     disabled={loading}
-                                    className="h-10 rounded-none border-2 border-input bg-background"
+                                    className="h-10 border-2 border-input bg-background"
                                 />
                             </div>
 
@@ -92,19 +92,19 @@ export function AdminLoginPage({
                                     onChange={(event) => onReviewerNameChange(event.target.value)}
                                     placeholder="admin"
                                     disabled={loading}
-                                    className="h-10 rounded-none border-2 border-input bg-background"
+                                    className="h-10 border-2 border-input bg-background"
                                 />
                             </div>
 
                             {error && (
-                                <Alert aria-live="polite" className="rounded-none border-2 border-destructive bg-background py-3">
+                                <Alert aria-live="polite" className="border-2 border-destructive bg-background py-3">
                                     <AlertDescription className="text-sm text-destructive">{error}</AlertDescription>
                                 </Alert>
                             )}
 
                             <Button
                                 type="submit"
-                                className="h-10 w-full rounded-none border-2 border-primary font-semibold uppercase"
+                                className="h-10 w-full border-2 border-primary font-semibold uppercase"
                                 disabled={loading}
                             >
                                 <LockKeyhole className="h-4 w-4" />
@@ -117,3 +117,4 @@ export function AdminLoginPage({
         </div>
     );
 }
+

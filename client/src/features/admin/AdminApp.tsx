@@ -352,14 +352,14 @@ export function AdminApp() {
 
                 <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
                     <div className="space-y-6">
-                        <Card className="rounded-none border-2 border-border bg-card">
+                        <Card className="rounded-xl border-2 border-border bg-card">
                             <CardHeader className="gap-2 pb-4">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <Badge variant="outline" className="rounded-none border-2 border-primary bg-background text-primary">
+                                    <Badge variant="outline" className="border-2 border-primary bg-background text-primary">
                                         <Sparkles className="h-3 w-3" />
                                         Curated Gallery Queue
                                     </Badge>
-                                    <Badge variant="outline" className="rounded-none border-2 border-border bg-background text-muted-foreground">
+                                    <Badge variant="outline" className="border-2 border-border bg-background text-muted-foreground">
                                         {counts.PENDING} pending
                                     </Badge>
                                 </div>
@@ -371,13 +371,13 @@ export function AdminApp() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {notice && (
-                                    <Alert aria-live="polite" className="rounded-none border-2 border-emerald-500 bg-background py-3">
+                                    <Alert aria-live="polite" className="rounded-lg border-2 border-emerald-500 bg-background py-3">
                                         <AlertDescription className="text-sm text-emerald-200">{notice}</AlertDescription>
                                     </Alert>
                                 )}
 
                                 {error && (
-                                    <Alert aria-live="polite" className="rounded-none border-2 border-destructive bg-background py-3">
+                                    <Alert aria-live="polite" className="rounded-lg border-2 border-destructive bg-background py-3">
                                         <AlertDescription className="text-sm text-destructive">{error}</AlertDescription>
                                     </Alert>
                                 )}
@@ -404,7 +404,7 @@ export function AdminApp() {
             <div className="fixed right-4 bottom-4 z-40 lg:hidden">
                 <Button
                     size="icon"
-                    className="h-12 w-12 rounded-none border-2 border-border shadow-none"
+                    className="h-12 w-12 rounded-full border-2 border-border shadow-none"
                     aria-label="Open moderation settings"
                     onClick={() => setSettingsOpen(true)}
                 >
@@ -423,3 +423,4 @@ export function AdminApp() {
         </div>
     );
 }
+

@@ -34,7 +34,7 @@ export function RequestList({
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, index) => (
-                    <Card key={index} className="overflow-hidden rounded-none border-2 border-border bg-card">
+                    <Card key={index} className="overflow-hidden border-2 border-border bg-card">
                         <CardHeader className="space-y-3 border-b-2 border-border bg-background pb-4">
                             <Skeleton className="h-5 w-2/5" />
                             <Skeleton className="h-4 w-1/3" />
@@ -61,7 +61,7 @@ export function RequestList({
             statusFilter === 'all' ? 'the entire moderation queue' : `the "${statusFilter}" queue`;
 
         return (
-            <Card className="rounded-none border-2 border-dashed border-border bg-card">
+            <Card className="border-2 border-dashed border-border bg-card">
                 <CardContent className="py-16 text-center">
                     <Inbox className="mx-auto mb-4 h-10 w-10 text-muted-foreground/70" />
                     <p className="text-sm font-medium">No requests found</p>
@@ -74,7 +74,7 @@ export function RequestList({
     return (
         <div className="space-y-4">
             {loading && (
-                <div className="flex items-center gap-2 border-2 border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 rounded-lg border-2 border-border bg-background px-3 py-2 text-xs text-muted-foreground">
                     <RefreshCw className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
                     Refreshing queue data...
                 </div>
@@ -94,3 +94,4 @@ export function RequestList({
         </div>
     );
 }
+

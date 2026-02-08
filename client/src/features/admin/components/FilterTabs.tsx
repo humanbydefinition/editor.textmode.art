@@ -29,7 +29,7 @@ export function FilterTabs({ value, counts, onChange }: FilterTabsProps) {
         <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Filter Queue</p>
             <Tabs value={value} onValueChange={(next) => onChange(next as FilterOption)} className="w-full">
-                <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-2 border-border bg-background p-1 scrollbar-hide">
+                <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border-2 border-border bg-background p-1 scrollbar-hide">
                     {filterOptions.map((opt) => {
                         const Icon = opt.icon;
                         const count = counts[opt.countKey];
@@ -38,13 +38,13 @@ export function FilterTabs({ value, counts, onChange }: FilterTabsProps) {
                             <TabsTrigger
                                 key={opt.key}
                                 value={opt.key}
-                                className="group h-9 gap-2 rounded-none border-2 border-transparent px-3 data-[state=active]:border-border data-[state=active]:bg-card"
+                                className="group h-9 gap-2 border-2 border-transparent px-3 data-[state=active]:border-border data-[state=active]:bg-card"
                             >
                                 <Icon className="h-3.5 w-3.5 text-muted-foreground transition-colors group-data-[state=active]:text-foreground" />
                                 <span>{opt.label}</span>
                                 <Badge
                                     variant="outline"
-                                    className="rounded-none border-2 border-border bg-background text-[10px] tabular-nums text-muted-foreground"
+                                    className="border-2 border-border bg-background text-[10px] tabular-nums text-muted-foreground"
                                 >
                                     {count}
                                 </Badge>
@@ -56,3 +56,4 @@ export function FilterTabs({ value, counts, onChange }: FilterTabsProps) {
         </div>
     );
 }
+
