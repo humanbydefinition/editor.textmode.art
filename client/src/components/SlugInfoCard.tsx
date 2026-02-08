@@ -41,6 +41,8 @@ const LICENSE_LINKS: Record<string, string> = {
     'WTFPL': 'http://www.wtfpl.net/',
     'CC BY-SA 4.0': 'https://creativecommons.org/licenses/by-sa/4.0/',
     'CC BY-NC 4.0': 'https://creativecommons.org/licenses/by-nc/4.0/',
+    'CC BY-ND 4.0': 'https://creativecommons.org/licenses/by-nd/4.0/',
+    'CC BY-NC-ND 4.0': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
     'CC0 1.0': 'https://creativecommons.org/publicdomain/zero/1.0/',
     'Apache-2.0': 'https://www.apache.org/licenses/LICENSE-2.0',
 };
