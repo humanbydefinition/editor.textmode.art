@@ -14,6 +14,7 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { SlugInfoCard } from '@/components/SlugInfoCard';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
+import { TurnstileWidget } from './TurnstileWidget';
 import {
     Select,
     SelectContent,
@@ -53,6 +54,8 @@ function getPublishConsentPolicyVersion(): string {
 }
 
 const PUBLISH_CONSENT_POLICY_VERSION = getPublishConsentPolicyVersion();
+const TURNSTILE_SITE_KEY = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim();
+const TURNSTILE_CONFIGURED = TURNSTILE_SITE_KEY.length > 0;
 
 export interface PublishRequestData {
     textmodeCode: string;
@@ -97,6 +100,9 @@ export function PublishRequestDialog({
     const [bluesky, setBluesky] = useState('');
     const [mastodon, setMastodon] = useState('');
     const [publishConsentAccepted, setPublishConsentAccepted] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileError, setTurnstileError] = useState<string | null>(null);
+    const [turnstileResetNonce, setTurnstileResetNonce] = useState(0);
     const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submittedSlug, setSubmittedSlug] = useState<string | null>(null);
@@ -115,6 +121,9 @@ export function PublishRequestDialog({
             setBluesky('');
             setMastodon('');
             setPublishConsentAccepted(false);
+            setTurnstileToken(null);
+            setTurnstileError(null);
+            setTurnstileResetNonce((value) => value + 1);
             setSubmitStatus('idle');
             setSubmitError(null);
             setSubmittedSlug(null);
@@ -167,9 +176,11 @@ export function PublishRequestDialog({
             title.trim().length <= 120 &&
             description.length <= 200 &&
             authorName.length <= 32 &&
-            publishConsentAccepted
+            publishConsentAccepted &&
+            TURNSTILE_CONFIGURED &&
+            Boolean(turnstileToken)
         );
-    }, [slug.available, title, description, authorName, publishConsentAccepted]);
+    }, [slug.available, title, description, authorName, publishConsentAccepted, turnstileToken]);
 
     const previewSketch = useMemo(() => {
         const normalizedPreviewSlug = (slug.normalized || slug.value || 'your-sketch')
@@ -186,6 +197,11 @@ export function PublishRequestDialog({
 
     const handleSubmit = useCallback(async () => {
         if (!data || !isFormValid) return;
+        if (!turnstileToken) {
+            setSubmitStatus('error');
+            setSubmitError('Complete the security verification before submitting.');
+            return;
+        }
 
         setSubmitStatus('submitting');
         setSubmitError(null);
@@ -203,6 +219,7 @@ export function PublishRequestDialog({
                 accepted: true,
                 policyVersion: PUBLISH_CONSENT_POLICY_VERSION,
             },
+            turnstileToken,
         });
 
         if (result.success) {
@@ -211,8 +228,10 @@ export function PublishRequestDialog({
         } else {
             setSubmitStatus('error');
             setSubmitError(result.error);
+            setTurnstileToken(null);
+            setTurnstileResetNonce((value) => value + 1);
         }
-    }, [data, isFormValid, slug, title, description, authorName, license, socialLinks]);
+    }, [data, isFormValid, slug, title, description, authorName, license, socialLinks, turnstileToken]);
 
     if (!data) return null;
     const isSuccess = submitStatus === 'success';
@@ -490,6 +509,36 @@ export function PublishRequestDialog({
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-2">
+                        <Label className="text-sm text-zinc-200">
+                            security verification <span className="text-red-400">*</span>
+                        </Label>
+                        {TURNSTILE_CONFIGURED ? (
+                            <>
+                                <TurnstileWidget
+                                    siteKey={TURNSTILE_SITE_KEY}
+                                    resetNonce={turnstileResetNonce}
+                                    onTokenChange={setTurnstileToken}
+                                    onErrorChange={setTurnstileError}
+                                    className="flex justify-center"
+                                />
+                                <p className="text-xs text-zinc-500">
+                                    This check helps protect the gallery from automated abuse.
+                                </p>
+                                {turnstileError && (
+                                    <p className="text-xs text-red-400">{turnstileError}</p>
+                                )}
+                                {turnstileToken && !turnstileError && (
+                                    <p className="text-xs text-emerald-400">security verification complete.</p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-xs text-red-300">
+                                Security verification is not configured. Publishing is currently unavailable.
+                            </p>
+                        )}
                     </div>
 
                     {/* Error message */}
