@@ -194,6 +194,7 @@ export class AppRuntime {
 	}
 
 	private makeRandomChange(): void {
+		const isMobile = useAppStore.getState().isMobile;
 		let targetId = this.editorManager.getFocusedEditorId();
 
 		// If no editor has focus, default to a sensible choice
@@ -210,8 +211,11 @@ export class AppRuntime {
 			if (code !== newCode) {
 				engine.setCode(newCode);
 				engine.getController()?.handleForceRun();
-				// Restore focus to editor to allow seamless workflow
-				this.editorManager.focusEditor(targetId);
+				// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
+				if (!isMobile) {
+					// Restore focus to editor to allow seamless desktop workflow.
+					this.editorManager.focusEditor(targetId);
+				}
 			}
 		}
 	}
