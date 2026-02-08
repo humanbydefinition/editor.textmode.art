@@ -5,10 +5,11 @@ import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import staticPlugin from '@fastify/static';
 import { env } from './config/env.js';
-import publicRoutes from './routes/public.js';
-import adminRoutes from './routes/admin.js';
-import slugRoutes from './routes/slug.js';
-import mediaRoutes from './routes/media.js';
+import sketchesRoutes from './modules/sketches/sketches.routes.js';
+import submissionsRoutes from './modules/submissions/submissions.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
+import slugPageRoutes from './modules/slug-page/slug-page.routes.js';
+import mediaRoutes from './modules/media/media.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -95,9 +96,10 @@ export function buildServer(): FastifyInstance {
     });
   }
 
-  app.register(publicRoutes);
+  app.register(sketchesRoutes);
+  app.register(submissionsRoutes);
   app.register(adminRoutes);
-  app.register(slugRoutes);
+  app.register(slugPageRoutes);
   app.register(mediaRoutes);
 
   app.get('/api/health', async () => ({ status: 'ok' }));
