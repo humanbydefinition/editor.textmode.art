@@ -1,5 +1,6 @@
 {
   "tools": {
+    "sandbox": true,
     "autoAccept": true,
     "approvalMode": "auto_edit"
   },
