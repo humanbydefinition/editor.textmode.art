@@ -113,7 +113,7 @@ export function RequestCard({
                                 )}
                                 {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy slug'}
                             </Button>
-                            {request.status === 'APPROVED' ? (
+                            {request.status === 'APPROVED' || request.status === 'PENDING' ? (
                                 <Button variant="outline" size="sm" className="border-2 border-border" asChild>
                                     <a href={`/s/${request.slug}`} target="_blank" rel="noreferrer">
                                         <ExternalLink className="h-3.5 w-3.5" />
