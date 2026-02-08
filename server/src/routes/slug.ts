@@ -14,7 +14,7 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
         const slugValidation = validateSlug(normalizedSlug);
 
         if (!slugValidation.valid) {
-            reply.status(404).send({ error: 'Sketch not found' });
+            await reply.redirect('/');
             return;
         }
 
@@ -26,7 +26,7 @@ const slugRoutes: FastifyPluginAsync = async (app) => {
         });
 
         if (!sketch) {
-            reply.status(404).send({ error: 'Sketch not found' });
+            await reply.redirect('/');
             return;
         }
 
