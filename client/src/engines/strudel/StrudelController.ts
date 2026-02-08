@@ -5,15 +5,17 @@ import { BaseController, type BaseControllerCallbacks, type BaseControllerDepend
 /**
  * Strudel-specific dependencies.
  */
-export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, StrudelRuntime> { } /* eslint-disable-line @typescript-eslint/no-empty-object-type */
+export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, StrudelRuntime> {
+	getPlaybackEnabled: () => boolean;
+}
 
 /**
  * Strudel controller interface.
  */
 export interface IStrudelController extends IController {
 	handleHush(): void;
+	handleTransportPause(): void;
 	handleInitAudio(): Promise<void>;
-	setupAutoAudioInit(): void;
 	handleRuntimeReady(): void;
 	handlePatternUpdate(pattern: StrudelPattern | null): void;
 	handlePlayStateChange(isPlaying: boolean): void;
@@ -37,8 +39,6 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	// Engine ID for generic state management
 	protected readonly engineId = 'strudel';
 
-	private autoInitListener: (() => void) | null = null;
-
 	constructor(callbacks: BaseControllerCallbacks, deps: StrudelControllerDependencies) {
 		super(callbacks, deps);
 	}
@@ -48,10 +48,25 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	 * Handles audio initialization if needed.
 	 */
 	protected forceExecute(code: string): void {
+		if (!this.isPlaybackEnabled()) {
+			this.deps.getRuntime()?.clearPendingCode();
+			this.deps.getRuntime()?.hush();
+			return;
+		}
+
 		const state = this.getStrudelState();
 		if (!state.isInitialized) {
 			this.handleInitAudio().then(() => {
+				if (!this.isPlaybackEnabled()) {
+					this.deps.getRuntime()?.clearPendingCode();
+					this.deps.getRuntime()?.hush();
+					return;
+				}
 				this.deps.getRuntime()?.forceRun(code);
+			}).catch((error) => {
+				const message = error instanceof Error ? error.message : 'Failed to initialize Strudel audio';
+				this.deps.store.setError({ message: this.formatErrorMessage(message), source: this.errorSource });
+				this.callbacks.onRenderOverlay();
 			});
 		} else {
 			this.deps.getRuntime()?.forceRun(code);
@@ -69,7 +84,14 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	 * Handle hush (stop audio).
 	 */
 	handleHush(): void {
+		this.clearDebounce();
+		this.cancelPendingWorkingCode();
+		this.deps.getRuntime()?.clearPendingCode();
 		this.deps.getRuntime()?.hush();
+	}
+
+	handleTransportPause(): void {
+		this.handleHush();
 	}
 
 	/**
@@ -83,33 +105,16 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	}
 
 	/**
-	 * Setup automatic audio initialization on first user interaction.
-	 * Satisfies Web Audio autoplay policy.
-	 */
-	setupAutoAudioInit(): void {
-		const initOnInteraction = () => {
-			const state = this.getStrudelState();
-			if (!state.isInitialized) {
-				this.handleInitAudio();
-			}
-			document.removeEventListener('click', initOnInteraction);
-			document.removeEventListener('keydown', initOnInteraction);
-			document.removeEventListener('touchstart', initOnInteraction);
-		};
-
-		this.autoInitListener = initOnInteraction;
-		document.addEventListener('click', initOnInteraction);
-		document.addEventListener('keydown', initOnInteraction);
-		document.addEventListener('touchstart', initOnInteraction);
-	}
-
-	/**
 	 * Handle Strudel runtime ready.
 	 */
 	handleRuntimeReady(): void {
 		this.updateStrudelState({ isInitialized: true });
 		this.deps.store.setEngineInitialized(this.engineId, true);
 		this.callbacks.onRenderOverlay();
+	}
+
+	protected override shouldAutoExecute(): boolean {
+		return super.shouldAutoExecute() && this.isPlaybackEnabled();
 	}
 
 	/**
@@ -160,12 +165,9 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	 * Dispose listeners.
 	 */
 	dispose(): void {
-		if (this.autoInitListener) {
-			document.removeEventListener('click', this.autoInitListener);
-			document.removeEventListener('keydown', this.autoInitListener);
-			document.removeEventListener('touchstart', this.autoInitListener);
-			this.autoInitListener = null;
-		}
+		this.clearDebounce();
+		this.cancelPendingWorkingCode();
+		this.deps.getRuntime()?.clearPendingCode();
 	}
 
 	private getStrudelState(): StrudelState {
@@ -179,5 +181,9 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	private updateStrudelState(update: Partial<StrudelState>): void {
 		const current = this.getStrudelState();
 		this.deps.store.setEngineCustomState(this.engineId, 'state', { ...current, ...update });
+	}
+
+	private isPlaybackEnabled(): boolean {
+		return (this.deps as StrudelControllerDependencies).getPlaybackEnabled();
 	}
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Menu, Shuffle, X, Share, Dices } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -22,11 +22,15 @@ import { SlugInfoAlert } from '@/components/SlugInfoAlert';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
+import type { StrudelTransportState } from '@/types/app.types';
 
 export interface SystemMenuProps {
     onShare: () => void;
     onRandomize: () => void;
+    onToggleStrudelTransport: () => void;
     onMakeRandomChange?: () => void;
+    strudelEnabled: boolean;
+    strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
     onClearStorage: () => void;
     onLoadExample: (code: string, engineId: string) => void;
@@ -36,7 +40,10 @@ export interface SystemMenuProps {
 export function SystemMenu({
     onShare,
     onRandomize,
+    onToggleStrudelTransport,
     onMakeRandomChange,
+    strudelEnabled,
+    strudelTransport,
     randomizeLoading,
     onClearStorage,
     onLoadExample,
@@ -53,9 +60,48 @@ export function SystemMenu({
                 autoOpenEnabled={slugInfoAutoOpenEnabled}
                 onShare={onShare}
                 className={cn(
-                    'fixed top-2 right-[6.5rem] z-50 pointer-events-auto'
+                    'fixed top-2 right-[8.5rem] z-50 pointer-events-auto'
                 )}
             />
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        onClick={onToggleStrudelTransport}
+                        disabled={!strudelEnabled}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className={cn(
+                            'fixed top-2 right-[6.5rem] z-50 pointer-events-auto',
+                            'flex items-center justify-center',
+                            'w-6 h-6 rounded-full',
+                            strudelTransport === 'playing'
+                                ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
+                                : 'bg-zinc-900/40 border-white/5 text-zinc-400',
+                            'backdrop-blur-md border',
+                            'transition-all duration-300',
+                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                            'focus:outline-none focus:ring-2 focus:ring-white/10',
+                            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
+                        )}
+                        aria-label={strudelTransport === 'playing' ? 'Pause Strudel audio' : 'Play Strudel audio'}
+                    >
+                        {strudelTransport === 'playing' ? (
+                            <Pause className="w-[14px] h-[14px]" />
+                        ) : (
+                            <Play className="w-[14px] h-[14px]" />
+                        )}
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>
+                        {!strudelEnabled
+                            ? 'enable strudel in settings first'
+                            : strudelTransport === 'playing'
+                                ? 'pause strudel audio'
+                                : 'play strudel audio'}
+                    </p>
+                </TooltipContent>
+            </Tooltip>
 
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -224,7 +270,7 @@ export function SystemMenu({
 
 
                             <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>hush audio</span>
+                                <span>toggle audio</span>
                                 <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">Ctrl+.</span>
                             </div>
 

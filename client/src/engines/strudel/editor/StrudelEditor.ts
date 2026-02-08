@@ -2,9 +2,7 @@ import * as monaco from 'monaco-editor';
 import { BaseEditor, type EditorOptions } from '@/core/editor/BaseEditor';
 import { StrudelHighlighter, injectStrudelHighlightStyles, type Pattern } from './StrudelHighlighter';
 
-export interface StrudelEditorOptions extends EditorOptions {
-	onHush?: () => void;
-}
+export type StrudelEditorOptions = EditorOptions;
 
 // Strudel model URI - used to identify and filter diagnostics
 const STRUDEL_MODEL_URI = 'file:///strudel-sketch.js';
@@ -32,7 +30,6 @@ export class StrudelEditor extends BaseEditor {
 			lookahead: 0.1,
 		});
 
-		this.registerStrudelKeybindings();
 		this.setupErrorFiltering();
 	}
 
@@ -52,15 +49,6 @@ export class StrudelEditor extends BaseEditor {
 			model.dispose();
 		}
 		return monaco.editor.createModel(value, this.getLanguageId(), modelUri);
-	}
-
-	private registerStrudelKeybindings(): void {
-
-
-		// Ctrl/Cmd + .: Hush (stop audio) - Strudel convention
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period, () => {
-			this.options.onHush?.();
-		});
 	}
 
 	private setupErrorFiltering(): void {

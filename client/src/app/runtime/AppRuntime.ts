@@ -13,7 +13,7 @@ import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAda
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/services/StorageService';
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
-import type { AppSettings } from '@/types/app.types';
+import type { AppSettings, StrudelTransportState } from '@/types/app.types';
 import type { EngineId } from '@/types/engine.types';
 
 /**
@@ -112,6 +112,9 @@ export class AppRuntime {
 			this.shareWorkflow.syncApprovedSketchToStrudelIfPresent();
 		}
 		this.shareWorkflow.applyPendingApprovedSketchIfPresent();
+		if (loadedSettings.strudelEnabled && this.shouldSyncTransportNow(loadedSettings.strudelTransport)) {
+			this.engineLifecycle.setStrudelTransport(loadedSettings.strudelTransport);
+		}
 		this.shareSession.attachInteractionGuards();
 		this.shortcuts = this.createShortcutsManager();
 		this.shortcuts.init();
@@ -154,7 +157,7 @@ export class AppRuntime {
 					useAppStore.getState().setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
-				hushAudio: () => this.engineLifecycle.hushStrudel(),
+				toggleStrudelAudio: () => this.toggleStrudelTransport(),
 				runCodeForEngine: (engineId: string) => this.uiActions.runCodeForEngine(engineId),
 			},
 		});
@@ -168,6 +171,9 @@ export class AppRuntime {
 				this.engineLifecycle.applyEditorSettings();
 				if (!previous || settings.strudelEnabled !== previous.strudelEnabled) {
 					void this.setStrudelEnabled(settings.strudelEnabled);
+				}
+				if (!previous || settings.strudelTransport !== previous.strudelTransport) {
+					this.engineLifecycle.setStrudelTransport(settings.strudelTransport);
 				}
 			}
 		);
@@ -190,7 +196,38 @@ export class AppRuntime {
 		if (didEnable) {
 			this.shareSession.applyInitialShareIfPresent();
 			this.shareWorkflow.syncApprovedSketchToStrudelIfPresent();
+			if (this.shouldSyncTransportNow(this.settings.strudelTransport)) {
+				this.engineLifecycle.setStrudelTransport(this.settings.strudelTransport);
+			}
 		}
+	}
+
+	private toggleStrudelTransport(): void {
+		const nextTransport: StrudelTransportState =
+			this.settings.strudelTransport === 'playing' ? 'paused' : 'playing';
+		this.setStrudelTransport(nextTransport);
+	}
+
+	private setStrudelTransport(nextTransport: StrudelTransportState): void {
+		if (!this.settings.strudelEnabled && nextTransport === 'playing') return;
+		if (this.settings.strudelTransport === nextTransport) {
+			if (nextTransport === 'paused') {
+				this.engineLifecycle.setStrudelTransport(nextTransport);
+			}
+			return;
+		}
+		useAppStore.getState().setSettings({
+			...this.settings,
+			strudelTransport: nextTransport,
+		});
+	}
+
+	private shouldSyncTransportNow(transport: StrudelTransportState): boolean {
+		if (transport === 'paused') return true;
+		const state = useAppStore.getState();
+		if (state.share.payload && !state.share.consented) return false;
+		if (state.approvedSketch) return false;
+		return true;
 	}
 
 	private makeRandomChange(): void {
@@ -233,7 +270,10 @@ export class AppRuntime {
 				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
 				onShare: () => this.uiActions.openShareExport(),
 				onRandomize: () => void this.shareWorkflow.randomize(),
+				onToggleStrudelTransport: () => this.toggleStrudelTransport(),
 				onMakeRandomChange: () => this.makeRandomChange(),
+				strudelEnabled: this.settings.strudelEnabled,
+				strudelTransport: this.settings.strudelTransport,
 				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
 				onClearStorage: () => this.uiActions.clearStorage(),
 				onLoadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),

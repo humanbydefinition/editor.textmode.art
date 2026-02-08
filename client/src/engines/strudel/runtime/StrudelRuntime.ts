@@ -64,6 +64,11 @@ export class StrudelRuntime {
 	private repl: StrudelRepl | null = null;
 	private currentPattern: StrudelPattern | null = null;
 	private pendingCode: string | null = null;
+	private queuedCode: string | null = null;
+	private evaluateInFlight = false;
+	private playbackEpoch = 0;
+	private initPromise: Promise<void> | null = null;
+	private disposed = false;
 	private evalErrorOccurred = false;
 
 	constructor(options: StrudelRuntimeOptions) {
@@ -75,64 +80,88 @@ export class StrudelRuntime {
 	 * Must be called after user interaction due to Web Audio autoplay policy.
 	 */
 	async init(): Promise<void> {
-		if (this._isInitialized) return;
+		if (this._isInitialized || this.disposed) return;
+		if (this.initPromise) return this.initPromise;
+
+		this.initPromise = (async () => {
+			try {
+				// Import Strudel modules that are available
+				const strudelCore = await import('@strudel/core');
+				const strudelTranspiler = await import('@strudel/transpiler');
+				const strudelWebaudio = await import('@strudel/webaudio');
+				const strudelMini = await import('@strudel/mini');
+				const strudelTonal = await import('@strudel/tonal');
+
+				if (this.disposed) return;
+
+				// Initialize Web Audio
+				await strudelWebaudio.initAudio();
+				if (this.disposed) return;
+
+				// Register modules in eval scope
+				await strudelCore.evalScope(
+					strudelCore,
+					strudelMini,
+					strudelTonal,
+					strudelWebaudio,
+					strudelCore.controls
+				);
+
+				if (this.disposed) return;
+
+				// Load samples
+				try {
+					await Promise.all([
+						strudelWebaudio.samples('github:tidalcycles/dirt-samples'),
+						strudelWebaudio.registerSynthSounds(),
+						strudelWebaudio.registerZZFXSounds(),
+					]);
+				} catch (err) {
+					console.warn('[StrudelRuntime] Failed to load some samples:', err);
+				}
+
+				if (this.disposed) return;
+
+				// Create repl with afterEval callback to capture miniLocations
+				const repl = strudelCore.repl({
+					defaultOutput: strudelWebaudio.webaudioOutput,
+					onEvalError: (e: unknown) => {
+						this.evalErrorOccurred = true;
+						const parsed = this.parseError(e as Error);
+						this.options.onError?.(parsed);
+					},
+					getTime: () => strudelWebaudio.getAudioContext().currentTime,
+					transpiler: strudelTranspiler.transpiler,
+				}) as unknown as StrudelRepl;
+
+				if (this.disposed) {
+					repl.stop();
+					return;
+				}
+
+				this.repl = repl;
+				this._isInitialized = true;
+				this.options.onReady?.();
+
+				// Run pending code if any
+				if (this.pendingCode !== null) {
+					const code = this.pendingCode;
+					this.pendingCode = null;
+					this.forceRun(code);
+				}
+			} catch (error) {
+				if (this.disposed) return;
+				console.error('Failed to initialize Strudel:', error);
+				this.options.onError?.({
+					message: error instanceof Error ? error.message : 'Failed to initialize Strudel audio',
+				});
+			}
+		})();
 
 		try {
-			// Import Strudel modules that are available
-			const strudelCore = await import('@strudel/core');
-			const strudelTranspiler = await import('@strudel/transpiler');
-			const strudelWebaudio = await import('@strudel/webaudio');
-			const strudelMini = await import('@strudel/mini');
-			const strudelTonal = await import('@strudel/tonal');
-
-			// Initialize Web Audio
-			await strudelWebaudio.initAudio();
-
-			// Register modules in eval scope
-			await strudelCore.evalScope(
-				strudelCore,
-				strudelMini,
-				strudelTonal,
-				strudelWebaudio,
-				strudelCore.controls
-			);
-
-			// Load samples
-			try {
-				await Promise.all([
-					strudelWebaudio.samples('github:tidalcycles/dirt-samples'),
-					strudelWebaudio.registerSynthSounds(),
-					strudelWebaudio.registerZZFXSounds(),
-				]);
-			} catch (err) {
-				console.warn('[StrudelRuntime] Failed to load some samples:', err);
-			}
-
-			// Create repl with afterEval callback to capture miniLocations
-			this.repl = strudelCore.repl({
-				defaultOutput: strudelWebaudio.webaudioOutput,
-				onEvalError: (e: unknown) => {
-					this.evalErrorOccurred = true;
-					const parsed = this.parseError(e as Error);
-					this.options.onError?.(parsed);
-				},
-				getTime: () => strudelWebaudio.getAudioContext().currentTime,
-				transpiler: strudelTranspiler.transpiler,
-			}) as unknown as StrudelRepl;
-
-			this._isInitialized = true;
-			this.options.onReady?.();
-
-			// Run pending code if any
-			if (this.pendingCode !== null) {
-				await this.evaluateImmediate(this.pendingCode);
-				this.pendingCode = null;
-			}
-		} catch (error) {
-			console.error('Failed to initialize Strudel:', error);
-			this.options.onError?.({
-				message: error instanceof Error ? error.message : 'Failed to initialize Strudel audio',
-			});
+			await this.initPromise;
+		} finally {
+			this.initPromise = null;
 		}
 	}
 
@@ -147,13 +176,20 @@ export class StrudelRuntime {
 	 * Run code immediately.
 	 */
 	forceRun(code: string): void {
-		this.evaluateImmediate(code);
+		if (!this._isInitialized || !this.repl) {
+			this.pendingCode = code;
+			return;
+		}
+
+		this.queuedCode = code;
+		void this.processEvaluateQueue();
 	}
 
 	/**
 	 * Cleanup
 	 */
 	dispose(): void {
+		this.disposed = true;
 		this.hush();
 	}
 
@@ -161,19 +197,40 @@ export class StrudelRuntime {
 	 * Stop all audio (hush).
 	 */
 	hush(): void {
-		if (!this._isInitialized) return;
+		this.playbackEpoch += 1;
+		this.pendingCode = null;
+		this.queuedCode = null;
+		this.currentPattern = null;
+		this.isPlaying = false;
+
+		if (!this._isInitialized) {
+			this.options.onPlayStateChange?.(false);
+			this.options.onPatternUpdate?.(null);
+			return;
+		}
 
 		try {
 			if (this.repl) {
 				this.repl.stop();
 			}
-			this.currentPattern = null;
-			this.isPlaying = false;
+
+			// Best-effort global stop for any stale orphaned Strudel graph.
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const strudelGlobal = (window as any).strudel;
+			if (typeof strudelGlobal?.hush === 'function') {
+				strudelGlobal.hush();
+			}
+
 			this.options.onPlayStateChange?.(false);
 			this.options.onPatternUpdate?.(null);
 		} catch (error) {
 			console.error('Failed to stop Strudel:', error);
 		}
+	}
+
+	clearPendingCode(): void {
+		this.pendingCode = null;
+		this.queuedCode = null;
 	}
 
 	/**
@@ -223,11 +280,18 @@ export class StrudelRuntime {
 			return;
 		}
 
+		const epochAtStart = this.playbackEpoch;
 		this.evalErrorOccurred = false;
 
 		try {
 			// Use repl.evaluate which will trigger afterEval callback
 			const pattern = await this.repl.evaluate(code, true);
+
+			// Ignore stale results if playback was paused/replaced while evaluating.
+			if (epochAtStart !== this.playbackEpoch) {
+				this.repl.stop();
+				return;
+			}
 
 			// If onEvalError was called, don't update pattern
 			if (this.evalErrorOccurred) {
@@ -239,9 +303,37 @@ export class StrudelRuntime {
 			this.options.onPlayStateChange?.(true);
 			this.options.onPatternUpdate?.(this.currentPattern);
 		} catch (error) {
+			if (epochAtStart !== this.playbackEpoch) {
+				return;
+			}
 			const err = error as Error;
 			const parsed = this.parseError(err);
 			this.options.onError?.(parsed);
+		}
+	}
+
+	private async processEvaluateQueue(): Promise<void> {
+		if (this.evaluateInFlight) return;
+		if (!this._isInitialized || !this.repl) {
+			if (this.queuedCode !== null) {
+				this.pendingCode = this.queuedCode;
+				this.queuedCode = null;
+			}
+			return;
+		}
+
+		this.evaluateInFlight = true;
+		try {
+			while (this.queuedCode !== null) {
+				const code = this.queuedCode;
+				this.queuedCode = null;
+				await this.evaluateImmediate(code);
+			}
+		} finally {
+			this.evaluateInFlight = false;
+			if (this.queuedCode !== null) {
+				void this.processEvaluateQueue();
+			}
 		}
 	}
 

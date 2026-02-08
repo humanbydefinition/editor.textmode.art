@@ -122,7 +122,6 @@ export class StrudelEngine {
 			lineNumbers: context.getSettings().lineNumbers,
 			onChange: (value) => this.controller?.handleCodeChange(value),
 			onRun: () => this.controller?.handleForceRun(),
-			onHush: () => this.controller?.handleHush(),
 			onToggleUI: () => context.toggleUI(),
 			onIncreaseFontSize: () => {
 				context.changeFontSize(1);
@@ -154,6 +153,7 @@ export class StrudelEngine {
 			getRuntime: () => this.runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
+			getPlaybackEnabled: () => context.getSettings().strudelTransport === 'playing',
 			store: this.storeAdapter,
 		};
 
@@ -166,9 +166,5 @@ export class StrudelEngine {
 			isPlaying: false,
 			isInitialized: false,
 		});
-
-		// StrudelRuntime requires user interaction for Web Audio
-		// Setup auto-init on first user interaction
-		this.controller?.setupAutoAudioInit();
 	}
 }
