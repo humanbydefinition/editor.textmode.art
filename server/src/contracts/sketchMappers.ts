@@ -128,8 +128,18 @@ export function toPublicSketchAccess(sketch: SketchRecord): PublicSketchAccess {
 
 export function toAdminSketchRequest(sketch: SketchRecord): AdminSketchRequest {
   return {
-    ...toApprovedSketch(sketch),
+    id: sketch.id,
+    slug: sketch.slug,
     status: toSketchStatus(sketch.status),
+    title: sketch.title,
+    description: sketch.description,
+    authorName: sketch.authorName,
+    license: sketch.license,
+    socialLinks: toSocialLinks(sketch.socialLinks),
+    textmodeCode: sketch.textmodeCode,
+    strudelCode: sketch.strudelCode,
+    ogImageUrl: sketch.ogImageUrl,
+    createdAt: toIsoDate(sketch.createdAt),
     updatedAt: toIsoDate(sketch.updatedAt ?? sketch.createdAt),
     reviewedAt: sketch.reviewedAt ? toIsoDate(sketch.reviewedAt) : null,
     reviewedBy: sketch.reviewedBy ?? null,
