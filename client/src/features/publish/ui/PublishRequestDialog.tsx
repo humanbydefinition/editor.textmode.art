@@ -544,13 +544,11 @@ export function PublishRequestDialog({
                                 <Link2 className="w-4 h-4" />
                                 synth.textmode.art/s/{previewSketch.slug}
                             </p>
-                            <div className="rounded-md border border-white/5 bg-zinc-950/40 p-3">
                                 <div className="w-full max-w-[360px]">
                                     <SlugInfoCard
                                         sketch={previewSketch}
                                     />
                                 </div>
-                            </div>
                         </div>
                     </div>
 
