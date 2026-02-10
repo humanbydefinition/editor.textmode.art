@@ -14,6 +14,9 @@ const envSchema = z.object({
   PUBLIC_BASE_URL: z.string().url().optional(),
   RUNNER_PUBLIC_URL: z.string().url().optional(),
   VITE_DEV_SERVER_URL: z.string().url().optional(),
+  SCREENSHOT_BASE_URL: z.string().url().optional(),
+  SCREENSHOT_STORAGE_DIR: z.string().optional(),
+  SCREENSHOT_PREVIEW_TOKEN: z.string().min(16).optional(),
   PUBLISH_CONSENT_POLICY_VERSION: z.string().min(1).max(64).default('2026-02-08'),
   ANTI_SPAM_SECRET: z.string().min(32).optional(),
   ANTI_SPAM_POW_DIFFICULTY: z.coerce.number().int().min(8).max(24).default(14),
@@ -35,6 +38,9 @@ if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.ANTI_SPAM_SECRET) {
 }
 if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.TURNSTILE_SECRET_KEY) {
   throw new Error('TURNSTILE_SECRET_KEY must be set in production.');
+}
+if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.SCREENSHOT_PREVIEW_TOKEN) {
+  throw new Error('SCREENSHOT_PREVIEW_TOKEN must be set in production and be at least 16 characters long.');
 }
 
 export const env: Env = {

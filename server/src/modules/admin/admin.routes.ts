@@ -9,8 +9,23 @@ import {
 import { prisma } from '../../database/client.js';
 import { requireAdmin } from '../../middleware/adminAuth.js';
 import { toAdminSketchRequest } from './admin.mapper.js';
+import { screenshotService } from '../screenshot/screenshot.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
+  const enqueueScreenshotCapture = (sketch: { id: string; slug: string }) => {
+    void screenshotService.capture(sketch.slug)
+      .then(async (ogImageUrl) => {
+        await prisma.sketchRequest.update({
+          where: { id: sketch.id },
+          data: { ogImageUrl },
+        });
+        app.log.info({ slug: sketch.slug, ogImageUrl }, 'Generated OG image');
+      })
+      .catch((error) => {
+        app.log.error({ err: error, slug: sketch.slug }, 'Failed to generate OG image');
+      });
+  };
+
   app.get('/api/admin/session', { preHandler: requireAdmin }, async (_request, reply) => {
     const response: AdminSessionResponse = {
       authenticated: true,
@@ -44,6 +59,21 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     reply.send(response);
   });
 
+  app.get('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+
+    const sketch = await prisma.sketchRequest.findUnique({
+      where: { id },
+    });
+
+    if (!sketch) {
+      reply.status(404).send({ error: 'Sketch request not found' });
+      return;
+    }
+
+    reply.send(toAdminSketchRequest(sketch));
+  });
+
   app.patch('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = adminUpdateSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -71,10 +101,35 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
         },
       });
 
+      if (updated.status === 'APPROVED' && !updated.ogImageUrl) {
+        enqueueScreenshotCapture({ id: updated.id, slug: updated.slug });
+      }
+
       reply.send(toAdminSketchRequest(updated));
     } catch {
       reply.status(404).send({ error: 'Sketch request not found' });
     }
+  });
+
+  app.post('/api/admin/sketch-requests/:id/regenerate-preview', { preHandler: requireAdmin }, async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+
+    const sketch = await prisma.sketchRequest.findUnique({
+      where: { id },
+    });
+
+    if (!sketch) {
+      reply.status(404).send({ error: 'Sketch request not found' });
+      return;
+    }
+
+    if (sketch.status !== 'APPROVED') {
+      reply.status(400).send({ error: 'Only approved sketches can have previews regenerated.' });
+      return;
+    }
+
+    enqueueScreenshotCapture({ id: sketch.id, slug: sketch.slug });
+    reply.status(202).send({ message: 'Preview regeneration queued' });
   });
 };
 

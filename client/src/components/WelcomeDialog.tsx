@@ -9,7 +9,6 @@ import {
     DialogClose,
 } from '@/shared/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/ui/tooltip";
-import { Badge } from '@/shared/ui/badge';
 
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;

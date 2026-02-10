@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/shared/ui/scroll-area";
-import { Github, ExternalLink, Heart } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 
 const CodebergIcon = ({ className }: { className?: string }) => (
     <svg

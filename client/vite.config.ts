@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         xfwd: true,
       },
+      '/storage': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        xfwd: true,
+      },
       // Use ^/s/ to match /s/:slug paths but not /src/*
       '^/s/': {
         target: 'http://localhost:3000',

@@ -62,6 +62,16 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
+function toAbsoluteAssetUrl(assetUrl: string, baseUrl: string): string {
+  if (/^https?:\/\//i.test(assetUrl)) {
+    return assetUrl;
+  }
+  if (assetUrl.startsWith('/')) {
+    return `${baseUrl}${assetUrl}`;
+  }
+  return `${baseUrl}/${assetUrl}`;
+}
+
 /**
  * Generate SEO-optimized HTML for a slug page.
  * In production: reads dist/index.html and injects dynamic meta tags.
@@ -83,7 +93,7 @@ export function renderSlugPage({
   const canonicalUrl = `${baseUrl}/s/${sketch.slug}`;
   const ogImage = isPending
     ? `${baseUrl}/og-default.png`
-    : (sketch.ogImageUrl || `${baseUrl}/og-default.png`);
+    : (sketch.ogImageUrl ? toAbsoluteAssetUrl(sketch.ogImageUrl, baseUrl) : `${baseUrl}/og-default.png`);
 
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import fastify, { type FastifyInstance } from 'fastify';
 import helmet from '@fastify/helmet';
@@ -10,6 +11,8 @@ import submissionsRoutes from './modules/submissions/submissions.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import slugPageRoutes from './modules/slug-page/slug-page.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
+import previewRoutes from './modules/screenshot/preview.routes.js';
+import { getScreenshotStorageDir } from './modules/screenshot/screenshot.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +104,16 @@ export function buildServer(): FastifyInstance {
   app.register(adminRoutes);
   app.register(slugPageRoutes);
   app.register(mediaRoutes);
+  app.register(previewRoutes);
+
+  const screenshotStorageDir = getScreenshotStorageDir();
+  mkdirSync(screenshotStorageDir, { recursive: true });
+
+  app.register(staticPlugin, {
+    root: screenshotStorageDir,
+    prefix: '/storage/',
+    decorateReply: false,
+  });
 
   app.get('/api/health', async () => ({ status: 'ok' }));
 

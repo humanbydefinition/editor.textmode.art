@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { Check, CheckCircle2, ClipboardCopy, ExternalLink, Link2, UserRound, XCircle } from 'lucide-react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
+import {
+    Check,
+    CheckCircle2,
+    ClipboardCopy,
+    ExternalLink,
+    Image as ImageIcon,
+    Link2,
+    RefreshCw,
+    UserRound,
+    X,
+    XCircle,
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -22,10 +35,12 @@ import { SocialIcon } from './SocialIcon';
 type RequestCardProps = {
     request: SketchRequest;
     loading: boolean;
+    regenerating: boolean;
     denyDraft: string;
     onDenyDraftChange: (value: string) => void;
     onApprove: () => void;
     onDeny: () => void;
+    onRegeneratePreview: () => void;
     onCopySlug: () => Promise<boolean>;
 };
 
@@ -52,14 +67,17 @@ function renderValue(value: string | null): string {
 export function RequestCard({
     request,
     loading,
+    regenerating,
     denyDraft,
     onDenyDraftChange,
     onApprove,
     onDeny,
+    onRegeneratePreview,
     onCopySlug,
 }: RequestCardProps) {
     const links = getLinks(request.socialLinks);
     const [denyConfirmOpen, setDenyConfirmOpen] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const hasDenialReason = denyDraft.trim().length > 0;
     const hasConsentEvidence =
@@ -230,6 +248,60 @@ export function RequestCard({
                         </section>
 
                         <section className="space-y-3 rounded-lg border-2 border-border bg-background p-4">
+                            <div className="overflow-hidden rounded-lg border-2 border-border bg-muted/30">                                                                 
+                                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-background/50"> 
+                                    {request.status === 'APPROVED' ? (
+                                        request.ogImageUrl ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setLightboxOpen(true)}
+                                                className="h-full w-full cursor-zoom-in hover:cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                                title="View full size"
+                                            >
+                                                <img
+                                                    src={request.ogImageUrl}
+                                                    alt={`Preview for ${request.title}`}
+                                                    className="h-full w-full object-cover transition-opacity duration-300 hover:opacity-90"
+                                                />
+                                            </button>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <ImageIcon className="h-8 w-8 opacity-50" />
+                                                <span className="text-xs font-medium">Preview pending</span>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground/50">
+                                            <span className="text-xs font-medium">
+                                                Preview unavailable
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {request.status === 'APPROVED' && (
+                                        <div className="absolute right-2 top-2">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="h-8 border border-border/50 bg-background/80 shadow-sm backdrop-blur-sm transition-all hover:bg-background"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent lightbox from opening
+                                                    onRegeneratePreview();
+                                                }}
+                                                disabled={regenerating || loading}
+                                            >
+                                                <RefreshCw
+                                                    className={`mr-2 h-3.5 w-3.5 ${
+                                                        regenerating ? 'animate-spin' : ''
+                                                    }`}
+                                                />
+                                                {regenerating ? 'Regenerating' : 'Regenerate'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="space-y-1">
                                 <h3 className="text-sm font-semibold">Moderation Action</h3>
                                 <p className="text-xs text-muted-foreground">
@@ -299,6 +371,38 @@ export function RequestCard({
                 </CardContent>
             </Card>
 
+            <Lightbox
+                open={lightboxOpen}
+                close={() => setLightboxOpen(false)}
+                slides={request.ogImageUrl ? [{ src: request.ogImageUrl }] : []}
+                render={{
+                    buttonPrev: () => null,
+                    buttonNext: () => null,
+                    iconClose: () => (
+                        <div className="flex items-center gap-4">
+                            {request.ogImageUrl && (
+                                <a
+                                    href={request.ogImageUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-white/80 transition-colors hover:text-white focus:outline-none"
+                                    title="Open image in new tab"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink className="h-6 w-6" />
+                                </a>
+                            )}
+                            <X className="h-8 w-8 text-white/80 transition-colors hover:text-white" />
+                        </div>
+                    ),
+                }}
+                styles={{
+                    container: { backgroundColor: 'rgba(0, 0, 0, 0.95)' },
+                    slide: { padding: '80px 0' },
+                }}
+                controller={{ closeOnBackdropClick: true }}
+            />
+
             <Dialog open={denyConfirmOpen} onOpenChange={setDenyConfirmOpen}>
                 <DialogContent className="border-2 border-border sm:max-w-md">
                     <DialogHeader>
@@ -335,4 +439,3 @@ export function RequestCard({
         </>
     );
 }
-
