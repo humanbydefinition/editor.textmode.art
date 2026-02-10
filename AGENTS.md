@@ -137,9 +137,18 @@ Zustand store at `client/src/platform/state/appStore.ts` is composed from four d
 
 Store uses `devtools` (dev only) and `subscribeWithSelector` middleware.
 
+### Server Architecture
+
+The server uses a **Layered Architecture** to separate concerns:
+
+1.  **Plugins (`plugins/`)**: Cross-cutting concerns (CORS, Helmet, Error Handling, Database Lifecycle) registered in `app.ts`.
+2.  **Routes (`*.routes.ts`)**: HTTP layer. Handles request validation, auth middleware, and response formatting. **No business logic or DB calls.**
+3.  **Services (`*.service.ts`)**: Domain logic and data access (Prisma). Reusable and independent of HTTP transport.
+4.  **Mappers (`*.mapper.ts` / `shared/mappers.ts`)**: Transforms internal DB entities into public API contracts (DTOs).
+
 ### Server Module System
 
-Server follows a **modular route architecture** under `server/src/modules/`:
+Server routes are organized by feature under `server/src/modules/`:
 
 | Module | Purpose | Routes |
 |--------|---------|--------|
