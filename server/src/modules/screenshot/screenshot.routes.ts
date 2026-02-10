@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../database/client.js';
 import { normalizeSlug, validateSlug } from '../../shared/slug.js';
-import { PREVIEW_TEMPLATE } from './preview.template.js';
+import { PREVIEW_TEMPLATE } from './screenshot.template.js';
 import { getScreenshotPreviewToken, SCREENSHOT_PREVIEW_ROUTE } from './screenshot.config.js';
 
 function getHeaderValue(value: string | string[] | undefined): string | undefined {
