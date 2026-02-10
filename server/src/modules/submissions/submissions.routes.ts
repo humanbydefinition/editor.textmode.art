@@ -7,7 +7,7 @@ import {
 } from '@synth.textmode.art/contracts/sketch';
 import { env } from '../../config/env.js';
 import { NoPiiAntiSpamGuard } from '../../security/anti-spam.guard.js';
-import { verifyTurnstileToken } from '../../security/turnstile.js';
+import { verifyTurnstileToken } from '../../security/turnstile.guard.js';
 import { toSketchRequestResult } from '../sketches/sketches.mapper.js';
 import {
   getPendingCount,
