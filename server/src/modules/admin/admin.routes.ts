@@ -6,19 +6,21 @@ import {
   type AdminSketchListResponse,
   type AdminUpdateRequestPayload,
 } from '@synth.textmode.art/contracts/admin';
-import { prisma } from '../../database/client.js';
 import { requireAdmin } from '../../middleware/adminAuth.js';
 import { toAdminSketchRequest } from './admin.mapper.js';
+import {
+  listSketchRequests,
+  findSketchRequestById,
+  updateSketchRequest,
+  setOgImageUrl,
+} from './admin.service.js';
 import { screenshotService } from '../screenshot/screenshot.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
   const enqueueScreenshotCapture = (sketch: { id: string; slug: string }) => {
     void screenshotService.capture(sketch.slug)
       .then(async (ogImageUrl) => {
-        await prisma.sketchRequest.update({
-          where: { id: sketch.id },
-          data: { ogImageUrl },
-        });
+        await setOgImageUrl(sketch.id, ogImageUrl);
         app.log.info({ slug: sketch.slug, ogImageUrl }, 'Generated OG image');
       })
       .catch((error) => {
@@ -47,10 +49,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       ? rawStatus
       : undefined;
 
-    const requests = await prisma.sketchRequest.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: 'desc' },
-    });
+    const requests = await listSketchRequests(status);
 
     const response: AdminSketchListResponse = {
       items: requests.map(toAdminSketchRequest),
@@ -62,9 +61,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
     const id = (request.params as { id: string }).id;
 
-    const sketch = await prisma.sketchRequest.findUnique({
-      where: { id },
-    });
+    const sketch = await findSketchRequestById(id);
 
     if (!sketch) {
       reply.status(404).send({ error: 'Sketch request not found' });
@@ -91,15 +88,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     const id = (request.params as { id: string }).id;
 
     try {
-      const updated = await prisma.sketchRequest.update({
-        where: { id },
-        data: {
-          status,
-          denialReason: status === 'DENIED' ? denialReason ?? null : null,
-          reviewedAt: new Date(),
-          reviewedBy: reviewedBy ?? null,
-        },
-      });
+      const updated = await updateSketchRequest(id, { status, denialReason, reviewedBy });
 
       if (updated.status === 'APPROVED' && !updated.ogImageUrl) {
         enqueueScreenshotCapture({ id: updated.id, slug: updated.slug });
@@ -114,9 +103,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   app.post('/api/admin/sketch-requests/:id/regenerate-preview', { preHandler: requireAdmin }, async (request, reply) => {
     const id = (request.params as { id: string }).id;
 
-    const sketch = await prisma.sketchRequest.findUnique({
-      where: { id },
-    });
+    const sketch = await findSketchRequestById(id);
 
     if (!sketch) {
       reply.status(404).send({ error: 'Sketch request not found' });
