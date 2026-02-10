@@ -55,7 +55,7 @@ export function AboutTab() {
                     <div className="grid grid-cols-3 divide-x divide-white/5 border-t border-white/5 bg-zinc-900/40">
                         <div className="p-3 text-center">
                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Version</p>
-                            <p className="text-xs font-mono text-zinc-300">1.0.0-beta.1</p>
+                            <p className="text-xs font-mono text-zinc-300">1.0.0</p>
                         </div>
                         <div className="p-3 text-center">
                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">License</p>
