@@ -1,4 +1,5 @@
 import fastify, { type FastifyInstance } from 'fastify';
+import databasePlugin from './plugins/database.js';
 import errorHandlerPlugin from './plugins/error-handler.js';
 import securityHeadersPlugin from './plugins/security-headers.js';
 import corsPlugin from './plugins/cors.js';
@@ -17,6 +18,7 @@ export function buildServer(): FastifyInstance {
   });
 
   // --- Cross-cutting concerns (order matters) ---
+  app.register(databasePlugin);
   app.register(errorHandlerPlugin);
   app.register(securityHeadersPlugin);
   app.register(corsPlugin);

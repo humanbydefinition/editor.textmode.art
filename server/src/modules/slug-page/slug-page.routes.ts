@@ -63,6 +63,7 @@ const slugPageRoutes: FastifyPluginAsync = async (app) => {
       baseUrl,
       renderMode,
       devServerUrl: env.NODE_ENV === 'production' ? undefined : devServerUrl,
+      logger: request.log,
     });
 
     reply.type('text/html').send(html);

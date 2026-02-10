@@ -14,11 +14,22 @@ export interface SlugPageSketch {
   ogImageUrl: string | null;
 }
 
+export interface Logger {
+  warn(msg: string): void;
+  error(msg: string | Record<string, unknown>, ...args: unknown[]): void;
+}
+
+const defaultLogger: Logger = {
+  warn: (msg) => console.warn(msg),
+  error: (msg, ...args) => console.error(msg, ...args),
+};
+
 export interface SlugPageOptions {
   sketch: SlugPageSketch;
   baseUrl: string;
   devServerUrl?: string;
   renderMode?: 'approved' | 'pending';
+  logger?: Logger;
 }
 
 // Cache for the production HTML template
@@ -27,7 +38,7 @@ let cachedProductionHtml: string | null = null;
 /**
  * Read the built index.html from dist folder for production.
  */
-function getProductionHtmlTemplate(): string | null {
+function getProductionHtmlTemplate(log: Logger): string | null {
   if (cachedProductionHtml) {
     return cachedProductionHtml;
   }
@@ -39,7 +50,7 @@ function getProductionHtmlTemplate(): string | null {
   const indexPath = path.join(distDir, 'index.html');
 
   if (!existsSync(indexPath)) {
-    console.warn(`[slug-page] Production index.html not found at: ${indexPath}`);
+    log.warn(`[slug-page] Production index.html not found at: ${indexPath}`);
     return null;
   }
 
@@ -47,7 +58,7 @@ function getProductionHtmlTemplate(): string | null {
     cachedProductionHtml = readFileSync(indexPath, 'utf-8');
     return cachedProductionHtml;
   } catch (error) {
-    console.error(`[slug-page] Failed to read production index.html:`, error);
+    log.error(`[slug-page] Failed to read production index.html:`, error as Error);
     return null;
   }
 }
@@ -82,6 +93,7 @@ export function renderSlugPage({
   baseUrl,
   devServerUrl: devServerUrlOverride,
   renderMode = 'approved',
+  logger = defaultLogger,
 }: SlugPageOptions): string {
   const isPending = renderMode === 'pending';
   const title = isPending
@@ -127,7 +139,7 @@ ${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
 
   // Production mode: inject into built HTML
   if (env.NODE_ENV === 'production') {
-    const productionHtml = getProductionHtmlTemplate();
+    const productionHtml = getProductionHtmlTemplate(logger);
 
     if (productionHtml) {
       // Remove existing title and meta tags that we're replacing
