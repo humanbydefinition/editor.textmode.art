@@ -4,15 +4,15 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "dev": "prisma migrate deploy && tsx watch src/index.ts",
+        "dev": "dotenv -e ../.env -- sh -c 'prisma migrate deploy && tsx watch src/index.ts'",
         "lint": "eslint .",
-        "build": "prisma generate && tsc",
-        "check-types": "prisma generate && tsc --noEmit",
+        "build": "dotenv -e ../.env -- sh -c 'prisma generate && tsc'",
+        "check-types": "dotenv -e ../.env -- sh -c 'prisma generate && tsc --noEmit'",
         "start": "node dist/index.js",
-        "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
-        "prisma:migrate:deploy": "prisma migrate deploy",
-        "prisma:studio": "prisma studio",
+        "prisma:generate": "dotenv -e ../.env -- prisma generate",
+        "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
+        "prisma:migrate:deploy": "dotenv -e ../.env -- prisma migrate deploy",
+        "prisma:studio": "dotenv -e ../.env -- prisma studio",
         "playwright:install": "playwright install chromium",
         "screenshots:regenerate": "tsx scripts/regenerate-screenshots.ts"
     },
@@ -28,6 +28,7 @@
     },
     "devDependencies": {
         "@types/node": "^24.10.1",
+        "dotenv-cli": "^11.0.0",
         "prisma": "^6.2.1",
         "tsx": "^4.19.2",
         "typescript": "~5.9.3"
