@@ -29,33 +29,13 @@ export function AdminLoginPage({
 }: AdminLoginPageProps) {
     return (
         <div className="min-h-screen w-full bg-background text-foreground">
-            <div className="grid min-h-screen w-full gap-4 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-8 lg:px-8">
-                <section className="order-2 rounded-2xl border-2 border-border bg-card p-5 lg:order-1 lg:p-8">
-                    <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">Das Nest</p>
-                    <h1 className="mt-3 text-2xl leading-tight font-semibold sm:text-3xl">
-                        Admin moderation login
-                    </h1>
-                    <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-                        Enter your server token, then continue to the moderation dashboard. No queue data is displayed
-                        before authentication succeeds.
-                    </p>
-                    <div className="mt-5 grid gap-2 text-xs text-muted-foreground sm:text-sm">
-                        <p className="rounded-md border-2 border-border bg-background px-3 py-2">
-                            Access is validated through <code>/api/admin/session</code>.
-                        </p>
-                        <p className="rounded-md border-2 border-border bg-background px-3 py-2">
-                            Reviewer name is saved and attached to moderation actions.
-                        </p>
-                    </div>
-                </section>
-
-                <Card className="order-1 w-full border-2 border-border bg-card shadow-none lg:order-2">
+            <div className="flex min-h-screen w-full items-center justify-center gap-4 px-4 py-6 sm:px-6 sm:py-8 lg:gap-8 lg:px-8">
+                <Card className="w-full max-w-[420px] border-2 border-border bg-card shadow-none">
                     <CardHeader className="space-y-2">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <ShieldCheck className="h-5 w-5 text-primary" />
-                            Admin Login
+                        <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">Das Nest</p>
+                        <CardTitle className="text-lg">
+                            login
                         </CardTitle>
-                        <CardDescription>Use your credentials to start moderation.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <form
@@ -66,7 +46,7 @@ export function AdminLoginPage({
                             }}
                         >
                             <div className="space-y-2">
-                                <Label htmlFor="admin-login-token">Admin token</Label>
+                                <Label htmlFor="admin-login-token">access token</Label>
                                 <Input
                                     id="admin-login-token"
                                     name="admin-login-token"
@@ -75,14 +55,14 @@ export function AdminLoginPage({
                                     autoFocus
                                     value={token}
                                     onChange={(event) => onTokenChange(event.target.value)}
-                                    placeholder="Enter ADMIN_API_TOKEN"
+                                    placeholder="enter access token"
                                     disabled={loading}
                                     className="h-10 border-2 border-input bg-background"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="admin-login-reviewer">Reviewer name</Label>
+                                <Label htmlFor="admin-login-reviewer">reviewer name</Label>
                                 <Input
                                     id="admin-login-reviewer"
                                     name="admin-login-reviewer"
@@ -108,7 +88,7 @@ export function AdminLoginPage({
                                 disabled={loading}
                             >
                                 <LockKeyhole className="h-4 w-4" />
-                                {loading ? 'Verifying access...' : 'Sign in to dashboard'}
+                                {loading ? 'Verifying access...' : 'Sign in'}
                             </Button>
                         </form>
                     </CardContent>
