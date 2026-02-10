@@ -1,5 +1,5 @@
-import { prisma } from './src/database/client.js';
-import { screenshotService } from './src/modules/screenshot/screenshot.service.js';
+import { prisma } from '../src/database/client.js';
+import { screenshotService } from '../src/modules/screenshot/screenshot.service.js';
 
 async function main() {
   try {
