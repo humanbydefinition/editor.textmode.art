@@ -1,80 +1,84 @@
-import path from 'path';
-import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { env } from '../../config/env.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { normalizeSlug, validateSlug } from '../../shared/slug.js';
+import {
+  getScreenshotCaptureBaseUrl,
+  getScreenshotPreviewPath,
+  getScreenshotPreviewToken,
+  getScreenshotStorageDir,
+  toPublicScreenshotUrl,
+} from './screenshot.config.js';
 
 export class ScreenshotService {
-  private storageDir: string;
-  private baseUrl: string;
+  private readonly storageDir: string;
+  private readonly baseUrl: string;
+  private readonly previewToken?: string;
 
   constructor() {
-    // Determine storage directory relative to project root
-    // Assuming server root is at ../../../.. from here (src/modules/screenshot)
-    // Actually, simpler to rely on env or a fixed path relative to CWD if running from server root
-    this.storageDir = path.resolve(process.cwd(), 'storage');
-    this.baseUrl = `http://localhost:${env.PORT || 3000}`;
+    this.storageDir = getScreenshotStorageDir();
+    this.baseUrl = getScreenshotCaptureBaseUrl();
+    this.previewToken = getScreenshotPreviewToken();
   }
 
-  async init() {
-    // Ensure storage directory exists
-    try {
-      await fs.access(this.storageDir);
-    } catch {
-      await fs.mkdir(this.storageDir, { recursive: true });
+  private async ensureStorageDir(): Promise<void> {
+    await fs.mkdir(this.storageDir, { recursive: true });
+  }
+
+  private normalizeAndValidate(rawSlug: string): string {
+    const slug = normalizeSlug(rawSlug);
+    const validation = validateSlug(slug);
+    if (!validation.valid) {
+      throw new Error(`Invalid slug for screenshot capture: ${validation.reason}`);
     }
+    return slug;
   }
 
-  async capture(slug: string): Promise<string> {
-    await this.init();
+  async capture(rawSlug: string): Promise<string> {
+    if (!this.previewToken) {
+      throw new Error('SCREENSHOT_PREVIEW_TOKEN is required for screenshot capture.');
+    }
+
+    const slug = this.normalizeAndValidate(rawSlug);
+    await this.ensureStorageDir();
 
     const browser = await chromium.launch({
+      headless: true,
       args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
         '--use-gl=angle',
-        '--use-angle=gl', 
-        '--ignore-gpu-blocklist', 
-        '--enable-webgl', 
-        '--enable-webgl2'
-      ]
+        '--use-angle=gl',
+        '--ignore-gpu-blocklist',
+        '--enable-webgl',
+        '--enable-webgl2',
+      ],
     });
-    const page = await browser.newPage();
-    
-    // Set viewport to standard OG image size
-    await page.setViewportSize({ width: 1200, height: 630 });
 
     try {
-      const url = `${this.baseUrl}/preview/${slug}`;
-      console.log(`[ScreenshotService] Navigating to ${url}`);
-      
-      // Debugging: Log console messages and errors from the page
-      page.on('console', msg => console.log(`[Browser Console] ${msg.text()}`));
-      page.on('pageerror', err => console.error(`[Browser Error] ${err.message}`));
-      page.on('requestfailed', req => console.error(`[Browser Request Failed] ${req.url()} - ${req.failure()?.errorText}`));
+      const page = await browser.newPage({
+        viewport: { width: 1200, height: 630 },
+      });
+      await page.setExtraHTTPHeaders({
+        'x-screenshot-preview-token': this.previewToken,
+      });
+      const url = new URL(getScreenshotPreviewPath(slug), `${this.baseUrl}/`).toString();
 
-      await page.goto(url);
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
 
-      // Wait for sketch readiness signal
       await page.waitForSelector('body[data-ready="true"]', { timeout: 30000 });
-
-      // Find the canvas
       const canvas = page.locator('canvas').first();
-      
-      // Take screenshot of the canvas element
-      const buffer = await canvas.screenshot();
-      
+      await canvas.waitFor({ state: 'visible', timeout: 30000 });
+      const buffer = await canvas.screenshot({ type: 'png' });
+
       const fileName = `${slug}.png`;
       const filePath = path.resolve(this.storageDir, fileName);
-      
       await fs.writeFile(filePath, buffer);
-      console.log(`[ScreenshotService] Saved screenshot to ${filePath}`);
-      
-      return `/storage/${fileName}`;
-    } catch (error) {
-      console.error('[ScreenshotService] Error capturing screenshot:', error);
-      throw error;
+      return toPublicScreenshotUrl(fileName);
     } finally {
       await browser.close();
     }

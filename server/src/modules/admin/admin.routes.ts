@@ -12,6 +12,20 @@ import { toAdminSketchRequest } from './admin.mapper.js';
 import { screenshotService } from '../screenshot/screenshot.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
+  const enqueueScreenshotCapture = (sketch: { id: string; slug: string }) => {
+    void screenshotService.capture(sketch.slug)
+      .then(async (ogImageUrl) => {
+        await prisma.sketchRequest.update({
+          where: { id: sketch.id },
+          data: { ogImageUrl },
+        });
+        app.log.info({ slug: sketch.slug, ogImageUrl }, 'Generated OG image');
+      })
+      .catch((error) => {
+        app.log.error({ err: error, slug: sketch.slug }, 'Failed to generate OG image');
+      });
+  };
+
   app.get('/api/admin/session', { preHandler: requireAdmin }, async (_request, reply) => {
     const response: AdminSessionResponse = {
       authenticated: true,
@@ -72,20 +86,8 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
         },
       });
 
-      // Trigger screenshot generation if approved
-      if (updated.status === 'APPROVED') {
-        // Fire and forget - don't block the response
-        screenshotService.capture(updated.slug)
-          .then(async (ogImageUrl) => {
-            await prisma.sketchRequest.update({
-              where: { id: updated.id },
-              data: { ogImageUrl }
-            });
-            console.log(`[Admin] Generated OG image for ${updated.slug}: ${ogImageUrl}`);
-          })
-          .catch((err) => {
-            console.error(`[Admin] Failed to generate OG image for ${updated.slug}`, err);
-          });
+      if (updated.status === 'APPROVED' && !updated.ogImageUrl) {
+        enqueueScreenshotCapture({ id: updated.id, slug: updated.slug });
       }
 
       reply.send(toAdminSketchRequest(updated));

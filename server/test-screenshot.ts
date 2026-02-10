@@ -2,22 +2,21 @@ import { prisma } from './src/database/client.js';
 import { screenshotService } from './src/modules/screenshot/screenshot.service.js';
 
 async function main() {
-  console.log('Fetching a sketch...');
-  const sketch = await prisma.sketchRequest.findFirst({
-    orderBy: { createdAt: 'desc' },
-  });
-
-  if (!sketch) {
-    console.error('No sketches found in database.');
-    return;
-  }
-
-  console.log(`Found sketch: ${sketch.slug}`);
-  console.log('Capturing screenshot...');
-
   try {
+    console.log('Fetching a sketch...');
+    const sketch = await prisma.sketchRequest.findFirst({
+      where: { status: 'APPROVED' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!sketch) {
+      console.error('No approved sketches found in database.');
+      return;
+    }
+
+    console.log(`Capturing screenshot for ${sketch.slug}...`);
     const url = await screenshotService.capture(sketch.slug);
-    console.log(`Success! Screenshot saved at: ${url}`);
+    console.log(`Screenshot saved: ${url}`);
   } catch (error) {
     console.error('Failed to capture screenshot:', error);
   } finally {

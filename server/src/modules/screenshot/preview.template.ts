@@ -10,7 +10,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <!-- User code will be injected here by the server -->
     <script id="sketch-code" type="text/plain">
 /* SKETCH_CODE_INJECTION */
     </script>
@@ -23,7 +22,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
         } from 'https://esm.sh/textmode.synth.js@1.5.1';
         import { createFiltersPlugin } from 'https://esm.sh/textmode.filters.js@1.1.1';
 
-        // Initialize textmode
         const t = textmode.create({
             width: window.innerWidth,
             height: window.innerHeight,
@@ -31,7 +29,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
         });
         document.body.appendChild(t.canvas);
 
-        // Mock audio globals
         const audio = {
             fft: () => [],
             waveform: () => [],
@@ -41,7 +38,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             volume: () => 0
         };
 
-        // Prepare globals
         const globals = {
             t,
             audio,
@@ -49,7 +45,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             charColor, cellColor, paint, char, SynthPlugin
         };
 
-        // Execute user code
         try {
             const code = document.getElementById('sketch-code').textContent;
             const keys = Object.keys(globals);
@@ -58,13 +53,10 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             fn(...values);
         } catch (e) {
             console.error("Sketch execution error:", e);
-            document.body.dataset.error = e.message;
+            document.body.dataset.error = e instanceof Error ? e.message : String(e);
         }
 
-        // Readiness poller
         function checkReady() {
-            // We consider it ready when frameCount > 0 (first frame rendered)
-            // or if an error occurred (so we don't hang forever)
             if (t.frameCount > 0 || document.body.dataset.error) {
                 document.body.dataset.ready = "true";
             } else {
@@ -72,8 +64,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             }
         }
         requestAnimationFrame(checkReady);
-        
-        // Handle resize
+
         window.addEventListener('resize', () => {
             t.resizeCanvas(window.innerWidth, window.innerHeight);
         });

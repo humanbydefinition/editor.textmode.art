@@ -12,7 +12,8 @@
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:migrate:deploy": "prisma migrate deploy",
-        "prisma:studio": "prisma studio"
+        "prisma:studio": "prisma studio",
+        "playwright:install": "playwright install chromium"
     },
     "dependencies": {
         "@fastify/cors": "^10.0.0",
