@@ -9,6 +9,7 @@ import {
 import { prisma } from '../../database/client.js';
 import { requireAdmin } from '../../middleware/adminAuth.js';
 import { toAdminSketchRequest } from './admin.mapper.js';
+import { screenshotService } from '../screenshot/screenshot.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/admin/session', { preHandler: requireAdmin }, async (_request, reply) => {
@@ -70,6 +71,22 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
           reviewedBy: reviewedBy ?? null,
         },
       });
+
+      // Trigger screenshot generation if approved
+      if (updated.status === 'APPROVED') {
+        // Fire and forget - don't block the response
+        screenshotService.capture(updated.slug)
+          .then(async (ogImageUrl) => {
+            await prisma.sketchRequest.update({
+              where: { id: updated.id },
+              data: { ogImageUrl }
+            });
+            console.log(`[Admin] Generated OG image for ${updated.slug}: ${ogImageUrl}`);
+          })
+          .catch((err) => {
+            console.error(`[Admin] Failed to generate OG image for ${updated.slug}`, err);
+          });
+      }
 
       reply.send(toAdminSketchRequest(updated));
     } catch {
