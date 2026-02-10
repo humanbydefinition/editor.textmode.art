@@ -1,0 +1,44 @@
+name: Deploy Runner to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'runner/**'
+      - '.github/workflows/deploy-runner.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --workspace=@synth.textmode.art/runner --include-workspace-root
+
+      - name: Build Runner
+        run: npm run build -w @synth.textmode.art/runner
+        env:
+          # Define the parent origin allowed to embed the runner
+          VITE_RUNNER_PARENT_ORIGINS: https://synth.textmode.art
+
+      - name: Create CNAME
+        run: echo "runner.textmode.art" > runner/dist/CNAME
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./runner/dist
+          cname: runner.textmode.art

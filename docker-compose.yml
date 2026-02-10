@@ -49,18 +49,5 @@ services:
       - screenshot-storage:/app/server/storage
     restart: unless-stopped
 
-  # ==========================================================================
-  # Runner: Static Nginx serving the runner iframe
-  # ==========================================================================
-  runner:
-    build:
-      context: .
-      dockerfile: runner/Dockerfile
-      args:
-        - VITE_RUNNER_PARENT_ORIGINS=${VITE_RUNNER_PARENT_ORIGINS:-https://synth.textmode.art}
-    expose:
-      - "80"
-    restart: unless-stopped
-
 volumes:
   screenshot-storage:
