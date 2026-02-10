@@ -58,7 +58,7 @@ export class ScreenshotService {
 
     try {
       const page = await browser.newPage({
-        viewport: { width: 1200, height: 630 },
+        viewport: { width: 1536, height: 816 },
       });
       await page.setExtraHTTPHeaders({
         'x-screenshot-preview-token': this.previewToken,

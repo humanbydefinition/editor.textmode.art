@@ -23,8 +23,8 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
         import { createFiltersPlugin } from 'https://esm.sh/textmode.filters.js@1.1.1';
 
         const t = textmode.create({
-            width: window.innerWidth,
-            height: window.innerHeight,
+            width: 1536,
+            height: 816,
             plugins: [SynthPlugin, createFiltersPlugin()]
         });
         document.body.appendChild(t.canvas);
@@ -51,6 +51,39 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             const values = Object.values(globals);
             const fn = new Function(...keys, '"use strict";\\n' + code);
             fn(...values);
+
+            // Watermark injection (secure naming to avoid clashes)
+            const __screenshot_watermark_text = "synth.textmode.art";
+            const __screenshot_watermark_fontSize = 48;
+            const __screenshot_watermark_blendMode = "normal";
+            const __screenshot_watermark_radius = 0.05;
+            const __screenshot_watermark_speed = 1.0;
+
+            const __screenshot_watermark_layer = t.layers.add({
+                fontSize: __screenshot_watermark_fontSize,
+                blendMode: __screenshot_watermark_blendMode
+            });
+
+            const __screenshot_watermark_drawText = (s, x, y) => {
+                t.charColor(255, 255, 255, 255);
+                t.cellColor(0, 0, 0, 255);
+                for (let i = 0; i < s.length; i++) {
+                    t.translate(x + i, y);
+                    t.char(s[i]);
+                    t.rect(1, 1);
+                    t.translate(-(x + i), -y);
+                }
+            };
+
+            __screenshot_watermark_layer.draw(() => {
+                t.clear();
+                
+                // Bottom-left placement in grid coords
+                const gx = (__screenshot_watermark_layer.grid.cols / 2) - __screenshot_watermark_text.length + 1;
+                const gy = (__screenshot_watermark_layer.grid.rows / 2) - 1;
+                
+                __screenshot_watermark_drawText(__screenshot_watermark_text, gx, gy);
+            });
         } catch (e) {
             console.error("Sketch execution error:", e);
             document.body.dataset.error = e instanceof Error ? e.message : String(e);
@@ -64,10 +97,6 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             }
         }
         requestAnimationFrame(checkReady);
-
-        window.addEventListener('resize', () => {
-            t.resizeCanvas(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>`;
