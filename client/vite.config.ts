@@ -40,7 +40,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        runner: resolve(__dirname, 'src/engines/textmode/runner/index.html'),
       },
     },
   },

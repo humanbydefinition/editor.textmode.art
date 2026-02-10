@@ -149,6 +149,6 @@ function getRunnerUrl(): string {
 		return explicit.trim();
 	}
 	return import.meta.env.DEV
-		? '/src/engines/textmode/runner/index.html'
+		? 'http://localhost:5174/index.html'
 		: '/runner/index.html';
 }
