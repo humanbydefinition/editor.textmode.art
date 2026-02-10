@@ -9,10 +9,12 @@ type RequestListProps = {
     loading: boolean;
     statusFilter: FilterOption;
     updatingRequestId: string | null;
+    regeneratingId: string | null;
     denyDrafts: Record<string, string>;
     onDenyDraftChange: (requestId: string, value: string) => void;
     onApprove: (request: SketchRequest) => void;
     onDeny: (request: SketchRequest) => void;
+    onRegeneratePreview: (request: SketchRequest) => void;
     onCopySlug: (slug: string) => Promise<boolean>;
 };
 
@@ -24,10 +26,12 @@ export function RequestList({
     loading,
     statusFilter,
     updatingRequestId,
+    regeneratingId,
     denyDrafts,
     onDenyDraftChange,
     onApprove,
     onDeny,
+    onRegeneratePreview,
     onCopySlug,
 }: RequestListProps) {
     if (loading && requests.length === 0) {
@@ -84,10 +88,12 @@ export function RequestList({
                     key={request.id}
                     request={request}
                     loading={loading || updatingRequestId === request.id}
+                    regenerating={regeneratingId === request.id}
                     denyDraft={denyDrafts[request.id] ?? request.denialReason ?? ''}
                     onDenyDraftChange={(v) => onDenyDraftChange(request.id, v)}
                     onApprove={() => onApprove(request)}
                     onDeny={() => onDeny(request)}
+                    onRegeneratePreview={() => onRegeneratePreview(request)}
                     onCopySlug={() => onCopySlug(request.slug)}
                 />
             ))}

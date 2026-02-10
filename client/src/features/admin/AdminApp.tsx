@@ -55,6 +55,7 @@ export function AdminApp() {
     const [statusFilter, setStatusFilter] = useState<FilterOption>('pending');
     const [loading, setLoading] = useState(false);
     const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
+    const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
     const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [denyDrafts, setDenyDrafts] = useState<Record<string, string>>({});
@@ -293,6 +294,48 @@ export function AdminApp() {
         }
     };
 
+    const handleRegeneratePreview = async (request: SketchRequest) => {
+        if (!isAuthenticated || !activeToken.trim()) {
+            toast.error('Your admin session is not active.');
+            return;
+        }
+
+        setRegeneratingId(request.id);
+
+        try {
+            const response = await fetch(`/api/admin/sketch-requests/${request.id}/regenerate-preview`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${activeToken}`,
+                },
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    handleSessionExpired();
+                    return;
+                }
+                throw new Error(await getApiErrorMessage(response, 'Failed to regenerate preview'));
+            }
+
+            const updated = (await response.json()) as SketchRequest;
+            
+            // Force a new URL to bust cache if the backend returns the same filename
+            if (updated.ogImageUrl) {
+                const url = new URL(updated.ogImageUrl, window.location.origin);
+                url.searchParams.set('t', Date.now().toString());
+                updated.ogImageUrl = url.toString();
+            }
+
+            setRequests((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+            toast.success(`Preview regenerated for ${updated.slug}`);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to regenerate preview');
+        } finally {
+            setRegeneratingId(null);
+        }
+    };
+
     const copySlug = async (slug: string): Promise<boolean> => {
         try {
             await navigator.clipboard.writeText(slug);
@@ -368,10 +411,12 @@ export function AdminApp() {
                             loading={loading}
                             statusFilter={statusFilter}
                             updatingRequestId={updatingRequestId}
+                            regeneratingId={regeneratingId}
                             denyDrafts={denyDrafts}
                             onDenyDraftChange={(id, value) => setDenyDrafts((prev) => ({ ...prev, [id]: value }))}
                             onApprove={(request) => void updateRequestStatus(request, 'APPROVED')}
                             onDeny={(request) => void updateRequestStatus(request, 'DENIED')}
+                            onRegeneratePreview={handleRegeneratePreview}
                             onCopySlug={(slug) => copySlug(slug)}
                         />
                     </div>

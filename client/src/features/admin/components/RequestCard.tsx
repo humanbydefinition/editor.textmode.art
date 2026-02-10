@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { Check, CheckCircle2, ClipboardCopy, ExternalLink, Link2, UserRound, XCircle } from 'lucide-react';
+import {
+    Check,
+    CheckCircle2,
+    ClipboardCopy,
+    ExternalLink,
+    Image as ImageIcon,
+    ImageOff,
+    Link2,
+    RefreshCw,
+    UserRound,
+    XCircle,
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -22,10 +33,12 @@ import { SocialIcon } from './SocialIcon';
 type RequestCardProps = {
     request: SketchRequest;
     loading: boolean;
+    regenerating: boolean;
     denyDraft: string;
     onDenyDraftChange: (value: string) => void;
     onApprove: () => void;
     onDeny: () => void;
+    onRegeneratePreview: () => void;
     onCopySlug: () => Promise<boolean>;
 };
 
@@ -52,10 +65,12 @@ function renderValue(value: string | null): string {
 export function RequestCard({
     request,
     loading,
+    regenerating,
     denyDraft,
     onDenyDraftChange,
     onApprove,
     onDeny,
+    onRegeneratePreview,
     onCopySlug,
 }: RequestCardProps) {
     const links = getLinks(request.socialLinks);
@@ -140,6 +155,51 @@ export function RequestCard({
 
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                         <section className="space-y-4">
+                            <div className="overflow-hidden rounded-lg border-2 border-border bg-muted/30">
+                                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-background/50">
+                                    {request.status === 'APPROVED' ? (
+                                        request.ogImageUrl ? (
+                                            <img
+                                                src={request.ogImageUrl}
+                                                alt={`Preview for ${request.title}`}
+                                                className="h-full w-full object-cover transition-opacity duration-300"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <ImageIcon className="h-8 w-8 opacity-50" />
+                                                <span className="text-xs font-medium">Preview pending</span>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground/50">
+                                            <ImageOff className="h-8 w-8" />
+                                            <span className="text-xs font-medium">
+                                                Preview unavailable for {request.status.toLowerCase()}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {request.status === 'APPROVED' && (
+                                        <div className="absolute right-2 bottom-2">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="h-8 border border-border/50 bg-background/80 shadow-sm backdrop-blur-sm transition-all hover:bg-background"
+                                                onClick={onRegeneratePreview}
+                                                disabled={regenerating || loading}
+                                            >
+                                                <RefreshCw
+                                                    className={`mr-2 h-3.5 w-3.5 ${
+                                                        regenerating ? 'animate-spin' : ''
+                                                    }`}
+                                                />
+                                                {regenerating ? 'Regenerating...' : 'Regenerate'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="grid gap-2 sm:grid-cols-2">
                                 <div className="rounded-lg border-2 border-border bg-background p-3">
                                     <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Author</p>
