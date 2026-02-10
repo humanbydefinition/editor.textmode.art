@@ -95,6 +95,39 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       reply.status(404).send({ error: 'Sketch request not found' });
     }
   });
+
+  app.post('/api/admin/sketch-requests/:id/regenerate-preview', { preHandler: requireAdmin }, async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+
+    const sketch = await prisma.sketchRequest.findUnique({
+      where: { id },
+    });
+
+    if (!sketch) {
+      reply.status(404).send({ error: 'Sketch request not found' });
+      return;
+    }
+
+    if (sketch.status !== 'APPROVED') {
+      reply.status(400).send({ error: 'Only approved sketches can have previews regenerated.' });
+      return;
+    }
+
+    try {
+      const ogImageUrl = await screenshotService.capture(sketch.slug);
+      
+      const updated = await prisma.sketchRequest.update({
+        where: { id },
+        data: { ogImageUrl },
+      });
+
+      app.log.info({ slug: sketch.slug, ogImageUrl }, 'Regenerated OG image');
+      reply.send(toAdminSketchRequest(updated));
+    } catch (error) {
+      request.log.error({ err: error, slug: sketch.slug }, 'Failed to regenerate OG image');
+      reply.status(500).send({ error: 'Failed to regenerate preview image' });
+    }
+  });
 };
 
 export default adminRoutes;
