@@ -8,19 +8,17 @@ export interface ExampleEngineCatalog {
 	examples: Record<string, Example[]>;
 }
 
-export function getExampleEngineCatalog(strudelEnabled: boolean): ExampleEngineCatalog[] {
+export function getExampleEngineCatalog(): ExampleEngineCatalog[] {
 	return [
 		{
 			id: 'textmode' as const,
 			displayName: 'textmode.js',
 			examples: textmodeExamples,
 		},
-		...(strudelEnabled
-			? [{
-				id: 'strudel' as const,
-				displayName: 'strudel',
-				examples: strudelExamples,
-			}]
-			: []),
+		{
+			id: 'strudel' as const,
+			displayName: 'strudel',
+			examples: strudelExamples,
+		},
 	].filter((engine) => Object.keys(engine.examples).length > 0);
 }

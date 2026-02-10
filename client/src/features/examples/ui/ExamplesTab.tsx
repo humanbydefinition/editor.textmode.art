@@ -1,6 +1,8 @@
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Separator } from "@/shared/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import { cn } from "@/shared/lib/cn";
 import { Play } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
 import { selectStrudelEnabled } from '@/platform/state/selectors';
@@ -15,7 +17,7 @@ export interface ExamplesTabProps {
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     const strudelEnabled = useAppStore(selectStrudelEnabled);
 
-    const engines = getExampleEngineCatalog(strudelEnabled);
+    const engines = getExampleEngineCatalog();
 
     const handleSelect = (example: Example, engineId: string) => {
         onLoadExample(example.code, engineId);
@@ -33,16 +35,38 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     return (
         <Tabs defaultValue={engines[0]?.id} className="h-full flex flex-col">
             <div className="px-6 py-3 border-b border-white/5 bg-zinc-900/30 shrink-0">
-                <TabsList className="bg-transparent p-0 h-auto gap-2 justify-start w-full overflow-x-auto scrollbar-hide">
-                    {engines.map((engine) => (
-                        <TabsTrigger
-                            key={engine.id}
-                            value={engine.id}
-                            className="bg-zinc-900/50 text-zinc-400 data-[state=active]:text-emerald-400 data-[state=active]:bg-emerald-500/10 data-[state=active]:shadow-none border border-white/5 data-[state=active]:border-emerald-500/20 px-3 py-1.5 h-auto text-xs font-medium uppercase tracking-wider rounded-md transition-all"
-                        >
-                            {engine.displayName}
-                        </TabsTrigger>
-                    ))}
+                <TabsList className="bg-transparent p-0 h-auto gap-2 grid grid-cols-2 w-full">
+                    {engines.map((engine) => {
+                        const isDisabled = engine.id === 'strudel' && !strudelEnabled;
+                        const trigger = (
+                            <TabsTrigger
+                                key={engine.id}
+                                value={engine.id}
+                                disabled={isDisabled}
+                                className={cn(
+                                    "bg-zinc-900/50 text-zinc-400 data-[state=active]:text-emerald-400 data-[state=active]:bg-emerald-500/10 data-[state=active]:shadow-none border border-white/5 data-[state=active]:border-emerald-500/20 px-3 py-1.5 h-auto text-xs font-medium uppercase tracking-wider rounded-md transition-all w-full",
+                                    isDisabled && "opacity-50 cursor-not-allowed"
+                                )}
+                            >
+                                {engine.displayName}
+                            </TabsTrigger>
+                        );
+
+                        if (isDisabled) {
+                            return (
+                                <Tooltip key={engine.id}>
+                                    <TooltipTrigger asChild>
+                                        <div className="w-full">{trigger}</div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" align="start">
+                                        enable strudel in settings first
+                                    </TooltipContent>
+                                </Tooltip>
+                            );
+                        }
+
+                        return trigger;
+                    })}
                 </TabsList>
             </div>
 
