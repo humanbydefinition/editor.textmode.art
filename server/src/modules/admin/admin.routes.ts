@@ -6,7 +6,7 @@ import {
   type AdminSketchListResponse,
   type AdminUpdateRequestPayload,
 } from '@synth.textmode.art/contracts/admin';
-import { requireAdmin } from '../../middleware/adminAuth.js';
+import { requireAdmin } from '../../middleware/admin-auth.js';
 import { toAdminSketchRequest } from './admin.mapper.js';
 import {
   listSketchRequests,
