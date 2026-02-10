@@ -79,13 +79,19 @@ synth.textmode.art/
 │       └── styles/                  # CSS entry point
 ├── server/                          # Fastify API server
 │   ├── src/
-│   │   ├── app.ts                   # Server builder (routes, middleware, static)
+│   │   ├── app.ts                   # Slim application orchestrator
 │   │   ├── config/env.ts            # Zod-validated environment config
-│   │   ├── modules/                 # Feature modules (admin, submissions, sketches, slug-page, screenshot, media)
+│   │   ├── modules/                 # Feature modules (routes, services, mappers)
+│   │   │   └── [feature]/           # e.g. admin, sketches
+│   │   │       ├── *.routes.ts      # HTTP layer (validation, response)
+│   │   │       ├── *.service.ts     # Business logic & data access
+│   │   │       └── *.mapper.ts      # Data mapping (DTOs)
+│   │   ├── plugins/                 # Fastify plugins (cors, helmet, error-handler)
 │   │   ├── middleware/              # Request middleware
-│   │   ├── security/                # Auth & anti-spam
-│   │   ├── database/                # Prisma client
-│   │   └── shared/                  # Server utilities
+│   │   ├── security/                # Auth & anti-spam guards
+│   │   ├── database/                # Prisma client & lifecycle
+│   │   └── shared/                  # Shared utilities (mappers, slug, errors)
+│   ├── scripts/                     # Utility scripts (test-screenshot, regenerate)
 │   └── prisma/
 │       └── schema.prisma            # Database schema
 └── packages/
