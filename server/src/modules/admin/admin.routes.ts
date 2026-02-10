@@ -59,6 +59,21 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     reply.send(response);
   });
 
+  app.get('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+
+    const sketch = await prisma.sketchRequest.findUnique({
+      where: { id },
+    });
+
+    if (!sketch) {
+      reply.status(404).send({ error: 'Sketch request not found' });
+      return;
+    }
+
+    reply.send(toAdminSketchRequest(sketch));
+  });
+
   app.patch('/api/admin/sketch-requests/:id', { preHandler: requireAdmin }, async (request, reply) => {
     const parsed = adminUpdateSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -113,20 +128,8 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    try {
-      const ogImageUrl = await screenshotService.capture(sketch.slug);
-      
-      const updated = await prisma.sketchRequest.update({
-        where: { id },
-        data: { ogImageUrl },
-      });
-
-      app.log.info({ slug: sketch.slug, ogImageUrl }, 'Regenerated OG image');
-      reply.send(toAdminSketchRequest(updated));
-    } catch (error) {
-      request.log.error({ err: error, slug: sketch.slug }, 'Failed to regenerate OG image');
-      reply.status(500).send({ error: 'Failed to regenerate preview image' });
-    }
+    enqueueScreenshotCapture({ id: sketch.id, slug: sketch.slug });
+    reply.status(202).send({ message: 'Preview regeneration queued' });
   });
 };
 

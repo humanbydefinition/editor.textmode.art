@@ -318,20 +318,65 @@ export function AdminApp() {
                 throw new Error(await getApiErrorMessage(response, 'Failed to regenerate preview'));
             }
 
-            const updated = (await response.json()) as SketchRequest;
-            
-            // Force a new URL to bust cache if the backend returns the same filename
-            if (updated.ogImageUrl) {
-                const url = new URL(updated.ogImageUrl, window.location.origin);
-                url.searchParams.set('t', Date.now().toString());
-                updated.ogImageUrl = url.toString();
-            }
+            if (response.status === 202) {
+                toast.info(`Preview regeneration queued for ${request.slug}`);
+                
+                const originalUpdatedAt = request.updatedAt;
+                let attempts = 0;
+                const maxAttempts = 20; // Increased attempts
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    if (attempts > maxAttempts) {
+                        clearInterval(pollInterval);
+                        setRegeneratingId(null);
+                        toast.error(`Timed out waiting for ${request.slug} preview`);
+                        return;
+                    }
 
-            setRequests((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-            toast.success(`Preview regenerated for ${updated.slug}`);
+                    try {
+                        const pollResponse = await fetch(`/api/admin/sketch-requests/${request.id}`, {
+                            headers: { Authorization: `Bearer ${activeToken}` },
+                        });
+
+                        if (pollResponse.ok) {
+                            const updated = (await pollResponse.json()) as SketchRequest;
+                            
+                            // Check if the record has been updated since we started
+                            if (updated.updatedAt !== originalUpdatedAt) {
+                                clearInterval(pollInterval);
+                                
+                                // Force cache bust for the image
+                                if (updated.ogImageUrl) {
+                                    const url = new URL(updated.ogImageUrl, window.location.origin);
+                                    url.searchParams.set('t', Date.now().toString());
+                                    updated.ogImageUrl = url.toString();
+                                }
+
+                                setRequests((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+                                setRegeneratingId(null);
+                                toast.success(`Preview regenerated for ${updated.slug}`);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Polling error:', err);
+                    }
+                }, 3000);
+            } else {
+                const updated = (await response.json()) as SketchRequest;
+
+                // Force a new URL to bust cache if the backend returns the same filename
+                if (updated.ogImageUrl) {
+                    const url = new URL(updated.ogImageUrl, window.location.origin);
+                    url.searchParams.set('t', Date.now().toString());
+                    updated.ogImageUrl = url.toString();
+                }
+
+                setRequests((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+                toast.success(`Preview regenerated for ${updated.slug}`);
+                setRegeneratingId(null);
+            }
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to regenerate preview');
-        } finally {
             setRegeneratingId(null);
         }
     };
