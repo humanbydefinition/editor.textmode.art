@@ -51,6 +51,21 @@ npm run dev
 npm run build
 ```
 
+### Server Development
+
+The server provides sketch moderation, slug pages, and screenshot generation:
+
+```bash
+# Start server in development mode
+npm run -w server dev
+
+# Regenerate all approved sketch screenshots
+npm run -w server screenshots:regenerate
+
+# Install Playwright/Chromium for screenshot service
+npm run -w server playwright:install
+```
+
 ### Sandbox configuration (recommended)
 
 To run the textmode runner on a separate origin (recommended for isolation), set:
