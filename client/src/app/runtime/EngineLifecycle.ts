@@ -219,6 +219,7 @@ export class EngineLifecycle {
 
 	resetAll(): void {
 		useAppStore.getState().setEngineLastWorkingCode('textmode', null);
+		useAppStore.getState().clearOriginalApprovedSketch();
 		this.textmodeEngine.setCode(this.textmodeEngine.getDefaultCode());
 
 		useAppStore.getState().setEngineLastWorkingCode('strudel', null);

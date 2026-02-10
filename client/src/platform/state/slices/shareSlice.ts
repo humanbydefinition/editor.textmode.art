@@ -22,11 +22,19 @@ export interface ShareSlice {
     approvedSketch: ApprovedSketch | null;
     slugSketchInfo: SlugSketchInfo | null;
 
+    /**
+     * Shadow copy of the approved sketch. Preserved when the user edits code
+     * so that reverting to the original code can restore the active reference.
+     */
+    originalApprovedSketch: ApprovedSketch | null;
+    originalSlugSketchInfo: SlugSketchInfo | null;
+
     setSharePayload: (payload: SharePayload | null) => void;
     setShareConsented: (consented: boolean) => void;
     setSharePromptOpen: (open: boolean) => void;
     setApprovedSketch: (sketch: ApprovedSketch | null) => void;
     setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+    clearOriginalApprovedSketch: () => void;
 }
 
 export const createShareSlice: StateCreator<
@@ -42,6 +50,8 @@ export const createShareSlice: StateCreator<
     },
     approvedSketch: null,
     slugSketchInfo: null,
+    originalApprovedSketch: null,
+    originalSlugSketchInfo: null,
 
     setSharePayload: (payload) => set({
         share: {
@@ -63,6 +73,30 @@ export const createShareSlice: StateCreator<
             promptOpen: open && Boolean(state.share.payload),
         },
     })),
-    setApprovedSketch: (sketch) => set({ approvedSketch: sketch }),
-    setSlugSketchInfo: (info) => set({ slugSketchInfo: info }),
+    setApprovedSketch: (sketch) => set(() => {
+        // When setting a non-null sketch, also save it as the original reference
+        if (sketch) {
+            return {
+                approvedSketch: sketch,
+                originalApprovedSketch: sketch,
+            };
+        }
+        // When clearing, only clear the active reference; keep the original
+        return { approvedSketch: null };
+    }),
+    setSlugSketchInfo: (info) => set(() => {
+        if (info) {
+            return {
+                slugSketchInfo: info,
+                originalSlugSketchInfo: info,
+            };
+        }
+        return { slugSketchInfo: null };
+    }),
+    clearOriginalApprovedSketch: () => set({
+        originalApprovedSketch: null,
+        originalSlugSketchInfo: null,
+        approvedSketch: null,
+        slugSketchInfo: null,
+    }),
 });

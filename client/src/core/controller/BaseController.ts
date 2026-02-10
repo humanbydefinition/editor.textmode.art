@@ -62,6 +62,8 @@ export interface ControllerStoreAdapter {
 	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
 	getSlugSketchInfo: () => SlugSketchInfo | null;
 	setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+	getOriginalApprovedSketch: () => ApprovedSketch | null;
+	getOriginalSlugSketchInfo: () => SlugSketchInfo | null;
 }
 
 /**
@@ -286,6 +288,24 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			if (code !== approvedCodeForEngine) {
 				this.deps.store.setApprovedSketch(null);
 				this.deps.store.setSlugSketchInfo(null);
+			}
+			return;
+		}
+
+		// Check if reverted code matches the original gallery sketch
+		const originalSketch = this.deps.store.getOriginalApprovedSketch();
+		if (originalSketch) {
+			const originalCodeForEngine =
+				this.engineId === 'strudel'
+					? originalSketch.strudelCode ?? ''
+					: originalSketch.textmodeCode;
+
+			if (code === originalCodeForEngine) {
+				const originalSlugInfo = this.deps.store.getOriginalSlugSketchInfo();
+				this.deps.store.setApprovedSketch(originalSketch);
+				if (originalSlugInfo) {
+					this.deps.store.setSlugSketchInfo(originalSlugInfo);
+				}
 			}
 			return;
 		}
