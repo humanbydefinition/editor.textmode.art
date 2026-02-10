@@ -98,9 +98,10 @@ export function SlugInfoAlert({
 
             {sketch && (
                 <PopoverContent
-                    align="end"
+                    align="start"
                     side="bottom"
                     sideOffset={8}
+                    collisionPadding={8}
                     className="w-[min(calc(100vw-1rem),360px)] border-white/10 bg-zinc-950/95 p-0 shadow-xl shadow-black/50"
                 >
                     <SlugInfoCard
