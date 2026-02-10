@@ -7,14 +7,17 @@
   "workspaces": [
     "client",
     "server",
-    "packages/*"
+    "packages/*",
+    "runner"
   ],
   "scripts": {
     "dev": "npm run dev -w client",
-    "build": "npm run build -w @synth.textmode.art/contracts && npm run build -w client && npm run build -w server",
-    "check-types": "npm run check-types -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/contracts && npm run check-types -w client && npm run check-types -w server",
+    "build": "npm run build -w @synth.textmode.art/contracts && npm run build -w client && npm run build -w server && npm run build -w @synth.textmode.art/runner",
+    "check-types": "npm run check-types -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/contracts && npm run check-types -w client && npm run check-types -w server && npm run check-types -w @synth.textmode.art/runner",
     "server:dev": "npm run dev -w server",
     "server:build": "npm run build -w @synth.textmode.art/contracts && npm run build -w server",
+    "runner:dev": "npm run dev -w @synth.textmode.art/runner",
+    "runner:build": "npm run build -w @synth.textmode.art/runner",
     "lint": "npm run lint -w client && npm run lint -w server",
     "format": "prettier --write \"**/*.{ts,js}\"",
     "format:check": "prettier --check \"**/*.{ts,js}\"",
