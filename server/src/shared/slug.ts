@@ -1,3 +1,7 @@
+import type { SketchStatus } from '@synth.textmode.art/contracts/sketch';
+import { prisma } from '../database/client.js';
+import { existsSelect } from '../database/selects.js';
+
 const RESERVED_SLUGS = new Set([
   'api',
   'admin',
@@ -15,6 +19,9 @@ const RESERVED_SLUGS = new Set([
 
 export const SLUG_MIN_LENGTH = 3;
 export const SLUG_MAX_LENGTH = 64;
+
+/** Sketch statuses that "occupy" a slug (i.e. prevent reuse). */
+export const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
 
 export function normalizeSlug(raw: string): string {
   return raw
@@ -44,4 +51,13 @@ export function validateSlug(slug: string): { valid: true } | { valid: false; re
     return { valid: false, reason: 'Slug is reserved.' };
   }
   return { valid: true };
+}
+
+/** Check whether a slug is already in use by an active (PENDING | APPROVED) sketch. */
+export async function isSlugTaken(slug: string): Promise<boolean> {
+  const existing = await prisma.sketchRequest.findFirst({
+    where: { slug, status: { in: ACTIVE_SKETCH_STATUSES } },
+    select: existsSelect,
+  });
+  return Boolean(existing);
 }

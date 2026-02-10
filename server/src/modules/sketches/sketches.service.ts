@@ -1,9 +1,8 @@
-import type { SketchStatus } from '@synth.textmode.art/contracts/sketch';
 import { prisma } from '../../database/client.js';
-import { publicSketchSelect, existsSelect } from '../../database/selects.js';
-import { normalizeSlug, validateSlug } from '../../shared/slug.js';
+import { publicSketchSelect } from '../../database/selects.js';
+import { normalizeSlug, validateSlug, ACTIVE_SKETCH_STATUSES } from '../../shared/slug.js';
 
-const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
+export { isSlugTaken } from '../../shared/slug.js';
 
 export async function findApprovedSketchBySlug(rawSlug: string) {
   const normalizedSlug = normalizeSlug(rawSlug);
@@ -45,10 +44,3 @@ export async function findRandomApprovedSketch(excludeSlug?: string) {
   });
 }
 
-export async function isSlugTaken(slug: string): Promise<boolean> {
-  const existing = await prisma.sketchRequest.findFirst({
-    where: { slug, status: { in: ACTIVE_SKETCH_STATUSES } },
-    select: existsSelect,
-  });
-  return Boolean(existing);
-}

@@ -1,10 +1,10 @@
-import type { SketchStatus, SketchRequestPayload } from '@synth.textmode.art/contracts/sketch';
+import type { SketchRequestPayload } from '@synth.textmode.art/contracts/sketch';
 import { prisma } from '../../database/client.js';
-import { existsSelect, submissionResultSelect } from '../../database/selects.js';
+import { submissionResultSelect } from '../../database/selects.js';
 import { normalizeSlug, validateSlug } from '../../shared/slug.js';
 import { isUniqueConstraintViolation } from '../../shared/errors.js';
 
-const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];
+export { isSlugTaken } from '../../shared/slug.js';
 
 export async function getPendingCount(): Promise<number> {
   return prisma.sketchRequest.count({ where: { status: 'PENDING' } });
@@ -17,14 +17,6 @@ export function normalizeAndValidateSlug(rawSlug: string): { valid: true; slug: 
     return slugValidation;
   }
   return { valid: true, slug: normalizedSlug };
-}
-
-export async function isSlugTaken(slug: string): Promise<boolean> {
-  const existing = await prisma.sketchRequest.findFirst({
-    where: { slug, status: { in: ACTIVE_SKETCH_STATUSES } },
-    select: existsSelect,
-  });
-  return Boolean(existing);
 }
 
 export async function createSketchRequest(payload: SketchRequestPayload, normalizedSlug: string) {
