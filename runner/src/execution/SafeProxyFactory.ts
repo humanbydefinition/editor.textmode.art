@@ -139,11 +139,14 @@ export class SafeProxyFactory {
         if (src.startsWith('data:') || src.startsWith('blob:')) return null;
 
         try {
-            const baseOrigin = new URL(window.location.href).origin;
-            const resolved = new URL(src, window.location.href);
+            const resolved = new URL(src); // Will throw if src is relative
+
             // Only proxy absolute http(s) URLs that are cross-origin
             if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') return null;
-            if (resolved.origin === baseOrigin) return null;
+
+            const runnerOrigin = new URL(window.location.href).origin;
+            if (resolved.origin === runnerOrigin) return null;
+
             const encoded = encodeURIComponent(resolved.toString());
             return `${this.options.mediaProxyUrl}?url=${encoded}`;
         } catch {
