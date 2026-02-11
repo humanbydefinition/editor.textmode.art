@@ -174,6 +174,11 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.iframe.addEventListener('error', this.handleIframeError);
 
 		this.container.appendChild(this.iframe);
+
+		// Start the handshake timer immediately so we detect unavailability even
+		// when the iframe's `load`/`error` events don't fire as expected (iOS Safari)
+		// or when `contentWindow` is inaccessible for sandboxed cross-origin frames.
+		this.startHandshakeTimer();
 	}
 
 	/**
