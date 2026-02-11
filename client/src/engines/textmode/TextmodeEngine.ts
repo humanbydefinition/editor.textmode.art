@@ -1,5 +1,5 @@
 import type { EngineContext } from '@/types/engine.types';
-import type { Example } from '@/types/examples.types';
+import type { Example } from '@/features/examples/examples.types';
 import type { AudioData } from '@/services/AudioService';
 import { useAppStore } from '@/platform/state/appStore';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';

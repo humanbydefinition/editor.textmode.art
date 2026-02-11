@@ -1,8 +1,9 @@
+
 import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/services/SketchApiService';
-import { ShareService } from '@/services/ShareService';
+import { ShareService } from '@/shared/lib/ShareService';
 import { useAppStore } from '@/platform/state/appStore';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
 
 interface ShareWorkflowDependencies {
 	render: () => void;
@@ -32,10 +33,10 @@ export class ShareWorkflow {
 
 	async hydrateFromLocation(location: Location): Promise<void> {
 		const store = useAppStore.getState();
-		const sharedPayload = ShareService.getFromLocation(location);
-		if (sharedPayload) {
+		const payload = ShareService.getFromLocation(location);
+		if (payload) {
 			store.setSlugSketchInfo(null);
-			store.setSharePayload(sharedPayload);
+			store.setSharePayload(payload);
 			return;
 		}
 

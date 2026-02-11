@@ -6,7 +6,7 @@ import { cn } from "@/shared/lib/cn";
 import { Play } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
 import { selectStrudelEnabled } from '@/platform/state/selectors';
-import type { Example } from '@/types/examples.types';
+import type { Example } from '@/features/examples/examples.types';
 import { getExampleEngineCatalog } from '../model/exampleCatalog';
 
 export interface ExamplesTabProps {

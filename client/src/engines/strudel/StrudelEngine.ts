@@ -1,5 +1,5 @@
 import type { EngineContext } from '@/types/engine.types';
-import type { Example } from '@/types/examples.types';
+import type { Example } from '@/features/examples/examples.types';
 import { StrudelEditor, type StrudelEditorOptions } from './editor/StrudelEditor';
 import { StrudelRuntime } from './runtime';
 import { defaultStrudelSketch } from './defaultSketch';

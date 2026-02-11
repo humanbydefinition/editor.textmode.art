@@ -10,7 +10,7 @@ import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapt
 import { useAppStore } from '@/platform/state/appStore';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';
 import type { EngineId } from '@/types/engine.types';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
 
 interface EngineLifecycleDependencies {
 	paneCoordinator: PaneCoordinator;

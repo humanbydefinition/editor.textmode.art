@@ -1,7 +1,7 @@
 
-import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@/sandbox/protocol';
-import { isRunnerMessage, PROTOCOL_VERSION } from '@/sandbox/protocol';
-import type { IHostRuntime, HostRuntimeOptions } from '@/sandbox/types';
+import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@/engines/textmode/sandbox/protocol';
+import { isRunnerMessage, PROTOCOL_VERSION } from '@/engines/textmode/sandbox/protocol';
+import type { IHostRuntime, HostRuntimeOptions } from '@/engines/textmode/sandbox/types';
 import type { CodeError } from '@/types/app.types';
 import type { AudioData } from '@/services/AudioService';
 

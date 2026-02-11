@@ -8,10 +8,11 @@ import { AppShell } from '@/components/AppShell';
 import { ShareSessionManager } from '@/features/share/orchestration/ShareSessionManager';
 import { EditorManager } from '@/managers/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/managers/ShortcutsManager';
-import { CodeRandomizer } from '@/services/CodeRandomizer';
+import { CodeRandomizer } from '@/shared/lib/CodeRandomizer';
 import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAdapter';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/services/StorageService';
+
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';
 import type { EngineId } from '@/types/engine.types';

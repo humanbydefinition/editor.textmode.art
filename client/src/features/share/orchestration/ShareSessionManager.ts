@@ -1,5 +1,6 @@
 import type { EngineId } from '@/types/engine.types';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
+
 
 interface ShareState {
 	payload: SharePayload | null;

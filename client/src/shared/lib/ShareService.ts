@@ -1,4 +1,4 @@
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 
 const SHARE_HASH_KEY = 'share';

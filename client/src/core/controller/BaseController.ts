@@ -2,7 +2,7 @@ import type { CodeError, StatusState } from '@/types/app.types';
 import type { IEditor } from '../editor/BaseEditor';
 import type { EngineState } from '@/platform/state/appStore';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
 import type { SlugSketchInfo } from '@/platform/state/slices/shareSlice';
 
 /** Delay before pending code is confirmed as 'last working' */

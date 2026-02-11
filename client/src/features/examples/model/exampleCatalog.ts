@@ -1,6 +1,6 @@
 import { examples as textmodeExamples } from '@/engines/textmode/examples';
 import { examples as strudelExamples } from '@/engines/strudel/examples';
-import type { Example } from '@/types/examples.types';
+import type { Example } from '@/features/examples/examples.types';
 
 export interface ExampleEngineCatalog {
 	id: 'textmode' | 'strudel';

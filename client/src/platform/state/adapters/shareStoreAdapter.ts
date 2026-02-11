@@ -1,5 +1,6 @@
 import { useAppStore } from '@/platform/state/appStore';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
+
 
 export interface ShareStoreAdapter {
 	getShareState: () => {

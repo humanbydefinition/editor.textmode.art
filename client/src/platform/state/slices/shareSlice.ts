@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { SharePayload } from '@/types/share.types';
+import type { SharePayload } from '@/features/share/share.types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { AppState } from '../appStore';
 
