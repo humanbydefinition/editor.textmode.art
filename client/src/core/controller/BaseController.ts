@@ -1,9 +1,7 @@
-import type { CodeError, StatusState } from '@/types/app.types';
+import type { CodeError } from '@/types/app.types';
+import type { ControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 import type { IEditor } from '../editor/BaseEditor';
-import type { EngineState } from '@/platform/state/appStore';
-import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@/features/share/share.types';
-import type { SlugSketchInfo } from '@/platform/state/slices/shareSlice';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -36,35 +34,7 @@ export interface BaseControllerCallbacks {
 	onSaveCode: (code: string) => void;
 }
 
-/**
- * Store adapter - thin facade over the Zustand store.
- * Injected into controllers so they never import the store directly.
- */
-export interface ControllerStoreAdapter {
-	// Error / status
-	setError: (error: CodeError | null) => void;
-	setStatus: (status: StatusState) => void;
 
-	// Engine state
-	getEngineState: (engineId: string) => EngineState | undefined;
-	setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
-	setEnginePendingWorkingCode: (engineId: string, code: string) => void;
-	cancelEnginePendingWorkingCode: (engineId: string) => void;
-	setEngineInitialized: (engineId: string, initialized: boolean) => void;
-	setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
-
-	// Share
-	getShareState: () => { payload: unknown | null; consented: boolean; promptOpen: boolean };
-	setSharePromptOpen: (open: boolean) => void;
-
-	// Approved sketch
-	getApprovedSketch: () => ApprovedSketch | null;
-	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-	getSlugSketchInfo: () => SlugSketchInfo | null;
-	setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
-	getOriginalApprovedSketch: () => ApprovedSketch | null;
-	getOriginalSlugSketchInfo: () => SlugSketchInfo | null;
-}
 
 /**
  * Base dependencies shared by all controllers.
