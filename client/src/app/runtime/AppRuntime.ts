@@ -288,6 +288,10 @@ export class AppRuntime {
 				onReconnectTextmodeRunner: () => {
 					useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', true);
 					this.engineLifecycle.reconnectTextmodeRunner();
+					// Timeout after 10 seconds if reconnect doesn't succeed
+					setTimeout(() => {
+						useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
+					}, 10000);
 				},
 				shareExportOpen: this.uiActions.getShareExportOpen(),
 				shareExportData: this.uiActions.getShareExportData(),
