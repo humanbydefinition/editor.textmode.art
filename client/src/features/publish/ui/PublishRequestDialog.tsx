@@ -590,7 +590,7 @@ export function PublishRequestDialog({
                                     className="flex justify-center"
                                 />
                                 <p className="text-xs text-zinc-500">
-                                    This check helps protect the gallery from automated abuse.
+                                    this check helps protect the gallery from automated abuse.
                                 </p>
                                 {turnstileError && (
                                     <p className="text-xs text-red-400">{turnstileError}</p>
