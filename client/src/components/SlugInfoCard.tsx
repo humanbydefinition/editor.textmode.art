@@ -101,7 +101,7 @@ export function SlugInfoCard({
 
             {isPending && (
                 <div className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-200/90">
-                    Social links will be added after approval.
+                    social links will be added after approval.
                 </div>
             )}
 
