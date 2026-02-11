@@ -23,7 +23,7 @@ function startRunner() {
             console.warn('Runner is running in top-level window (debug mode).');
         } else {
             // Redirect to main app
-            const redirectUrl = isDev ? 'http://localhost:5173' : 'https://synth.textmode.art';
+            const redirectUrl = isDev ? `http://${window.location.hostname}:5173` : 'https://synth.textmode.art';
             window.location.href = redirectUrl;
             return;
         }

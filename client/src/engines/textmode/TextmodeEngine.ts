@@ -148,7 +148,8 @@ function getRunnerUrl(): string {
 	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
 		return explicit.trim();
 	}
+	// Use window.location.hostname to support access from other devices on the network
 	return import.meta.env.DEV
-		? 'http://localhost:5174/index.html'
+		? `http://${window.location.hostname}:5174/index.html`
 		: '/runner/index.html';
 }
