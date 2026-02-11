@@ -303,8 +303,8 @@ export function PublishRequestDialog({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <ScrollArea className="flex-1 min-h-0">
-                            <div className="px-6 py-5 space-y-5">
+                        <ScrollArea className="flex-1 min-h-0 min-w-0">
+                            <div className="px-6 py-5 space-y-5 min-w-0">
                                 {submissionQueue.full && (
                                     <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
                                         <p className="text-sm text-red-300">
@@ -318,7 +318,7 @@ export function PublishRequestDialog({
                                     <Label htmlFor="slug" className="text-sm text-zinc-300">
                                         custom slug <span className="text-red-400">*</span>
                                     </Label>
-                                    <div className="relative">
+                                    <div className="relative min-w-0">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
                                             /s/
                                         </span>
@@ -327,7 +327,7 @@ export function PublishRequestDialog({
                                             value={slug.value}
                                             onChange={handleSlugChange}
                                             placeholder="my-sketch"
-                                            className="pl-10 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
+                                            className="pl-10 pr-10 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
                                             maxLength={60}
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -342,7 +342,8 @@ export function PublishRequestDialog({
                                     </div>
                                     {slug.normalized && slug.normalized !== slug.value && (
                                         <p className="text-xs text-zinc-500">
-                                            will be normalized to: <span className="font-mono text-zinc-400">{slug.normalized}</span>
+                                            will be normalized to:{' '}
+                                            <span className="font-mono text-zinc-400 break-all">{slug.normalized}</span>
                                         </p>
                                     )}
                                     {slug.reason && (
@@ -379,10 +380,10 @@ export function PublishRequestDialog({
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="A brief description of your sketch for social previews..."
-                                        className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 min-h-[80px] resize-none"
+                                        className="field-sizing-fixed min-w-0 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 min-h-[80px] resize-none"
                                         maxLength={200}
                                     />
-                                    <p className="text-xs text-zinc-500">{description.length}/300 characters</p>
+                                    <p className="text-xs text-zinc-500">{description.length}/200 characters</p>
                                 </div>
 
                                 {/* Author input */}
@@ -540,11 +541,11 @@ export function PublishRequestDialog({
                                     <Label className="text-sm text-zinc-300">slug info preview</Label>
                                     <div className="rounded-lg border border-white/10 bg-zinc-900/40 p-3">
                                         <p className="text-xs text-zinc-500 mb-2">how this card appears once approved:</p>
-                                        <p className="text-sm font-mono text-emerald-300 flex items-center gap-2 mb-3">
-                                            <Link2 className="w-4 h-4" />
+                                        <p className="text-sm font-mono text-emerald-300 flex items-center gap-2 mb-3 min-w-0 break-all">
+                                            <Link2 className="w-4 h-4 shrink-0" />
                                             synth.textmode.art/s/{previewSketch.slug}
                                         </p>
-                                        <div className="w-full max-w-[360px]">
+                                        <div className="w-full max-w-[360px] min-w-0">
                                             <SlugInfoCard
                                                 sketch={previewSketch}
                                             />

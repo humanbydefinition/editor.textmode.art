@@ -106,7 +106,7 @@ export function SlugInfoCard({
             )}
 
             {(sketch.authorName || sketch.license || socialLinks.length > 0 || sketch.slug) && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
+                <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
                     {sketch.authorName && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 max-w-[10rem]">
                             <User className="h-3 w-3 shrink-0" />
@@ -150,8 +150,8 @@ export function SlugInfoCard({
                         );
                     })}
                     {sketch.slug && (
-                        <span className="inline-flex items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
-                            /s/{sketch.slug}
+                        <span className="inline-flex min-w-0 max-w-full items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
+                            <span className="break-all">/s/{sketch.slug}</span>
                         </span>
                     )}
                 </div>
