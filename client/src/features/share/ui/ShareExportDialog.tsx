@@ -12,6 +12,8 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { ShareService, MAX_SHARE_URL_LENGTH } from '@/services/ShareService';
 import type { SharePayload } from '@/types/share.types';
 import { PublishRequestDialog } from '@/features/publish';
+import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
+import { fetchSketchSubmissionQueueStatus } from '@/services/SketchApiService';
 import { Check, Link2, Sparkles, Code2, Music2, Info } from 'lucide-react';
 
 export interface ShareExportData {
@@ -34,6 +36,8 @@ function formatCount(value: number): string {
 export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: ShareExportDialogProps) {
 	const [copied, setCopied] = useState<'textmode' | 'full' | null>(null);
 	const [publishOpen, setPublishOpen] = useState(false);
+	const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
+	const [isCheckingQueue, setIsCheckingQueue] = useState(false);
 
 	const computed = useMemo(() => {
 		if (!data) return null;
@@ -77,6 +81,24 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 		const timer = window.setTimeout(() => setCopied(null), 1800);
 		return () => window.clearTimeout(timer);
 	}, [copied]);
+
+	const handlePublishClick = async () => {
+		setIsCheckingQueue(true);
+		try {
+			const status = await fetchSketchSubmissionQueueStatus();
+			if (status && status.full) {
+				setSubmissionsPausedOpen(true);
+			} else {
+				setPublishOpen(true);
+			}
+		} catch (error) {
+			console.error('Failed to check queue status:', error);
+			// Default to opening the dialog if check fails, it handles its own error states / queue checks too
+			setPublishOpen(true);
+		} finally {
+			setIsCheckingQueue(false);
+		}
+	};
 
 	if (!data || !computed) {
 		return null;
@@ -233,7 +255,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 							<div className="p-3 rounded-lg border border-amber-500/10 bg-amber-500/[0.02] flex gap-3">
 								<Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
 								<p className="text-[11px] text-amber-200/70 leading-relaxed">
-									{!computed.textmodeFits 
+									{!computed.textmodeFits
 										? "the sketch is too large for a URL. shorten the code to enable sharing."
 										: "combined sketch exceeds the URL limit. share textmode only or shorten the code."}
 								</p>
@@ -253,10 +275,18 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 									</p>
 								</div>
 								<Button
-									className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0"
-									onClick={() => setPublishOpen(true)}
+									className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0 min-w-[120px]"
+									onClick={handlePublishClick}
+									disabled={isCheckingQueue}
 								>
-									publish sketch
+									{isCheckingQueue ? (
+										<span className="flex items-center gap-2">
+											<span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin" />
+											checking...
+										</span>
+									) : (
+										'publish sketch'
+									)}
 								</Button>
 							</div>
 						</div>
@@ -268,6 +298,11 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 				open={publishOpen}
 				data={data ? { textmodeCode: data.textmodeCode, strudelCode: data.strudelCode } : null}
 				onOpenChange={setPublishOpen}
+			/>
+
+			<SubmissionsPausedDialog
+				open={submissionsPausedOpen}
+				onOpenChange={setSubmissionsPausedOpen}
 			/>
 		</Dialog>
 	);

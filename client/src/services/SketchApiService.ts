@@ -109,7 +109,9 @@ export async function checkSlugAvailability(slug: string): Promise<SlugAvailabil
  */
 export async function fetchSketchSubmissionQueueStatus(): Promise<SketchSubmissionQueueStatus | null> {
     try {
-        const response = await fetch(`${getApiBase()}/api/sketch-requests/queue-status`);
+        const response = await fetch(`${getApiBase()}/api/sketch-requests/queue-status`, {
+            cache: 'no-store',
+        });
         if (!response.ok) {
             return null;
         }
