@@ -6,6 +6,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/shared/ui/dialog';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
@@ -38,6 +44,8 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 	const [publishOpen, setPublishOpen] = useState(false);
 	const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
 	const [isCheckingQueue, setIsCheckingQueue] = useState(false);
+
+	const [backendAvailable, setBackendAvailable] = useState<boolean>(true);
 
 	const computed = useMemo(() => {
 		if (!data) return null;
@@ -82,19 +90,30 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 		return () => window.clearTimeout(timer);
 	}, [copied]);
 
+	useEffect(() => {
+		if (open) {
+			setBackendAvailable(true);
+			fetchSketchSubmissionQueueStatus().then((status) => {
+				setBackendAvailable(status !== null);
+			});
+		}
+	}, [open]);
+
 	const handlePublishClick = async () => {
 		setIsCheckingQueue(true);
 		try {
 			const status = await fetchSketchSubmissionQueueStatus();
 			if (status && status.full) {
 				setSubmissionsPausedOpen(true);
-			} else {
+			} else if (status) {
 				setPublishOpen(true);
+			} else {
+				// Status is null, meaning backend issue
+				setBackendAvailable(false);
 			}
 		} catch (error) {
 			console.error('Failed to check queue status:', error);
-			// Default to opening the dialog if check fails, it handles its own error states / queue checks too
-			setPublishOpen(true);
+			setBackendAvailable(false);
 		} finally {
 			setIsCheckingQueue(false);
 		}
@@ -274,20 +293,33 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 										approved sketches get a short URL like <span className="text-zinc-300 font-mono">/s/slug</span> and appear in the community gallery.
 									</p>
 								</div>
-								<Button
-									className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0 min-w-[120px]"
-									onClick={handlePublishClick}
-									disabled={isCheckingQueue}
-								>
-									{isCheckingQueue ? (
-										<span className="flex items-center gap-2">
-											<span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin" />
-											checking...
-										</span>
-									) : (
-										'publish sketch'
-									)}
-								</Button>
+								<TooltipProvider>
+									<Tooltip delayDuration={0}>
+										<TooltipTrigger asChild>
+											<span tabIndex={0} className="inline-flex"> {/* Wrapper for disabled button tooltip trigger */}
+												<Button
+													className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0 min-w-[120px]"
+													onClick={handlePublishClick}
+													disabled={isCheckingQueue || !backendAvailable}
+												>
+													{isCheckingQueue ? (
+														<span className="flex items-center gap-2">
+															<span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin" />
+															checking...
+														</span>
+													) : (
+														'publish sketch'
+													)}
+												</Button>
+											</span>
+										</TooltipTrigger>
+										{!backendAvailable && (
+											<TooltipContent side="top">
+												<p>backend is not responding</p>
+											</TooltipContent>
+										)}
+									</Tooltip>
+								</TooltipProvider>
 							</div>
 						</div>
 					</div>
