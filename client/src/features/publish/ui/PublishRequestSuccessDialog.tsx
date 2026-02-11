@@ -20,7 +20,7 @@ export function PublishRequestSuccessDialog({
                     <Check className="w-5 h-5 text-emerald-400" />
                     request submitted
                 </DialogTitle>
-                <DialogDescription className="text-sm text-zinc-400">
+                <DialogDescription className="text-sm text-zinc-400 text-left">
                     your sketch is pending review
                 </DialogDescription>
             </DialogHeader>
