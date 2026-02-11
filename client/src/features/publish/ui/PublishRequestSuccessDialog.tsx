@@ -1,4 +1,5 @@
-import { Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Copy, ExternalLink } from 'lucide-react';
 import { DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
 
@@ -11,7 +12,28 @@ export function PublishRequestSuccessDialog({
     submittedSlug,
     onClose,
 }: PublishRequestSuccessDialogProps) {
+    const [copied, setCopied] = useState(false);
     const slug = submittedSlug || 'your-sketch';
+    const url = `https://synth.textmode.art/s/${slug}`;
+
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    const handleOpen = () => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
 
     return (
         <div className="animate-in fade-in-0 zoom-in-95 duration-200">
@@ -30,11 +52,39 @@ export function PublishRequestSuccessDialog({
                     <p className="text-sm text-zinc-300">
                         your publish request for{' '}
                         <span className="font-mono text-emerald-300">/s/{slug}</span>{' '}
-                        has been submitted for moderation and is immediately viewable behind the code consent prompt.
+                        has been submitted for moderation and is immediately viewable behind a code consent prompt.
                     </p>
                     <p className="text-xs text-zinc-500 mt-2">
                         once approved, your sketch will appear in the community gallery, be discoverable via randomize, and show social links.
                     </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Button
+                        variant="outline"
+                        className="w-full bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                        onClick={handleCopy}
+                    >
+                        {copied ? (
+                            <>
+                                <Check className="w-4 h-4 mr-2 text-emerald-400" />
+                                copied!
+                            </>
+                        ) : (
+                            <>
+                                <Copy className="w-4 h-4 mr-2" />
+                                copy link
+                            </>
+                        )}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="w-full bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                        onClick={handleOpen}
+                    >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        open
+                    </Button>
                 </div>
 
                 <Button
