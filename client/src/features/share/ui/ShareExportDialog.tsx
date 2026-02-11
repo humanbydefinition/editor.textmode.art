@@ -122,7 +122,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 						</div>
 
 						{/* Export Options */}
-						<div className="grid gap-4 sm:grid-cols-2 mb-4">
+						<div className={`grid gap-4 mb-4 ${hasStrudel ? 'sm:grid-cols-2' : ''}`}>
 							{/* Textmode Card */}
 							<div className="flex flex-col rounded-lg border border-white/10 bg-zinc-900/40 p-4 transition-all hover:border-white/20">
 								<div className="flex items-center justify-between mb-4">
