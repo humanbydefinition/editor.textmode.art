@@ -1,6 +1,7 @@
 import type { EngineContext } from '@/types/engine.types';
 import type { Example } from '@/types/examples.types';
 import type { AudioData } from '@/services/AudioService';
+import { useAppStore } from '@/platform/state/appStore';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import { defaultTextmodeSketch } from './defaultSketch';
@@ -92,6 +93,9 @@ export class TextmodeEngine {
 		this.runtime?.sendAudioData(data);
 	}
 
+	reconnectRuntime(): void {
+		this.runtime?.reconnect();
+	}
 	private createEditor(context: EngineContext, initialCode: string): TextmodeEditor {
 		const options: TextmodeEditorOptions = {
 			container: context.editorContainer,
@@ -121,6 +125,14 @@ export class TextmodeEngine {
 			onRunError: (error) => this.controller?.handleRunError(error),
 			onSynthError: (error) => this.controller?.handleSynthError(error),
 			onToggleUI: () => context.toggleUI(),
+			onRunnerConnected: () => {
+				useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', false);
+				useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
+			},
+			onRunnerDisconnected: () => {
+				useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', true);
+				useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
+			},
 		});
 		return this.runtime;
 	}

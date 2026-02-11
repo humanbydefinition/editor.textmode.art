@@ -94,6 +94,10 @@ export interface HostRuntimeOptions extends Partial<IRuntimeEvents> {
     runnerUrl: string;
     /** Container element for the iframe */
     container: HTMLElement;
+    /** Called when runner connection is established */
+    onRunnerConnected?: () => void;
+    /** Called when runner is unreachable or disconnected */
+    onRunnerDisconnected?: () => void;
 }
 
 /**

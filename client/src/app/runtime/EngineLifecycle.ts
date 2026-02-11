@@ -45,6 +45,8 @@ export class EngineLifecycle {
 
 	async initTextmodeEngine(): Promise<void> {
 		useAppStore.getState().initEngineState('textmode');
+		useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', false);
+		useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
 		const container = await this.deps.paneCoordinator.waitForPane('textmode');
 
 		await this.textmodeEngine.init({
@@ -136,6 +138,10 @@ export class EngineLifecycle {
 			return;
 		}
 		this.getEngine(engineId)?.getController()?.handleForceRun();
+	}
+
+	reconnectTextmodeRunner(): void {
+		this.textmodeEngine.reconnectRuntime();
 	}
 
 	loadExample(engineId: EngineId, code: string): boolean {

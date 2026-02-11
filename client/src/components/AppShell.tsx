@@ -10,11 +10,14 @@ import {
     selectError,
     selectHasLastWorkingForError,
     selectShareState,
+    selectTextmodeRunnerReconnecting,
+    selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
 import { MobileNav } from './EditorLayout/MobileNav';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
-import { Lock } from 'lucide-react';
+import { Lock, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { Button } from '@/shared/ui/button';
 import type { StrudelTransportState } from '@/types/app.types';
 
 
@@ -40,6 +43,7 @@ export interface AppShellProps {
     onShareUnlockOnly: () => void;
     onShareDiscard: () => void;
     onSharePromptOpen: () => void;
+    onReconnectTextmodeRunner: () => void;
     shareExportOpen: boolean;
     shareExportData: ShareExportData | null;
     onShareExportOpenChange: (open: boolean) => void;
@@ -68,6 +72,7 @@ export function AppShell({
     onShareUnlockOnly,
     onShareDiscard,
     onSharePromptOpen,
+    onReconnectTextmodeRunner,
     shareExportOpen,
     shareExportData,
     onShareExportOpenChange,
@@ -79,6 +84,8 @@ export function AppShell({
     const error = useAppStore(selectError);
     const setError = useAppStore((state) => state.setError);
     const share = useAppStore(selectShareState);
+    const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
+    const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
     const hasLastWorking = useAppStore(selectHasLastWorkingForError);
@@ -95,6 +102,8 @@ export function AppShell({
                 onPaneReady={onPaneReady}
             />
 
+            
+
             {/* UI shell layer - elevated above editors */}
             <div
                 id="shell-container"
@@ -102,6 +111,24 @@ export function AppShell({
             >
                 {/* Orientation Toggle Button (Desktop Only) */}
                 {/* Orientation Toggle Button (Desktop Only) removed */}
+
+                {textmodeRunnerUnavailable && (
+                <div className="fixed inset-0 z-[1] pointer-events-none flex items-center justify-center p-6">
+                    <div
+                        className={cn(
+                            'w-full max-w-xl rounded-xl border border-white/12',
+                            'bg-zinc-950/70 backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.55)]',
+                            'px-5 py-4 text-zinc-100'
+                        )}
+                    >
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-amber-300/95">runner offline</p>
+                        <h2 className="mt-1 text-base font-semibold text-zinc-100">textmode.js runner is not reachable</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-zinc-300/95">
+                            visual output is paused because the sandbox runner failed to load.
+                        </p>
+                    </div>
+                </div>
+            )}
 
                 {/* Mobile Navigation */}
                 <MobileNav />
@@ -148,6 +175,34 @@ export function AppShell({
                             <p>sketch locked - click to unlock</p>
                         </TooltipContent>
                     </Tooltip>
+                )}
+
+                {textmodeRunnerUnavailable && (
+                    <div className="fixed bottom-3 left-3 z-50 flex flex-col items-start gap-1 pointer-events-auto">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={onReconnectTextmodeRunner}
+                            disabled={textmodeRunnerReconnecting}
+                            className="gap-2 bg-zinc-900/95 text-zinc-100 shadow-lg hover:bg-zinc-800"
+                            aria-live="polite"
+                            aria-busy={textmodeRunnerReconnecting}
+                        >
+                            <RotateCcw
+                                className={cn(
+                                    'h-3.5 w-3.5 transition-transform duration-300',
+                                    textmodeRunnerReconnecting ? 'animate-spin' : ''
+                                )}
+                            />
+                            {textmodeRunnerReconnecting ? 'Reconnecting…' : 'Reconnect Runner'}
+                        </Button>
+                        <p className="text-[11px] text-zinc-400/80">
+                            {textmodeRunnerReconnecting
+                                ? 'Attempting to reach the runner...'
+                                : 'Tap to retry loading the sandbox runner.'}
+                        </p>
+                    </div>
                 )}
 
                 {/* Main UI - hidden when welcome modal is open, with smooth transition */}

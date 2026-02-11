@@ -17,15 +17,19 @@ export class TextmodeRuntime implements IHostRuntime {
 	private container: HTMLElement;
 	private _isReady = false;
 	private pendingCode: string | null = null;
+	private lastRequestedCode: string | null = null;
 	private messagePort: MessagePort | null = null;
 	private runnerOrigin: string;
 	private handshakeTimer: number | null = null;
+	private runnerUnavailable = false;
 
 	private onReadyCallback?: () => void;
 	private onRunOk?: (timestamp: number) => void;
 	private onRunError?: (error: CodeError) => void;
 	private onSynthError?: (error: CodeError) => void;
 	private onUserInteractionCallback?: () => void;
+	private onRunnerConnected?: () => void;
+	private onRunnerDisconnected?: () => void;
 
 	private options: HostRuntimeOptions;
 
@@ -36,6 +40,8 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.onRunOk = options.onRunOk;
 		this.onRunError = options.onRunError;
 		this.onSynthError = options.onSynthError;
+		this.onRunnerConnected = options.onRunnerConnected;
+		this.onRunnerDisconnected = options.onRunnerDisconnected;
 		this.runnerOrigin = new URL(this.options.runnerUrl, window.location.origin).origin;
 	}
 
@@ -57,6 +63,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Run code immediately
 	 */
 	forceRun(code: string): void {
+		this.lastRequestedCode = code;
 		if (!this._isReady) {
 			this.pendingCode = code;
 			return;
@@ -68,6 +75,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Soft reset - reset frameCount to 0 and re-run code
 	 */
 	softReset(code: string): void {
+		this.lastRequestedCode = code;
 		if (!this._isReady) {
 			this.pendingCode = code;
 			return;
@@ -77,6 +85,13 @@ export class TextmodeRuntime implements IHostRuntime {
 
 	setOnUserInteraction(callback: (() => void) | undefined): void {
 		this.onUserInteractionCallback = callback;
+	}
+
+	/**
+	 * Manually retry loading the runner iframe.
+	 */
+	reconnect(): void {
+		this.createIframe();
 	}
 
 	/**
@@ -106,6 +121,7 @@ export class TextmodeRuntime implements IHostRuntime {
 		}
 		if (this.iframe) {
 			this.iframe.removeEventListener('load', this.handleIframeLoad);
+			this.iframe.removeEventListener('error', this.handleIframeError);
 			this.iframe.remove();
 		}
 	}
@@ -131,6 +147,8 @@ export class TextmodeRuntime implements IHostRuntime {
 	private createIframe(): void {
 		// Remove existing iframe if any
 		if (this.iframe) {
+			this.iframe.removeEventListener('load', this.handleIframeLoad);
+			this.iframe.removeEventListener('error', this.handleIframeError);
 			this.iframe.remove();
 			this.iframe = null;
 		}
@@ -146,11 +164,14 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.iframe = document.createElement('iframe');
 		this.iframe.id = 'runner-frame';
 		this.iframe.src = this.options.runnerUrl;
+		this.iframe.style.opacity = '0';
+		this.iframe.style.transition = 'opacity 140ms ease';
 
 		// Sandbox permissions: allow scripts only
 		this.iframe.sandbox.add('allow-scripts');
 		this.iframe.referrerPolicy = 'no-referrer';
 		this.iframe.addEventListener('load', this.handleIframeLoad);
+		this.iframe.addEventListener('error', this.handleIframeError);
 
 		this.container.appendChild(this.iframe);
 	}
@@ -165,7 +186,9 @@ export class TextmodeRuntime implements IHostRuntime {
 		switch (msg.type) {
 			case 'READY':
 				this._isReady = true;
+				this.iframe?.style.setProperty('opacity', '1');
 				this.clearHandshakeTimer();
+				this.setRunnerUnavailable(false);
 				this.onReadyCallback?.();
 				// Run pending code if any
 				if (this.pendingCode !== null) {
@@ -207,6 +230,10 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.initializeMessagePort();
 	};
 
+	private handleIframeError = (): void => {
+		this.handleRunnerUnavailable();
+	};
+
 	/**
 	 * Send message to iframe
 	 */
@@ -235,7 +262,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	private startHandshakeTimer(): void {
 		this.clearHandshakeTimer();
 		this.handshakeTimer = window.setTimeout(() => {
-			this.createIframe();
+			this.handleRunnerUnavailable();
 		}, HANDSHAKE_TIMEOUT_MS);
 	}
 
@@ -252,5 +279,38 @@ export class TextmodeRuntime implements IHostRuntime {
 		} catch {
 			element.focus();
 		}
+	}
+
+	private handleRunnerUnavailable(): void {
+		this._isReady = false;
+		this.clearHandshakeTimer();
+
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
+
+		if (this.pendingCode === null && this.lastRequestedCode !== null) {
+			this.pendingCode = this.lastRequestedCode;
+		}
+
+		if (this.iframe) {
+			this.iframe.removeEventListener('load', this.handleIframeLoad);
+			this.iframe.removeEventListener('error', this.handleIframeError);
+			this.iframe.remove();
+			this.iframe = null;
+		}
+
+		this.setRunnerUnavailable(true);
+	}
+
+	private setRunnerUnavailable(isUnavailable: boolean): void {
+		if (this.runnerUnavailable === isUnavailable) return;
+		this.runnerUnavailable = isUnavailable;
+		if (isUnavailable) {
+			this.onRunnerDisconnected?.();
+			return;
+		}
+		this.onRunnerConnected?.();
 	}
 }

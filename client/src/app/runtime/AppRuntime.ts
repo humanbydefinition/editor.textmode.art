@@ -285,6 +285,10 @@ export class AppRuntime {
 				onShareUnlockOnly: () => this.shareSession.unlockOnly(),
 				onShareDiscard: () => this.shareSession.discard(),
 				onSharePromptOpen: () => this.shareSession.openPrompt(),
+				onReconnectTextmodeRunner: () => {
+					useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', true);
+					this.engineLifecycle.reconnectTextmodeRunner();
+				},
 				shareExportOpen: this.uiActions.getShareExportOpen(),
 				shareExportData: this.uiActions.getShareExportData(),
 				onShareExportOpenChange: (open: boolean) => this.uiActions.setShareExportOpen(open),

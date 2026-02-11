@@ -10,6 +10,10 @@ export const selectApprovedSketch = (state: AppState) => state.approvedSketch;
 export const selectSlugSketchInfo = (state: AppState) => state.slugSketchInfo;
 export const selectStrudelEnabled = (state: AppState) => state.settings.strudelEnabled;
 export const selectStrudelTransport = (state: AppState) => state.settings.strudelTransport;
+export const selectTextmodeRunnerUnavailable = (state: AppState): boolean =>
+	state.engineStates.textmode?.customState.runnerUnavailable === true;
+export const selectTextmodeRunnerReconnecting = (state: AppState): boolean =>
+	state.engineStates.textmode?.customState.runnerReconnecting === true;
 
 export const selectHasLastWorkingForError = (state: AppState): boolean => {
 	if (!state.error?.source) return false;
