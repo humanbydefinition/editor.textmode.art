@@ -4,10 +4,10 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "dev": "dotenv -e ../.env -- sh -c 'prisma migrate deploy && tsx watch src/index.ts'",
+        "dev": "npm run prisma:migrate:deploy && tsx watch src/index.ts",
         "lint": "eslint .",
-        "build": "dotenv -e ../.env -- sh -c 'prisma generate && tsc'",
-        "check-types": "dotenv -e ../.env -- sh -c 'prisma generate && tsc --noEmit'",
+        "build": "npm run prisma:generate && tsc",
+        "check-types": "npm run prisma:generate && tsc --noEmit",
         "start": "node dist/index.js",
         "prisma:generate": "dotenv -e ../.env -- prisma generate",
         "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
