@@ -23,6 +23,24 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@/core/*": [
+        "./src/core/*"
+      ],
+      "@/platform/*": [
+        "./src/platform/*"
+      ],
+      "@/engines/*": [
+        "./src/engines/*"
+      ],
+      "@/features/*": [
+        "./src/features/*"
+      ],
+      "@/shared/*": [
+        "./src/shared/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
       ]
     },
     /* Linting */
