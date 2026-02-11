@@ -33,3 +33,4 @@ dist-ssr
 .agents/
 .gemini/
 server/storage/
+server/prisma/generated/

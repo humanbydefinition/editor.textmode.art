@@ -9,10 +9,10 @@
         "build": "npm run prisma:generate && tsc",
         "check-types": "npm run prisma:generate && tsc --noEmit",
         "start": "node dist/index.js",
-        "prisma:generate": "dotenv -e ../.env -- prisma generate",
-        "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
-        "prisma:migrate:deploy": "dotenv -e ../.env -- prisma migrate deploy",
-        "prisma:studio": "dotenv -e ../.env -- prisma studio",
+        "prisma:generate": "prisma generate",
+        "prisma:migrate": "prisma migrate dev",
+        "prisma:migrate:deploy": "prisma migrate deploy",
+        "prisma:studio": "prisma studio",
         "playwright:install": "playwright install chromium",
         "screenshots:regenerate": "tsx scripts/regenerate-screenshots.ts"
     },
@@ -20,7 +20,8 @@
         "@fastify/cors": "^10.0.0",
         "@fastify/helmet": "^12.0.1",
         "@fastify/static": "^8.0.0",
-        "@prisma/client": "^6.2.1",
+        "@prisma/adapter-pg": "^7.4.0",
+        "@prisma/client": "^7.4.0",
         "@synth.textmode.art/contracts": "file:../packages/contracts",
         "dotenv": "^16.4.7",
         "fastify": "^5.2.1",
@@ -28,8 +29,7 @@
     },
     "devDependencies": {
         "@types/node": "^24.10.1",
-        "dotenv-cli": "^11.0.0",
-        "prisma": "^6.2.1",
+        "prisma": "^7.4.0",
         "tsx": "^4.19.2",
         "typescript": "~5.9.3"
     }
