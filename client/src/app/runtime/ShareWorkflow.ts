@@ -74,8 +74,8 @@ export class ShareWorkflow {
 		this.deps.applyApprovedSketchToStrudel(approvedSketch);
 	}
 
-	async randomize(): Promise<void> {
-		if (this.randomizeLoading) return;
+	async randomize(): Promise<boolean> {
+		if (this.randomizeLoading) return false;
 
 		this.randomizeLoading = true;
 		this.deps.render();
@@ -83,8 +83,11 @@ export class ShareWorkflow {
 		try {
 			const currentSlug = useAppStore.getState().approvedSketch?.slug;
 			const sketch = await fetchRandomApprovedSketch(currentSlug);
-			if (!sketch) return;
+			if (!sketch) return false;
 			this.applyApprovedSketch(sketch);
+			return true;
+		} catch {
+			return false;
 		} finally {
 			this.randomizeLoading = false;
 			this.deps.render();

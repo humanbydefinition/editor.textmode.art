@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play, Heart } from 'lucide-react';
 import {
     Dialog,
@@ -25,7 +26,7 @@ import type { StrudelTransportState } from '@/types/app.types';
 
 export interface SystemMenuProps {
     onShare: () => void;
-    onRandomize: () => void;
+    onRandomize: () => Promise<boolean>;
     onToggleStrudelTransport: () => void;
     onMakeRandomChange?: () => void;
     strudelEnabled: boolean;
@@ -52,6 +53,15 @@ export function SystemMenu({
     const setSettings = useAppStore((state) => state.setSettings);
 
     const [open, setOpen] = useState(false);
+
+    const handleRandomize = async () => {
+        const success = await onRandomize();
+        if (!success) {
+            toast.error('failed to load random sketch', {
+                position: 'bottom-right',
+            });
+        }
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -131,7 +141,7 @@ export function SystemMenu({
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
-                        onClick={onRandomize}
+                        onClick={handleRandomize}
                         disabled={randomizeLoading}
                         className={cn(
                             'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',

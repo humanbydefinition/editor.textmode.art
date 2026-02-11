@@ -269,7 +269,7 @@ export class AppRuntime {
 				editorBackdrop: this.settings.editorBackdrop,
 				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
 				onShare: () => this.uiActions.openShareExport(),
-				onRandomize: () => void this.shareWorkflow.randomize(),
+				onRandomize: () => this.shareWorkflow.randomize(),
 				onToggleStrudelTransport: () => this.toggleStrudelTransport(),
 				onMakeRandomChange: () => this.makeRandomChange(),
 				strudelEnabled: this.settings.strudelEnabled,
