@@ -10,6 +10,7 @@ interface ShareWorkflowDependencies {
 	applyApprovedSketch: (sketch: ApprovedSketch) => void;
 	applyApprovedSketchToStrudel: (sketch: ApprovedSketch) => void;
 	getServerInjectedSlug: () => string | undefined;
+	replaceUrl: (url: string) => void;
 }
 
 /**
@@ -47,6 +48,7 @@ export class ShareWorkflow {
 		const sketchData = await fetchSketchBySlugAccess(detectedSlug);
 		if (!sketchData) {
 			store.setSlugSketchInfo(null);
+			this.deps.replaceUrl('/');
 			return;
 		}
 

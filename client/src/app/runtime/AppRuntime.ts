@@ -64,6 +64,7 @@ export class AppRuntime {
 			applyApprovedSketch: (sketch) => this.engineLifecycle.applyApprovedSketch(sketch),
 			applyApprovedSketchToStrudel: (sketch) => this.engineLifecycle.applyApprovedSketchToStrudel(sketch),
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
+			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
 		this.uiActions = new UIActions({
