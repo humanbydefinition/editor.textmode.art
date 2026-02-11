@@ -601,7 +601,7 @@ export function PublishRequestDialog({
                             </>
                         ) : (
                             <p className="text-xs text-red-300">
-                                Security verification is not configured. Publishing is currently unavailable.
+                                security verification is not configured. publishing is currently unavailable.
                             </p>
                         )}
                     </div>
