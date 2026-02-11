@@ -26,7 +26,7 @@ import {
     checkSlugAvailability,
     fetchSketchSubmissionQueueStatus,
     submitSketchRequest,
-} from '@/services/SketchApiService';
+} from '@/platform/api/SketchApiService';
 import { SLUG_MAX_LENGTH } from '@synth.textmode.art/contracts/sketch';
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
 import {

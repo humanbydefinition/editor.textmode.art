@@ -3,7 +3,7 @@ import type { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
 import { useAppStore } from '@/platform/state/appStore';
 import type { AppSettings } from '@/types/app.types';
 import type { EngineId } from '@/types/engine.types';
-import type { IStorageService } from '@/services/StorageService';
+import type { IStorageService } from '@/platform/storage/StorageService';
 
 interface UIActionsDependencies {
 	storage: IStorageService;

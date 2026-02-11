@@ -19,7 +19,7 @@ import { MAX_SHARE_URL_LENGTH, ShareService } from '@/shared/lib/ShareService';
 import type { SharePayload } from '@/features/share/share.types';
 import { PublishRequestDialog } from '@/features/publish';
 import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
-import { fetchSketchSubmissionQueueStatus } from '@/services/SketchApiService';
+import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';
 import { Check, Link2, Sparkles, Code2, Music2, Info } from 'lucide-react';
 
 export interface ShareExportData {

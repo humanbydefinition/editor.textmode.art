@@ -6,12 +6,12 @@ import { ShareWorkflow } from '@/app/runtime/ShareWorkflow';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/components/AppShell';
 import { ShareSessionManager } from '@/features/share/orchestration/ShareSessionManager';
-import { EditorManager } from '@/managers/EditorManager';
-import { ShortcutsManager, type IShortcutsManager } from '@/managers/ShortcutsManager';
+import { EditorManager } from '@/platform/input/EditorManager';
+import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from '@/shared/lib/CodeRandomizer';
 import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAdapter';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
-import { storageService, type IStorageService } from '@/services/StorageService';
+import { storageService, type IStorageService } from '@/platform/storage/StorageService';
 
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';

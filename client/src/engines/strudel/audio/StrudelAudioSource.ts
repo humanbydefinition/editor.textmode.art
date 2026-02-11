@@ -1,4 +1,4 @@
-import type { IAudioSource } from '../../../services/AudioService';
+import type { IAudioSource } from '../../../platform/audio/AudioService';
 
 /**
  * Options for StrudelAudioSource

@@ -1,8 +1,8 @@
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import { PaneCoordinator } from '@/app/orchestration/PaneCoordinator';
-import { EditorManager } from '@/managers/EditorManager';
-import { audioService, type IAudioSource } from '@/services/AudioService';
-import type { IStorageService } from '@/services/StorageService';
+import { EditorManager } from '@/platform/input/EditorManager';
+import { audioService, type IAudioSource } from '@/platform/audio/AudioService';
+import type { IStorageService } from '@/platform/storage/StorageService';
 import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
