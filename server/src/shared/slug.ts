@@ -1,4 +1,5 @@
 import type { SketchStatus } from '@synth.textmode.art/contracts/sketch';
+import { SLUG_MAX_LENGTH, SLUG_MIN_LENGTH } from '@synth.textmode.art/contracts/sketch';
 import { prisma } from '../database/client.js';
 import { existsSelect } from '../database/selects.js';
 
@@ -16,9 +17,6 @@ const RESERVED_SLUGS = new Set([
   'sitemap',
   'sitemap.xml',
 ]);
-
-export const SLUG_MIN_LENGTH = 3;
-export const SLUG_MAX_LENGTH = 64;
 
 /** Sketch statuses that "occupy" a slug (i.e. prevent reuse). */
 export const ACTIVE_SKETCH_STATUSES: SketchStatus[] = ['PENDING', 'APPROVED'];

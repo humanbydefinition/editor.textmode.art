@@ -27,6 +27,7 @@ import {
     fetchSketchSubmissionQueueStatus,
     submitSketchRequest,
 } from '@/services/SketchApiService';
+import { SLUG_MAX_LENGTH } from '@synth.textmode.art/contracts/sketch';
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
 import {
     Check,
@@ -328,7 +329,7 @@ export function PublishRequestDialog({
                                             onChange={handleSlugChange}
                                             placeholder="my-sketch"
                                             className="pl-10 pr-10 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
-                                            maxLength={60}
+                                            maxLength={SLUG_MAX_LENGTH}
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                             {slug.checking && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />}

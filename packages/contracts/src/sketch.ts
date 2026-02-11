@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const SLUG_MIN_LENGTH = 3;
+export const SLUG_MAX_LENGTH = 32;
+
 export const sketchStatusSchema = z.enum(['PENDING', 'APPROVED', 'DENIED']);
 export type SketchStatus = z.infer<typeof sketchStatusSchema>;
 export const antiSpamAlgorithmSchema = z.literal('sha256-leading-zero-bits-v1');
@@ -80,7 +83,7 @@ export const antiSpamProofSchema = z.object({
 export type AntiSpamProof = z.infer<typeof antiSpamProofSchema>;
 
 export const sketchRequestHashPayloadSchema = z.object({
-  slug: z.string().min(1),
+  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
   title: z.string().min(1).max(120),
   description: z.string().max(300).nullable(),
   authorName: z.string().max(80).nullable(),
@@ -93,7 +96,7 @@ export const sketchRequestHashPayloadSchema = z.object({
 export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
 
 export const createSketchRequestSchema = z.object({
-  slug: z.string().min(1),
+  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
   title: z.string().min(1).max(120),
   description: z.string().max(300).optional().nullable(),
   authorName: z.string().max(80).optional().nullable(),
@@ -137,7 +140,7 @@ export type SketchRequestResult = z.infer<typeof sketchRequestResultSchema>;
 
 export const slugAvailabilityResultSchema = z.object({
   available: z.boolean(),
-  slug: z.string(),
+  slug: z.string().max(SLUG_MAX_LENGTH),
   reason: z.string().optional(),
 });
 export type SlugAvailabilityResult = z.infer<typeof slugAvailabilityResultSchema>;
@@ -148,7 +151,7 @@ export const sketchSubmissionQueueStatusSchema = z.object({
 export type SketchSubmissionQueueStatus = z.infer<typeof sketchSubmissionQueueStatusSchema>;
 
 export const slugAvailabilityQuerySchema = z.object({
-  slug: z.string().min(1),
+  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
 });
 
 export const randomSketchQuerySchema = z.object({
