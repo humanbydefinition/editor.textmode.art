@@ -79,22 +79,29 @@ export function SlugInfoAlert({
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    type="button"
-                    className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
-                        'border border-white/5',
-                        'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
-                        className
-                    )}
-                    aria-label={buttonLabel}
-                    aria-expanded={open}
-                >
-                    <Info className="h-[14px] w-[14px]" />
-                </button>
-            </PopoverTrigger>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                        <button
+                            type="button"
+                            className={cn(
+                                'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
+                                'border border-white/5',
+                                'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
+                                className
+                            )}
+                            aria-label={buttonLabel}
+                            aria-expanded={open}
+                        >
+                            <Info className="h-[14px] w-[14px]" />
+                        </button>
+                    </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>sketch info</p>
+                </TooltipContent>
+            </Tooltip>
 
             {sketch && (
                 <PopoverContent

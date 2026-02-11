@@ -159,24 +159,31 @@ export function SystemMenu({
                 </TooltipContent>
             </Tooltip>
 
-            <DialogTrigger asChild>
-                <button
-                    className={cn(
-                        'fixed top-2 right-2 z-50 pointer-events-auto',
-                        'flex items-center justify-center',
-                        'w-6 h-6 rounded-full',
-                        'bg-zinc-900/40 backdrop-blur-md',
-                        'border border-white/5',
-                        'text-zinc-400',
-                        'transition-all duration-300',
-                        'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                        'focus:outline-none focus:ring-2 focus:ring-white/10'
-                    )}
-                    aria-label="System Menu"
-                >
-                    <Menu className="w-[14px] h-[14px]" />
-                </button>
-            </DialogTrigger>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                        <button
+                            className={cn(
+                                'fixed top-2 right-2 z-50 pointer-events-auto',
+                                'flex items-center justify-center',
+                                'w-6 h-6 rounded-full',
+                                'bg-zinc-900/40 backdrop-blur-md',
+                                'border border-white/5',
+                                'text-zinc-400',
+                                'transition-all duration-300',
+                                'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
+                                'focus:outline-none focus:ring-2 focus:ring-white/10'
+                            )}
+                            aria-label="System Menu"
+                        >
+                            <Menu className="w-[14px] h-[14px]" />
+                        </button>
+                    </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>system menu</p>
+                </TooltipContent>
+            </Tooltip>
 
             <DialogContent showCloseButton={false} className="sm:max-w-[600px] h-[85vh] sm:h-[600px] bg-zinc-950/95 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col">
                 <DialogDescription className="sr-only">
