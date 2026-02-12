@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CodeError, StatusState } from '@/types/app.types';
+import type { CodeError, StatusState } from '@/core/app.types';
 import type { AppState } from '../appStore';
 
 export interface EngineState {
