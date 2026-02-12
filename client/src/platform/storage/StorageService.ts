@@ -1,7 +1,4 @@
 import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
-import { defaultTextmodeSketch } from '@/engines/textmode/defaultSketch';
-import { defaultStrudelSketch } from '@/engines/strudel/defaultSketch';
-
 // Storage keys
 const SETTINGS_STORAGE_KEY = 'app_settings';
 
@@ -12,15 +9,13 @@ function getEngineCodeKey(engineId: string): string {
 	return `${engineId}_code`;
 }
 
-const DEFAULT_CODE_BY_ENGINE: Record<string, string> = {
-	textmode: defaultTextmodeSketch,
-	strudel: defaultStrudelSketch,
-};
-
 /**
  * Storage service interface.
  */
 export interface IStorageService {
+	/** Register default code for an engine */
+	registerDefaultCode(engineId: string, code: string): void;
+
 	/** Load engine code from localStorage or default */
 	loadEngineCode(engineId: string): string;
 
@@ -44,6 +39,15 @@ export interface IStorageService {
  * Storage service using localStorage.
  */
 export class StorageService implements IStorageService {
+	private readonly defaultCodeMap = new Map<string, string>();
+
+	/**
+	 * Register default code for an engine.
+	 */
+	registerDefaultCode(engineId: string, code: string): void {
+		this.defaultCodeMap.set(engineId, code);
+	}
+
 	/**
 	 * Load engine code.
 	 * Priority: localStorage > default sketch
@@ -53,7 +57,7 @@ export class StorageService implements IStorageService {
 		const storedCode = localStorage.getItem(getEngineCodeKey(engineId));
 		if (storedCode) return storedCode;
 
-		return DEFAULT_CODE_BY_ENGINE[engineId] ?? '// No default code found for this engine';
+		return this.defaultCodeMap.get(engineId) ?? '// No default code found for this engine';
 	}
 
 	/**
@@ -74,9 +78,10 @@ export class StorageService implements IStorageService {
 	 * Clear all known engine code from localStorage.
 	 */
 	clearCode(): void {
-		Object.keys(DEFAULT_CODE_BY_ENGINE).forEach((engineId) => {
+		// Clear based on registered defaults
+		for (const engineId of this.defaultCodeMap.keys()) {
 			this.clearEngineCode(engineId);
-		});
+		}
 	}
 
 	/**

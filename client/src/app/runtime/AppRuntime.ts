@@ -9,13 +9,17 @@ import { ShareSessionManager } from '@/features/share/model/ShareSessionManager'
 import { EditorManager } from '@/platform/input/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from '@/shared/lib/CodeRandomizer';
+import { defaultTextmodeSketch, defaultStrudelSketch } from '@/features/examples/content/default-sketches';
+import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
+import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
+import { registry } from '@/engines/registry';
 import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAdapter';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/platform/storage/StorageService';
 
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';
-import type { EngineId } from '@/types/engine.types';
+import type { EngineId } from '@/core/engine.types';
 
 /**
  * Main application composition root.
@@ -45,6 +49,14 @@ export class AppRuntime {
 	private initialized = false;
 
 	constructor() {
+		// Register default code
+		this.storage.registerDefaultCode('textmode', defaultTextmodeSketch);
+		this.storage.registerDefaultCode('strudel', defaultStrudelSketch);
+
+		// Register engines
+		registry.register(new TextmodeEngine());
+		registry.register(new StrudelEngine());
+
 		const shareStore = createShareStoreAdapter();
 		this.shareSession = new ShareSessionManager({
 			getShareState: shareStore.getShareState,

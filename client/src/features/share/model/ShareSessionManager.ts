@@ -1,4 +1,4 @@
-import type { EngineId } from '@/types/engine.types';
+import type { EngineId } from '@/core/engine.types';
 import type { SharePayload } from '../share.types';
 
 

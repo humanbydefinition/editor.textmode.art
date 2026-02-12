@@ -3,13 +3,14 @@ import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator'
 import { EditorManager } from '@/platform/input/EditorManager';
 import { audioService, type IAudioSource } from '@/platform/audio/AudioService';
 import type { IStorageService } from '@/platform/storage/StorageService';
-import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
+import { registry } from '@/engines/registry';
+import type { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
-import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
+import type { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import { useAppStore } from '@/platform/state/appStore';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';
-import type { EngineId } from '@/types/engine.types';
+import type { EngineId } from '@/core/engine.types';
 import type { SharePayload } from '@/features/share/share.types';
 
 interface EngineLifecycleDependencies {
@@ -31,8 +32,6 @@ type RuntimeEngine = TextmodeEngine | StrudelEngine;
  */
 export class EngineLifecycle {
 	private readonly deps: EngineLifecycleDependencies;
-	private readonly textmodeEngine = new TextmodeEngine();
-	private strudelEngine: StrudelEngine | null = null;
 	private enableStrudelPromise: Promise<void> | null = null;
 	private audioUnsubscribe: (() => void) | null = null;
 
@@ -41,6 +40,17 @@ export class EngineLifecycle {
 			...deps,
 			createAudioSource: deps.createAudioSource ?? (() => new StrudelAudioSource()),
 		};
+	}
+
+	private get textmodeEngine(): TextmodeEngine {
+		const engine = registry.get('textmode');
+		if (!engine) throw new Error('Textmode engine not registered');
+		return engine as TextmodeEngine;
+	}
+
+	private get strudelEngine(): StrudelEngine | null {
+		const engine = registry.get('strudel');
+		return (engine as StrudelEngine) ?? null;
 	}
 
 	async initTextmodeEngine(): Promise<void> {
@@ -69,7 +79,7 @@ export class EngineLifecycle {
 	}
 
 	async enableStrudel(): Promise<boolean> {
-		if (this.strudelEngine) return false;
+		if (this.strudelEngine?.isInitialized()) return false;
 		if (this.enableStrudelPromise) {
 			await this.enableStrudelPromise;
 			return false;
@@ -85,10 +95,16 @@ export class EngineLifecycle {
 	}
 
 	disableStrudel(): boolean {
-		if (!this.strudelEngine) return false;
+		if (!this.strudelEngine?.isInitialized()) return false;
 		this.disableStrudelInternal();
 		return true;
 	}
+
+	// ... (keep intermediate methods if unchanged, but I'll replace everything to be safe or use multi-replace if possible)
+	// Actually simpler to just replace the changed parts. 
+	// The previous prompt replaced the class definition start. 
+	// I need to update getEngine to use registry.
+	// And enableStrudelInternal to NOT instantiate with new.
 
 	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
 		this.deps.paneCoordinator.sync(this.deps.getSettings(), createPaneStoreAdapter());
@@ -105,7 +121,7 @@ export class EngineLifecycle {
 	}
 
 	setStrudelTransport(transport: StrudelTransportState): void {
-		if (!this.strudelEngine) return;
+		if (!this.strudelEngine?.isInitialized()) return;
 		if (transport === 'playing') {
 			this.strudelEngine.getController()?.handleForceRun();
 			return;
@@ -122,14 +138,14 @@ export class EngineLifecycle {
 	}
 
 	getCode(engineId: EngineId): string {
-		const engine = this.getEngine(engineId);
+		const engine = registry.get(engineId);
 		return engine?.getCode() ?? '';
 	}
 
 	getEngine(engineId: EngineId): RuntimeEngine | null {
-		if (engineId === 'textmode') return this.textmodeEngine;
-		if (engineId === 'strudel') return this.strudelEngine;
-		return null;
+		const engine = registry.get(engineId);
+		// Cast as RuntimeEngine which is TextmodeEngine | StrudelEngine
+		return (engine as RuntimeEngine) ?? null;
 	}
 
 	runEngine(engineId: EngineId): void {
@@ -140,6 +156,9 @@ export class EngineLifecycle {
 		this.getEngine(engineId)?.getController()?.handleForceRun();
 	}
 
+	// ...
+	// Need to handle remaining methods.
+
 	reconnectTextmodeRunner(): void {
 		this.textmodeEngine.reconnectRuntime();
 	}
@@ -148,11 +167,12 @@ export class EngineLifecycle {
 		const engine = this.getEngine(engineId);
 		if (!engine) return false;
 
-		if (engineId === 'strudel' && this.strudelEngine) {
-			this.strudelEngine.setCode(code, { silent: true });
+		if (engineId === 'strudel') {
+			const strudel = engine as StrudelEngine;
+			strudel.setCode(code, { silent: true });
 			this.deps.storage.saveEngineCode(engineId, code);
 			if (this.shouldRunStrudel()) {
-				this.strudelEngine.getController()?.handleForceRun();
+				strudel.getController()?.handleForceRun();
 			} else {
 				this.pauseStrudelPlayback();
 			}
@@ -170,7 +190,7 @@ export class EngineLifecycle {
 			this.textmodeEngine.setCode(payload.engines.textmode, { silent: true });
 		}
 
-		if (payload.engines.strudel !== undefined && this.strudelEngine) {
+		if (payload.engines.strudel !== undefined && this.strudelEngine?.isInitialized()) {
 			this.strudelEngine.setCode(payload.engines.strudel, { silent: true });
 		}
 	}
@@ -179,7 +199,7 @@ export class EngineLifecycle {
 		const textmodeCode = this.deps.storage.loadEngineCode('textmode');
 		this.textmodeEngine.setCode(textmodeCode, { silent: true });
 
-		if (this.strudelEngine) {
+		if (this.strudelEngine?.isInitialized()) {
 			const strudelCode = this.deps.storage.loadEngineCode('strudel');
 			this.strudelEngine.setCode(strudelCode, { silent: true });
 		}
@@ -194,7 +214,7 @@ export class EngineLifecycle {
 			this.textmodeEngine.getController()?.handleForceRun();
 		}
 
-		if (payload.engines.strudel !== undefined && this.strudelEngine) {
+		if (payload.engines.strudel !== undefined && this.strudelEngine?.isInitialized()) {
 			if (this.shouldRunStrudel()) {
 				this.strudelEngine.getController()?.handleForceRun();
 			} else {
@@ -210,7 +230,7 @@ export class EngineLifecycle {
 	}
 
 	applyApprovedSketchToStrudel(sketch: ApprovedSketch): void {
-		if (!this.strudelEngine) return;
+		if (!this.strudelEngine?.isInitialized()) return;
 		if (sketch.strudelCode) {
 			this.strudelEngine.setCode(sketch.strudelCode, { silent: true });
 			if (this.shouldRunStrudel()) {
@@ -226,11 +246,42 @@ export class EngineLifecycle {
 	resetAll(): void {
 		useAppStore.getState().setEngineLastWorkingCode('textmode', null);
 		useAppStore.getState().clearOriginalApprovedSketch();
-		this.textmodeEngine.setCode(this.textmodeEngine.getDefaultCode());
+		// Use generic reset if possible, or explicit defaults
+		// Since getDefaultCode was removed from IEngine/Engine classes (moved to StorageService defaults),
+		// we should load from StorageService (assuming clearCode reset them to defaults?)
+		// StorageService.clearCode() removes keys. loadEngineCode then returns default.
+		// So we should call deps.storage.clearCode() then reload.
+
+		// Wait, resetAll in current logic:
+		// this.textmodeEngine.setCode(this.textmodeEngine.getDefaultCode());
+		// Storage code is NOT cleared in the original code? 
+		// Original: resetAll() -> setCode(default). It doesn't explicitly save to storage here, 
+		// but controller change handler will save it?
+		// TextmodeEditor options: onChange: handlesCodeChange -> onSaveCode -> storage.saveEngineCode.
+		// Yes.
+
+		// So we need to get default code.
+		// StorageService has defaults internally. 
+		// loadEngineCode returns default if storage is empty.
+		// But storage might NOT be empty.
+
+		// StorageService.registerDefaultCode stored them.
+		// We can expose `getDefaultCode(engineId)` on StorageService?
+		// Or just `loadEngineCode` after clearing?
+
+		// Let's assume we want to load the default code.
+		// We can't ask engine for it anymore.
+		// But we registered it in StorageService.
+		// Maybe StorageService should expose `getDefaultCode(engineId)`?
+		// Or we just rely on `storage.clearEngineCode(id)` then `storage.loadEngineCode(id)`.
+
+		this.deps.storage.clearEngineCode('textmode');
+		this.textmodeEngine.setCode(this.deps.storage.loadEngineCode('textmode'));
 
 		useAppStore.getState().setEngineLastWorkingCode('strudel', null);
-		if (this.strudelEngine) {
-			this.strudelEngine.setCode(this.strudelEngine.getDefaultCode(), { silent: true });
+		if (this.strudelEngine?.isInitialized()) {
+			this.deps.storage.clearEngineCode('strudel');
+			this.strudelEngine.setCode(this.deps.storage.loadEngineCode('strudel'), { silent: true });
 			if (this.shouldRunStrudel()) {
 				this.strudelEngine.getController()?.handleForceRun();
 			} else {
@@ -241,19 +292,27 @@ export class EngineLifecycle {
 
 	dispose(): void {
 		this.stopAudioReactivity();
-		this.strudelEngine?.dispose();
-		this.strudelEngine = null;
+		// We don't dispose the engine instances here if they are singletons from registry?
+		// Original code: this.strudelEngine?.dispose(); this.textmodeEngine.dispose();
+		// If AppRuntime owns them, AppRuntime should dispose them?
+		// EngineLifecycle "owns runtime engine lifecycle".
+		// Calling dispose on the engine instance is correct if the app is shutting down.
+		if (this.strudelEngine?.isInitialized()) {
+			this.strudelEngine.dispose();
+		}
 		this.textmodeEngine.dispose();
 	}
 
 	private async enableStrudelInternal(): Promise<void> {
-		if (this.strudelEngine) return;
+		const engine = this.strudelEngine;
+		if (!engine) return;
+		if (engine.isInitialized()) return;
 
 		useAppStore.getState().initEngineState('strudel');
 		const container = await this.deps.paneCoordinator.waitForPane('strudel');
 
-		this.strudelEngine = new StrudelEngine();
-		await this.strudelEngine.init({
+		// Reuse existing instance from registry
+		await engine.init({
 			editorContainer: container,
 			getSettings: this.deps.getSettings,
 			callbacks: {
@@ -265,7 +324,7 @@ export class EngineLifecycle {
 			changeFontSize: this.deps.changeFontSize,
 		});
 
-		const editor = this.strudelEngine.getEditor();
+		const editor = engine.getEditor();
 		if (editor) {
 			this.deps.editorManager.registerEditor('strudel', editor);
 		}
@@ -275,14 +334,14 @@ export class EngineLifecycle {
 	}
 
 	private disableStrudelInternal(): void {
-		if (!this.strudelEngine) return;
+		const engine = this.strudelEngine;
+		if (!engine) return;
 
 		this.pauseStrudelPlayback();
 		this.stopAudioReactivity();
 
 		this.deps.editorManager.unregisterEditor('strudel');
-		this.strudelEngine.dispose();
-		this.strudelEngine = null;
+		engine.dispose();
 		this.deps.paneCoordinator.removePane('strudel');
 
 		const store = useAppStore.getState();
