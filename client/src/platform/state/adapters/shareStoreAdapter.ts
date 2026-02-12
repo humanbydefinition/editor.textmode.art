@@ -1,5 +1,5 @@
 import { useAppStore } from '@/platform/state/appStore';
-import type { SharePayload } from '@/features/share/share.types';
+import type { SharePayload } from '@synth.textmode.art/contracts/share';
 
 
 export interface ShareStoreAdapter {
