@@ -64,6 +64,9 @@ RUN npm run build -w client
 # ---------------------------------------------------------------------------
 FROM source AS server-build
 
+# Reinstall dependencies in the server-build context to ensure workspace links are set up
+RUN npm ci
+
 # Prisma generate needs a DATABASE_URL to load config, but does NOT connect.
 # Provide a dummy value so the config file parses successfully.
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
@@ -104,13 +107,13 @@ RUN apk add --no-cache \
 
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# --- Copy node_modules from the build stage (includes all workspace deps) ---
-COPY --from=deps /build/node_modules/ node_modules/
+# --- Copy workspace root package files ---
+COPY package.json package-lock.json ./
 
-# --- Copy workspace root package.json ---
-COPY --from=deps /build/package.json ./
+# --- Install all dependencies (including workspace links) ---
+RUN npm ci
 
-# --- Copy built contracts (resolved via workspace symlink in node_modules) ---
+# --- Copy built contracts ---
 COPY --from=source /build/packages/ packages/
 
 # --- Copy built server ---
