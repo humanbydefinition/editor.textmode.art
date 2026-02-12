@@ -1,5 +1,5 @@
 
-import type { CodeError } from '@/types/app.types';
+import type { CodeError } from '@/core/app.types';
 import type { MiniLocation } from '@strudel/core';
 
 export interface StrudelRuntimeOptions {

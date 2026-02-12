@@ -1,4 +1,5 @@
-import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
+
+import { DEFAULT_SETTINGS, type AppSettings } from '@/core/app.types';
 // Storage keys
 const SETTINGS_STORAGE_KEY = 'app_settings';
 

@@ -1,15 +1,13 @@
 import type { ShareExportData } from '@/features/share';
 import type { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
-import { useAppStore } from '@/platform/state/appStore';
-import type { AppSettings } from '@/types/app.types';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { EngineId } from '@/core/engine.types';
 import type { IStorageService } from '@/platform/storage/StorageService';
 
 interface UIActionsDependencies {
 	storage: IStorageService;
 	engineLifecycle: EngineLifecycle;
-	getSettings: () => AppSettings;
-	setSettings: (settings: AppSettings) => void;
+	store: AppStoreAdapter;
 	render: () => void;
 }
 
@@ -51,22 +49,22 @@ export class UIActions {
 		const loaded = this.deps.engineLifecycle.loadExample(typedEngineId, code);
 		if (!loaded) return;
 
-		if (useAppStore.getState().isMobile) {
-			useAppStore.getState().setActivePanel(typedEngineId);
+		if (this.deps.store.ui.getIsMobile()) {
+			this.deps.store.ui.setActivePanel(typedEngineId);
 			this.deps.render();
 		}
 	}
 
 	toggleUIVisibility(): void {
-		const settings = this.deps.getSettings();
-		this.deps.setSettings({ ...settings, uiVisible: !settings.uiVisible });
+		const settings = this.deps.store.settings.getSettings();
+		this.deps.store.settings.setSettings({ ...settings, uiVisible: !settings.uiVisible });
 	}
 
 	changeFontSize(delta: number): void {
-		const settings = this.deps.getSettings();
+		const settings = this.deps.store.settings.getSettings();
 		const newSize = Math.min(32, Math.max(10, settings.fontSize + delta));
 		if (newSize === settings.fontSize) return;
-		this.deps.setSettings({ ...settings, fontSize: newSize });
+		this.deps.store.settings.setSettings({ ...settings, fontSize: newSize });
 	}
 
 	runCodeForEngine(engineId: string): void {

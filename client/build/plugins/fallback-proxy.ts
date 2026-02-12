@@ -21,7 +21,7 @@ export function fallbackProxy(options: FallbackProxyOptions): Plugin {
                             res.end(text);
                             return;
                         }
-                    } catch (e) {
+                    } catch {
                         // Backend down or unreachable, fall through to next() which lets Vite serve index.html
                     }
                 }

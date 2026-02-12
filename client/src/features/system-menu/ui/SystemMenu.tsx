@@ -22,7 +22,7 @@ import { SlugInfoAlert } from '@/shared/components/SlugInfoAlert';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
-import type { StrudelTransportState } from '@/types/app.types';
+import type { StrudelTransportState } from '@/core/app.types';
 
 export interface SystemMenuProps {
     onShare: () => void;

@@ -1,7 +1,7 @@
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
-import type { CodeError } from '../../types/app.types';
-import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/controller/BaseController';
+import type { CodeError } from '@/core/app.types';
+import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';
 
 /**
  * Textmode-specific dependencies.

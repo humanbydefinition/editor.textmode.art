@@ -1,5 +1,5 @@
 import { useAppStore } from '@/platform/state/appStore';
-import type { CodeError, StatusState } from '@/types/app.types';
+import type { CodeError, StatusState } from '@/core/app.types';
 import type { EngineState } from '@/platform/state/appStore';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SlugSketchInfo } from '@/platform/state/slices/shareSlice';

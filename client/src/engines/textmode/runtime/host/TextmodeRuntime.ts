@@ -2,7 +2,7 @@
 import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@/engines/textmode/sandbox/protocol';
 import { isRunnerMessage, PROTOCOL_VERSION } from '@/engines/textmode/sandbox/protocol';
 import type { IHostRuntime, HostRuntimeOptions } from '@/engines/textmode/sandbox/types';
-import type { CodeError } from '@/types/app.types';
+import type { CodeError } from '@/core/app.types';
 import type { AudioData } from '@/platform/audio/AudioService';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;

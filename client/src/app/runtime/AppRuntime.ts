@@ -13,12 +13,12 @@ import { defaultTextmodeSketch, defaultStrudelSketch } from '@/features/examples
 import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
 import { registry } from '@/engines/registry';
-import { createShareStoreAdapter } from '@/platform/state/adapters/shareStoreAdapter';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/platform/storage/StorageService';
 
+import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
-import type { AppSettings, StrudelTransportState } from '@/types/app.types';
+import type { AppSettings, StrudelTransportState } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
 
@@ -27,18 +27,12 @@ import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeCon
  * Orchestrates runtime modules while keeping view and feature concerns delegated.
  */
 export class AppRuntime {
-	private readonly storage: IStorageService = storageService;
-	private readonly editorManager = new EditorManager();
-	private readonly paneCoordinator = new PaneCoordinator();
-	private readonly engineLifecycle = new EngineLifecycle({
-		paneCoordinator: this.paneCoordinator,
-		editorManager: this.editorManager,
-		storage: this.storage,
-		getSettings: () => this.settings,
-		render: () => this.render(),
-		toggleUI: () => this.uiActions.toggleUIVisibility(),
-		changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
-	});
+	private readonly storage: IStorageService;
+	private readonly editorManager: EditorManager;
+	private readonly paneCoordinator: PaneCoordinator;
+	private readonly storeAdapter: AppStoreAdapter;
+
+	private readonly engineLifecycle: EngineLifecycle;
 	private readonly shareSession: ShareSessionManager;
 	private readonly shareWorkflow: ShareWorkflow;
 	private readonly uiActions: UIActions;
@@ -50,6 +44,11 @@ export class AppRuntime {
 	private initialized = false;
 
 	constructor() {
+		this.storage = storageService;
+		this.editorManager = new EditorManager();
+		this.paneCoordinator = new PaneCoordinator();
+		this.storeAdapter = createAppStoreAdapter();
+
 		// Register default code
 		this.storage.registerDefaultCode('textmode', defaultTextmodeSketch);
 		this.storage.registerDefaultCode('strudel', defaultStrudelSketch);
@@ -58,12 +57,33 @@ export class AppRuntime {
 		registry.register(new TextmodeEngine());
 		registry.register(new StrudelEngine());
 
-		const shareStore = createShareStoreAdapter();
+		// Initialize Lifecycle first (it needs callbacks that refer to uiActions, which is fine as they are lazy)
+		this.engineLifecycle = new EngineLifecycle({
+			paneCoordinator: this.paneCoordinator,
+			editorManager: this.editorManager,
+			storage: this.storage,
+			store: this.storeAdapter,
+			render: () => this.render(),
+			toggleUI: () => this.uiActions.toggleUIVisibility(),
+			changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
+		});
+
+		this.uiActions = new UIActions({
+			storage: this.storage,
+			engineLifecycle: this.engineLifecycle,
+			store: this.storeAdapter,
+			render: () => this.render(),
+		});
+
 		this.shareSession = new ShareSessionManager({
-			getShareState: shareStore.getShareState,
-			setSharePayload: shareStore.setSharePayload,
-			setShareConsented: shareStore.setShareConsented,
-			setSharePromptOpen: shareStore.setSharePromptOpen,
+			getShareState: () => ({
+				payload: this.storeAdapter.share.getPayload(),
+				consented: this.storeAdapter.share.getConsented(),
+				promptOpen: this.storeAdapter.share.getPromptOpen(),
+			}),
+			setSharePayload: this.storeAdapter.share.setPayload,
+			setShareConsented: this.storeAdapter.share.setConsented,
+			setSharePromptOpen: this.storeAdapter.share.setPromptOpen,
 			setEditorsReadOnly: (readOnly) => this.editorManager.setReadOnly(readOnly),
 			applyPayload: (payload) => this.engineLifecycle.applySharePayload(payload),
 			focusEditor: (engineId) => this.editorManager.focusEditor(engineId),
@@ -73,6 +93,7 @@ export class AppRuntime {
 		});
 
 		this.shareWorkflow = new ShareWorkflow({
+			store: this.storeAdapter,
 			render: () => this.render(),
 			clearShareLockIfPresent: () => this.shareSession.clearShareLockIfPresent(),
 			applyApprovedSketch: (sketch) => this.engineLifecycle.applyApprovedSketch(sketch),
@@ -80,18 +101,10 @@ export class AppRuntime {
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
-
-		this.uiActions = new UIActions({
-			storage: this.storage,
-			engineLifecycle: this.engineLifecycle,
-			getSettings: () => this.settings,
-			setSettings: (settings) => useAppStore.getState().setSettings(settings),
-			render: () => this.render(),
-		});
 	}
 
 	private get settings(): AppSettings {
-		return useAppStore.getState().settings;
+		return this.storeAdapter.settings.getSettings();
 	}
 
 	async init(): Promise<void> {
@@ -99,7 +112,7 @@ export class AppRuntime {
 		this.initialized = true;
 
 		const loadedSettings = this.storage.loadSettings();
-		useAppStore.getState().setSettings(loadedSettings);
+		this.storeAdapter.settings.setSettings(loadedSettings);
 		await this.shareWorkflow.hydrateFromLocation(window.location);
 
 		this.paneCoordinator.sync(loadedSettings, createPaneStoreAdapter());
@@ -165,11 +178,11 @@ export class AppRuntime {
 				changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
 				toggleAutoExecute: () => {
 					const s = this.settings;
-					useAppStore.getState().setSettings({ ...s, autoExecute: !s.autoExecute });
+					this.storeAdapter.settings.setSettings({ ...s, autoExecute: !s.autoExecute });
 				},
 				toggleEditorBackdrop: () => {
 					const s = this.settings;
-					useAppStore.getState().setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
+					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
 				toggleStrudelAudio: () => this.toggleStrudelTransport(),
@@ -231,7 +244,7 @@ export class AppRuntime {
 			}
 			return;
 		}
-		useAppStore.getState().setSettings({
+		this.storeAdapter.settings.setSettings({
 			...this.settings,
 			strudelTransport: nextTransport,
 		});
@@ -239,14 +252,19 @@ export class AppRuntime {
 
 	private shouldSyncTransportNow(transport: StrudelTransportState): boolean {
 		if (transport === 'paused') return true;
-		const state = useAppStore.getState();
-		if (state.share.payload && !state.share.consented) return false;
-		if (state.approvedSketch) return false;
+		// Use adapter where possible, or state snapshot
+		const consented = this.storeAdapter.share.getConsented();
+		const payload = this.storeAdapter.share.getPayload();
+		const approvedSketch = this.storeAdapter.share.getApprovedSketch();
+
+		if (payload && !consented) return false;
+		if (approvedSketch) return false;
 		return true;
 	}
 
 	private makeRandomChange(): void {
-		const { isMobile, activePanel } = useAppStore.getState();
+		const isMobile = this.storeAdapter.ui.getIsMobile();
+		const activePanel = this.storeAdapter.ui.getActivePanel();
 		const focusedEditorId = this.editorManager.getFocusedEditorId();
 		const candidateTargets = isMobile
 			? [activePanel, focusedEditorId, 'textmode', 'strudel']
@@ -285,15 +303,15 @@ export class AppRuntime {
 				clearStorage: () => this.uiActions.clearStorage(),
 				loadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),
 				revertToLastWorking: () => {
-					const errorSource = useAppStore.getState().error?.source;
+					const errorSource = this.storeAdapter.engine.getError()?.source;
 					if (!errorSource) return;
 					this.engineLifecycle.getEngine(errorSource as EngineId)?.getController()?.handleRevertToLastWorking();
 				},
 				reconnectTextmodeRunner: () => {
-					useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', true);
+					this.storeAdapter.engine.setCustomState('textmode', 'runnerReconnecting', true);
 					this.engineLifecycle.reconnectTextmodeRunner();
 					setTimeout(() => {
-						useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
+						this.storeAdapter.engine.setCustomState('textmode', 'runnerReconnecting', false);
 					}, 10000);
 				},
 				unlockAndRun: () => this.shareSession.unlockAndRun(),

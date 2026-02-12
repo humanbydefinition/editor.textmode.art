@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { PaneConfig } from '@/features/editor-layout/ui/types';
-import type { StrudelTransportState } from '@/types/app.types';
+import type { StrudelTransportState } from '@/core/app.types';
 import type { ShareExportData } from '@/features/share';
 
 /**

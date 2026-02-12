@@ -7,9 +7,10 @@ import { registry } from '@/engines/registry';
 import type { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 import type { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
-import { useAppStore } from '@/platform/state/appStore';
-import type { AppSettings, StrudelTransportState } from '@/types/app.types';
+
+import type { StrudelTransportState } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
 import type { SharePayload } from '@/features/share/share.types';
 
@@ -17,7 +18,7 @@ interface EngineLifecycleDependencies {
 	paneCoordinator: PaneCoordinator;
 	editorManager: EditorManager;
 	storage: IStorageService;
-	getSettings: () => AppSettings;
+	store: AppStoreAdapter;
 	render: () => void;
 	toggleUI: () => void;
 	changeFontSize: (delta: number) => void;
@@ -54,15 +55,15 @@ export class EngineLifecycle {
 	}
 
 	async initTextmodeEngine(): Promise<void> {
-		useAppStore.getState().initEngineState('textmode');
-		useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', false);
-		useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
+		this.deps.store.engine.initEngineState('textmode');
+		this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', false);
+		this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
 		const container = await this.deps.paneCoordinator.waitForPane('textmode');
 
 		await this.textmodeEngine.init({
 			editorContainer: container,
 			visualContainer: document.body,
-			getSettings: this.deps.getSettings,
+			getSettings: this.deps.store.settings.getSettings,
 			callbacks: {
 				onRenderOverlay: this.deps.render,
 				onSaveCode: (code: string) => this.deps.storage.saveEngineCode('textmode', code),
@@ -100,14 +101,8 @@ export class EngineLifecycle {
 		return true;
 	}
 
-	// ... (keep intermediate methods if unchanged, but I'll replace everything to be safe or use multi-replace if possible)
-	// Actually simpler to just replace the changed parts. 
-	// The previous prompt replaced the class definition start. 
-	// I need to update getEngine to use registry.
-	// And enableStrudelInternal to NOT instantiate with new.
-
 	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
-		this.deps.paneCoordinator.sync(this.deps.getSettings(), createPaneStoreAdapter());
+		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), createPaneStoreAdapter());
 		this.deps.render();
 
 		if (enabled) {
@@ -130,7 +125,7 @@ export class EngineLifecycle {
 	}
 
 	applyEditorSettings(): void {
-		this.deps.editorManager.applySettings(this.deps.getSettings());
+		this.deps.editorManager.applySettings(this.deps.store.settings.getSettings());
 	}
 
 	hushStrudel(): void {
@@ -155,9 +150,6 @@ export class EngineLifecycle {
 		}
 		this.getEngine(engineId)?.getController()?.handleForceRun();
 	}
-
-	// ...
-	// Need to handle remaining methods.
 
 	reconnectTextmodeRunner(): void {
 		this.textmodeEngine.reconnectRuntime();
@@ -244,8 +236,8 @@ export class EngineLifecycle {
 	}
 
 	resetAll(): void {
-		useAppStore.getState().setEngineLastWorkingCode('textmode', null);
-		useAppStore.getState().clearOriginalApprovedSketch();
+		this.deps.store.engine.setLastWorkingCode('textmode', null);
+		this.deps.store.share.clearOriginalApprovedSketch();
 		// Use generic reset if possible, or explicit defaults
 		// Since getDefaultCode was removed from IEngine/Engine classes (moved to StorageService defaults),
 		// we should load from StorageService (assuming clearCode reset them to defaults?)
@@ -261,15 +253,6 @@ export class EngineLifecycle {
 		// Yes.
 
 		// So we need to get default code.
-		// StorageService has defaults internally. 
-		// loadEngineCode returns default if storage is empty.
-		// But storage might NOT be empty.
-
-		// StorageService.registerDefaultCode stored them.
-		// We can expose `getDefaultCode(engineId)` on StorageService?
-		// Or just `loadEngineCode` after clearing?
-
-		// Let's assume we want to load the default code.
 		// We can't ask engine for it anymore.
 		// But we registered it in StorageService.
 		// Maybe StorageService should expose `getDefaultCode(engineId)`?
@@ -278,7 +261,7 @@ export class EngineLifecycle {
 		this.deps.storage.clearEngineCode('textmode');
 		this.textmodeEngine.setCode(this.deps.storage.loadEngineCode('textmode'));
 
-		useAppStore.getState().setEngineLastWorkingCode('strudel', null);
+		this.deps.store.engine.setLastWorkingCode('strudel', null);
 		if (this.strudelEngine?.isInitialized()) {
 			this.deps.storage.clearEngineCode('strudel');
 			this.strudelEngine.setCode(this.deps.storage.loadEngineCode('strudel'), { silent: true });
@@ -308,13 +291,13 @@ export class EngineLifecycle {
 		if (!engine) return;
 		if (engine.isInitialized()) return;
 
-		useAppStore.getState().initEngineState('strudel');
+		this.deps.store.engine.initEngineState('strudel');
 		const container = await this.deps.paneCoordinator.waitForPane('strudel');
 
 		// Reuse existing instance from registry
 		await engine.init({
 			editorContainer: container,
-			getSettings: this.deps.getSettings,
+			getSettings: this.deps.store.settings.getSettings,
 			callbacks: {
 				onRenderOverlay: this.deps.render,
 				onSaveCode: (code: string) => this.deps.storage.saveEngineCode('strudel', code),
@@ -344,16 +327,16 @@ export class EngineLifecycle {
 		engine.dispose();
 		this.deps.paneCoordinator.removePane('strudel');
 
-		const store = useAppStore.getState();
-		store.setEngineInitialized('strudel', false);
-		store.setEngineCustomState('strudel', 'state', {
+		const store = this.deps.store.engine;
+		store.setInitialized('strudel', false);
+		store.setCustomState('strudel', 'state', {
 			isPlaying: false,
 			isInitialized: false,
 		});
 	}
 
 	private shouldRunStrudel(): boolean {
-		return this.deps.getSettings().strudelTransport === 'playing';
+		return this.deps.store.settings.getSettings().strudelTransport === 'playing';
 	}
 
 	private pauseStrudelPlayback(): void {

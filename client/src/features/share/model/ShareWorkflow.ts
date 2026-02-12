@@ -1,11 +1,11 @@
-
 import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
 import { ShareService } from '@/shared/lib/ShareService';
-import { useAppStore } from '@/platform/state/appStore';
 import type { SharePayload } from '../share.types';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 
 interface ShareWorkflowDependencies {
+	store: AppStoreAdapter;
 	render: () => void;
 	clearShareLockIfPresent: () => void;
 	applyApprovedSketch: (sketch: ApprovedSketch) => void;
@@ -32,36 +32,36 @@ export class ShareWorkflow {
 	}
 
 	async hydrateFromLocation(location: Location): Promise<void> {
-		const store = useAppStore.getState();
+		const store = this.deps.store;
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
-			store.setSlugSketchInfo(null);
-			store.setSharePayload(payload);
+			store.share.setSlugSketchInfo(null);
+			store.share.setPayload(payload);
 			return;
 		}
 
 		const detectedSlug = this.getDetectedSlug(location);
 		if (!detectedSlug) {
-			store.setSlugSketchInfo(null);
+			store.share.setSlugSketchInfo(null);
 			return;
 		}
 
 		const sketchData = await fetchSketchBySlugAccess(detectedSlug);
 		if (!sketchData) {
-			store.setSlugSketchInfo(null);
+			store.share.setSlugSketchInfo(null);
 			this.deps.replaceUrl('/');
 			return;
 		}
 
-		store.setSlugSketchInfo(this.toSlugSketchInfo(sketchData));
+		store.share.setSlugSketchInfo(this.toSlugSketchInfo(sketchData));
 
 		if (sketchData.status === 'APPROVED') {
 			this.pendingApprovedSketch = this.toApprovedSketch(sketchData);
 			return;
 		}
 
-		store.setApprovedSketch(null);
-		store.setSharePayload(this.toSharePayload(sketchData));
+		store.share.setApprovedSketch(null);
+		store.share.setPayload(this.toSharePayload(sketchData));
 	}
 
 	applyPendingApprovedSketchIfPresent(): void {
@@ -72,7 +72,7 @@ export class ShareWorkflow {
 	}
 
 	syncApprovedSketchToStrudelIfPresent(): void {
-		const approvedSketch = useAppStore.getState().approvedSketch;
+		const approvedSketch = this.deps.store.share.getApprovedSketch();
 		if (!approvedSketch) return;
 		this.deps.applyApprovedSketchToStrudel(approvedSketch);
 	}
@@ -84,7 +84,7 @@ export class ShareWorkflow {
 		this.deps.render();
 
 		try {
-			const currentSlug = useAppStore.getState().approvedSketch?.slug;
+			const currentSlug = this.deps.store.share.getApprovedSketch()?.slug;
 			const sketch = await fetchRandomApprovedSketch(currentSlug);
 			if (!sketch) return false;
 			this.applyApprovedSketch(sketch);
@@ -105,11 +105,11 @@ export class ShareWorkflow {
 	}
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
-		const store = useAppStore.getState();
+		const store = this.deps.store;
 		this.deps.clearShareLockIfPresent();
 
-		store.setApprovedSketch(sketch);
-		store.setSlugSketchInfo({
+		store.share.setApprovedSketch(sketch);
+		store.share.setSlugSketchInfo({
 			status: 'APPROVED',
 			slug: sketch.slug,
 			title: sketch.title,
@@ -118,11 +118,11 @@ export class ShareWorkflow {
 			license: sketch.license,
 			socialLinks: sketch.socialLinks,
 		});
-		store.setError(null);
+		store.engine.setError(null);
 		this.deps.applyApprovedSketch(sketch);
 
-		if (store.isMobile) {
-			store.setActivePanel('textmode');
+		if (store.ui.getIsMobile()) {
+			store.ui.setActivePanel('textmode');
 			this.deps.render();
 		}
 	}
