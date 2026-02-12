@@ -18,37 +18,17 @@ interface UIActionsDependencies {
  */
 export class UIActions {
 	private readonly deps: UIActionsDependencies;
-	private shareExportOpen = false;
-	private shareExportData: ShareExportData | null = null;
 
 	constructor(deps: UIActionsDependencies) {
 		this.deps = deps;
 	}
 
-	getShareExportOpen(): boolean {
-		return this.shareExportOpen;
-	}
-
-	getShareExportData(): ShareExportData | null {
-		return this.shareExportData;
-	}
-
-	openShareExport(): void {
-		this.shareExportData = {
+	getShareExportData(): ShareExportData {
+		return {
 			createdAt: Date.now(),
 			textmodeCode: this.deps.engineLifecycle.getCode('textmode'),
 			strudelCode: this.deps.engineLifecycle.getCode('strudel') || null,
 		};
-		this.shareExportOpen = true;
-		this.deps.render();
-	}
-
-	setShareExportOpen(open: boolean): void {
-		this.shareExportOpen = open;
-		if (!open) {
-			this.shareExportData = null;
-		}
-		this.deps.render();
 	}
 
 	copyShareExportUrl(url: string): void {
