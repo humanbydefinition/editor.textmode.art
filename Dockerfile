@@ -125,18 +125,10 @@ COPY --from=server-build /build/server/prisma/ server/prisma/
 # --- Copy built client SPA (needed by slug-page SSR template to inject OG meta) ---
 COPY --from=client-build /build/client/dist/ dist/
 
-# Regenerate Prisma client for the production Alpine platform
 WORKDIR /app/server
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-ENV ADMIN_API_TOKEN="build-placeholder"
-RUN npx prisma generate
 
 # Create persistent storage directory for screenshots
 RUN mkdir -p /app/server/storage
-
-# Clean up build-time env vars (runtime env is set by Docker)
-ENV DATABASE_URL=""
-ENV ADMIN_API_TOKEN=""
 
 EXPOSE 3000
 
