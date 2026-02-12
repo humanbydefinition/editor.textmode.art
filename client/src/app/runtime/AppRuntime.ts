@@ -20,6 +20,7 @@ import { storageService, type IStorageService } from '@/platform/storage/Storage
 import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings, StrudelTransportState } from '@/types/app.types';
 import type { EngineId } from '@/core/engine.types';
+import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
 
 /**
  * Main application composition root.
@@ -273,45 +274,57 @@ export class AppRuntime {
 		}
 	}
 
-	private render(): void {
-		if (!this.root) return;
-
-		const errorSource = useAppStore.getState().error?.source;
-		this.root.render(
-			createElement(AppShell, {
-				panes: this.paneCoordinator.getPaneConfigs(),
-				editorBackdrop: this.settings.editorBackdrop,
-				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
-				onShare: () => this.uiActions.openShareExport(),
-				onRandomize: () => this.shareWorkflow.randomize(),
-				onToggleStrudelTransport: () => this.toggleStrudelTransport(),
-				onMakeRandomChange: () => this.makeRandomChange(),
-				strudelEnabled: this.settings.strudelEnabled,
-				strudelTransport: this.settings.strudelTransport,
-				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
-				onClearStorage: () => this.uiActions.clearStorage(),
-				onLoadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),
-				onRevertToLastWorking: () => {
+	private getContextValue(): AppRuntimeContextValue {
+		const s = this.settings;
+		return {
+			actions: {
+				share: () => { /* handled by AppShell local state */ },
+				randomize: () => this.shareWorkflow.randomize(),
+				toggleStrudelTransport: () => this.toggleStrudelTransport(),
+				makeRandomChange: () => this.makeRandomChange(),
+				clearStorage: () => this.uiActions.clearStorage(),
+				loadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),
+				revertToLastWorking: () => {
+					const errorSource = useAppStore.getState().error?.source;
 					if (!errorSource) return;
 					this.engineLifecycle.getEngine(errorSource as EngineId)?.getController()?.handleRevertToLastWorking();
 				},
-				onShareUnlockAndRun: () => this.shareSession.unlockAndRun(),
-				onShareUnlockOnly: () => this.shareSession.unlockOnly(),
-				onShareDiscard: () => this.shareSession.discard(),
-				onSharePromptOpen: () => this.shareSession.openPrompt(),
-				onReconnectTextmodeRunner: () => {
+				reconnectTextmodeRunner: () => {
 					useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', true);
 					this.engineLifecycle.reconnectTextmodeRunner();
-					// Timeout after 10 seconds if reconnect doesn't succeed
 					setTimeout(() => {
 						useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
 					}, 10000);
 				},
-				shareExportOpen: this.uiActions.getShareExportOpen(),
-				shareExportData: this.uiActions.getShareExportData(),
-				onShareExportOpenChange: (open: boolean) => this.uiActions.setShareExportOpen(open),
-				onShareExportCopy: (url: string) => this.uiActions.copyShareExportUrl(url),
-			})
+				unlockAndRun: () => this.shareSession.unlockAndRun(),
+				unlockOnly: () => this.shareSession.unlockOnly(),
+				discardShare: () => this.shareSession.discard(),
+				openSharePrompt: () => this.shareSession.openPrompt(),
+				copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
+				getShareExportData: () => this.uiActions.getShareExportData(),
+			},
+			layout: {
+				panes: this.paneCoordinator.getPaneConfigs(),
+				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
+			},
+			state: {
+				strudelEnabled: s.strudelEnabled,
+				strudelTransport: s.strudelTransport,
+				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
+				editorBackdrop: s.editorBackdrop,
+			},
+		};
+	}
+
+	private render(): void {
+		if (!this.root) return;
+
+		this.root.render(
+			createElement(
+				AppRuntimeProvider,
+				{ value: this.getContextValue() },
+				createElement(AppShell, {})
+			)
 		);
 	}
 }
