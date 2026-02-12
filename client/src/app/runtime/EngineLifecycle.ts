@@ -1,18 +1,16 @@
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
-import { EditorManager } from '@/platform/input/EditorManager';
-import { audioService, type IAudioSource } from '@/platform/audio/AudioService';
-import type { IStorageService } from '@/platform/storage/StorageService';
+import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { IController } from '@/core/BaseController';
+import type { EngineContext, EngineId, IEngine } from '@/core/engine.types';
+import type { StrudelTransportState } from '@/core/app.types';
 import { registry } from '@/engines/registry';
-import type { StrudelEngine } from '@/engines/strudel/StrudelEngine';
-import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
-import type { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
+import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
+import { audioService, type AudioData, type IAudioSource } from '@/platform/audio/AudioService';
+import { EditorManager } from '@/platform/input/EditorManager';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
-
-import type { StrudelTransportState } from '@/core/app.types';
-import type { EngineId } from '@/core/engine.types';
-import type { SharePayload } from '@/features/share/share.types';
+import type { IStorageService } from '@/platform/storage/StorageService';
+import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 
 interface EngineLifecycleDependencies {
 	paneCoordinator: PaneCoordinator;
@@ -26,7 +24,25 @@ interface EngineLifecycleDependencies {
 	createAudioSource: () => IAudioSource;
 }
 
-type RuntimeEngine = TextmodeEngine | StrudelEngine;
+interface ReconnectableEngine extends IEngine {
+	reconnectRuntime: () => void;
+}
+
+interface AudioInputEngine extends IEngine {
+	sendAudioData: (data: AudioData) => void;
+}
+
+interface RuntimeForceRunEngine extends IEngine {
+	getRuntime: () => { forceRun: (code: string) => void } | null;
+}
+
+interface TransportPauseController extends IController {
+	handleTransportPause: () => void;
+}
+
+interface HushableEngine extends IEngine {
+	hush: () => void;
+}
 
 /**
  * Owns runtime engine lifecycle and engine-level workflows.
@@ -34,7 +50,7 @@ type RuntimeEngine = TextmodeEngine | StrudelEngine;
  */
 export class EngineLifecycle {
 	private readonly deps: EngineLifecycleDependencies;
-	private enableStrudelPromise: Promise<void> | null = null;
+	private readonly enableEnginePromises = new Map<EngineId, Promise<void>>();
 	private audioUnsubscribe: (() => void) | null = null;
 
 	constructor(deps: Omit<EngineLifecycleDependencies, 'createAudioSource'> & { createAudioSource?: () => IAudioSource }) {
@@ -44,93 +60,43 @@ export class EngineLifecycle {
 		};
 	}
 
-	private get textmodeEngine(): TextmodeEngine {
-		const engine = registry.get('textmode');
-		if (!engine) throw new Error('Textmode engine not registered');
-		return engine as TextmodeEngine;
-	}
-
-	private get strudelEngine(): StrudelEngine | null {
-		const engine = registry.get('strudel');
-		return (engine as StrudelEngine) ?? null;
-	}
-
-	async initTextmodeEngine(): Promise<void> {
-		this.deps.store.engine.initEngineState('textmode');
-		this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', false);
-		this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
-		const container = await this.deps.paneCoordinator.waitForPane('textmode');
-
-		await this.textmodeEngine.init({
-			editorContainer: container,
-			visualContainer: document.body,
-			getSettings: this.deps.store.settings.getSettings,
-			callbacks: {
-				onRenderOverlay: this.deps.render,
-				onSaveCode: (code: string) => this.deps.storage.saveEngineCode('textmode', code),
-			},
-			getInitialCode: () => this.deps.storage.loadEngineCode('textmode'),
-			toggleUI: this.deps.toggleUI,
-			changeFontSize: this.deps.changeFontSize,
-			onRunnerConnected: () => {
-				this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', false);
-				this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
-			},
-			onRunnerDisconnected: () => {
-				this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', true);
-				this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
-			},
-		});
-
-		const editor = this.textmodeEngine.getEditor();
-		if (editor) {
-			this.deps.editorManager.registerEditor('textmode', editor);
+	async initEagerEngines(): Promise<void> {
+		for (const engine of this.getRegisteredEngines().filter((candidate) => candidate.capabilities.bootStrategy === 'eager')) {
+			await this.initEngine(engine);
 		}
+	}
+
+	/**
+	 * Backwards-compatible alias for older call sites.
+	 */
+	async initTextmodeEngine(): Promise<void> {
+		await this.initEagerEngines();
 	}
 
 	async enableStrudel(): Promise<boolean> {
-		if (this.strudelEngine?.isInitialized()) return false;
-		if (this.enableStrudelPromise) {
-			await this.enableStrudelPromise;
-			return false;
-		}
-
-		this.enableStrudelPromise = this.enableStrudelInternal();
-		try {
-			await this.enableStrudelPromise;
-		} finally {
-			this.enableStrudelPromise = null;
-		}
-		return true;
+		return this.enableEngine('strudel');
 	}
 
 	disableStrudel(): boolean {
-		if (!this.strudelEngine?.isInitialized()) return false;
-		this.disableStrudelInternal();
-		return true;
+		return this.disableEngineById('strudel');
 	}
 
 	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
-		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), this.deps.paneStore);
-		this.deps.render();
-
-		if (enabled) {
-			await this.deps.paneCoordinator.waitForPanes(this.deps.paneCoordinator.getPaneIds());
-			const didEnable = await this.enableStrudel();
-			return didEnable;
-		}
-
-		this.disableStrudel();
-		return false;
+		return this.setEngineEnabled('strudel', enabled);
 	}
 
 	setStrudelTransport(transport: StrudelTransportState): void {
-		if (!this.strudelEngine?.isInitialized()) return;
+		const transportEngines = this.getTransportEngines().filter((engine) => engine.isInitialized());
+		if (transportEngines.length === 0) return;
+
 		if (transport === 'playing') {
-			this.strudelEngine.getController()?.handleForceRun();
+			for (const engine of transportEngines) {
+				engine.getController()?.handleForceRun();
+			}
 			return;
 		}
-		this.pauseStrudelPlayback();
+
+		this.pauseTransportEngines(transportEngines);
 	}
 
 	applyEditorSettings(): void {
@@ -138,230 +104,348 @@ export class EngineLifecycle {
 	}
 
 	hushStrudel(): void {
-		this.pauseStrudelPlayback();
+		this.pauseTransportEngines();
 	}
 
 	getCode(engineId: EngineId): string {
-		const engine = registry.get(engineId);
-		return engine?.getCode() ?? '';
+		return this.getEngine(engineId)?.getCode() ?? '';
 	}
 
-	getEngine(engineId: EngineId): RuntimeEngine | null {
-		const engine = registry.get(engineId);
-		// Cast as RuntimeEngine which is TextmodeEngine | StrudelEngine
-		return (engine as RuntimeEngine) ?? null;
+	getEngine(engineId: EngineId): IEngine | null {
+		return registry.get(engineId) ?? null;
 	}
 
 	runEngine(engineId: EngineId): void {
-		if (engineId === 'strudel' && !this.shouldRunStrudel()) {
-			this.pauseStrudelPlayback();
+		const engine = this.getEngine(engineId);
+		if (!engine) return;
+
+		if (!this.shouldRunEngine(engine)) {
+			if (engine.capabilities.supportsTransportControl) {
+				this.pauseTransportEngines([engine]);
+			}
 			return;
 		}
-		this.getEngine(engineId)?.getController()?.handleForceRun();
+
+		engine.getController()?.handleForceRun();
 	}
 
 	reconnectTextmodeRunner(): void {
-		this.textmodeEngine.reconnectRuntime();
+		this.reconnectEngine('textmode');
 	}
 
 	loadExample(engineId: EngineId, code: string): boolean {
 		const engine = this.getEngine(engineId);
 		if (!engine) return false;
 
-		if (engineId === 'strudel') {
-			const strudel = engine as StrudelEngine;
-			strudel.setCode(code, { silent: true });
-			this.deps.storage.saveEngineCode(engineId, code);
-			if (this.shouldRunStrudel()) {
-				strudel.getController()?.handleForceRun();
-			} else {
-				this.pauseStrudelPlayback();
-			}
-			return true;
+		const setOptions = engine.capabilities.requiresTransportGate ? { silent: true } : undefined;
+		engine.setCode(code, setOptions);
+		this.deps.storage.saveEngineCode(engineId, code);
+
+		if (this.shouldRunEngine(engine)) {
+			engine.getController()?.handleForceRun();
+		} else if (engine.capabilities.supportsTransportControl) {
+			this.pauseTransportEngines([engine]);
 		}
 
-		engine.setCode(code);
-		this.deps.storage.saveEngineCode(engineId, code);
-		engine.getController()?.handleForceRun();
 		return true;
 	}
 
 	applySharePayload(payload: SharePayload): void {
-		if (payload.engines.textmode !== undefined) {
-			this.textmodeEngine.setCode(payload.engines.textmode, { silent: true });
-		}
-
-		if (payload.engines.strudel !== undefined && this.strudelEngine?.isInitialized()) {
-			this.strudelEngine.setCode(payload.engines.strudel, { silent: true });
+		for (const [engineId, code] of Object.entries(payload.engines) as Array<[EngineId, string | undefined]>) {
+			if (typeof code !== 'string') continue;
+			const engine = this.getEngine(engineId);
+			if (!engine) continue;
+			if (!engine.isInitialized() && engine.capabilities.bootStrategy === 'toggleable') continue;
+			engine.setCode(code, { silent: true });
 		}
 	}
 
 	restoreLocalSketches(): void {
-		const textmodeCode = this.deps.storage.loadEngineCode('textmode');
-		this.textmodeEngine.setCode(textmodeCode, { silent: true });
-
-		if (this.strudelEngine?.isInitialized()) {
-			const strudelCode = this.deps.storage.loadEngineCode('strudel');
-			this.strudelEngine.setCode(strudelCode, { silent: true });
+		for (const engine of this.getRegisteredEngines()) {
+			if (!engine.isInitialized()) continue;
+			const code = this.deps.storage.loadEngineCode(engine.id);
+			engine.setCode(code, { silent: true });
 		}
 	}
 
 	runRestoredSketches(): void {
-		this.textmodeEngine.getController()?.handleForceRun();
+		for (const engine of this.getRegisteredEngines().filter((candidate) => candidate.capabilities.bootStrategy === 'eager')) {
+			engine.getController()?.handleForceRun();
+		}
 	}
 
 	runSharedSketch(payload: SharePayload): void {
-		if (payload.engines.textmode !== undefined) {
-			this.textmodeEngine.getController()?.handleForceRun();
-		}
-
-		if (payload.engines.strudel !== undefined && this.strudelEngine?.isInitialized()) {
-			if (this.shouldRunStrudel()) {
-				this.strudelEngine.getController()?.handleForceRun();
-			} else {
-				this.pauseStrudelPlayback();
-			}
+		for (const [engineId, code] of Object.entries(payload.engines) as Array<[EngineId, string | undefined]>) {
+			if (typeof code !== 'string') continue;
+			this.runEngine(engineId);
 		}
 	}
 
 	applyApprovedSketch(sketch: ApprovedSketch): void {
-		this.textmodeEngine.setCode(sketch.textmodeCode, { silent: true });
-		this.textmodeEngine.getRuntime()?.forceRun(sketch.textmodeCode);
-		this.applyApprovedSketchToStrudel(sketch);
+		this.applyApprovedSketchToEngine('textmode', sketch);
+		this.applyApprovedSketchToEngine('strudel', sketch);
 	}
 
 	applyApprovedSketchToStrudel(sketch: ApprovedSketch): void {
-		if (!this.strudelEngine?.isInitialized()) return;
-		if (sketch.strudelCode) {
-			this.strudelEngine.setCode(sketch.strudelCode, { silent: true });
-			if (this.shouldRunStrudel()) {
-				this.strudelEngine.getController()?.handleForceRun();
-			} else {
-				this.pauseStrudelPlayback();
-			}
-			return;
-		}
-		this.pauseStrudelPlayback();
+		this.applyApprovedSketchToEngine('strudel', sketch);
 	}
 
 	resetAll(): void {
-		this.deps.store.engine.setLastWorkingCode('textmode', null);
 		this.deps.store.share.clearOriginalApprovedSketch();
-		// Use generic reset if possible, or explicit defaults
-		// Since getDefaultCode was removed from IEngine/Engine classes (moved to StorageService defaults),
-		// we should load from StorageService (assuming clearCode reset them to defaults?)
-		// StorageService.clearCode() removes keys. loadEngineCode then returns default.
-		// So we should call deps.storage.clearCode() then reload.
 
-		// Wait, resetAll in current logic:
-		// this.textmodeEngine.setCode(this.textmodeEngine.getDefaultCode());
-		// Storage code is NOT cleared in the original code? 
-		// Original: resetAll() -> setCode(default). It doesn't explicitly save to storage here, 
-		// but controller change handler will save it?
-		// TextmodeEditor options: onChange: handlesCodeChange -> onSaveCode -> storage.saveEngineCode.
-		// Yes.
+		for (const engine of this.getRegisteredEngines()) {
+			this.deps.store.engine.setLastWorkingCode(engine.id, null);
+			this.deps.storage.clearEngineCode(engine.id);
 
-		// So we need to get default code.
-		// We can't ask engine for it anymore.
-		// But we registered it in StorageService.
-		// Maybe StorageService should expose `getDefaultCode(engineId)`?
-		// Or we just rely on `storage.clearEngineCode(id)` then `storage.loadEngineCode(id)`.
+			if (!engine.isInitialized()) continue;
 
-		this.deps.storage.clearEngineCode('textmode');
-		this.textmodeEngine.setCode(this.deps.storage.loadEngineCode('textmode'));
+			const defaultCode = this.deps.storage.loadEngineCode(engine.id);
+			if (engine.capabilities.bootStrategy === 'eager') {
+				engine.setCode(defaultCode);
+				continue;
+			}
 
-		this.deps.store.engine.setLastWorkingCode('strudel', null);
-		if (this.strudelEngine?.isInitialized()) {
-			this.deps.storage.clearEngineCode('strudel');
-			this.strudelEngine.setCode(this.deps.storage.loadEngineCode('strudel'), { silent: true });
-			if (this.shouldRunStrudel()) {
-				this.strudelEngine.getController()?.handleForceRun();
-			} else {
-				this.pauseStrudelPlayback();
+			engine.setCode(defaultCode, { silent: true });
+			if (this.shouldRunEngine(engine)) {
+				engine.getController()?.handleForceRun();
+			} else if (engine.capabilities.supportsTransportControl) {
+				this.pauseTransportEngines([engine]);
 			}
 		}
 	}
 
 	dispose(): void {
 		this.stopAudioReactivity();
-		// We don't dispose the engine instances here if they are singletons from registry?
-		// Original code: this.strudelEngine?.dispose(); this.textmodeEngine.dispose();
-		// If AppRuntime owns them, AppRuntime should dispose them?
-		// EngineLifecycle "owns runtime engine lifecycle".
-		// Calling dispose on the engine instance is correct if the app is shutting down.
-		if (this.strudelEngine?.isInitialized()) {
-			this.strudelEngine.dispose();
+		this.enableEnginePromises.clear();
+
+		for (const engine of this.getRegisteredEngines()) {
+			this.deps.editorManager.unregisterEditor(engine.id);
+
+			if (engine.isInitialized()) {
+				engine.dispose();
+			}
+
+			this.deps.store.engine.setInitialized(engine.id, false);
+			this.applyCustomState(engine.id, engine.capabilities.customStateOnDisable);
+
+			if (engine.capabilities.bootStrategy === 'toggleable') {
+				this.deps.paneCoordinator.removePane(engine.id);
+			}
 		}
-		this.textmodeEngine.dispose();
 	}
 
-	private async enableStrudelInternal(): Promise<void> {
-		const engine = this.strudelEngine;
-		if (!engine) return;
-		if (engine.isInitialized()) return;
+	private getRegisteredEngines(): IEngine[] {
+		return registry.getAll();
+	}
 
-		this.deps.store.engine.initEngineState('strudel');
-		const container = await this.deps.paneCoordinator.waitForPane('strudel');
+	private async setEngineEnabled(engineId: EngineId, enabled: boolean): Promise<boolean> {
+		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), this.deps.paneStore);
+		this.deps.render();
 
-		// Reuse existing instance from registry
-		await engine.init({
-			editorContainer: container,
-			getSettings: this.deps.store.settings.getSettings,
-			callbacks: {
-				onRenderOverlay: this.deps.render,
-				onSaveCode: (code: string) => this.deps.storage.saveEngineCode('strudel', code),
-			},
-			getInitialCode: () => this.deps.storage.loadEngineCode('strudel'),
-			toggleUI: this.deps.toggleUI,
-			changeFontSize: this.deps.changeFontSize,
-		});
+		if (enabled) {
+			await this.deps.paneCoordinator.waitForPanes(this.deps.paneCoordinator.getPaneIds());
+			return this.enableEngine(engineId);
+		}
+
+		this.disableEngineById(engineId);
+		return false;
+	}
+
+	private async enableEngine(engineId: EngineId): Promise<boolean> {
+		const engine = this.getEngine(engineId);
+		if (!engine) return false;
+		if (engine.isInitialized()) return false;
+
+		const pendingInit = this.enableEnginePromises.get(engineId);
+		if (pendingInit) {
+			await pendingInit;
+			return false;
+		}
+
+		const initPromise = this.initEngine(engine);
+		this.enableEnginePromises.set(engineId, initPromise);
+		try {
+			await initPromise;
+		} finally {
+			this.enableEnginePromises.delete(engineId);
+		}
+		return true;
+	}
+
+	private disableEngineById(engineId: EngineId): boolean {
+		const engine = this.getEngine(engineId);
+		if (!engine || !engine.isInitialized()) return false;
+
+		if (engine.capabilities.supportsTransportControl) {
+			this.pauseTransportEngines([engine]);
+		}
+
+		if (engine.capabilities.producesAudioSource) {
+			this.stopAudioReactivity();
+		}
+
+		this.deps.editorManager.unregisterEditor(engine.id);
+		engine.dispose();
+		this.deps.paneCoordinator.removePane(engine.id);
+		this.deps.store.engine.setInitialized(engine.id, false);
+		this.applyCustomState(engine.id, engine.capabilities.customStateOnDisable);
+		return true;
+	}
+
+	private async initEngine(engine: IEngine): Promise<void> {
+		this.deps.store.engine.initEngineState(engine.id);
+		this.applyCustomState(engine.id, engine.capabilities.customStateOnInit);
+
+		const container = await this.deps.paneCoordinator.waitForPane(engine.id);
+		await engine.init(this.createEngineContext(engine, container));
 
 		const editor = engine.getEditor();
 		if (editor) {
-			this.deps.editorManager.registerEditor('strudel', editor);
+			this.deps.editorManager.registerEditor(engine.id, editor);
 		}
 
 		this.applyEditorSettings();
-		this.startAudioReactivity();
+
+		if (engine.capabilities.producesAudioSource) {
+			this.startAudioReactivity();
+		}
 	}
 
-	private disableStrudelInternal(): void {
-		const engine = this.strudelEngine;
-		if (!engine) return;
+	private createEngineContext(engine: IEngine, editorContainer: HTMLElement): EngineContext {
+		const context: EngineContext = {
+			editorContainer,
+			visualContainer: document.body,
+			getSettings: this.deps.store.settings.getSettings,
+			callbacks: {
+				onRenderOverlay: this.deps.render,
+				onSaveCode: (code: string) => this.deps.storage.saveEngineCode(engine.id, code),
+			},
+			getInitialCode: () => this.deps.storage.loadEngineCode(engine.id),
+			toggleUI: this.deps.toggleUI,
+			changeFontSize: this.deps.changeFontSize,
+		};
 
-		this.pauseStrudelPlayback();
-		this.stopAudioReactivity();
+		if (engine.capabilities.supportsReconnect) {
+			context.onRunnerConnected = () => {
+				this.deps.store.engine.setCustomState(engine.id, 'runnerUnavailable', false);
+				this.deps.store.engine.setCustomState(engine.id, 'runnerReconnecting', false);
+			};
+			context.onRunnerDisconnected = () => {
+				this.deps.store.engine.setCustomState(engine.id, 'runnerUnavailable', true);
+				this.deps.store.engine.setCustomState(engine.id, 'runnerReconnecting', false);
+			};
+		}
 
-		this.deps.editorManager.unregisterEditor('strudel');
-		engine.dispose();
-		this.deps.paneCoordinator.removePane('strudel');
-
-		const store = this.deps.store.engine;
-		store.setInitialized('strudel', false);
-		store.setCustomState('strudel', 'state', {
-			isPlaying: false,
-			isInitialized: false,
-		});
+		return context;
 	}
 
-	private shouldRunStrudel(): boolean {
+	private applyCustomState(engineId: EngineId, customState: Record<string, unknown> | undefined): void {
+		if (!customState) return;
+		for (const [key, value] of Object.entries(customState)) {
+			this.deps.store.engine.setCustomState(engineId, key, value);
+		}
+	}
+
+	private shouldRunEngine(engine: IEngine): boolean {
+		if (!engine.capabilities.requiresTransportGate) return true;
 		return this.deps.store.settings.getSettings().strudelTransport === 'playing';
 	}
 
-	private pauseStrudelPlayback(): void {
-		const controller = this.strudelEngine?.getController();
-		if (controller) {
-			controller.handleTransportPause();
+	private getTransportEngines(): IEngine[] {
+		return this.getRegisteredEngines().filter((engine) => engine.capabilities.supportsTransportControl);
+	}
+
+	private pauseTransportEngines(targetEngines: IEngine[] = this.getTransportEngines()): void {
+		for (const engine of targetEngines) {
+			if (!engine.isInitialized()) continue;
+			const controller = engine.getController();
+			if (hasTransportPause(controller)) {
+				controller.handleTransportPause();
+				continue;
+			}
+			if (hasHush(engine)) {
+				engine.hush();
+			}
+		}
+	}
+
+	private reconnectEngine(engineId: EngineId): boolean {
+		const engine = this.getEngine(engineId);
+		if (!engine || !engine.capabilities.supportsReconnect) return false;
+		if (!hasReconnectRuntime(engine)) return false;
+		engine.reconnectRuntime();
+		return true;
+	}
+
+	private applyApprovedSketchToEngine(engineId: EngineId, sketch: ApprovedSketch): void {
+		const code = this.getApprovedSketchCode(engineId, sketch);
+		const engine = this.getEngine(engineId);
+		if (!engine) return;
+
+		if (code === null) {
+			if (engine.capabilities.supportsTransportControl) {
+				this.pauseTransportEngines([engine]);
+			}
 			return;
 		}
-		this.strudelEngine?.hush();
+
+		if (!engine.isInitialized() && engine.capabilities.bootStrategy === 'toggleable') {
+			return;
+		}
+
+		engine.setCode(code, { silent: true });
+
+		if (engine.capabilities.bootStrategy === 'eager' && hasRuntimeForceRun(engine)) {
+			engine.getRuntime()?.forceRun(code);
+			return;
+		}
+
+		if (this.shouldRunEngine(engine)) {
+			engine.getController()?.handleForceRun();
+			return;
+		}
+
+		if (engine.capabilities.supportsTransportControl) {
+			this.pauseTransportEngines([engine]);
+		}
+	}
+
+	private getApprovedSketchCode(engineId: EngineId, sketch: ApprovedSketch): string | null {
+		if (engineId === 'textmode') {
+			return sketch.textmodeCode;
+		}
+		if (engineId === 'strudel') {
+			return sketch.strudelCode ?? null;
+		}
+		return null;
+	}
+
+	private getAudioInputEngines(): AudioInputEngine[] {
+		return this.getRegisteredEngines().filter((engine): engine is AudioInputEngine => (
+			Boolean(engine.capabilities.consumesAudioInput) &&
+			hasAudioInput(engine)
+		));
+	}
+
+	private hasAudioPipeline(): boolean {
+		const hasProducer = this.getRegisteredEngines().some((engine) => (
+			Boolean(engine.capabilities.producesAudioSource) && engine.isInitialized()
+		));
+		return hasProducer && this.getAudioInputEngines().length > 0;
+	}
+
+	private broadcastAudioData(data: AudioData): void {
+		for (const engine of this.getAudioInputEngines()) {
+			engine.sendAudioData(data);
+		}
 	}
 
 	private startAudioReactivity(): void {
-		if (this.audioUnsubscribe) return;
+		if (this.audioUnsubscribe || !this.hasAudioPipeline()) return;
+
 		audioService.setSource(this.deps.createAudioSource());
 		this.audioUnsubscribe = audioService.subscribe((data) => {
-			this.textmodeEngine.sendAudioData(data);
+			this.broadcastAudioData(data);
 		});
 		audioService.start();
 	}
@@ -376,10 +460,30 @@ export class EngineLifecycle {
 		audioService.setSource(null);
 
 		const snapshot = audioService.getData();
-		this.textmodeEngine.sendAudioData({
+		this.broadcastAudioData({
 			fft: new Array(snapshot.fft.length).fill(0),
 			waveform: new Array(snapshot.waveform.length).fill(128),
 			timestamp: performance.now(),
 		});
 	}
+}
+
+function hasTransportPause(controller: IController | null): controller is TransportPauseController {
+	return Boolean(controller) && typeof (controller as TransportPauseController).handleTransportPause === 'function';
+}
+
+function hasReconnectRuntime(engine: IEngine): engine is ReconnectableEngine {
+	return typeof (engine as ReconnectableEngine).reconnectRuntime === 'function';
+}
+
+function hasAudioInput(engine: IEngine): engine is AudioInputEngine {
+	return typeof (engine as AudioInputEngine).sendAudioData === 'function';
+}
+
+function hasRuntimeForceRun(engine: IEngine): engine is RuntimeForceRunEngine {
+	return typeof (engine as RuntimeForceRunEngine).getRuntime === 'function';
+}
+
+function hasHush(engine: IEngine): engine is HushableEngine {
+	return typeof (engine as HushableEngine).hush === 'function';
 }

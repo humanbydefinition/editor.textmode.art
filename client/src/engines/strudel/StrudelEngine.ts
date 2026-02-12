@@ -1,4 +1,4 @@
-import type { EngineContext, IEngine } from '@/core/engine.types';
+import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
 import { StrudelEditor, type StrudelEditorOptions } from './editor/StrudelEditor';
 import { StrudelRuntime } from './runtime';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
@@ -12,6 +12,24 @@ export class StrudelEngine implements IEngine {
 	readonly id = 'strudel';
 	readonly displayName = 'strudel';
 	readonly description = 'Web-based environment for live coding algorithmic patterns';
+	readonly capabilities: EngineLifecycleCapabilities = {
+		bootStrategy: 'toggleable',
+		requiresTransportGate: true,
+		supportsTransportControl: true,
+		producesAudioSource: true,
+		customStateOnInit: {
+			state: {
+				isPlaying: false,
+				isInitialized: false,
+			},
+		},
+		customStateOnDisable: {
+			state: {
+				isPlaying: false,
+				isInitialized: false,
+			},
+		},
+	};
 
 	private editor: StrudelEditor | null = null;
 	private runtime: StrudelRuntime | null = null;
@@ -30,8 +48,6 @@ export class StrudelEngine implements IEngine {
 			this.editor = this.createEditor(context, initialCode);
 			this.runtime = this.createRuntime();
 			this.controller = this.createController(context);
-
-			this.initializeRuntime();
 			this.initialized = true;
 		} finally {
 			this.initializing = false;
@@ -149,11 +165,4 @@ export class StrudelEngine implements IEngine {
 		return new StrudelController(callbacks, deps);
 	}
 
-	private initializeRuntime(): void {
-		// Initialize state defaults
-		this.storeAdapter.setEngineCustomState(this.id, 'state', {
-			isPlaying: false,
-			isInitialized: false,
-		});
-	}
 }

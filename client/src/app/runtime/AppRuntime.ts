@@ -130,7 +130,7 @@ export class AppRuntime {
 
 		this.render();
 		await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
-		await this.engineLifecycle.initTextmodeEngine();
+		await this.engineLifecycle.initEagerEngines();
 		this.render();
 
 		if (loadedSettings.strudelEnabled) {

@@ -1,4 +1,4 @@
-import type { EngineContext, IEngine } from '@/core/engine.types';
+import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
 import type { AudioData } from '@/platform/audio/AudioService';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
@@ -13,6 +13,15 @@ export class TextmodeEngine implements IEngine {
 	readonly id = 'textmode';
 	readonly displayName = 'textmode.js';
 	readonly description = 'Visual live coding with ASCII/text-based graphics';
+	readonly capabilities: EngineLifecycleCapabilities = {
+		bootStrategy: 'eager',
+		supportsReconnect: true,
+		consumesAudioInput: true,
+		customStateOnInit: {
+			runnerUnavailable: false,
+			runnerReconnecting: false,
+		},
+	};
 
 	private editor: TextmodeEditor | null = null;
 	private runtime: TextmodeRuntime | null = null;
