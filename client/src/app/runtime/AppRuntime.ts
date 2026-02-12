@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
+import { PaneCoordinator } from '@/features/editor-layout';
 import { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
 import { ShareWorkflow } from '@/features/share/model/ShareWorkflow';
 import { UIActions } from '@/app/runtime/UIActions';

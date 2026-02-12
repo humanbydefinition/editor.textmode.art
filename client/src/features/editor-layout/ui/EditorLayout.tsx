@@ -18,7 +18,7 @@ export interface EditorLayoutProps {
 }
 
 /**
- * AppLayout component - the main layout wrapper.
+ * EditorLayout component - the main layout wrapper.
  * Always renders all panes to preserve Monaco editors on layout switches.
  */
 export function EditorLayout({

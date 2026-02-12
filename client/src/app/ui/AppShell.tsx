@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AppLayout } from '@/features/editor-layout/ui';
+import { EditorLayout, MobileNav } from '@/features/editor-layout';
 import { SystemMenu } from '@/features/system-menu';
 import { ErrorOverlay } from '@/shared/components/ErrorOverlay';
 import { Toaster } from '@/shared/ui/sonner';
@@ -13,7 +13,6 @@ import {
     selectTextmodeRunnerReconnecting,
     selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
-import { MobileNav } from '@/features/editor-layout/ui/MobileNav';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { PublishRequestDialog } from '@/features/publish';
 import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
@@ -61,7 +60,7 @@ export function AppShell() {
     return (
         <>
             {/* Layout layer - editor panes with mobile nav */}
-            <AppLayout
+            <EditorLayout
                 panes={layout.panes}
                 editorBackdrop={runtimeState.editorBackdrop}
                 onPaneReady={layout.onPaneReady}

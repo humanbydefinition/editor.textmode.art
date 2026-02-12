@@ -1,7 +1,7 @@
 /**
  * Layout components barrel export.
  */
-export { EditorLayout as AppLayout, type EditorLayoutProps as AppLayoutProps } from './EditorLayout';
+export { EditorLayout, type EditorLayoutProps } from './EditorLayout';
 export { EditorPane, type EditorPaneProps } from './EditorPane';
 export { MobileNav } from './MobileNav';
 export { useSplitResize } from './useSplitResize';

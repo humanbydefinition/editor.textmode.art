@@ -1,4 +1,4 @@
-import type { IEditor } from '../../core/BaseEditor';
+import type { IEditor } from '@/core/BaseEditor';
 import type { AppSettings } from '@/core/app.types';
 
 /**

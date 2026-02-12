@@ -4,7 +4,7 @@ import type { IController } from '@/core/BaseController';
 import type { EngineContext, EngineId, IEngine } from '@/core/engine.types';
 import type { StrudelTransportState } from '@/core/app.types';
 import { registry } from '@/engines/registry';
-import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
+import { PaneCoordinator } from '@/features/editor-layout';
 import { audioService, type AudioData, type IAudioSource } from '@/platform/audio/AudioService';
 import { EditorManager } from '@/platform/input/EditorManager';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
