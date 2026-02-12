@@ -1,5 +1,5 @@
-import { examples as textmodeExamples } from '@/engines/textmode/examples';
-import { examples as strudelExamples } from '@/engines/strudel/examples';
+import { tutorials as textmodeTutorials } from '@/features/examples/content/textmode-tutorial';
+import { tutorials as strudelTutorials } from '@/features/examples/content/strudel-tutorial';
 import type { Example } from '@/features/examples/examples.types';
 
 export interface ExampleEngineCatalog {
@@ -13,12 +13,16 @@ export function getExampleEngineCatalog(): ExampleEngineCatalog[] {
 		{
 			id: 'textmode' as const,
 			displayName: 'textmode.js',
-			examples: textmodeExamples,
+			examples: {
+				tutorial: textmodeTutorials,
+			},
 		},
 		{
 			id: 'strudel' as const,
 			displayName: 'strudel',
-			examples: strudelExamples,
+			examples: {
+				tutorial: strudelTutorials,
+			},
 		},
 	].filter((engine) => Object.keys(engine.examples).length > 0);
 }
