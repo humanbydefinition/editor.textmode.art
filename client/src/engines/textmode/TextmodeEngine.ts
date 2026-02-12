@@ -4,7 +4,7 @@ import { useAppStore } from '@/platform/state/appStore';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
-import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
+import type { BaseControllerCallbacks } from '@/core/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 
 /**

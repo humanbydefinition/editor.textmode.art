@@ -2,7 +2,7 @@ import type { EngineContext, IEngine } from '@/core/engine.types';
 import { StrudelEditor, type StrudelEditorOptions } from './editor/StrudelEditor';
 import { StrudelRuntime } from './runtime';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
-import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
+import type { BaseControllerCallbacks } from '@/core/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 
 /**

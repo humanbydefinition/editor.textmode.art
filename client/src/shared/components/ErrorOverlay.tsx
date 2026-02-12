@@ -1,7 +1,7 @@
 import { X, Undo2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
-import type { CodeError } from '@/types/app.types';
+import type { CodeError } from '@/core/app.types';
 
 interface ErrorOverlayProps {
     error: CodeError | null;

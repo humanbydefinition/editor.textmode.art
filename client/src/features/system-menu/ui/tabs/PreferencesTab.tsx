@@ -7,7 +7,7 @@ import { Label } from '@/shared/ui/label';
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Separator } from "@/shared/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import type { AppSettings } from '@/types/app.types';
+import type { AppSettings } from '@/core/app.types';
 
 export interface PreferencesTabProps {
     settings: AppSettings;

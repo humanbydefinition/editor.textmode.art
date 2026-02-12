@@ -1,5 +1,6 @@
+
 import type { StateCreator } from 'zustand';
-import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
+import { DEFAULT_SETTINGS, type AppSettings } from '@/core/app.types';
 import type { AppState } from '../appStore';
 
 export interface SettingsSlice {
