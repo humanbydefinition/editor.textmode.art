@@ -1,4 +1,4 @@
-import { Prisma } from '../../prisma/generated/prisma/client.js';
+import { Prisma } from '../generated/prisma/client.js';
 
 /**
  * Check whether a Prisma error is a unique constraint violation (P2002).
