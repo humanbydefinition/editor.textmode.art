@@ -1,7 +1,7 @@
-import type { CodeError } from '@/core/app.types';
-import type { ControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
+import type { CodeError, StatusState } from '@/core/app.types';
 import type { IEditor } from './BaseEditor';
-import type { SharePayload } from '@/features/share/share.types';
+import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -32,6 +32,59 @@ export interface BaseControllerCallbacks {
 	onRenderOverlay: () => void;
 	/** Called to save code to storage */
 	onSaveCode: (code: string) => void;
+}
+
+/**
+ * Minimal slug metadata contract used by controllers.
+ * Defined in core to avoid depending on higher layers.
+ */
+export interface ControllerSlugSketchInfo {
+	status: 'PENDING' | 'APPROVED';
+	slug: string;
+	title: string;
+	description: string | null;
+	authorName: string | null;
+	license: string | null;
+	socialLinks: Array<{ label: string; url: string }> | null;
+}
+
+/**
+ * Minimal engine state contract needed by controllers.
+ */
+export interface ControllerEngineState {
+	lastWorkingCode: string | null;
+	pendingWorkingCode: string | null;
+	customState: Record<string, unknown>;
+}
+
+/**
+ * Store adapter contract used by base controllers.
+ * Implemented in platform/state/adapters/controllerStoreAdapter.ts.
+ */
+export interface ControllerStoreAdapter {
+	// Error / status
+	setError: (error: CodeError | null) => void;
+	setStatus: (status: StatusState) => void;
+
+	// Engine state
+	getEngineState: (engineId: string) => ControllerEngineState | undefined;
+	setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
+	setEnginePendingWorkingCode: (engineId: string, code: string) => void;
+	cancelEnginePendingWorkingCode: (engineId: string) => void;
+	setEngineInitialized: (engineId: string, initialized: boolean) => void;
+	setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
+
+	// Share
+	getShareState: () => { payload: SharePayload | null; consented: boolean; promptOpen: boolean };
+	setSharePromptOpen: (open: boolean) => void;
+
+	// Approved sketch
+	getApprovedSketch: () => ApprovedSketch | null;
+	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
+	getSlugSketchInfo: () => ControllerSlugSketchInfo | null;
+	setSlugSketchInfo: (info: ControllerSlugSketchInfo | null) => void;
+	getOriginalApprovedSketch: () => ApprovedSketch | null;
+	getOriginalSlugSketchInfo: () => ControllerSlugSketchInfo | null;
 }
 
 
@@ -291,16 +344,14 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		}
 	}
 
-	private getSharePayloadCodeForEngine(payload: unknown): string | null {
-		if (!payload || typeof payload !== 'object') return null;
-		const candidate = payload as SharePayload;
-		if (!candidate.engines || typeof candidate.engines !== 'object') return null;
+	private getSharePayloadCodeForEngine(payload: SharePayload | null): string | null {
+		if (!payload?.engines) return null;
 
 		if (this.engineId === 'strudel') {
-			return candidate.engines.strudel ?? '';
+			return payload.engines.strudel ?? '';
 		}
 
-		return candidate.engines.textmode ?? '';
+		return payload.engines.textmode ?? '';
 	}
 
 	/**
