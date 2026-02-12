@@ -1,5 +1,5 @@
-import type { IEditor } from '../../core/editor/BaseEditor';
-import type { AppSettings } from '../../types/app.types';
+import type { IEditor } from '../../core/BaseEditor';
+import type { AppSettings } from '@/core/app.types';
 
 /**
  * Manages all active editor instances.

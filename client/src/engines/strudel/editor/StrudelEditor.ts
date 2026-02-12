@@ -1,8 +1,8 @@
 import * as monaco from 'monaco-editor';
-import { BaseEditor, type EditorOptions } from '@/core/editor/BaseEditor';
+import { BaseEditor, type BaseEditorOptions } from '@/core/BaseEditor';
 import { StrudelHighlighter, injectStrudelHighlightStyles, type Pattern } from './StrudelHighlighter';
 
-export type StrudelEditorOptions = EditorOptions;
+export type StrudelEditorOptions = BaseEditorOptions;
 
 // Strudel model URI - used to identify and filter diagnostics
 const STRUDEL_MODEL_URI = 'file:///strudel-sketch.js';

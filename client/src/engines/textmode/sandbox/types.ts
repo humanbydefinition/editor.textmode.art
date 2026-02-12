@@ -3,7 +3,7 @@
  * Consolidated types for the iframe sandbox and code execution.
  */
 
-import type { CodeError } from '@/types/app.types';
+import type { CodeError } from '@/core/app.types';
 
 /**
  * Events emitted by the runtime

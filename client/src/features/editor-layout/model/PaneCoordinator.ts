@@ -1,5 +1,5 @@
 import type { PaneConfig } from '@/features/editor-layout/ui';
-import type { AppSettings } from '@/types/app.types';
+import type { AppSettings } from '@/core/app.types';
 
 interface Panel {
 	id: string;

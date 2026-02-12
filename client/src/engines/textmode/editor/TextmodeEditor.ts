@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { BaseEditor, type EditorOptions } from '@/core/editor/BaseEditor';
+import { BaseEditor, type BaseEditorOptions } from '@/core/BaseEditor';
 import { typeDefinitions } from '../config/generatedTypes';
 
 // Import Monaco workers
@@ -16,7 +16,7 @@ self.MonacoEnvironment = {
 	},
 };
 
-export interface TextmodeEditorOptions extends EditorOptions {
+export interface TextmodeEditorOptions extends BaseEditorOptions {
 	onSoftReset?: () => void;
 	onToggleTextBackground?: () => void;
 	onToggleAutoExecute?: () => void;
