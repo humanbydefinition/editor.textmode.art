@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { AppLayout } from './EditorLayout';
+import { AppLayout } from '@/features/editor-layout/ui';
 import { SystemMenu } from '@/features/system-menu';
-import { ErrorOverlay } from './ErrorOverlay';
+import { ErrorOverlay } from '@/shared/components/ErrorOverlay';
 import { Toaster } from '@/shared/ui/sonner';
-import { WelcomeDialog } from './WelcomeDialog';
+import { WelcomeDialog } from '@/shared/components/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
-import type { PaneConfig } from './EditorLayout/types';
+import type { PaneConfig } from '@/features/editor-layout/ui/types';
 import { useAppStore } from '@/platform/state/appStore';
 import {
     selectError,
@@ -14,8 +14,10 @@ import {
     selectTextmodeRunnerReconnecting,
     selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
-import { MobileNav } from './EditorLayout/MobileNav';
+import { MobileNav } from '@/features/editor-layout/ui/MobileNav';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
+import { PublishRequestDialog } from '@/features/publish';
+import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
 import { Lock, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
@@ -80,6 +82,8 @@ export function AppShell({
     onShareExportCopy,
 }: AppShellProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
+    const [publishOpen, setPublishOpen] = useState(false);
+    const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
 
     // Store State
     const error = useAppStore(selectError);
@@ -170,6 +174,19 @@ export function AppShell({
                     data={shareExportData}
                     onOpenChange={onShareExportOpenChange}
                     onCopyLink={onShareExportCopy}
+                    onPublishRequested={() => setPublishOpen(true)}
+                    onSubmissionsPaused={() => setSubmissionsPausedOpen(true)}
+                />
+
+                <PublishRequestDialog
+                    open={publishOpen}
+                    data={shareExportData ? { textmodeCode: shareExportData.textmodeCode, strudelCode: shareExportData.strudelCode } : null}
+                    onOpenChange={setPublishOpen}
+                />
+
+                <SubmissionsPausedDialog
+                    open={submissionsPausedOpen}
+                    onOpenChange={setSubmissionsPausedOpen}
                 />
 
                 {showShareLock && (

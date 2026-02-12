@@ -1,4 +1,4 @@
-import type { PaneConfig } from '@/components/EditorLayout';
+import type { PaneConfig } from '@/features/editor-layout/ui';
 import type { AppSettings } from '@/types/app.types';
 
 interface Panel {

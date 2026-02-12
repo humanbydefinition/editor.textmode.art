@@ -18,7 +18,7 @@ import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { ExamplesTab } from '@/features/examples';
-import { SlugInfoAlert } from '@/components/SlugInfoAlert';
+import { SlugInfoAlert } from '@/shared/components/SlugInfoAlert';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';

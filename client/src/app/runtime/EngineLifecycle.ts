@@ -1,5 +1,5 @@
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import { PaneCoordinator } from '@/app/orchestration/PaneCoordinator';
+import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
 import { EditorManager } from '@/platform/input/EditorManager';
 import { audioService, type IAudioSource } from '@/platform/audio/AudioService';
 import type { IStorageService } from '@/platform/storage/StorageService';

@@ -12,7 +12,7 @@ import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Checkbox } from '@/shared/ui/checkbox';
-import { SlugInfoCard } from '@/components/SlugInfoCard';
+import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
 import { TurnstileWidget } from './TurnstileWidget';
 import {

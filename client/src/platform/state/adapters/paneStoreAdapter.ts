@@ -1,5 +1,5 @@
 import { useAppStore } from '@/platform/state/appStore';
-import type { PaneStoreAdapter } from '@/app/orchestration/PaneCoordinator';
+import type { PaneStoreAdapter } from '@/features/editor-layout/model/PaneCoordinator';
 
 export function createPaneStoreAdapter(): PaneStoreAdapter {
 	return {

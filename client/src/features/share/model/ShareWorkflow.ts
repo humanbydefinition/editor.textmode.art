@@ -3,7 +3,7 @@ import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/con
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
 import { ShareService } from '@/shared/lib/ShareService';
 import { useAppStore } from '@/platform/state/appStore';
-import type { SharePayload } from '@/features/share/share.types';
+import type { SharePayload } from '../share.types';
 
 interface ShareWorkflowDependencies {
 	render: () => void;

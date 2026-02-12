@@ -1,11 +1,11 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { PaneCoordinator } from '@/app/orchestration/PaneCoordinator';
+import { PaneCoordinator } from '@/features/editor-layout/model/PaneCoordinator';
 import { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
-import { ShareWorkflow } from '@/app/runtime/ShareWorkflow';
+import { ShareWorkflow } from '@/features/share/model/ShareWorkflow';
 import { UIActions } from '@/app/runtime/UIActions';
-import { AppShell } from '@/components/AppShell';
-import { ShareSessionManager } from '@/features/share/orchestration/ShareSessionManager';
+import { AppShell } from '@/app/ui/AppShell';
+import { ShareSessionManager } from '@/features/share/model/ShareSessionManager';
 import { EditorManager } from '@/platform/input/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from '@/shared/lib/CodeRandomizer';

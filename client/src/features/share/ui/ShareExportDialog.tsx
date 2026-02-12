@@ -17,8 +17,7 @@ import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '@/shared/lib/ShareService';
 import type { SharePayload } from '@/features/share/share.types';
-import { PublishRequestDialog } from '@/features/publish';
-import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
+
 import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';
 import { Check, Link2, Sparkles, Code2, Music2, Info } from 'lucide-react';
 
@@ -33,16 +32,16 @@ export interface ShareExportDialogProps {
 	data: ShareExportData | null;
 	onOpenChange: (open: boolean) => void;
 	onCopyLink: (url: string) => void;
+	onPublishRequested: () => void;
+	onSubmissionsPaused: () => void;
 }
 
 function formatCount(value: number): string {
 	return new Intl.NumberFormat('en-US').format(value);
 }
 
-export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: ShareExportDialogProps) {
+export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPublishRequested, onSubmissionsPaused }: ShareExportDialogProps) {
 	const [copied, setCopied] = useState<'textmode' | 'full' | null>(null);
-	const [publishOpen, setPublishOpen] = useState(false);
-	const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
 	const [isCheckingQueue, setIsCheckingQueue] = useState(false);
 
 	const [backendAvailable, setBackendAvailable] = useState<boolean>(true);
@@ -104,9 +103,9 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 		try {
 			const status = await fetchSketchSubmissionQueueStatus();
 			if (status && status.full) {
-				setSubmissionsPausedOpen(true);
+				onSubmissionsPaused();
 			} else if (status) {
-				setPublishOpen(true);
+				onPublishRequested();
 			} else {
 				// Status is null, meaning backend issue
 				setBackendAvailable(false);
@@ -326,16 +325,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: Shar
 				</ScrollArea>
 			</DialogContent>
 
-			<PublishRequestDialog
-				open={publishOpen}
-				data={data ? { textmodeCode: data.textmodeCode, strudelCode: data.strudelCode } : null}
-				onOpenChange={setPublishOpen}
-			/>
 
-			<SubmissionsPausedDialog
-				open={submissionsPausedOpen}
-				onOpenChange={setSubmissionsPausedOpen}
-			/>
 		</Dialog>
 	);
 }
