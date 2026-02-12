@@ -167,8 +167,14 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.iframe.style.opacity = '0';
 		this.iframe.style.transition = 'opacity 140ms ease';
 
-		// Sandbox permissions: allow scripts only
+		// Sandbox permissions: allow-scripts is required to run JS inside the frame.
+		// allow-same-origin lets the frame retain its real origin so that the
+		// MessagePort handshake (postMessage with a specific targetOrigin) works
+		// for cross-origin runner deployments.  This is safe because the runner
+		// is already hosted on a *separate* origin, so it cannot access the
+		// parent's cookies, storage, or DOM.
 		this.iframe.sandbox.add('allow-scripts');
+		this.iframe.sandbox.add('allow-same-origin');
 		this.iframe.referrerPolicy = 'no-referrer';
 		this.iframe.addEventListener('load', this.handleIframeLoad);
 		this.iframe.addEventListener('error', this.handleIframeError);
