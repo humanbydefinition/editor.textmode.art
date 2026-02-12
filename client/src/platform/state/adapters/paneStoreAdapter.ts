@@ -1,5 +1,15 @@
 import { useAppStore } from '@/platform/state/appStore';
-import type { PaneStoreAdapter } from '@/features/editor-layout/model/PaneCoordinator';
+
+export interface PaneStorePanel {
+	id: string;
+	label: string;
+}
+
+export interface PaneStoreAdapter {
+	setPanels: (panels: PaneStorePanel[]) => void;
+	getActivePanel: () => string;
+	setActivePanel: (panelId: string) => void;
+}
 
 export function createPaneStoreAdapter(): PaneStoreAdapter {
 	return {

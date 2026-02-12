@@ -1,16 +1,7 @@
 import type { PaneConfig } from '@/features/editor-layout/ui';
 import type { AppSettings } from '@/core/app.types';
+import type { PaneStoreAdapter, PaneStorePanel } from '@/platform/state/adapters/paneStoreAdapter';
 
-interface Panel {
-	id: string;
-	label: string;
-}
-
-export interface PaneStoreAdapter {
-	setPanels: (panels: Panel[]) => void;
-	getActivePanel: () => string;
-	setActivePanel: (panelId: string) => void;
-}
 
 /**
  * Owns pane composition and pane readiness coordination.
@@ -24,7 +15,7 @@ export class PaneCoordinator {
 	sync(settings: AppSettings, store: PaneStoreAdapter): void {
 		this.paneConfigs = this.buildPaneConfigs(settings);
 
-		const panels: Panel[] = [
+		const panels: PaneStorePanel[] = [
 			{ id: 'textmode', label: 'textmode.js' },
 			...(settings.strudelEnabled ? [{ id: 'strudel', label: 'strudel' }] : []),
 		];
