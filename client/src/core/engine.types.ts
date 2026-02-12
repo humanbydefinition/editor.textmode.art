@@ -22,6 +22,10 @@ export interface EngineContext {
     toggleUI: () => void;
     /** Change font size callback */
     changeFontSize: (delta: number) => void;
+    /** Textmode runtime connected callback (optional, textmode-only) */
+    onRunnerConnected?: () => void;
+    /** Textmode runtime disconnected callback (optional, textmode-only) */
+    onRunnerDisconnected?: () => void;
 }
 
 /**

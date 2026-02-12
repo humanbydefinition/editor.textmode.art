@@ -44,7 +44,6 @@ export default [
   },
   {
     files: ['src/{core,engines,features,shared}/**/*.ts'],
-    ignores: ['src/engines/textmode/TextmodeEngine.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

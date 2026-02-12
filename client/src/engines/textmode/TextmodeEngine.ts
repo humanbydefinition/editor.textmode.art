@@ -1,6 +1,5 @@
 import type { EngineContext, IEngine } from '@/core/engine.types';
 import type { AudioData } from '@/platform/audio/AudioService';
-import { useAppStore } from '@/platform/state/appStore';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
@@ -114,14 +113,8 @@ export class TextmodeEngine implements IEngine {
 			onRunError: (error) => this.controller?.handleRunError(error),
 			onSynthError: (error) => this.controller?.handleSynthError(error),
 			onToggleUI: () => context.toggleUI(),
-			onRunnerConnected: () => {
-				useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', false);
-				useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
-			},
-			onRunnerDisconnected: () => {
-				useAppStore.getState().setEngineCustomState('textmode', 'runnerUnavailable', true);
-				useAppStore.getState().setEngineCustomState('textmode', 'runnerReconnecting', false);
-			},
+			onRunnerConnected: () => context.onRunnerConnected?.(),
+			onRunnerDisconnected: () => context.onRunnerDisconnected?.(),
 		});
 		return this.runtime;
 	}

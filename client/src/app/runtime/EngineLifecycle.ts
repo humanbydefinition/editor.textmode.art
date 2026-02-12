@@ -8,7 +8,7 @@ import type { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 import type { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
+import type { PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 
 import type { StrudelTransportState } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
@@ -16,6 +16,7 @@ import type { SharePayload } from '@/features/share/share.types';
 
 interface EngineLifecycleDependencies {
 	paneCoordinator: PaneCoordinator;
+	paneStore: PaneStoreAdapter;
 	editorManager: EditorManager;
 	storage: IStorageService;
 	store: AppStoreAdapter;
@@ -71,6 +72,14 @@ export class EngineLifecycle {
 			getInitialCode: () => this.deps.storage.loadEngineCode('textmode'),
 			toggleUI: this.deps.toggleUI,
 			changeFontSize: this.deps.changeFontSize,
+			onRunnerConnected: () => {
+				this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', false);
+				this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
+			},
+			onRunnerDisconnected: () => {
+				this.deps.store.engine.setCustomState('textmode', 'runnerUnavailable', true);
+				this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
+			},
 		});
 
 		const editor = this.textmodeEngine.getEditor();
@@ -102,7 +111,7 @@ export class EngineLifecycle {
 	}
 
 	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
-		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), createPaneStoreAdapter());
+		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), this.deps.paneStore);
 		this.deps.render();
 
 		if (enabled) {

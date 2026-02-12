@@ -17,7 +17,7 @@ import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/platform/storage/StorageService';
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import { createPaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
+import { createPaneStoreAdapter, type PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings, StrudelTransportState } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
@@ -30,6 +30,7 @@ export class AppRuntime {
 	private readonly storage: IStorageService;
 	private readonly editorManager: EditorManager;
 	private readonly paneCoordinator: PaneCoordinator;
+	private readonly paneStore: PaneStoreAdapter;
 	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly engineLifecycle: EngineLifecycle;
@@ -47,6 +48,7 @@ export class AppRuntime {
 		this.storage = storageService;
 		this.editorManager = new EditorManager();
 		this.paneCoordinator = new PaneCoordinator();
+		this.paneStore = createPaneStoreAdapter();
 		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
@@ -60,6 +62,7 @@ export class AppRuntime {
 		// Initialize Lifecycle first (it needs callbacks that refer to uiActions, which is fine as they are lazy)
 		this.engineLifecycle = new EngineLifecycle({
 			paneCoordinator: this.paneCoordinator,
+			paneStore: this.paneStore,
 			editorManager: this.editorManager,
 			storage: this.storage,
 			store: this.storeAdapter,
@@ -115,7 +118,7 @@ export class AppRuntime {
 		this.storeAdapter.settings.setSettings(loadedSettings);
 		await this.shareWorkflow.hydrateFromLocation(window.location);
 
-		this.paneCoordinator.sync(loadedSettings, createPaneStoreAdapter());
+		this.paneCoordinator.sync(loadedSettings, this.paneStore);
 		this.storeInitCleanup = initAppStore();
 
 		const appContainer = document.getElementById('app-container');
