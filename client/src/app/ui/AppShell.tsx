@@ -5,7 +5,6 @@ import { ErrorOverlay } from '@/shared/components/ErrorOverlay';
 import { Toaster } from '@/shared/ui/sonner';
 import { WelcomeDialog } from '@/shared/components/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
-import type { PaneConfig } from '@/features/editor-layout/ui/types';
 import { useAppStore } from '@/platform/state/appStore';
 import {
     selectError,
@@ -21,69 +20,23 @@ import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPaused
 import { Lock, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
-import type { StrudelTransportState } from '@/types/app.types';
-
-
-export interface AppShellProps {
-    /** Pane configurations for the layout */
-    panes: PaneConfig[];
-    /** Whether to show editor backdrop */
-    editorBackdrop: boolean;
-    /** Callback when a pane container is ready */
-    onPaneReady: (paneId: string, container: HTMLElement) => void;
-    // Actions (Controller Logic)
-    onShare: () => void;
-    onRandomize: () => Promise<boolean>;
-    onToggleStrudelTransport: () => void;
-    onMakeRandomChange: () => void;
-    strudelEnabled: boolean;
-    strudelTransport: StrudelTransportState;
-    randomizeLoading: boolean;
-    onClearStorage: () => void;
-    onLoadExample: (code: string, engineId: string) => void;
-    onRevertToLastWorking: () => void;
-    onShareUnlockAndRun: () => void;
-    onShareUnlockOnly: () => void;
-    onShareDiscard: () => void;
-    onSharePromptOpen: () => void;
-    onReconnectTextmodeRunner: () => void;
-    shareExportOpen: boolean;
-    shareExportData: ShareExportData | null;
-    onShareExportOpenChange: (open: boolean) => void;
-    onShareExportCopy: (url: string) => void;
-}
+import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
 
 /**
  * Root component for the application.
  * Renders both EditorLayout (editor panes) and the AppShell (UI layer).
  */
-export function AppShell({
-    panes,
-    editorBackdrop,
-    onPaneReady,
-    onShare,
-    onRandomize,
-    onToggleStrudelTransport,
-    onMakeRandomChange,
-    strudelEnabled,
-    strudelTransport,
-    randomizeLoading,
-    onClearStorage,
-    onLoadExample,
-    onRevertToLastWorking,
-    onShareUnlockAndRun,
-    onShareUnlockOnly,
-    onShareDiscard,
-    onSharePromptOpen,
-    onReconnectTextmodeRunner,
-    shareExportOpen,
-    shareExportData,
-    onShareExportOpenChange,
-    onShareExportCopy,
-}: AppShellProps) {
+export function AppShell() {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
     const [publishOpen, setPublishOpen] = useState(false);
     const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
+
+    // Local UI State for Share Export
+    const [shareExportOpen, setShareExportOpen] = useState(false);
+    const [shareExportData, setShareExportData] = useState<ShareExportData | null>(null);
+
+    // Runtime Context
+    const { actions, state: runtimeState, layout } = useAppRuntime();
 
     // Store State
     const error = useAppStore(selectError);
@@ -95,26 +48,28 @@ export function AppShell({
 
     const hasLastWorking = useAppStore(selectHasLastWorkingForError);
 
-
     const onDismissError = () => setError(null);
+
+    const handleShare = () => {
+        const data = actions.getShareExportData();
+        setShareExportData(data);
+        setShareExportOpen(true);
+    };
 
     return (
         <>
             {/* Layout layer - editor panes with mobile nav */}
             <AppLayout
-                panes={panes}
-                editorBackdrop={editorBackdrop}
-                onPaneReady={onPaneReady}
+                panes={layout.panes}
+                editorBackdrop={runtimeState.editorBackdrop}
+                onPaneReady={layout.onPaneReady}
             />
-
-
 
             {/* UI shell layer - elevated above editors */}
             <div
                 id="shell-container"
                 className="fixed inset-0 z-[100] pointer-events-none"
             >
-                {/* Orientation Toggle Button (Desktop Only) */}
                 {/* Orientation Toggle Button (Desktop Only) removed */}
 
                 {textmodeRunnerUnavailable && (
@@ -137,7 +92,7 @@ export function AppShell({
                                     type="button"
                                     size="sm"
                                     variant="secondary"
-                                    onClick={onReconnectTextmodeRunner}
+                                    onClick={actions.reconnectTextmodeRunner}
                                     disabled={textmodeRunnerReconnecting}
                                     className="gap-2 bg-zinc-900/95 text-zinc-100 shadow-lg hover:bg-zinc-800"
                                     aria-live="polite"
@@ -163,17 +118,17 @@ export function AppShell({
 
                 {!welcomeOpen && (
                     <ShareConsentDialog
-                        onUnlockAndRun={onShareUnlockAndRun}
-                        onUnlockOnly={onShareUnlockOnly}
-                        onDiscard={onShareDiscard}
+                        onUnlockAndRun={actions.unlockAndRun}
+                        onUnlockOnly={actions.unlockOnly}
+                        onDiscard={actions.discardShare}
                     />
                 )}
 
                 <ShareExportDialog
                     open={shareExportOpen}
                     data={shareExportData}
-                    onOpenChange={onShareExportOpenChange}
-                    onCopyLink={onShareExportCopy}
+                    onOpenChange={setShareExportOpen}
+                    onCopyLink={actions.copyShareExportUrl}
                     onPublishRequested={() => setPublishOpen(true)}
                     onSubmissionsPaused={() => setSubmissionsPausedOpen(true)}
                 />
@@ -193,7 +148,7 @@ export function AppShell({
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button
-                                onClick={onSharePromptOpen}
+                                onClick={actions.openSharePrompt}
                                 className={cn(
                                     'fixed bottom-2 right-2 z-50 pointer-events-auto',
                                     'flex items-center justify-center',
@@ -225,15 +180,15 @@ export function AppShell({
                 >
                     {!showShareLock && (
                         <SystemMenu
-                            onShare={onShare}
-                            onRandomize={onRandomize}
-                            onToggleStrudelTransport={onToggleStrudelTransport}
-                            onMakeRandomChange={onMakeRandomChange}
-                            strudelEnabled={strudelEnabled}
-                            strudelTransport={strudelTransport}
-                            randomizeLoading={randomizeLoading}
-                            onClearStorage={onClearStorage}
-                            onLoadExample={onLoadExample}
+                            onShare={handleShare}
+                            onRandomize={actions.randomize}
+                            onToggleStrudelTransport={actions.toggleStrudelTransport}
+                            onMakeRandomChange={actions.makeRandomChange}
+                            strudelEnabled={runtimeState.strudelEnabled}
+                            strudelTransport={runtimeState.strudelTransport}
+                            randomizeLoading={runtimeState.randomizeLoading}
+                            onClearStorage={actions.clearStorage}
+                            onLoadExample={actions.loadExample}
                             slugInfoAutoOpenEnabled={!welcomeOpen}
                         />
                     )}
@@ -242,7 +197,7 @@ export function AppShell({
                         error={error}
                         hasLastWorking={hasLastWorking}
                         onDismiss={onDismissError}
-                        onRevert={onRevertToLastWorking}
+                        onRevert={actions.revertToLastWorking}
                     />
                 </div>
             </div>
