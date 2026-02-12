@@ -136,5 +136,5 @@ RUN mkdir -p /app/server/storage
 
 EXPOSE 3000
 
-# Run pending migrations, then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Run pending migrations (with retry for DB readiness), then start the server
+CMD ["sh", "-c", "until npx prisma migrate deploy; do echo 'DB not ready — retrying in 3s…'; sleep 3; done && node dist/index.js"]
