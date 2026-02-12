@@ -107,17 +107,21 @@ RUN apk add --no-cache \
 
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# --- Copy workspace root package files ---
+# --- Copy workspace root + every workspace package.json for dependency resolution ---
+# npm workspaces requires all workspace dirs to exist before `npm ci` can resolve them.
 COPY package.json package-lock.json ./
+COPY packages/contracts/package.json packages/contracts/
+COPY client/package.json client/
+COPY server/package.json server/
+COPY runner/package.json runner/
 
 # --- Install all dependencies (including workspace links) ---
 RUN npm ci
 
-# --- Copy built contracts ---
+# --- Overlay built contracts (replaces the placeholder package.json-only dir) ---
 COPY --from=source /build/packages/ packages/
 
-# --- Copy built server ---
-COPY --from=server-build /build/server/package.json server/package.json
+# --- Overlay built server artifacts ---
 COPY --from=server-build /build/server/prisma.config.ts server/prisma.config.ts
 COPY --from=server-build /build/server/dist/ server/dist/
 COPY --from=server-build /build/server/prisma/ server/prisma/
