@@ -38,7 +38,7 @@ export interface IEditor {
 /**
  * Configuration options shared by all editors.
  */
-export interface EditorOptions {
+export interface BaseEditorOptions {
 	container: HTMLElement;
 	initialValue: string;
 	fontSize?: number;
@@ -62,9 +62,9 @@ export abstract class BaseEditor implements IEditor {
 	protected disposables: monaco.IDisposable[] = [];
 	private suppressChange = false;
 
-	protected options: EditorOptions;
+	protected options: BaseEditorOptions;
 
-	constructor(options: EditorOptions) {
+	constructor(options: BaseEditorOptions) {
 		this.options = options;
 
 		// Create model

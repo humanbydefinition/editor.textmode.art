@@ -1,6 +1,6 @@
-import type { AppSettings } from '@/types/app.types';
-import type { IController, BaseControllerCallbacks } from './controller/BaseController';
-import type { BaseEditor } from './editor/BaseEditor';
+import type { AppSettings } from '@/core/app.types';
+import type { IController, BaseControllerCallbacks } from './BaseController';
+import type { BaseEditor } from './BaseEditor';
 
 export type EngineId = 'textmode' | 'strudel';
 

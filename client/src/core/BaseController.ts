@@ -1,6 +1,6 @@
-import type { CodeError } from '@/types/app.types';
+import type { CodeError } from '@/core/app.types';
 import type { ControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
-import type { IEditor } from '../editor/BaseEditor';
+import type { IEditor } from './BaseEditor';
 import type { SharePayload } from '@/features/share/share.types';
 
 /** Delay before pending code is confirmed as 'last working' */
