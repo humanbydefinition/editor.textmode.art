@@ -1,11 +1,8 @@
-import type { EngineContext } from '@/types/engine.types';
-import type { Example } from '@/features/examples/examples.types';
+import type { EngineContext, IEngine } from '@/core/engine.types';
 import type { AudioData } from '@/platform/audio/AudioService';
 import { useAppStore } from '@/platform/state/appStore';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
-import { defaultTextmodeSketch } from './defaultSketch';
-import { examples } from './examples';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
@@ -13,7 +10,7 @@ import { createControllerStoreAdapter } from '@/platform/state/adapters/controll
 /**
  * Textmode engine for visual live coding with textmode.js.
  */
-export class TextmodeEngine {
+export class TextmodeEngine implements IEngine {
 	readonly id = 'textmode';
 	readonly displayName = 'textmode.js';
 	readonly description = 'Visual live coding with ASCII/text-based graphics';
@@ -68,14 +65,6 @@ export class TextmodeEngine {
 
 	isInitialized(): boolean {
 		return this.initialized;
-	}
-
-	getDefaultCode(): string {
-		return defaultTextmodeSketch;
-	}
-
-	getExamples(): Record<string, Example[]> {
-		return examples;
 	}
 
 	getCode(): string {

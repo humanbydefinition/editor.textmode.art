@@ -1,9 +1,6 @@
-import type { EngineContext } from '@/types/engine.types';
-import type { Example } from '@/features/examples/examples.types';
+import type { EngineContext, IEngine } from '@/core/engine.types';
 import { StrudelEditor, type StrudelEditorOptions } from './editor/StrudelEditor';
 import { StrudelRuntime } from './runtime';
-import { defaultStrudelSketch } from './defaultSketch';
-import { examples } from './examples';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
 import type { BaseControllerCallbacks } from '@/core/controller/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
@@ -11,7 +8,7 @@ import { createControllerStoreAdapter } from '@/platform/state/adapters/controll
 /**
  * Strudel engine for audio live coding with Strudel/TidalCycles patterns.
  */
-export class StrudelEngine {
+export class StrudelEngine implements IEngine {
 	readonly id = 'strudel';
 	readonly displayName = 'strudel';
 	readonly description = 'Web-based environment for live coding algorithmic patterns';
@@ -68,14 +65,6 @@ export class StrudelEngine {
 
 	isInitialized(): boolean {
 		return this.initialized;
-	}
-
-	getDefaultCode(): string {
-		return defaultStrudelSketch;
-	}
-
-	getExamples(): Record<string, Example[]> {
-		return examples;
 	}
 
 	getCode(): string {
