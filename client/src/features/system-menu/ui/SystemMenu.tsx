@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play, Heart } from 'lucide-react';
 import {
@@ -17,8 +17,6 @@ import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
-import { ExamplesTab } from '@/features/examples';
-import { SlugInfoAlert } from '@/shared/components/SlugInfoAlert';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
@@ -33,8 +31,7 @@ export interface SystemMenuProps {
     strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
     onClearStorage: () => void;
-    onLoadExample: (code: string, engineId: string) => void;
-    slugInfoAutoOpenEnabled?: boolean;
+    renderExamplesTab: (onClose: () => void) => ReactNode;
 }
 
 export function SystemMenu({
@@ -46,8 +43,7 @@ export function SystemMenu({
     strudelTransport,
     randomizeLoading,
     onClearStorage,
-    onLoadExample,
-    slugInfoAutoOpenEnabled = true,
+    renderExamplesTab,
 }: SystemMenuProps) {
     const settings = useAppStore(selectSettings);
     const setSettings = useAppStore((state) => state.setSettings);
@@ -65,14 +61,6 @@ export function SystemMenu({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <SlugInfoAlert
-                autoOpenEnabled={slugInfoAutoOpenEnabled}
-                onShare={onShare}
-                className={cn(
-                    'fixed top-2 right-[8.5rem] z-50 pointer-events-auto'
-                )}
-            />
-
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
@@ -270,7 +258,7 @@ export function SystemMenu({
                     </TabsContent>
 
                     <TabsContent value="examples" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-                        <ExamplesTab onLoadExample={onLoadExample} onClose={() => setOpen(false)} />
+                        {renderExamplesTab(() => setOpen(false))}
                     </TabsContent>
 
                     <TabsContent value="shortcuts" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">

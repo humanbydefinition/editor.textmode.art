@@ -17,10 +17,12 @@ import { MobileNav } from '@/features/editor-layout/ui/MobileNav';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { PublishRequestDialog } from '@/features/publish';
 import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
+import { ExamplesTab } from '@/features/examples';
 import { Lock, RotateCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
+import { SlugInfoAlert } from './SlugInfoAlert';
 
 /**
  * Root component for the application.
@@ -179,18 +181,27 @@ export function AppShell() {
                     )}
                 >
                     {!showShareLock && (
-                        <SystemMenu
-                            onShare={handleShare}
-                            onRandomize={actions.randomize}
-                            onToggleStrudelTransport={actions.toggleStrudelTransport}
-                            onMakeRandomChange={actions.makeRandomChange}
-                            strudelEnabled={runtimeState.strudelEnabled}
-                            strudelTransport={runtimeState.strudelTransport}
-                            randomizeLoading={runtimeState.randomizeLoading}
-                            onClearStorage={actions.clearStorage}
-                            onLoadExample={actions.loadExample}
-                            slugInfoAutoOpenEnabled={!welcomeOpen}
-                        />
+                        <>
+                            <SlugInfoAlert
+                                autoOpenEnabled={!welcomeOpen}
+                                onShare={handleShare}
+                                className="fixed top-2 right-[8.5rem] z-50 pointer-events-auto"
+                            />
+
+                            <SystemMenu
+                                onShare={handleShare}
+                                onRandomize={actions.randomize}
+                                onToggleStrudelTransport={actions.toggleStrudelTransport}
+                                onMakeRandomChange={actions.makeRandomChange}
+                                strudelEnabled={runtimeState.strudelEnabled}
+                                strudelTransport={runtimeState.strudelTransport}
+                                randomizeLoading={runtimeState.randomizeLoading}
+                                onClearStorage={actions.clearStorage}
+                                renderExamplesTab={(onClose) => (
+                                    <ExamplesTab onLoadExample={actions.loadExample} onClose={onClose} />
+                                )}
+                            />
+                        </>
                     )}
 
                     <ErrorOverlay
