@@ -39,13 +39,20 @@ const slugPageRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const sketch = await prisma.sketchRequest.findFirst({
-      where: {
-        slug: normalizedSlug,
-        status: { in: ['PENDING', 'APPROVED'] },
-      },
-      select: slugPageSelect,
-    });
+    let sketch;
+    try {
+      sketch = await prisma.sketchRequest.findFirst({
+        where: {
+          slug: normalizedSlug,
+          status: { in: ['PENDING', 'APPROVED'] },
+        },
+        select: slugPageSelect,
+      });
+    } catch (error) {
+      request.log.error({ err: error }, 'Database unavailable for slug page, serving SPA fallback');
+      await reply.redirect('/');
+      return;
+    }
 
     if (!sketch) {
       await reply.redirect('/');
