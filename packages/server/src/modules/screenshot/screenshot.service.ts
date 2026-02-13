@@ -65,7 +65,30 @@ export class ScreenshotService {
         timeout: 30000,
       });
 
-      await page.waitForSelector('body[data-ready="true"]', { timeout: 30000 });
+      await page.waitForFunction(() => {
+        const status = document.body?.dataset.status;
+        return status === 'ready' || status === 'error';
+      }, { timeout: 30000 });
+
+      const previewStatus = await page.evaluate(() => document.body?.dataset.status ?? 'unknown');
+      if (previewStatus === 'error') {
+        const previewError = await page.evaluate(() => document.body?.dataset.error ?? 'Unknown preview error');
+        throw new Error(`Screenshot preview failed for "${slug}": ${previewError}`);
+      }
+      if (previewStatus !== 'ready') {
+        throw new Error(`Screenshot preview entered unexpected state for "${slug}": ${previewStatus}`);
+      }
+
+      // Ensure one more paint cycle before capturing.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => resolve());
+            });
+          }),
+      );
+
       const canvas = page.locator('canvas').first();
       await canvas.waitFor({ state: 'visible', timeout: 30000 });
       const buffer = await canvas.screenshot({ type: 'png' });
