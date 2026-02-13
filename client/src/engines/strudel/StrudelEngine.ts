@@ -1,6 +1,10 @@
 import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
 import { StrudelEditor, type StrudelEditorOptions } from './editor/StrudelEditor';
-import { StrudelRuntime } from './runtime';
+import {
+	StrudelHostRuntime,
+	type IStrudelRuntime,
+	type StrudelRuntimeOptions,
+} from './runtime';
 import { StrudelController, type StrudelControllerDependencies } from './StrudelController';
 import type { BaseControllerCallbacks } from '@/core/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
@@ -32,7 +36,7 @@ export class StrudelEngine implements IEngine {
 	};
 
 	private editor: StrudelEditor | null = null;
-	private runtime: StrudelRuntime | null = null;
+	private runtime: IStrudelRuntime | null = null;
 	private controller: StrudelController | null = null;
 	private readonly storeAdapter = createControllerStoreAdapter();
 	private initialized = false;
@@ -75,7 +79,7 @@ export class StrudelEngine implements IEngine {
 		return this.controller;
 	}
 
-	getRuntime(): StrudelRuntime | null {
+	getRuntime(): IStrudelRuntime | null {
 		return this.runtime;
 	}
 
@@ -138,12 +142,17 @@ export class StrudelEngine implements IEngine {
 		return new StrudelEditor(options);
 	}
 
-	private createRuntime(): StrudelRuntime {
-		return new StrudelRuntime({
+	private createRuntime(): IStrudelRuntime {
+		const runtimeOptions: StrudelRuntimeOptions = {
 			onReady: () => this.controller?.handleRuntimeReady(),
 			onError: (error) => this.controller?.handleError(error),
 			onPatternUpdate: (pattern) => this.controller?.handlePatternUpdate(pattern),
 			onPlayStateChange: (isPlaying) => this.controller?.handlePlayStateChange(isPlaying),
+		};
+
+		return new StrudelHostRuntime({
+			...runtimeOptions,
+			runnerUrl: getStrudelRunnerUrl(),
 		});
 	}
 
@@ -165,4 +174,15 @@ export class StrudelEngine implements IEngine {
 		return new StrudelController(callbacks, deps);
 	}
 
+}
+
+function getStrudelRunnerUrl(): string {
+	const explicit = import.meta.env.VITE_STRUDEL_RUNNER_URL;
+	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
+		return explicit.trim();
+	}
+
+	return import.meta.env.DEV
+		? `http://${window.location.hostname}:5174/strudel.html`
+		: '/runner/strudel.html';
 }

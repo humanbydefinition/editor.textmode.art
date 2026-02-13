@@ -1,0 +1,381 @@
+import type { CodeError } from '@/core/app.types';
+import type {
+	StrudelHap,
+	StrudelPattern,
+	StrudelRuntimeOptions,
+	IStrudelRuntime,
+} from '../StrudelRuntime';
+import {
+	STRUDEL_PROTOCOL_VERSION,
+	type StrudelParentToRunnerMessage,
+	type StrudelHapDto,
+	type StrudelInitMessage,
+	type StrudelMiniLocationDto,
+	isStrudelRunnerMessage,
+} from '@/engines/strudel/sandbox/protocol';
+
+const HANDSHAKE_TIMEOUT_MS = 5000;
+
+export interface StrudelHostRuntimeOptions extends StrudelRuntimeOptions {
+	runnerUrl: string;
+	container?: HTMLElement;
+}
+
+export class StrudelHostRuntime implements IStrudelRuntime {
+	readonly strategy = 'sandboxed' as const;
+
+	private iframe: HTMLIFrameElement | null = null;
+	private messagePort: MessagePort | null = null;
+	private readonly options: StrudelHostRuntimeOptions;
+	private readonly container: HTMLElement;
+	private readonly runnerOrigin: string;
+
+	private _isInitialized = false;
+	private isReady = false;
+	private isPlaying = false;
+	private currentPattern: StrudelPattern | null = null;
+	private latestHaps: StrudelHap[] = [];
+	private currentCycle = 0;
+
+	private pendingCode: string | null = null;
+	private queuedCode: string | null = null;
+	private handshakeTimer: number | null = null;
+	private readyPromise: Promise<void> | null = null;
+	private readyResolver: (() => void) | null = null;
+	private readyRejecter: ((reason: Error) => void) | null = null;
+	private disposed = false;
+
+	constructor(options: StrudelHostRuntimeOptions) {
+		this.options = options;
+		this.container = options.container ?? document.body;
+		this.runnerOrigin = new URL(options.runnerUrl, window.location.origin).origin;
+	}
+
+	async init(): Promise<void> {
+		if (this.disposed) return;
+		if (!this.iframe) {
+			this.createIframe();
+		}
+
+		await this.waitUntilReady();
+		this.sendMessage({ type: 'STR_INIT_AUDIO' });
+		this._isInitialized = true;
+		this.options.onReady?.();
+	}
+
+	isInitialized(): boolean {
+		return this._isInitialized;
+	}
+
+	forceRun(code: string): void {
+		if (this.disposed) return;
+		if (!this.isReady) {
+			this.pendingCode = code;
+			return;
+		}
+		this.queuedCode = code;
+		this.flushQueuedCode();
+	}
+
+	clearPendingCode(): void {
+		this.pendingCode = null;
+		this.queuedCode = null;
+	}
+
+	hush(): void {
+		this.clearPendingCode();
+		this.currentPattern = null;
+		this.latestHaps = [];
+		this.isPlaying = false;
+		if (this.isReady) {
+			this.sendMessage({ type: 'STR_HUSH' });
+		}
+		this.options.onPlayStateChange?.(false);
+		this.options.onPatternUpdate?.(null);
+	}
+
+	dispose(): void {
+		this.disposed = true;
+		this.hush();
+		this.clearHandshakeTimer();
+
+		if (this.isReady) {
+			this.sendMessage({ type: 'STR_DISPOSE' });
+		}
+
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
+
+		if (this.iframe) {
+			this.iframe.removeEventListener('load', this.handleIframeLoad);
+			this.iframe.removeEventListener('error', this.handleIframeError);
+			this.iframe.remove();
+			this.iframe = null;
+		}
+
+		if (this.readyRejecter) {
+			this.readyRejecter(new Error('Strudel runtime disposed'));
+		}
+		this.readyPromise = null;
+		this.readyResolver = null;
+		this.readyRejecter = null;
+	}
+
+	getIsPlaying(): boolean {
+		return this.isPlaying;
+	}
+
+	getPattern(): StrudelPattern | null {
+		return this.currentPattern;
+	}
+
+	getCycle(): number {
+		return this.currentCycle;
+	}
+
+	getTime(): number {
+		return performance.now() / 1000;
+	}
+
+	private createIframe(): void {
+		if (this.iframe) {
+			this.iframe.removeEventListener('load', this.handleIframeLoad);
+			this.iframe.removeEventListener('error', this.handleIframeError);
+			this.iframe.remove();
+			this.iframe = null;
+		}
+
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
+
+		this.isReady = false;
+		this.iframe = document.createElement('iframe');
+		this.iframe.id = 'strudel-runner-frame';
+		this.iframe.src = this.options.runnerUrl;
+		this.iframe.style.display = 'none';
+		this.iframe.sandbox.add('allow-scripts');
+		this.iframe.sandbox.add('allow-same-origin');
+		this.iframe.referrerPolicy = 'no-referrer';
+		this.iframe.addEventListener('load', this.handleIframeLoad);
+		this.iframe.addEventListener('error', this.handleIframeError);
+		this.container.appendChild(this.iframe);
+		this.startHandshakeTimer();
+	}
+
+	private waitUntilReady(): Promise<void> {
+		if (this.isReady) return Promise.resolve();
+		if (this.readyPromise) return this.readyPromise;
+
+		this.readyPromise = new Promise<void>((resolve, reject) => {
+			this.readyResolver = resolve;
+			this.readyRejecter = reject;
+		});
+		return this.readyPromise;
+	}
+
+	private flushQueuedCode(): void {
+		if (!this.isReady || !this.messagePort) return;
+
+		const code = this.queuedCode ?? this.pendingCode;
+		if (code === null) return;
+		this.queuedCode = null;
+		this.pendingCode = null;
+		this.sendMessage({ type: 'STR_RUN_CODE', code, autostart: true });
+	}
+
+	private sendMessage(message: StrudelParentToRunnerMessage): void {
+		if (!this.messagePort) return;
+		this.messagePort.postMessage(message);
+	}
+
+	private handleIframeLoad = (): void => {
+		this.initializeMessagePort();
+	};
+
+	private handleIframeError = (): void => {
+		this.failHandshake(new Error('Failed to load Strudel runner iframe'));
+	};
+
+	private initializeMessagePort(): void {
+		if (!this.iframe?.contentWindow) return;
+
+		const channel = new MessageChannel();
+		this.messagePort = channel.port1;
+		this.messagePort.onmessage = this.handlePortMessage;
+		this.messagePort.start();
+
+		const initMessage: StrudelInitMessage = {
+			type: 'STR_INIT',
+			v: STRUDEL_PROTOCOL_VERSION,
+		};
+		const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
+		this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
+		this.startHandshakeTimer();
+	}
+
+	private handlePortMessage = (event: MessageEvent): void => {
+		const message = event.data as unknown;
+		if (!isStrudelRunnerMessage(message)) return;
+
+		switch (message.type) {
+			case 'STR_READY':
+				this.isReady = true;
+				this._isInitialized = message.audioInitialized;
+				this.clearHandshakeTimer();
+				if (this.readyResolver) {
+					this.readyResolver();
+				}
+				this.readyPromise = null;
+				this.readyResolver = null;
+				this.readyRejecter = null;
+				this.flushQueuedCode();
+				break;
+
+			case 'STR_RUN_OK':
+				if (typeof message.cycle === 'number') {
+					this.currentCycle = message.cycle;
+				}
+				this.isPlaying = message.isPlaying;
+				this.currentPattern = this.createPattern(message.haps, message.miniLocations);
+				this.options.onPlayStateChange?.(this.isPlaying);
+				this.options.onPatternUpdate?.(this.currentPattern);
+				break;
+
+			case 'STR_RUN_ERROR':
+				this.options.onError?.({
+					message: message.message,
+					stack: message.stack,
+					line: message.line,
+					column: message.column,
+				});
+				break;
+
+			case 'STR_PLAY_STATE':
+				this.isPlaying = message.isPlaying;
+				if (typeof message.cycle === 'number') {
+					this.currentCycle = message.cycle;
+				}
+				if (message.haps) {
+					this.updateLatestHaps(message.haps);
+					if (!this.currentPattern && this.latestHaps.length > 0) {
+						this.currentPattern = this.createLivePattern();
+						this.options.onPatternUpdate?.(this.currentPattern);
+					}
+				}
+				this.options.onPlayStateChange?.(this.isPlaying);
+				if (!this.isPlaying) {
+					this.currentPattern = null;
+					this.latestHaps = [];
+					this.options.onPatternUpdate?.(null);
+				}
+				break;
+		}
+	};
+
+	private createPattern(
+		haps: StrudelHapDto[] | undefined,
+		miniLocations: StrudelMiniLocationDto[] | undefined
+	): StrudelPattern | null {
+		if (haps && haps.length > 0) {
+			this.updateLatestHaps(haps);
+			if (this.latestHaps.length > 0) {
+				return this.createLivePattern();
+			}
+		}
+
+		if (!miniLocations || miniLocations.length === 0) return null;
+
+		const locations = miniLocations
+			.map((location) => ({
+				start: location.start.offset,
+				end: location.end.offset,
+			}))
+			.filter((location) => Number.isFinite(location.start) && Number.isFinite(location.end) && location.start < location.end);
+
+		if (locations.length === 0) return null;
+
+		const beginValue = this.currentCycle;
+		const safeEnd = beginValue + 0.25;
+		this.latestHaps = locations.map((location) => ({
+			whole: {
+				begin: { valueOf: () => beginValue },
+				end: { valueOf: () => safeEnd },
+				duration: safeEnd - beginValue,
+			},
+			context: {
+				locations: [{ start: location.start, end: location.end }],
+			},
+			hasOnset: () => true,
+		}));
+		return this.createLivePattern();
+	}
+
+	private updateLatestHaps(haps: StrudelHapDto[]): void {
+		this.latestHaps = haps
+			.filter((hap) => Number.isFinite(hap.begin) && Number.isFinite(hap.end) && hap.begin < hap.end)
+			.map((hap) => {
+				const locations = hap.locations
+					.filter((location) => Number.isFinite(location.start) && Number.isFinite(location.end) && location.start < location.end)
+					.map((location) => ({ start: location.start, end: location.end }));
+
+				return {
+					whole: {
+						begin: { valueOf: () => hap.begin },
+						end: { valueOf: () => hap.end },
+						duration: hap.end - hap.begin,
+					},
+					context: {
+						locations,
+					},
+					hasOnset: () => true,
+				} satisfies StrudelHap;
+			})
+			.filter((hap) => (hap.context?.locations?.length ?? 0) > 0);
+	}
+
+	private createLivePattern(): StrudelPattern {
+		return {
+			queryArc: (begin: number, end: number): StrudelHap[] => {
+				const beginValue = Number.isFinite(begin) ? begin : 0;
+				const endValue = Number.isFinite(end) ? end : beginValue + 0.25;
+				return this.latestHaps.filter((hap) => {
+					const hapBegin = hap.whole?.begin.valueOf() ?? 0;
+					const hapEnd = hap.whole?.end.valueOf() ?? 0;
+					return hapEnd > beginValue && hapBegin < endValue;
+				});
+			},
+		};
+	}
+
+	private startHandshakeTimer(): void {
+		this.clearHandshakeTimer();
+		this.handshakeTimer = window.setTimeout(() => {
+			this.failHandshake(new Error('Timed out waiting for Strudel runner handshake'));
+		}, HANDSHAKE_TIMEOUT_MS);
+	}
+
+	private clearHandshakeTimer(): void {
+		if (this.handshakeTimer !== null) {
+			window.clearTimeout(this.handshakeTimer);
+			this.handshakeTimer = null;
+		}
+	}
+
+	private failHandshake(error: Error): void {
+		this.clearHandshakeTimer();
+		this.isReady = false;
+		if (this.readyRejecter) {
+			this.readyRejecter(error);
+		}
+		this.readyPromise = null;
+		this.readyResolver = null;
+		this.readyRejecter = null;
+
+		const codeError: CodeError = { message: error.message };
+		this.options.onError?.(codeError);
+	}
+}

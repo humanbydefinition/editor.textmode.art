@@ -84,9 +84,9 @@ export function AppShell() {
                             )}
                         >
                             <p className="text-[11px] uppercase tracking-[0.16em] text-amber-300/95">runner offline</p>
-                            <h2 className="mt-1 text-sm sm:text-base font-semibold text-zinc-100">textmode.js runner is not reachable</h2>
+                            <h2 className="mt-1 text-sm sm:text-base font-semibold text-zinc-100">sandbox runner is not reachable</h2>
                             <p className="mt-1 text-xs sm:text-sm leading-relaxed text-zinc-300/95">
-                                visual output is paused because the sandbox runner failed to load.
+                                visuals and audio are paused because the sandbox runner failed to load.
                             </p>
                             <div className="mt-3 sm:mt-4 flex justify-end">
                                 <Button

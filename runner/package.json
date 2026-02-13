@@ -10,6 +10,7 @@
         "check-types": "tsc --noEmit"
     },
     "dependencies": {
+        "@strudel/web": "^1.2.6",
         "textmode.js": "0.10.0",
         "textmode.synth.js": "1.5.1",
         "textmode.filters.js": "^1.1.1"

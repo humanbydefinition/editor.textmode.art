@@ -9,6 +9,20 @@ export interface StrudelRuntimeOptions {
 	onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
+export interface IStrudelRuntime {
+	readonly strategy: 'direct' | 'sandboxed';
+	init(): Promise<void>;
+	isInitialized(): boolean;
+	forceRun(code: string): void;
+	dispose(): void;
+	hush(): void;
+	clearPendingCode(): void;
+	getIsPlaying(): boolean;
+	getPattern(): StrudelPattern | null;
+	getCycle(): number;
+	getTime(): number;
+}
+
 /** Minimal pattern interface for querying haps */
 export interface StrudelPattern {
 	queryArc(begin: number, end: number): StrudelHap[];
@@ -55,7 +69,7 @@ interface StrudelRepl {
 /**
  * Strudel audio runtime with miniLocations support
  */
-export class StrudelRuntime {
+export class StrudelRuntime implements IStrudelRuntime {
 	readonly strategy = 'direct' as const;
 
 	private _isInitialized = false;

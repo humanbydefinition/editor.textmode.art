@@ -1,11 +1,11 @@
-import { StrudelRuntime, type StrudelPattern } from './runtime';
+import type { IStrudelRuntime, StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';
 
 /**
  * Strudel-specific dependencies.
  */
-export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, StrudelRuntime> {
+export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, IStrudelRuntime> {
 	getPlaybackEnabled: () => boolean;
 }
 
@@ -35,7 +35,7 @@ export interface StrudelState {
 /**
  * StrudelController - manages Strudel audio runtime and code evaluation.
  */
-export class StrudelController extends BaseController<StrudelEditor, StrudelRuntime> implements IStrudelController {
+export class StrudelController extends BaseController<StrudelEditor, IStrudelRuntime> implements IStrudelController {
 	// Engine ID for generic state management
 	protected readonly engineId = 'strudel';
 
