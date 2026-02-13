@@ -15,6 +15,7 @@ import {
   setOgImageUrl,
 } from './admin.service.js';
 import { screenshotService } from '../screenshot/screenshot.service.js';
+import { DiscordService } from '../discord/discord.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
   const enqueueScreenshotCapture = (sketch: { id: string; slug: string }) => {
@@ -92,6 +93,12 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
 
       if (updated.status === 'APPROVED' && !updated.ogImageUrl) {
         enqueueScreenshotCapture({ id: updated.id, slug: updated.slug });
+      }
+
+      if (updated.status === 'APPROVED') {
+        DiscordService.getInstance().sendApprovalNotification(updated).catch((err) => {
+          app.log.error({ err }, 'Failed to send Discord approval notification');
+        });
       }
 
       reply.send(toAdminSketchRequest(updated));

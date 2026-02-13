@@ -29,6 +29,7 @@ const envSchema = z.object({
   TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
   DISCORD_BOT_TOKEN: z.string().optional(),
   DISCORD_CHANNEL_ID: z.string().optional(),
+  DISCORD_APPROVED_CHANNEL_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

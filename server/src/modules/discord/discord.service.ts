@@ -87,4 +87,54 @@ export class DiscordService {
             console.error('[Discord] Failed to send notification:', error);
         }
     }
+
+    public async sendApprovalNotification(sketch: { slug: string; title: string; description: string | null; authorName: string | null; socialLinks: any }, publicUrlOverride?: string): Promise<void> {
+        if (!this.isReady || !env.DISCORD_APPROVED_CHANNEL_ID) {
+            return;
+        }
+
+        try {
+            const channel = await this.client.channels.fetch(env.DISCORD_APPROVED_CHANNEL_ID);
+            if (!channel || !(channel instanceof TextChannel)) {
+                console.warn(`[Discord] Channel ${env.DISCORD_APPROVED_CHANNEL_ID} not found or is not a text channel.`);
+                return;
+            }
+
+            const publicUrl = publicUrlOverride || env.PUBLIC_BASE_URL || 'https://synth.textmode.art';
+            const sketchUrl = `${publicUrl}/s/${sketch.slug}`;
+
+            // Extract URL from socialLinks if it exists (Prisma JSON type)
+            let userUrl: string | null = null;
+            if (Array.isArray(sketch.socialLinks) && sketch.socialLinks.length > 0) {
+                const firstLink = sketch.socialLinks[0];
+                if (typeof firstLink === 'object' && firstLink !== null && 'url' in firstLink) {
+                    userUrl = (firstLink as any).url;
+                }
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor(0x00FF00) // Green for approved
+                .setTitle('✨ New Sketch Approved! ✨')
+                .setURL(sketchUrl)
+                .setDescription(sketch.description || 'No description provided.')
+                .addFields(
+                    { name: 'Title', value: sketch.title, inline: true },
+                    { name: 'Author', value: sketch.authorName || 'Anonymous', inline: true },
+                )
+                .setTimestamp();
+
+            if (userUrl) {
+                embed.setAuthor({ name: sketch.authorName || 'Author', url: userUrl });
+            }
+
+            // If there's an OG image (preview), we could add it but we might not have the URL handy if it was just generated. 
+            // The admin route triggers generation *after* approval usually, or in parallel. 
+            // For now, simple notification.
+
+            await channel.send({ embeds: [embed] });
+            console.log(`[Discord] Approval notification sent for sketch ${sketch.slug}`);
+        } catch (error) {
+            console.error('[Discord] Failed to send approval notification:', error);
+        }
+    }
 }
