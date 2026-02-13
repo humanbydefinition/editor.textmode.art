@@ -17,7 +17,7 @@ import {
 } from '@/platform/api/SketchApiService';
 import { SLUG_MAX_LENGTH } from '@synth.textmode.art/contracts/sketch';
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
-import { Check, Loader2, X, Send, Link2, AlertCircle, Globe, ExternalLink } from 'lucide-react';
+import { Check, Loader2, X, Send, AlertCircle, Globe, ExternalLink } from 'lucide-react';
 
 const LICENSE_OPTIONS = [
 	'None',
@@ -49,7 +49,22 @@ function getPublishConsentPolicyVersion(): string {
 const PUBLISH_CONSENT_POLICY_VERSION = getPublishConsentPolicyVersion();
 const TURNSTILE_SITE_KEY = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim();
 const TURNSTILE_CONFIGURED = TURNSTILE_SITE_KEY.length > 0;
-const APP_HOST_FOR_PREVIEW = typeof window !== 'undefined' ? window.location.host : 'localhost:5173';
+function normalizeMastodonUrl(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) return '';
+
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+		return trimmed;
+	}
+
+	const handle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+	const [user, host] = handle.split('@');
+	if (user && host) {
+		return `https://${host}/@${user}`;
+	}
+
+	return `https://${trimmed}`;
+}
 
 export interface PublishRequestData {
 	textmodeCode: string;
@@ -194,7 +209,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 		if (mastodon.trim())
 			links.push({
 				label: 'Mastodon',
-				url: mastodon.trim().startsWith('http') ? mastodon.trim() : `https://${mastodon.trim()}`,
+				url: normalizeMastodonUrl(mastodon),
 			});
 		return links;
 	}, [website, github, instagram, bluesky, mastodon]);
@@ -545,7 +560,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 										<Input
 											value={mastodon}
 											onChange={(e) => setMastodon(e.target.value.replace(/\s/g, ''))}
-											placeholder="@user@mastodon.social"
+											placeholder="humanbydefinition@mastodon.social"
 											className="flex-1 bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
 											maxLength={200}
 										/>
