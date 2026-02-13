@@ -1,6 +1,49 @@
-import { Client, Events, GatewayIntentBits, EmbedBuilder, TextChannel } from 'discord.js';
+import { Client, EmbedBuilder, Events, GatewayIntentBits, TextChannel } from 'discord.js';
 import type { SketchRequestPayload } from '@synth.textmode.art/contracts/sketch';
 import { env } from '../../config/env.js';
+
+function escapeInlineMarkdown(value: string): string {
+    return value.replace(/([\\`*_~|>])/g, '\\$1');
+}
+
+interface SocialLinkLike {
+    label?: unknown;
+    url?: unknown;
+}
+
+function formatUnknownSocialLinks(socialLinks: unknown): string {
+    if (!Array.isArray(socialLinks) || socialLinks.length === 0) {
+        return 'none';
+    }
+
+    const lines = socialLinks
+        .map((entry) => {
+            if (!entry || typeof entry !== 'object') {
+                return null;
+            }
+
+            const { label, url } = entry as SocialLinkLike;
+            if (typeof url !== 'string' || url.trim().length === 0) {
+                return null;
+            }
+
+            const safeLabel = typeof label === 'string' && label.trim().length > 0
+                ? escapeInlineMarkdown(label.trim())
+                : 'Link';
+
+            return `- **${safeLabel}:** <${url.trim()}>`;
+        })
+        .filter((line): line is string => line !== null);
+
+    return lines.length > 0 ? lines.join('\n') : 'none';
+}
+
+function toQuotedBlock(value: string): string {
+    return value
+        .split(/\r?\n/)
+        .map((line) => `> ${line}`)
+        .join('\n');
+}
 
 export class DiscordService {
     private static instance: DiscordService;
@@ -67,7 +110,7 @@ export class DiscordService {
 
             const embed = new EmbedBuilder()
                 .setColor(0x0099FF)
-                .setTitle('New Sketch Submitted!')
+                .setTitle('A new gallery sketch submission has been received!')
                 .setURL(sketchUrl)
                 .setDescription(submission.description || 'No description provided.')
                 .addFields(
@@ -88,7 +131,16 @@ export class DiscordService {
         }
     }
 
-    public async sendApprovalNotification(sketch: { slug: string; title: string; description: string | null; authorName: string | null; socialLinks: any }, publicUrlOverride?: string): Promise<void> {
+    public async sendApprovalNotification(
+        sketch: {
+            slug: string;
+            title: string;
+            description?: string | null;
+            authorName?: string | null;
+            socialLinks?: unknown;
+        },
+        publicUrlOverride?: string
+    ): Promise<void> {
         if (!this.isReady || !env.DISCORD_APPROVED_CHANNEL_ID) {
             return;
         }
@@ -102,36 +154,34 @@ export class DiscordService {
 
             const publicUrl = publicUrlOverride || env.PUBLIC_BASE_URL || 'https://synth.textmode.art';
             const sketchUrl = `${publicUrl}/s/${sketch.slug}`;
+            const title = escapeInlineMarkdown(sketch.title);
+            const author = sketch.authorName?.trim() ? escapeInlineMarkdown(sketch.authorName.trim()) : 'unknown';
+            const description = sketch.description?.trim() ? sketch.description.trim() : null;
+            const socialLinks = formatUnknownSocialLinks(sketch.socialLinks);
+            const hasSocialLinks = socialLinks !== 'none';
 
-            // Extract URL from socialLinks if it exists (Prisma JSON type)
-            let userUrl: string | null = null;
-            if (Array.isArray(sketch.socialLinks) && sketch.socialLinks.length > 0) {
-                const firstLink = sketch.socialLinks[0];
-                if (typeof firstLink === 'object' && firstLink !== null && 'url' in firstLink) {
-                    userUrl = (firstLink as any).url;
-                }
+            const lines = [
+                '**A new entry has been approved and added to the gallery!**',
+                sketchUrl,
+                '',
+                `**"${title}"**`,
+                `by _${author}_`,
+            ];
+
+            if (description) {
+                lines.push('', toQuotedBlock(description));
             }
 
-            const embed = new EmbedBuilder()
-                .setColor(0x00FF00) // Green for approved
-                .setTitle('✨ New Sketch Approved! ✨')
-                .setURL(sketchUrl)
-                .setDescription(sketch.description || 'No description provided.')
-                .addFields(
-                    { name: 'Title', value: sketch.title, inline: true },
-                    { name: 'Author', value: sketch.authorName || 'Anonymous', inline: true },
-                )
-                .setTimestamp();
-
-            if (userUrl) {
-                embed.setAuthor({ name: sketch.authorName || 'Author', url: userUrl });
+            if (hasSocialLinks) {
+                lines.push('', '**Links**', socialLinks);
             }
 
-            // If there's an OG image (preview), we could add it but we might not have the URL handy if it was just generated. 
-            // The admin route triggers generation *after* approval usually, or in parallel. 
-            // For now, simple notification.
+            const message = lines.join('\n');
 
-            await channel.send({ embeds: [embed] });
+            await channel.send({
+                content: message,
+                allowedMentions: { parse: [] },
+            });
             console.log(`[Discord] Approval notification sent for sketch ${sketch.slug}`);
         } catch (error) {
             console.error('[Discord] Failed to send approval notification:', error);
