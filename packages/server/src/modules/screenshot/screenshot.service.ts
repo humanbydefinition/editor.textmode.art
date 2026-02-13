@@ -10,6 +10,9 @@ import {
   toPublicScreenshotUrl,
 } from './screenshot.config.js';
 
+const SCREENSHOT_WIDTH = 1216;
+const SCREENSHOT_HEIGHT = 640;
+
 export class ScreenshotService {
   private readonly storageDir: string;
   private readonly baseUrl: string;
@@ -42,28 +45,30 @@ export class ScreenshotService {
     const slug = this.normalizeAndValidate(rawSlug);
     await this.ensureStorageDir();
 
-    const browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-      ],
-    });
+    const browser = await this.launchBrowser();
 
     try {
       const page = await browser.newPage({
-        viewport: { width: 1536, height: 816 },
+        viewport: { width: SCREENSHOT_WIDTH, height: SCREENSHOT_HEIGHT },
       });
+
       await page.setExtraHTTPHeaders({
         'x-screenshot-preview-token': this.previewToken,
       });
       const url = new URL(getScreenshotPreviewPath(slug), `${this.baseUrl}/`).toString();
 
-      await page.goto(url, {
+      const response = await page.goto(url, {
         waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
+      if (!response) {
+        throw new Error(`Preview navigation returned no response for "${slug}" (${url}).`);
+      }
+      if (!response.ok()) {
+        throw new Error(
+          `Preview route returned ${response.status()} ${response.statusText()} for "${slug}" (${url}).`,
+        );
+      }
 
       await page.waitForFunction(() => {
         const status = document.body?.dataset.status;
@@ -99,6 +104,45 @@ export class ScreenshotService {
       return toPublicScreenshotUrl(fileName);
     } finally {
       await browser.close();
+    }
+  }
+
+  private async launchBrowser() {
+    const launchArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      // Force software-backed WebGL in environments without GPU/WebGL2.
+      '--enable-webgl',
+      '--ignore-gpu-blocklist',
+      '--use-gl=angle',
+      '--use-angle=swiftshader-webgl',
+      '--enable-unsafe-swiftshader',
+    ];
+
+    try {
+      return await chromium.launch({
+        headless: true,
+        // Prefer full Chromium over headless-shell to maximize WebGL2 compatibility.
+        channel: 'chromium',
+        args: launchArgs,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const missingChromiumChannel =
+        message.includes('channel') ||
+        message.includes('Executable doesn\'t exist') ||
+        message.includes('playwright install');
+
+      if (!missingChromiumChannel) {
+        throw error;
+      }
+
+      // Fallback for environments where channel binaries are unavailable.
+      return chromium.launch({
+        headless: true,
+        args: launchArgs,
+      });
     }
   }
 }
