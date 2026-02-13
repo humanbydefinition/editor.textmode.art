@@ -55,6 +55,7 @@ export function SlugInfoCard({
 }: SlugInfoCardProps) {
     const isPending = sketch.status === 'PENDING';
     const socialLinks = isPending ? [] : (sketch.socialLinks ?? []);
+    const socialLinkKeyCounts = new Map<string, number>();
 
     return (
         <section
@@ -135,10 +136,13 @@ export function SlugInfoCard({
                         );
                     })()}
                     {socialLinks.map((link) => {
+                        const baseKey = `${link.url}::${link.label}`;
+                        const occurrenceCount = socialLinkKeyCounts.get(baseKey) ?? 0;
+                        socialLinkKeyCounts.set(baseKey, occurrenceCount + 1);
                         const displayLabel = getDisplayLink(link.label, link.url);
                         return (
                             <a
-                                key={link.url}
+                                key={`${baseKey}::${occurrenceCount}`}
                                 href={link.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
