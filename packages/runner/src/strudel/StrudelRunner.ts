@@ -12,6 +12,7 @@ import {
     isStrudelParentMessage,
     type StrudelHapDto,
     type StrudelMiniLocationDto,
+    type StrudelAudioDataMessage,
     type StrudelParentToRunnerMessage,
     type StrudelRunnerToParentMessage,
     type StrudelWindowToRunnerMessage,
@@ -53,6 +54,7 @@ export class StrudelRunner {
     private audioInitialized = false;
     private isPlaying = false;
     private cycleBroadcastTimer: number | null = null;
+    private audioBroadcastTimer: number | null = null;
 
     constructor() {
         this.allowedParentOrigins = new Set(this.getAllowedParentOrigins());
@@ -157,8 +159,10 @@ export class StrudelRunner {
             this.isPlaying = autostart;
             if (this.isPlaying) {
                 this.startCycleBroadcast();
+                this.startAudioBroadcast();
             } else {
                 this.stopCycleBroadcast();
+                this.stopAudioBroadcast();
             }
 
             const patternDerivedLocations = this.collectMiniLocationsFromPattern(evaluatedPattern);
@@ -192,6 +196,7 @@ export class StrudelRunner {
             this.isPlaying = false;
             this.currentPattern = null;
             this.stopCycleBroadcast();
+            this.stopAudioBroadcast();
             this.sendPlayState();
         }
     }
@@ -199,6 +204,7 @@ export class StrudelRunner {
     private dispose(): void {
         this.hush();
         this.stopCycleBroadcast();
+        this.stopAudioBroadcast();
         if (this.messagePort) {
             this.messagePort.close();
             this.messagePort = null;
@@ -249,6 +255,48 @@ export class StrudelRunner {
         if (this.cycleBroadcastTimer === null) return;
         window.clearInterval(this.cycleBroadcastTimer);
         this.cycleBroadcastTimer = null;
+    }
+
+    private startAudioBroadcast(): void {
+        if (this.audioBroadcastTimer !== null) return;
+        // Use setInterval instead of rAF because the runner iframe is hidden
+        // and browsers may throttle/stop rAF in non-visible frames.
+        this.audioBroadcastTimer = window.setInterval(() => {
+            if (!this.isPlaying) return;
+            this.sendAudioData();
+        }, 16);
+    }
+
+    private stopAudioBroadcast(): void {
+        if (this.audioBroadcastTimer === null) return;
+        window.clearInterval(this.audioBroadcastTimer);
+        this.audioBroadcastTimer = null;
+    }
+
+    private sendAudioData(): void {
+        // Prefer the same analyser registry Strudel exposes globally in the runner context.
+        // This avoids module-instance mismatch issues across bundled dependency copies.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const globalAnalysers = (window as any).analysers as Record<string, AnalyserNode | undefined> | undefined;
+        const analyser =
+            globalAnalysers?.['main'] ??
+            (globalAnalysers
+                ? Object.values(globalAnalysers).find((candidate): candidate is AnalyserNode => Boolean(candidate))
+                : undefined);
+        if (!analyser) return;
+
+        const fft = new Uint8Array(analyser.frequencyBinCount);
+        const waveform = new Uint8Array(analyser.fftSize);
+        analyser.getByteFrequencyData(fft);
+        analyser.getByteTimeDomainData(waveform);
+
+        const message: StrudelAudioDataMessage = {
+            type: 'STR_AUDIO_DATA',
+            fft,
+            waveform,
+            timestamp: performance.now(),
+        };
+        this.sendMessage(message);
     }
 
     private sendRunError(error: unknown): void {

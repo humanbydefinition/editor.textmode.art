@@ -70,11 +70,19 @@ export interface StrudelPlayStateMessage {
     haps?: StrudelHapDto[];
 }
 
+export interface StrudelAudioDataMessage {
+    type: 'STR_AUDIO_DATA';
+    fft: Uint8Array;
+    waveform: Uint8Array;
+    timestamp: number;
+}
+
 export type StrudelRunnerToParentMessage =
     | StrudelReadyMessage
     | StrudelRunOkMessage
     | StrudelRunErrorMessage
-    | StrudelPlayStateMessage;
+    | StrudelPlayStateMessage
+    | StrudelAudioDataMessage;
 
 export type StrudelWindowToRunnerMessage = StrudelInitMessage;
 

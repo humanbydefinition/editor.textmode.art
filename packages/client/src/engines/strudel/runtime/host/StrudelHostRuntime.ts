@@ -13,6 +13,7 @@ import {
 	type StrudelMiniLocationDto,
 	isStrudelRunnerMessage,
 } from '@/engines/strudel/sandbox/protocol';
+import { clearStrudelAudioFrame, setStrudelAudioFrame } from '@/engines/strudel/audio/StrudelAudioFrameStore';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
 
@@ -87,6 +88,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.currentPattern = null;
 		this.latestHaps = [];
 		this.isPlaying = false;
+		clearStrudelAudioFrame();
 		if (this.isReady) {
 			this.sendMessage({ type: 'STR_HUSH' });
 		}
@@ -118,6 +120,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		if (this.readyRejecter) {
 			this.readyRejecter(new Error('Strudel runtime disposed'));
 		}
+		clearStrudelAudioFrame();
 		this.readyPromise = null;
 		this.readyResolver = null;
 		this.readyRejecter = null;
@@ -270,8 +273,17 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				if (!this.isPlaying) {
 					this.currentPattern = null;
 					this.latestHaps = [];
+					clearStrudelAudioFrame();
 					this.options.onPatternUpdate?.(null);
 				}
+				break;
+
+			case 'STR_AUDIO_DATA':
+				setStrudelAudioFrame({
+					fft: message.fft,
+					waveform: message.waveform,
+					timestamp: message.timestamp,
+				});
 				break;
 		}
 	};
