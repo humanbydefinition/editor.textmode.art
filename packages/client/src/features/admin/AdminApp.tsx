@@ -431,15 +431,6 @@ export function AdminApp() {
                     <div className="space-y-6">
                         <Card className="rounded-xl border-2 border-border bg-card">
                             <CardHeader className="gap-2 pb-4">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Badge variant="outline" className="border-2 border-primary bg-background text-primary">
-                                        <Sparkles className="h-3 w-3" />
-                                        Curated Gallery Queue
-                                    </Badge>
-                                    <Badge variant="outline" className="border-2 border-border bg-background text-muted-foreground">
-                                        {counts.PENDING} pending
-                                    </Badge>
-                                </div>
                                 <CardTitle className="text-xl sm:text-2xl">Moderate submitted gallery sketches</CardTitle>
                                 <CardDescription className="max-w-3xl text-sm sm:text-base">
                                     Review custom slug submissions, keep quality high, and document clear denial reasons

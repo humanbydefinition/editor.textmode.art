@@ -32,9 +32,6 @@ export function AdminHeader({
         <header className="sticky top-0 z-50 w-full border-b-2 border-border bg-background">
             <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-primary bg-background">
-                        <ShieldCheck className="h-4 w-4 text-primary" />
-                    </div>
                     <div className="min-w-0">
                         <p className="truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                             synth.textmode.art
