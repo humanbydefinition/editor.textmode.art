@@ -92,20 +92,9 @@ EXPOSE 80
 # ============================================================================
 # Target: server — Node.js Fastify API server
 # ============================================================================
-FROM node:22-alpine AS server
+FROM node:22-slim AS server
 
 WORKDIR /app
-
-# System dependencies for Playwright-based OG screenshot generation
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
-
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # --- Copy workspace root + every workspace package.json for dependency resolution ---
 # npm workspaces requires all workspace dirs to exist before `npm ci` can resolve them.
@@ -117,6 +106,14 @@ COPY runner/package.json runner/
 
 # --- Install all dependencies (including workspace links) ---
 RUN npm ci
+
+# Playwright's bundled Chromium includes SwiftShader for software WebGL2 rendering.
+# This is required because textmode.js needs WebGL2 to render sketch canvases for
+# OG screenshot generation. --with-deps installs all system libraries Chromium needs.
+RUN npx playwright install --with-deps chromium
+
+# wget is needed for the Docker healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
 
 # --- Overlay built contracts (replaces the placeholder package.json-only dir) ---
 COPY --from=source /build/packages/ packages/

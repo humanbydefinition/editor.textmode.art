@@ -42,18 +42,12 @@ export class ScreenshotService {
     const slug = this.normalizeAndValidate(rawSlug);
     await this.ensureStorageDir();
 
-    const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
-    console.log(`[screenshot] Launching Chromium${executablePath ? ` at ${executablePath}` : ' (bundled)'}…`);
-
     const browser = await chromium.launch({
       headless: true,
-      executablePath,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
       ],
     });
 
