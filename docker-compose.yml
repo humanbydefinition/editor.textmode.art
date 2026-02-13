@@ -94,7 +94,7 @@ services:
   runner:
     build:
       context: .
-      dockerfile: runner/Dockerfile
+      dockerfile: packages/runner/Dockerfile
       args:
         - VITE_RUNNER_PARENT_ORIGINS=${VITE_RUNNER_PARENT_ORIGINS:-https://synth.textmode.art}
         - VITE_MEDIA_PROXY_URL=${VITE_MEDIA_PROXY_URL:-}
