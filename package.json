@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @synth.textmode.art/client",
+    "client:dev": "npm run dev -w @synth.textmode.art/client",
+    "client:build": "npm run build -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/client",
     "build": "npm run build -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/client && npm run build -w @synth.textmode.art/server && npm run build -w @synth.textmode.art/runner",
     "check-types": "npm run check-types -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/contracts && npm run check-types -w @synth.textmode.art/client && npm run check-types -w @synth.textmode.art/server && npm run check-types -w @synth.textmode.art/runner",
     "server:dev": "npm run dev -w @synth.textmode.art/server",
