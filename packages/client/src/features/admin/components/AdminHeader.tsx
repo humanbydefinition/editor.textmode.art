@@ -1,4 +1,4 @@
-import { LogOut, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
+import { LogOut, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Settings2, Sparkles } from 'lucide-react';
-import { Badge } from '@/shared/ui/badge';
+import { Settings2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import type { AdminSessionResponse, AdminSketchListResponse } from '@synth.textmode.art/contracts/admin';
