@@ -27,6 +27,8 @@ const envSchema = z.object({
   ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(600),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   TURNSTILE_VERIFY_URL: z.string().url().default('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
+  DISCORD_BOT_TOKEN: z.string().optional(),
+  DISCORD_CHANNEL_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

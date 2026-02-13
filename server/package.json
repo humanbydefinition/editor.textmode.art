@@ -23,6 +23,7 @@
         "@prisma/adapter-pg": "^7.4.0",
         "@prisma/client": "^7.4.0",
         "@synth.textmode.art/contracts": "file:../packages/contracts",
+        "discord.js": "^14.25.1",
         "dotenv": "^16.4.7",
         "fastify": "^5.2.1",
         "playwright": "^1.58.2"

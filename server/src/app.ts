@@ -5,6 +5,8 @@ import securityHeadersPlugin from './plugins/security-headers.js';
 import corsPlugin from './plugins/cors.js';
 import staticFilesPlugin from './plugins/static-files.js';
 import runnerCspPlugin from './plugins/runner-csp.js';
+import discordPlugin from './plugins/discord.js';
+
 import sketchesRoutes from './modules/sketches/sketches.routes.js';
 import submissionsRoutes from './modules/submissions/submissions.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';

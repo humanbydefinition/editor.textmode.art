@@ -3,6 +3,7 @@ import { prisma } from '../../database/client.js';
 import { submissionResultSelect } from '../../database/selects.js';
 import { normalizeSlug, validateSlug } from '../../shared/slug.js';
 import { isUniqueConstraintViolation } from '../../shared/errors.js';
+import { DiscordService } from '../discord/discord.service.js';
 
 export { isSlugTaken } from '../../shared/slug.js';
 
@@ -37,7 +38,14 @@ export async function createSketchRequest(payload: SketchRequestPayload, normali
       },
       select: submissionResultSelect,
     });
+
+    // Fire-and-forget Discord notification
+    DiscordService.getInstance().sendSubmissionNotification(payload, normalizedSlug).catch((err) => {
+      console.error('Failed to send Discord notification', err);
+    });
+
     return { ok: true as const, data: created };
+
   } catch (error) {
     if (isUniqueConstraintViolation(error)) {
       return { ok: false as const, reason: 'slug-taken' as const };
