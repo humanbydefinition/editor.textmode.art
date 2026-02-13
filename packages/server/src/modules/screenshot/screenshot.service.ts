@@ -10,8 +10,8 @@ import {
   toPublicScreenshotUrl,
 } from './screenshot.config.js';
 
-const SCREENSHOT_WIDTH = 1216;
-const SCREENSHOT_HEIGHT = 640;
+const SCREENSHOT_WIDTH = 1536;
+const SCREENSHOT_HEIGHT = 816;
 
 export class ScreenshotService {
   private readonly storageDir: string;

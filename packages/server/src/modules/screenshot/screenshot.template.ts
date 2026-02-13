@@ -19,8 +19,8 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
     </script>
 
     <script type="module">
-        const SCREENSHOT_WIDTH = 1216;
-        const SCREENSHOT_HEIGHT = 640;
+        const SCREENSHOT_WIDTH = 1536;
+        const SCREENSHOT_HEIGHT = 816;
         const toErrorMessage = (error) => error instanceof Error ? error.message : String(error);
         const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
         const markReady = async () => {
@@ -74,7 +74,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
 
                     // Watermark injection (secure naming to avoid clashes)
                     const __screenshot_watermark_text = 'synth.textmode.art';
-                    const __screenshot_watermark_fontSize = 32;
+                    const __screenshot_watermark_fontSize = 48;
                     const __screenshot_watermark_blendMode = 'normal';
 
                     const __screenshot_watermark_layer = t.layers.add({
