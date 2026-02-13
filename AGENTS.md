@@ -35,7 +35,7 @@ Run from the **repo root**:
 
 ```bash
 npm install                    # Install all workspace dependencies
-npm run dev                    # Start client dev server (Vite)
+npm run client:dev                    # Start client dev server (Vite)
 npm run server:dev             # Start server dev (Fastify + Prisma migrate)
 npm run build                  # Production build (contracts → client → server)
 npm run lint                   # Lint client + server

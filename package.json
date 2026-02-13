@@ -11,7 +11,8 @@
     "runner"
   ],
   "scripts": {
-    "dev": "npm run dev -w client",
+    "client:dev": "npm run dev -w client",
+    "client:build": "npm run build -w @synth.textmode.art/contracts && npm run build -w client",
     "build": "npm run build -w @synth.textmode.art/contracts && npm run build -w client && npm run build -w server && npm run build -w @synth.textmode.art/runner",
     "check-types": "npm run check-types -w @synth.textmode.art/contracts && npm run build -w @synth.textmode.art/contracts && npm run check-types -w client && npm run check-types -w server && npm run check-types -w @synth.textmode.art/runner",
     "server:dev": "npm run dev -w server",
