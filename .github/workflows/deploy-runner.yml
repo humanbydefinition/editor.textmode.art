@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'runner/**'
+      - 'packages/runner/**'
       - '.github/workflows/deploy-runner.yml'
 
 permissions:
@@ -34,11 +34,11 @@ jobs:
           VITE_RUNNER_PARENT_ORIGINS: https://synth.textmode.art
 
       - name: Create CNAME
-        run: echo "runner.textmode.art" > runner/dist/CNAME
+        run: echo "runner.textmode.art" > packages/runner/dist/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./runner/dist
+          publish_dir: ./packages/runner/dist
           cname: runner.textmode.art

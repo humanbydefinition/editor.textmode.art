@@ -32,5 +32,5 @@ dist-ssr
 
 .agents/
 .gemini/
-server/storage/
-server/src/generated/
+packages/server/storage/
+packages/server/src/generated/

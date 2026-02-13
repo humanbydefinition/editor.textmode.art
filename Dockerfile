@@ -6,7 +6,7 @@
 #   - client : Nginx serving the SPA + reverse proxy to server
 #   - server : Node.js Fastify API + SSR slug pages + screenshot generation
 #
-# The runner has its own Dockerfile at runner/Dockerfile.
+# The runner has its own Dockerfile at packages/runner/Dockerfile.
 #
 # ============================================================================
 
@@ -20,9 +20,9 @@ WORKDIR /build
 # Copy workspace root + every workspace package.json for dependency resolution
 COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
-COPY client/package.json client/
-COPY server/package.json server/
-COPY runner/package.json runner/
+COPY packages/client/package.json packages/client/
+COPY packages/server/package.json packages/server/
+COPY packages/runner/package.json packages/runner/
 
 RUN npm ci
 
@@ -32,8 +32,6 @@ RUN npm ci
 FROM deps AS source
 
 COPY packages/ packages/
-COPY client/ client/
-COPY server/ server/
 
 RUN npm run build -w @synth.textmode.art/contracts
 
@@ -57,7 +55,7 @@ ENV VITE_RUNNER_PARENT_ORIGINS=${VITE_RUNNER_PARENT_ORIGINS}
 ENV VITE_MEDIA_PROXY_URL=${VITE_MEDIA_PROXY_URL}
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
-RUN npm run build -w client
+RUN npm run build -w @synth.textmode.art/client
 
 # ---------------------------------------------------------------------------
 # Stage 4: Build server (TypeScript + Prisma generate)
@@ -72,7 +70,7 @@ RUN npm ci
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV ADMIN_API_TOKEN="build-placeholder"
 
-RUN npm run build -w server
+RUN npm run build -w @synth.textmode.art/server
 
 
 # ============================================================================
@@ -81,10 +79,10 @@ RUN npm run build -w server
 FROM nginx:alpine AS client
 
 # Copy built SPA assets
-COPY --from=client-build /build/client/dist /usr/share/nginx/html
+COPY --from=client-build /build/packages/client/dist /usr/share/nginx/html
 
 # Production Nginx config (reverse proxy + SPA fallback)
-COPY client/nginx.conf /etc/nginx/conf.d/default.conf
+COPY packages/client/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
@@ -100,9 +98,9 @@ WORKDIR /app
 # npm workspaces requires all workspace dirs to exist before `npm ci` can resolve them.
 COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
-COPY client/package.json client/
-COPY server/package.json server/
-COPY runner/package.json runner/
+COPY packages/client/package.json packages/client/
+COPY packages/server/package.json packages/server/
+COPY packages/runner/package.json packages/runner/
 
 # --- Install all dependencies (including workspace links) ---
 RUN npm ci
@@ -119,12 +117,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf 
 COPY --from=source /build/packages/ packages/
 
 # --- Overlay built server artifacts ---
-COPY --from=server-build /build/server/prisma.config.ts server/prisma.config.ts
-COPY --from=server-build /build/server/dist/ server/dist/
-COPY --from=server-build /build/server/prisma/ server/prisma/
+COPY --from=server-build /build/packages/server/prisma.config.ts server/prisma.config.ts
+COPY --from=server-build /build/packages/server/dist/ server/dist/
+COPY --from=server-build /build/packages/server/prisma/ server/prisma/
 
 # --- Copy built client SPA (needed by slug-page SSR template to inject OG meta) ---
-COPY --from=client-build /build/client/dist/ dist/
+COPY --from=client-build /build/packages/client/dist/ dist/
 
 WORKDIR /app/server
 

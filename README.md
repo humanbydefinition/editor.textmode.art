@@ -57,13 +57,13 @@ The server provides sketch moderation, slug pages, and screenshot generation:
 
 ```bash
 # Start server in development mode
-npm run -w server dev
+npm run -w @synth.textmode.art/server dev
 
 # Regenerate all approved sketch screenshots
-npm run -w server screenshots:regenerate
+npm run -w @synth.textmode.art/server screenshots:regenerate
 
 # Install Playwright/Chromium for screenshot service
-npm run -w server playwright:install
+npm run -w @synth.textmode.art/server playwright:install
 ```
 
 ### Sandbox configuration (recommended)

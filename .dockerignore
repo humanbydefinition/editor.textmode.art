@@ -28,8 +28,8 @@ dist
 docs/
 
 # Persistent storage (mounted as volume)
-server/storage
+packages/server/storage
 
 # Runner build artifacts (runner has its own Dockerfile)
-runner/dist
-runner/node_modules
+packages/runner/dist
+packages/runner/node_modules
