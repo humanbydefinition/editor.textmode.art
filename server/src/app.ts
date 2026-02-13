@@ -24,6 +24,7 @@ export function buildServer(): FastifyInstance {
   app.register(errorHandlerPlugin);
   app.register(securityHeadersPlugin);
   app.register(corsPlugin);
+  app.register(discordPlugin);
 
   // --- Domain routes ---
   app.register(sketchesRoutes);
