@@ -3,19 +3,19 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 const MAX_LINES = 200;
-const SOURCE_DIRS = ['client/src', 'server/src'];
+const SOURCE_DIRS = ['packages/client/src', 'packages/server/src'];
 const VALID_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs']);
 
 // Legacy exceptions to keep CI green while Phase 1+ decomposition is in progress.
 const LEGACY_ALLOWLIST = new Set([
-  'client/src/app.ts',
-  'client/src/components/dialogs/PublishRequestDialog.tsx',
-  'client/src/components/dialogs/ShareExportDialog.tsx',
-  'client/src/core/controller/BaseController.ts',
-  'client/src/engines/strudel/editor/StrudelHighlighter.ts',
-  'client/src/engines/strudel/runtime/StrudelRuntime.ts',
-  'client/src/engines/textmode/examples/tutorial.ts',
-  'client/src/engines/textmode/runtime/host/TextmodeRuntime.ts',
+  'packages/client/src/app.ts',
+  'packages/client/src/components/dialogs/PublishRequestDialog.tsx',
+  'packages/client/src/components/dialogs/ShareExportDialog.tsx',
+  'packages/client/src/core/controller/BaseController.ts',
+  'packages/client/src/engines/strudel/editor/StrudelHighlighter.ts',
+  'packages/client/src/engines/strudel/runtime/StrudelRuntime.ts',
+  'packages/client/src/engines/textmode/examples/tutorial.ts',
+  'packages/client/src/engines/textmode/runtime/host/TextmodeRuntime.ts',
 ]);
 
 function shouldIgnore(relativePath) {
