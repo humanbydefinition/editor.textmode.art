@@ -1,4 +1,3 @@
-export { StrudelRuntime } from './StrudelRuntime';
 export { StrudelHostRuntime } from './host/StrudelHostRuntime';
 export type {
 	StrudelRuntimeOptions,
@@ -6,6 +5,5 @@ export type {
 	StrudelPattern,
 	StrudelHap,
 	StrudelHapLocation,
-	StrudelScheduler,
 } from './StrudelRuntime';
 

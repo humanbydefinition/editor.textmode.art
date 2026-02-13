@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import type { Pattern, Hap } from '@strudel/core';
+import type { StrudelPattern as Pattern, StrudelHap as Hap } from '../runtime';
 
 export type { Pattern };
 
