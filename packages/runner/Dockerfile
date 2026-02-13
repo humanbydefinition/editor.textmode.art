@@ -12,14 +12,13 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 
 # Copy only the packages needed by the runner
-COPY runner/package.json runner/package.json
 COPY packages/ packages/
 
 # Install dependencies (only runner workspace + shared packages)
 RUN npm ci --workspace=@synth.textmode.art/runner --include-workspace-root
 
 # Copy runner source
-COPY runner/ runner/
+COPY packages/runner/ packages/runner/
 
 # Accept build-time env vars (Vite inlines these at build time)
 ARG VITE_RUNNER_PARENT_ORIGINS
@@ -35,9 +34,9 @@ RUN npm run build -w @synth.textmode.art/runner
 FROM nginx:alpine
 
 # Copy built assets
-COPY --from=build /build/runner/dist /usr/share/nginx/html
+COPY --from=build /build/packages/runner/dist /usr/share/nginx/html
 
 # Security headers for the runner
-COPY runner/nginx.conf /etc/nginx/conf.d/default.conf
+COPY packages/runner/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
