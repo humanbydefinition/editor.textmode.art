@@ -18,6 +18,8 @@ import {
     type StrudelWindowToRunnerMessage,
 } from './protocol';
 
+const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
+
 interface StrudelSchedulerLike {
     now: () => number;
 }
@@ -44,6 +46,14 @@ interface StrudelReplLike {
     stop?: () => void;
 }
 
+interface UnlockPromptElements {
+    root: HTMLDivElement;
+    title: HTMLHeadingElement;
+    description: HTMLParagraphElement;
+    button: HTMLButtonElement;
+    status: HTMLParagraphElement;
+}
+
 export class StrudelRunner {
     private messagePort: MessagePort | null = null;
     private readonly allowedParentOrigins: Set<string>;
@@ -55,26 +65,20 @@ export class StrudelRunner {
     private isPlaying = false;
     private cycleBroadcastTimer: number | null = null;
     private audioBroadcastTimer: number | null = null;
+    private pendingAutostartCode: string | null = null;
+    private unlockPrompt: UnlockPromptElements | null = null;
+    private unlockPromptVisible = false;
+    private activeParentOrigin: string | null = null;
+    private initAudioRequestPromise: Promise<void> | null = null;
 
     constructor() {
         this.allowedParentOrigins = new Set(this.getAllowedParentOrigins());
     }
 
     start(): void {
+        this.setupUnlockPrompt();
         this.setupErrorHandlers();
-        window.addEventListener('message', this.handleInitMessage);
-    }
-
-    private handleInitMessage = (event: MessageEvent<StrudelWindowToRunnerMessage>): void => {
-        if (!isStrudelInitMessage(event.data)) return;
-        if (!this.isAllowedOrigin(event.origin)) return;
-        if (event.source !== window.parent) return;
-        const port = event.ports?.[0];
-        if (!port) return;
-
-        this.attachPort(port);
-        window.removeEventListener('message', this.handleInitMessage);
-        this.sendReady();
+        window.addEventListener('message', this.handleWindowMessage);
     };
 
     private handlePortMessage = (event: MessageEvent<StrudelParentToRunnerMessage>): void => {
@@ -87,8 +91,7 @@ export class StrudelRunner {
     private async handleParentMessage(message: StrudelParentToRunnerMessage): Promise<void> {
         switch (message.type) {
             case 'STR_INIT_AUDIO':
-                await this.initializeAudio();
-                this.sendReady();
+                await this.handleInitAudioRequest();
                 break;
             case 'STR_RUN_CODE':
                 await this.runCode(message.code, message.autostart ?? true);
@@ -99,6 +102,36 @@ export class StrudelRunner {
             case 'STR_DISPOSE':
                 this.dispose();
                 break;
+        }
+    }
+
+    private async handleInitAudioRequest(): Promise<void> {
+        if (this.initAudioRequestPromise) {
+            await this.initAudioRequestPromise;
+            return;
+        }
+
+        this.initAudioRequestPromise = (async () => {
+        if (this.audioInitialized) {
+            this.sendReady();
+            return;
+        }
+
+        const initialized = await this.initializeAudio();
+        if (initialized) {
+            this.hideUnlockPrompt();
+            this.sendReady();
+            return;
+        }
+
+        this.showUnlockPrompt();
+        this.sendMessage({ type: 'STR_AUDIO_UNLOCK_REQUIRED' });
+        })();
+
+        try {
+            await this.initAudioRequestPromise;
+        } finally {
+            this.initAudioRequestPromise = null;
         }
     }
 
@@ -137,13 +170,20 @@ export class StrudelRunner {
         }
     }
 
-    private async initializeAudio(): Promise<void> {
+    private async initializeAudio(): Promise<boolean> {
         try {
             await this.ensureRuntimeInitialized();
             await initAudio();
             this.audioInitialized = true;
+            this.hideUnlockPrompt();
+            this.setUnlockPromptStatus('');
+            return true;
         } catch (error) {
+            if (this.isUserActivationRequiredError(error)) {
+                return false;
+            }
             this.sendRunError(error);
+            return false;
         }
     }
 
@@ -151,8 +191,38 @@ export class StrudelRunner {
         try {
             await this.ensureRuntimeInitialized();
             if (!this.audioInitialized) {
-                await this.initializeAudio();
+                const initialized = await this.initializeAudio();
+                if (!initialized) {
+                    if (autostart) {
+                        this.pendingAutostartCode = code;
+                    }
+
+                    const evaluatedPattern = await evaluateStrudel(code, false) as StrudelPatternLike;
+                    this.isPlaying = false;
+                    this.stopCycleBroadcast();
+                    this.stopAudioBroadcast();
+                    this.currentPattern = evaluatedPattern;
+
+                    const patternDerivedLocations = this.collectMiniLocationsFromPattern(evaluatedPattern);
+                    const miniLocations = this.serializeMiniLocations(this.repl?.state?.miniLocations);
+                    const haps = this.collectHapsFromPattern(evaluatedPattern, this.getCycle());
+
+                    this.sendMessage({
+                        type: 'STR_RUN_OK',
+                        timestamp: Date.now(),
+                        miniLocations: patternDerivedLocations ?? miniLocations,
+                        haps,
+                        cycle: this.getCycle(),
+                        isPlaying: false,
+                    });
+                    this.sendPlayState();
+                    this.showUnlockPrompt();
+                    this.sendMessage({ type: 'STR_AUDIO_UNLOCK_REQUIRED' });
+                    return;
+                }
             }
+
+            this.pendingAutostartCode = null;
 
             const evaluatedPattern = await evaluateStrudel(code, autostart) as StrudelPatternLike;
 
@@ -195,8 +265,14 @@ export class StrudelRunner {
         } finally {
             this.isPlaying = false;
             this.currentPattern = null;
+            this.pendingAutostartCode = null;
             this.stopCycleBroadcast();
             this.stopAudioBroadcast();
+            if (this.audioInitialized) {
+                this.hideUnlockPrompt();
+            } else {
+                this.showUnlockPrompt();
+            }
             this.sendPlayState();
         }
     }
@@ -205,6 +281,13 @@ export class StrudelRunner {
         this.hush();
         this.stopCycleBroadcast();
         this.stopAudioBroadcast();
+        window.removeEventListener('message', this.handleWindowMessage);
+        if (this.unlockPrompt) {
+            this.unlockPrompt.button.removeEventListener('click', this.handleUnlockButtonClick);
+            this.unlockPrompt.root.remove();
+            this.unlockPrompt = null;
+            this.unlockPromptVisible = false;
+        }
         if (this.messagePort) {
             this.messagePort.close();
             this.messagePort = null;
@@ -271,6 +354,153 @@ export class StrudelRunner {
         if (this.audioBroadcastTimer === null) return;
         window.clearInterval(this.audioBroadcastTimer);
         this.audioBroadcastTimer = null;
+    }
+
+    private setupUnlockPrompt(): void {
+        document.documentElement.style.height = '100%';
+        document.documentElement.style.background = 'transparent';
+        document.body.style.height = '100%';
+        document.body.style.margin = '0';
+        document.body.style.background = 'transparent';
+
+        const root = document.createElement('div');
+        root.style.position = 'fixed';
+        root.style.inset = '0';
+        root.style.display = 'none';
+        root.style.alignItems = 'stretch';
+        root.style.justifyContent = 'stretch';
+        root.style.padding = '0';
+        root.style.boxSizing = 'border-box';
+        root.style.pointerEvents = 'none';
+        root.style.color = '#f5f5f5';
+        root.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif';
+
+        const card = document.createElement('div');
+        card.style.width = '100%';
+        card.style.height = '100%';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        card.style.borderRadius = '12px';
+        card.style.background = 'rgba(9, 9, 11, 0.97)';
+        card.style.boxShadow = '0 24px 64px rgba(0, 0, 0, 0.45)';
+        card.style.padding = '14px 14px 12px';
+        card.style.display = 'grid';
+        card.style.gridTemplateRows = 'auto auto 1fr auto';
+        card.style.gap = '10px';
+        card.style.pointerEvents = 'auto';
+        card.style.boxSizing = 'border-box';
+        card.style.overflow = 'hidden';
+
+        const title = document.createElement('h1');
+        title.textContent = 'enable strudel audio';
+        title.style.margin = '0';
+        title.style.fontSize = '13px';
+        title.style.fontWeight = '600';
+        title.style.lineHeight = '1.3';
+        title.style.letterSpacing = '0.01em';
+        title.style.color = 'rgba(255, 255, 255, 0.96)';
+
+        const description = document.createElement('p');
+        description.textContent = 'browser policy blocked autoplay. tap once to unlock audio playback.';
+        description.style.margin = '0';
+        description.style.fontSize = '12px';
+        description.style.lineHeight = '1.45';
+        description.style.color = 'rgba(212, 212, 216, 0.92)';
+        description.style.maxWidth = '34ch';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'enable audio';
+        button.style.border = '1px solid rgba(16, 185, 129, 0.45)';
+        button.style.borderRadius = '8px';
+        button.style.padding = '10px 12px';
+        button.style.fontSize = '12px';
+        button.style.fontWeight = '600';
+        button.style.cursor = 'pointer';
+        button.style.background = 'rgba(16, 185, 129, 0.18)';
+        button.style.color = '#6ee7b7';
+        button.style.minHeight = '40px';
+        button.style.transition = 'background 120ms ease';
+        button.style.width = '100%';
+        button.addEventListener('click', this.handleUnlockButtonClick);
+
+        const status = document.createElement('p');
+        status.style.margin = '0';
+        status.style.fontSize = '11px';
+        status.style.minHeight = '18px';
+        status.style.lineHeight = '1.35';
+        status.style.color = '#fda4af';
+        status.style.display = 'none';
+
+        card.appendChild(title);
+        card.appendChild(description);
+        card.appendChild(button);
+        card.appendChild(status);
+        root.appendChild(card);
+        document.body.appendChild(root);
+
+        this.unlockPrompt = { root, title, description, button, status };
+        this.showUnlockPrompt();
+    }
+
+    private showUnlockPrompt(): void {
+        if (!this.unlockPrompt) return;
+        this.unlockPromptVisible = true;
+        this.unlockPrompt.root.style.display = 'block';
+        this.unlockPrompt.button.disabled = false;
+        this.unlockPrompt.button.textContent = 'enable audio';
+        this.setUnlockPromptStatus('');
+    }
+
+    private hideUnlockPrompt(): void {
+        if (!this.unlockPrompt) return;
+        this.unlockPromptVisible = false;
+        this.unlockPrompt.root.style.display = 'none';
+        this.setUnlockPromptStatus('');
+    }
+
+    private setUnlockPromptStatus(message: string): void {
+        if (!this.unlockPrompt) return;
+        this.unlockPrompt.status.textContent = message;
+        this.unlockPrompt.status.style.display = message.length > 0 ? 'block' : 'none';
+    }
+
+    private handleUnlockButtonClick = async (): Promise<void> => {
+        if (!this.unlockPrompt || !this.unlockPromptVisible) return;
+
+        this.unlockPrompt.button.disabled = true;
+        this.unlockPrompt.button.textContent = 'enabling...';
+        this.setUnlockPromptStatus('');
+
+        const initialized = await this.initializeAudio();
+        if (initialized) {
+            this.hideUnlockPrompt();
+            this.sendReady();
+            if (this.pendingAutostartCode) {
+                const pendingCode = this.pendingAutostartCode;
+                this.pendingAutostartCode = null;
+                await this.runCode(pendingCode, true);
+            }
+            return;
+        }
+
+        this.unlockPrompt.button.disabled = false;
+        this.unlockPrompt.button.textContent = 'enable audio';
+        this.setUnlockPromptStatus('audio is still blocked. tap once more.');
+    };
+
+    private isUserActivationRequiredError(error: unknown): boolean {
+        if (!(error instanceof Error)) return false;
+
+        const domLikeError = error as { name?: string };
+        const name = domLikeError.name ?? '';
+        const message = error.message.toLowerCase();
+        return (
+            name === 'NotAllowedError' ||
+            name === 'InvalidStateError' ||
+            message.includes('not allowed') ||
+            message.includes('user gesture') ||
+            message.includes('interaction')
+        );
     }
 
     private sendAudioData(): void {
@@ -476,8 +706,27 @@ export class StrudelRunner {
     }
 
     private sendMessage(message: StrudelRunnerToParentMessage): void {
-        if (!this.messagePort) return;
-        this.messagePort.postMessage(message);
+        if (this.messagePort) {
+            this.messagePort.postMessage(message);
+        }
+
+        // Fallback channel for browsers where MessagePort runner->parent delivery is flaky.
+        // Keep this limited to control/state messages to avoid duplicating high-rate FFT traffic.
+        if (message.type !== 'STR_AUDIO_DATA') {
+            this.postWindowMessage(message);
+        }
+    }
+
+    private postWindowMessage(message: StrudelRunnerToParentMessage): void {
+        if (window.parent === window) return;
+        const targetOrigin = this.activeParentOrigin ?? (import.meta.env.DEV ? '*' : window.location.origin);
+        window.parent.postMessage(
+            {
+                type: STRUDEL_WINDOW_EVENT_TYPE,
+                message,
+            },
+            targetOrigin
+        );
     }
 
     private attachPort(port: MessagePort): void {
@@ -488,6 +737,27 @@ export class StrudelRunner {
         this.messagePort.onmessage = this.handlePortMessage;
         this.messagePort.start();
     }
+
+    private handleWindowMessage = (event: MessageEvent<StrudelWindowToRunnerMessage | StrudelParentToRunnerMessage>): void => {
+        if (event.source !== window.parent) return;
+        if (!this.isAllowedOrigin(event.origin)) return;
+
+        const data = event.data as unknown;
+        if (isStrudelInitMessage(data)) {
+            this.activeParentOrigin = event.origin;
+            const port = event.ports?.[0];
+            if (port) {
+                this.attachPort(port);
+            }
+            this.sendReady();
+            return;
+        }
+
+        // Window-message fallback path when MessagePort is unavailable.
+        if (isStrudelParentMessage(data) && (data.type === 'STR_INIT_AUDIO' || !this.messagePort)) {
+            void this.handleParentMessage(data);
+        }
+    };
 
     private setupErrorHandlers(): void {
         window.addEventListener('error', (event) => {

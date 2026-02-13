@@ -8,14 +8,22 @@ import type {
 import {
 	STRUDEL_PROTOCOL_VERSION,
 	type StrudelParentToRunnerMessage,
+	type StrudelRunnerToParentMessage,
 	type StrudelHapDto,
 	type StrudelInitMessage,
 	type StrudelMiniLocationDto,
 	isStrudelRunnerMessage,
 } from '@/engines/strudel/sandbox/protocol';
 import { clearStrudelAudioFrame, setStrudelAudioFrame } from '@/engines/strudel/audio/StrudelAudioFrameStore';
+import {
+	STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT,
+	STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT,
+	STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT,
+} from '@/platform/ui/popoverEvents';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
+const STRUDEL_RUNNER_OVERLAY_Z_INDEX = '460';
+const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
 export interface StrudelHostRuntimeOptions extends StrudelRuntimeOptions {
 	runnerUrl: string;
@@ -44,24 +52,49 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	private readyPromise: Promise<void> | null = null;
 	private readyResolver: (() => void) | null = null;
 	private readyRejecter: ((reason: Error) => void) | null = null;
+	private audioInitPromise: Promise<void> | null = null;
+	private audioInitResolver: (() => void) | null = null;
+	private audioInitRejecter: ((reason: Error) => void) | null = null;
 	private disposed = false;
+	private portInboundHealthy = false;
+	private unlockPopoverSuppressed = false;
+	private readonly windowMessageListener: (event: MessageEvent) => void;
+	private readonly dismissUnlockOverlayListener: () => void;
+	private readonly suppressUnlockOverlayListener: () => void;
+	private readonly allowUnlockOverlayListener: () => void;
 
 	constructor(options: StrudelHostRuntimeOptions) {
 		this.options = options;
 		this.container = options.container ?? document.body;
 		this.runnerOrigin = new URL(options.runnerUrl, window.location.origin).origin;
+		this.windowMessageListener = (event: MessageEvent) => {
+			this.handleWindowMessage(event);
+		};
+		this.dismissUnlockOverlayListener = () => {
+			this.hideUnlockOverlay();
+		};
+		this.suppressUnlockOverlayListener = () => {
+			this.unlockPopoverSuppressed = true;
+			this.hideUnlockOverlay();
+		};
+		this.allowUnlockOverlayListener = () => {
+			this.unlockPopoverSuppressed = false;
+		};
+		window.addEventListener('message', this.windowMessageListener);
+		window.addEventListener(STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT, this.dismissUnlockOverlayListener);
+		window.addEventListener(STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT, this.suppressUnlockOverlayListener);
+		window.addEventListener(STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT, this.allowUnlockOverlayListener);
+		this.createIframe();
+		// Warm up runner handshake so the first play click can unlock audio immediately.
+		void this.waitUntilReady().catch(() => {
+			// Handshake errors are surfaced by failHandshake.
+		});
 	}
 
 	async init(): Promise<void> {
 		if (this.disposed) return;
-		if (!this.iframe) {
-			this.createIframe();
-		}
-
-		await this.waitUntilReady();
-		this.sendMessage({ type: 'STR_INIT_AUDIO' });
-		this._isInitialized = true;
-		this.options.onReady?.();
+		await this.ensureRunnerReady();
+		await this.requestAudioInitialization();
 	}
 
 	isInitialized(): boolean {
@@ -70,6 +103,12 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 
 	forceRun(code: string): void {
 		if (this.disposed) return;
+		if (!this._isInitialized) {
+			this.showUnlockOverlay();
+			void this.requestAudioInitialization().catch(() => {
+				// Unlock failures are surfaced by runner/UI callbacks.
+			});
+		}
 		if (!this.isReady) {
 			this.pendingCode = code;
 			return;
@@ -88,6 +127,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.currentPattern = null;
 		this.latestHaps = [];
 		this.isPlaying = false;
+		this.hideUnlockOverlay();
 		clearStrudelAudioFrame();
 		if (this.isReady) {
 			this.sendMessage({ type: 'STR_HUSH' });
@@ -100,6 +140,10 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.disposed = true;
 		this.hush();
 		this.clearHandshakeTimer();
+		window.removeEventListener('message', this.windowMessageListener);
+		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT, this.dismissUnlockOverlayListener);
+		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT, this.suppressUnlockOverlayListener);
+		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT, this.allowUnlockOverlayListener);
 
 		if (this.isReady) {
 			this.sendMessage({ type: 'STR_DISPOSE' });
@@ -120,7 +164,12 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		if (this.readyRejecter) {
 			this.readyRejecter(new Error('Strudel runtime disposed'));
 		}
+		if (this.audioInitRejecter) {
+			this.audioInitRejecter(new Error('Strudel runtime disposed'));
+		}
+		this.hideUnlockOverlay();
 		clearStrudelAudioFrame();
+		this.clearAudioInitPromise();
 		this.readyPromise = null;
 		this.readyResolver = null;
 		this.readyRejecter = null;
@@ -156,10 +205,26 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		}
 
 		this.isReady = false;
+		this._isInitialized = false;
+		this.portInboundHealthy = false;
+		this.clearAudioInitPromise();
 		this.iframe = document.createElement('iframe');
 		this.iframe.id = 'strudel-runner-frame';
 		this.iframe.src = this.options.runnerUrl;
-		this.iframe.style.display = 'none';
+		this.iframe.style.position = 'fixed';
+		this.iframe.style.top = 'calc(2rem + 8px)';
+		this.iframe.style.right = '0.5rem';
+		this.iframe.style.width = 'min(24rem, calc(100vw - 1rem))';
+		this.iframe.style.height = '14rem';
+		this.iframe.style.border = '0';
+		this.iframe.style.background = 'rgba(9, 9, 11, 0.97)';
+		this.iframe.style.borderRadius = '12px';
+		this.iframe.style.overflow = 'hidden';
+		this.iframe.style.opacity = '0';
+		this.iframe.style.pointerEvents = 'none';
+		this.iframe.style.visibility = 'hidden';
+		this.iframe.style.zIndex = STRUDEL_RUNNER_OVERLAY_Z_INDEX;
+		this.iframe.allow = 'autoplay';
 		this.iframe.sandbox.add('allow-scripts');
 		this.iframe.sandbox.add('allow-same-origin');
 		this.iframe.referrerPolicy = 'no-referrer';
@@ -190,9 +255,55 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.sendMessage({ type: 'STR_RUN_CODE', code, autostart: true });
 	}
 
+	private async requestAudioInitialization(): Promise<void> {
+		if (this._isInitialized) return;
+		if (this.audioInitPromise) {
+			await this.audioInitPromise;
+			return;
+		}
+
+		this.showUnlockOverlay();
+		await this.ensureRunnerReady();
+		if (this._isInitialized) return;
+		if (!this.messagePort) {
+			throw new Error('Strudel runner channel is unavailable.');
+		}
+
+		this.audioInitPromise = new Promise<void>((resolve, reject) => {
+			this.audioInitResolver = resolve;
+			this.audioInitRejecter = reject;
+		});
+
+		this.sendMessage({ type: 'STR_INIT_AUDIO' });
+		await this.audioInitPromise;
+	}
+
+	private showUnlockOverlay(): void {
+		if (!this.iframe) return;
+		if (this.unlockPopoverSuppressed) return;
+		this.iframe.style.visibility = 'visible';
+		this.iframe.style.opacity = '1';
+		this.iframe.style.pointerEvents = 'auto';
+	}
+
+	private hideUnlockOverlay(): void {
+		if (!this.iframe) return;
+		this.iframe.style.opacity = '0';
+		this.iframe.style.pointerEvents = 'none';
+		this.iframe.style.visibility = 'hidden';
+	}
+
 	private sendMessage(message: StrudelParentToRunnerMessage): void {
-		if (!this.messagePort) return;
-		this.messagePort.postMessage(message);
+		if (this.messagePort) {
+			this.messagePort.postMessage(message);
+		}
+
+		// Fallback for intermittent parent->runner port delivery: duplicate only init-audio,
+		// which is idempotent and de-duplicated in the runner.
+		if (message.type === 'STR_INIT_AUDIO' && this.iframe?.contentWindow) {
+			const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
+			this.iframe.contentWindow.postMessage(message, targetOrigin);
+		}
 	}
 
 	private handleIframeLoad = (): void => {
@@ -223,19 +334,52 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	private handlePortMessage = (event: MessageEvent): void => {
 		const message = event.data as unknown;
 		if (!isStrudelRunnerMessage(message)) return;
+		this.portInboundHealthy = true;
+		this.processRunnerMessage(message);
+	};
 
+	private handleWindowMessage(event: MessageEvent): void {
+		if (this.disposed) return;
+		if (this.portInboundHealthy) return;
+		if (!this.iframe?.contentWindow || event.source !== this.iframe.contentWindow) return;
+		if (!import.meta.env.DEV && event.origin !== this.runnerOrigin) return;
+		if (typeof event.data !== 'object' || event.data === null) return;
+
+		const envelope = event.data as { type?: string; message?: unknown };
+		if (envelope.type !== STRUDEL_WINDOW_EVENT_TYPE) return;
+		if (!isStrudelRunnerMessage(envelope.message)) return;
+		this.processRunnerMessage(envelope.message);
+	}
+
+	private processRunnerMessage(message: StrudelRunnerToParentMessage): void {
 		switch (message.type) {
 			case 'STR_READY':
+				const wasReady = this.isReady;
+				const wasInitialized = this._isInitialized;
 				this.isReady = true;
 				this._isInitialized = message.audioInitialized;
+				if (message.audioInitialized) {
+					this.hideUnlockOverlay();
+				}
 				this.clearHandshakeTimer();
-				if (this.readyResolver) {
+				if (!wasReady && this.readyResolver) {
 					this.readyResolver();
 				}
 				this.readyPromise = null;
 				this.readyResolver = null;
 				this.readyRejecter = null;
+				if (message.audioInitialized) {
+					this.audioInitResolver?.();
+					this.clearAudioInitPromise();
+					if (!wasInitialized) {
+						this.options.onReady?.();
+					}
+				}
 				this.flushQueuedCode();
+				break;
+
+			case 'STR_AUDIO_UNLOCK_REQUIRED':
+				this.showUnlockOverlay();
 				break;
 
 			case 'STR_RUN_OK':
@@ -249,6 +393,11 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				break;
 
 			case 'STR_RUN_ERROR':
+				if (this.audioInitRejecter) {
+					this.audioInitRejecter(new Error(message.message));
+					this.clearAudioInitPromise();
+				}
+				this.hideUnlockOverlay();
 				this.options.onError?.({
 					message: message.message,
 					stack: message.stack,
@@ -286,7 +435,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				});
 				break;
 		}
-	};
+	}
 
 	private createPattern(
 		haps: StrudelHapDto[] | undefined,
@@ -377,12 +526,44 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		}
 	}
 
+	private clearAudioInitPromise(): void {
+		this.audioInitPromise = null;
+		this.audioInitResolver = null;
+		this.audioInitRejecter = null;
+	}
+
+	private async ensureRunnerReady(): Promise<void> {
+		if (this.disposed) return;
+		if (!this.iframe || this.shouldRecreateRunner()) {
+			this.createIframe();
+		}
+
+		try {
+			await this.waitUntilReady();
+		} catch (firstError) {
+			if (this.disposed) throw firstError;
+			// Recover once from stale/failed hidden-frame handshakes.
+			this.createIframe();
+			await this.waitUntilReady();
+		}
+	}
+
+	private shouldRecreateRunner(): boolean {
+		return !this.isReady && !this.messagePort && this.handshakeTimer === null;
+	}
+
 	private failHandshake(error: Error): void {
 		this.clearHandshakeTimer();
 		this.isReady = false;
+		this._isInitialized = false;
+		this.hideUnlockOverlay();
 		if (this.readyRejecter) {
 			this.readyRejecter(error);
 		}
+		if (this.audioInitRejecter) {
+			this.audioInitRejecter(error);
+		}
+		this.clearAudioInitPromise();
 		this.readyPromise = null;
 		this.readyResolver = null;
 		this.readyRejecter = null;

@@ -21,6 +21,10 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
 import type { StrudelTransportState } from '@/core/app.types';
+import {
+    emitStrudelUnlockPopoverDismiss,
+    emitStrudelUnlockPopoverSuppress,
+} from '@/platform/ui/popoverEvents';
 
 export interface SystemMenuProps {
     onShare: () => void;
@@ -51,6 +55,8 @@ export function SystemMenu({
     const [open, setOpen] = useState(false);
 
     const handleRandomize = async () => {
+        emitStrudelUnlockPopoverDismiss();
+        emitStrudelUnlockPopoverSuppress();
         const success = await onRandomize();
         if (!success) {
             toast.error('failed to load random sketch', {

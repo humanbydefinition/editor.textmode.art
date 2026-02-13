@@ -46,6 +46,10 @@ export interface StrudelReadyMessage {
 	audioInitialized: boolean;
 }
 
+export interface StrudelAudioUnlockRequiredMessage {
+	type: 'STR_AUDIO_UNLOCK_REQUIRED';
+}
+
 export interface StrudelRunOkMessage {
 	type: 'STR_RUN_OK';
 	timestamp: number;
@@ -79,6 +83,7 @@ export interface StrudelAudioDataMessage {
 
 export type StrudelRunnerToParentMessage =
 	| StrudelReadyMessage
+	| StrudelAudioUnlockRequiredMessage
 	| StrudelRunOkMessage
 	| StrudelRunErrorMessage
 	| StrudelPlayStateMessage
@@ -108,6 +113,7 @@ export function isStrudelRunnerMessage(msg: unknown): msg is StrudelRunnerToPare
 	const candidate = msg as { type?: string };
 	return (
 		candidate.type === 'STR_READY' ||
+		candidate.type === 'STR_AUDIO_UNLOCK_REQUIRED' ||
 		candidate.type === 'STR_RUN_OK' ||
 		candidate.type === 'STR_RUN_ERROR' ||
 		candidate.type === 'STR_PLAY_STATE' ||

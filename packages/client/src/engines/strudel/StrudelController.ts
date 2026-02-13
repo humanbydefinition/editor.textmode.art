@@ -56,21 +56,13 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 
 		const state = this.getStrudelState();
 		if (!state.isInitialized) {
-			this.handleInitAudio().then(() => {
-				if (!this.isPlaybackEnabled()) {
-					this.deps.getRuntime()?.clearPendingCode();
-					this.deps.getRuntime()?.hush();
-					return;
-				}
-				this.deps.getRuntime()?.forceRun(code);
-			}).catch((error) => {
+			void this.handleInitAudio().catch((error) => {
 				const message = error instanceof Error ? error.message : 'Failed to initialize Strudel audio';
 				this.deps.store.setError({ message: this.formatErrorMessage(message), source: this.errorSource });
 				this.callbacks.onRenderOverlay();
 			});
-		} else {
-			this.deps.getRuntime()?.forceRun(code);
 		}
+		this.deps.getRuntime()?.forceRun(code);
 	}
 
 	/**
@@ -154,7 +146,7 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 	handlePlayStateChange(isPlaying: boolean): void {
 		this.updateStrudelState({ isPlaying });
 
-		if (!isPlaying) {
+		if (!isPlaying && !this.isPlaybackEnabled()) {
 			this.deps.getEditor()?.stopHighlighting();
 		}
 
