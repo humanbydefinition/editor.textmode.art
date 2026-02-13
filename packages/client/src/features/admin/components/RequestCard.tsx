@@ -41,7 +41,7 @@ type RequestCardProps = {
     onApprove: () => void;
     onDeny: () => void;
     onRegeneratePreview: () => void;
-    onCopySlug: () => Promise<boolean>;
+    onCopyLink: () => Promise<boolean>;
 };
 
 const statusStyles: Record<SketchRequest['status'], string> = {
@@ -73,7 +73,7 @@ export function RequestCard({
     onApprove,
     onDeny,
     onRegeneratePreview,
-    onCopySlug,
+    onCopyLink,
 }: RequestCardProps) {
     const links = getLinks(request.socialLinks);
     const [denyConfirmOpen, setDenyConfirmOpen] = useState(false);
@@ -85,8 +85,8 @@ export function RequestCard({
         Boolean(request.publishConsentAcceptedAt) &&
         Boolean(request.publishConsentPolicyVersion?.trim());
 
-    const handleCopySlug = async () => {
-        const copied = await onCopySlug();
+    const handleCopyLink = async () => {
+        const copied = await onCopyLink();
         setCopyState(copied ? 'copied' : 'failed');
         window.setTimeout(() => setCopyState('idle'), 1200);
     };
@@ -122,14 +122,14 @@ export function RequestCard({
                                           ? 'border-destructive bg-destructive/10 text-destructive motion-safe:animate-pulse'
                                           : 'border-border'
                                 }`}
-                                onClick={() => void handleCopySlug()}
+                                onClick={() => void handleCopyLink()}
                             >
                                 {copyState === 'copied' ? (
                                     <Check className="h-3.5 w-3.5" />
                                 ) : (
                                     <ClipboardCopy className="h-3.5 w-3.5" />
                                 )}
-                                {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy slug'}
+                                {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy link'}
                             </Button>
                             {request.status === 'APPROVED' || request.status === 'PENDING' ? (
                                 <Button variant="outline" size="sm" className="border-2 border-border" asChild>

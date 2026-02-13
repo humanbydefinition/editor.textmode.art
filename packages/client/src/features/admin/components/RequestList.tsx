@@ -15,7 +15,7 @@ type RequestListProps = {
     onApprove: (request: SketchRequest) => void;
     onDeny: (request: SketchRequest) => void;
     onRegeneratePreview: (request: SketchRequest) => void;
-    onCopySlug: (slug: string) => Promise<boolean>;
+    onCopyLink: (slug: string) => Promise<boolean>;
 };
 
 /**
@@ -32,7 +32,7 @@ export function RequestList({
     onApprove,
     onDeny,
     onRegeneratePreview,
-    onCopySlug,
+    onCopyLink,
 }: RequestListProps) {
     if (loading && requests.length === 0) {
         return (
@@ -94,10 +94,9 @@ export function RequestList({
                     onApprove={() => onApprove(request)}
                     onDeny={() => onDeny(request)}
                     onRegeneratePreview={() => onRegeneratePreview(request)}
-                    onCopySlug={() => onCopySlug(request.slug)}
+                    onCopyLink={() => onCopyLink(request.slug)}
                 />
             ))}
         </div>
     );
 }
-

@@ -380,9 +380,10 @@ export function AdminApp() {
         }
     };
 
-    const copySlug = async (slug: string): Promise<boolean> => {
+    const copyLink = async (slug: string): Promise<boolean> => {
         try {
-            await navigator.clipboard.writeText(slug);
+            const link = new URL(`/s/${slug}`, window.location.origin).toString();
+            await navigator.clipboard.writeText(link);
             return true;
         } catch {
             return false;
@@ -452,7 +453,7 @@ export function AdminApp() {
                             onApprove={(request) => void updateRequestStatus(request, 'APPROVED')}
                             onDeny={(request) => void updateRequestStatus(request, 'DENIED')}
                             onRegeneratePreview={handleRegeneratePreview}
-                            onCopySlug={(slug) => copySlug(slug)}
+                            onCopyLink={(slug) => copyLink(slug)}
                         />
                     </div>
                 </main>
