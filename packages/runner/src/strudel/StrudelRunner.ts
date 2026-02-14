@@ -87,17 +87,10 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 
 		this.initAudioRequestPromise = (async () => {
 			if (this.runtimeAdapter.isAudioInitialized()) {
-				this.sendReady();
-				return;
-			}
-
-			const initialized = await this.initializeAudio();
-			if (initialized) {
 				this.unlockPrompt.hide();
 				this.sendReady();
 				return;
 			}
-
 			this.unlockPrompt.show();
 			this.sendMessage({ type: 'STR_AUDIO_UNLOCK_REQUIRED' });
 		})();
@@ -128,36 +121,33 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 		try {
 			await this.runtimeAdapter.ensureRuntimeInitialized((error) => this.sendRunError(error));
 			if (!this.runtimeAdapter.isAudioInitialized()) {
-				const initialized = await this.initializeAudio();
-				if (!initialized) {
-					if (autostart) {
-						this.pendingAutostartCode = code;
-					}
-
-					const evaluatedPattern = await this.runtimeAdapter.evaluate(code, false);
-					this.isPlaying = false;
-					this.timerManager.stopCycleBroadcast();
-					this.timerManager.stopAudioBroadcast();
-					this.currentPattern = evaluatedPattern;
-
-					const cycle = this.getCycle();
-					const patternDerivedLocations = collectMiniLocationsFromPattern(evaluatedPattern);
-					const miniLocations = serializeMiniLocations(this.runtimeAdapter.getMiniLocations());
-					const haps = collectHapsFromPattern(evaluatedPattern, cycle);
-
-					this.sendMessage({
-						type: 'STR_RUN_OK',
-						timestamp: Date.now(),
-						miniLocations: patternDerivedLocations ?? miniLocations,
-						haps,
-						cycle,
-						isPlaying: false,
-					});
-					this.sendPlayState();
-					this.unlockPrompt.show();
-					this.sendMessage({ type: 'STR_AUDIO_UNLOCK_REQUIRED' });
-					return;
+				if (autostart) {
+					this.pendingAutostartCode = code;
 				}
+
+				const evaluatedPattern = await this.runtimeAdapter.evaluate(code, false);
+				this.isPlaying = false;
+				this.timerManager.stopCycleBroadcast();
+				this.timerManager.stopAudioBroadcast();
+				this.currentPattern = evaluatedPattern;
+
+				const cycle = this.getCycle();
+				const patternDerivedLocations = collectMiniLocationsFromPattern(evaluatedPattern);
+				const miniLocations = serializeMiniLocations(this.runtimeAdapter.getMiniLocations());
+				const haps = collectHapsFromPattern(evaluatedPattern, cycle);
+
+				this.sendMessage({
+					type: 'STR_RUN_OK',
+					timestamp: Date.now(),
+					miniLocations: patternDerivedLocations ?? miniLocations,
+					haps,
+					cycle,
+					isPlaying: false,
+				});
+				this.sendPlayState();
+				this.unlockPrompt.show();
+				this.sendMessage({ type: 'STR_AUDIO_UNLOCK_REQUIRED' });
+				return;
 			}
 
 			this.pendingAutostartCode = null;
