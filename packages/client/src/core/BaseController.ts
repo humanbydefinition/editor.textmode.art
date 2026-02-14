@@ -2,6 +2,7 @@ import type { CodeError, StatusState } from '@/core/app.types';
 import type { IEditor } from './BaseEditor';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
+import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -32,20 +33,6 @@ export interface BaseControllerCallbacks {
 	onRenderOverlay: () => void;
 	/** Called to save code to storage */
 	onSaveCode: (code: string) => void;
-}
-
-/**
- * Minimal slug metadata contract used by controllers.
- * Defined in core to avoid depending on higher layers.
- */
-export interface ControllerSlugSketchInfo {
-	status: 'PENDING' | 'APPROVED';
-	slug: string;
-	title: string;
-	description: string | null;
-	authorName: string | null;
-	license: string | null;
-	socialLinks: Array<{ label: string; url: string }> | null;
 }
 
 /**
@@ -81,10 +68,10 @@ export interface ControllerStoreAdapter {
 	// Approved sketch
 	getApprovedSketch: () => ApprovedSketch | null;
 	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-	getSlugSketchInfo: () => ControllerSlugSketchInfo | null;
-	setSlugSketchInfo: (info: ControllerSlugSketchInfo | null) => void;
+	getSlugSketchInfo: () => SlugSketchInfo | null;
+	setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
 	getOriginalApprovedSketch: () => ApprovedSketch | null;
-	getOriginalSlugSketchInfo: () => ControllerSlugSketchInfo | null;
+	getOriginalSlugSketchInfo: () => SlugSketchInfo | null;
 }
 
 

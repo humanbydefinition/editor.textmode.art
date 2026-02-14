@@ -2,16 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { AppState } from '../appStore';
-
-export interface SlugSketchInfo {
-    status: 'PENDING' | 'APPROVED';
-    slug: string;
-    title: string;
-    description: string | null;
-    authorName: string | null;
-    license: string | null;
-    socialLinks: Array<{ label: string; url: string }> | null;
-}
+import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
 
 export interface ShareSlice {
     share: {

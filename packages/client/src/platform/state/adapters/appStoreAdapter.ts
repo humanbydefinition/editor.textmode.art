@@ -2,7 +2,7 @@ import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/core/app.types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { SlugSketchInfo } from '../slices/shareSlice';
+import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
 
 /**
  * Adapter for accessing settings state.

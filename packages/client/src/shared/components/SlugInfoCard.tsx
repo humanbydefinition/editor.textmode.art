@@ -1,16 +1,7 @@
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Badge } from '@/shared/ui/badge';
-
-export interface SlugInfoCardSketch {
-    status?: 'PENDING' | 'APPROVED';
-    slug: string;
-    title: string;
-    description: string | null;
-    authorName: string | null;
-    license: string | null;
-    socialLinks: Array<{ label: string; url: string }> | null;
-}
+import type { SlugInfoCardSketch } from '@/shared/types/slugSketchInfo';
 
 interface SlugInfoCardProps {
     sketch: SlugInfoCardSketch;
