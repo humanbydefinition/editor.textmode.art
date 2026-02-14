@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppRuntime } from '@/app/runtime/AppRuntime';
 import { AdminApp } from '@/features/admin';
-import { ensureMonacoClipboardCompatibility } from '@/platform/compat/monacoClipboardShim';
+import { ensureMonacoClipboardCompatibility } from '@/platform/polyfills/monacoClipboardShim';
 
 interface RuntimeWindow extends Window {
 	__synthBootStarted__?: boolean;
