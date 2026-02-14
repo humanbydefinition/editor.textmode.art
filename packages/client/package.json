@@ -35,9 +35,6 @@
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.4.0",
         "tailwindcss-animate": "^1.0.7",
-        "textmode.filters.js": "^1.1.1",
-        "textmode.js": "0.10.0",
-        "textmode.synth.js": "1.5.1",
         "yet-another-react-lightbox": "^3.28.0",
         "zod": "^3.24.1",
         "zustand": "^5.0.10"
@@ -55,6 +52,9 @@
         "eslint-plugin-react-refresh": "^0.4.24",
         "globals": "^16.5.0",
         "tailwindcss": "^4.1.10",
+        "textmode.filters.js": "^1.1.1",
+        "textmode.js": "0.10.0",
+        "textmode.synth.js": "1.5.1",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.46.4",
         "vite": "^7.2.4"
