@@ -2,6 +2,7 @@
  * Admin module utility functions
  */
 
+import { normalizeMastodonUrl } from '@synth.textmode.art/contracts/sketch';
 import type { SocialLink, SketchRequest } from './types';
 
 /**
@@ -37,15 +38,7 @@ export function normalizeSocialLink(link: SocialLink): SocialLink {
     const url = link.url.trim();
 
     if (label.toLowerCase() === 'mastodon') {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            return link;
-        }
-
-        const handle = url.startsWith('@') ? url.slice(1) : url;
-        const [user, host] = handle.split('@');
-        if (user && host) {
-            return { ...link, url: `https://${host}/@${user}` };
-        }
+        return { ...link, url: normalizeMastodonUrl(url) };
     }
 
     if (!url.startsWith('http://') && !url.startsWith('https://')) {

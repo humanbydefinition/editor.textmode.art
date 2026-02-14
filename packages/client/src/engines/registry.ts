@@ -29,13 +29,6 @@ class EngineRegistry {
     getAll(): IEngine[] {
         return Array.from(this.engines.values());
     }
-
-    /**
-     * Unregister an engine (used for cleanup/updates).
-     */
-    unregister(id: EngineId): void {
-        this.engines.delete(id);
-    }
 }
 
 export const registry = new EngineRegistry();
