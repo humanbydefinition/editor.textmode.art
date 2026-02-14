@@ -12,10 +12,6 @@ import { createEngineSlice, type EngineSlice } from './slices/engineSlice';
 import { createShareSlice, type ShareSlice } from './slices/shareSlice';
 import { createUISlice, initUISlice, type UISlice } from './slices/uiSlice';
 
-// Re-export slice types for consumers
-export type { EngineState } from './slices/engineSlice';
-export type { Panel } from './slices/uiSlice';
-
 /**
  * Combined application state — intersection of all slices.
  */
