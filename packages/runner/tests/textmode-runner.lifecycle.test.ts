@@ -23,7 +23,7 @@ const mocked = vi.hoisted(() => ({
 	}>,
 }));
 
-vi.mock('@/lib/TextmodeManager', () => ({
+vi.mock('@/engines/textmode/TextmodeManager', () => ({
 	TextmodeManager: class MockTextmodeManager {
 		init = vi.fn();
 		pause = vi.fn();
@@ -40,7 +40,7 @@ vi.mock('@/lib/TextmodeManager', () => ({
 	},
 }));
 
-vi.mock('@/execution/ExecutionContext', () => ({
+vi.mock('@/engines/textmode/ExecutionContext', () => ({
 	ExecutionContext: class MockExecutionContext {
 		validateSyntax = vi.fn(() => ({ valid: true }));
 		execute = vi.fn(() => ({ success: true }));
@@ -52,7 +52,7 @@ vi.mock('@/execution/ExecutionContext', () => ({
 	},
 }));
 
-vi.mock('@/sandbox/scheduling/FrameScheduler', () => ({
+vi.mock('@/engines/textmode/FrameScheduler', () => ({
 	FrameScheduler: class MockFrameScheduler {
 		schedule = vi.fn();
 		cancel = vi.fn();
@@ -63,7 +63,7 @@ vi.mock('@/sandbox/scheduling/FrameScheduler', () => ({
 	},
 }));
 
-import { TextmodeRunner } from '../src/TextmodeRunner';
+import { TextmodeEngine as TextmodeRunner } from '../src/engines/textmode/TextmodeEngine';
 
 describe('TextmodeRunner lifecycle', () => {
 	beforeEach(() => {

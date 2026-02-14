@@ -1,7 +1,7 @@
 import type { ExecutionResult, ValidationResult } from '@/types/internal';
 import { SafeProxyFactory } from './SafeProxyFactory';
-import { ErrorReporter } from '@/sandbox/errors/ErrorReporter';
-import type { AudioReceiver } from '@/sandbox/scheduling/AudioReceiver';
+import { ErrorReporter } from '@/engines/textmode/ErrorReporter';
+import type { AudioReceiver } from '@/engines/textmode/AudioReceiver';
 import {
     src,
     osc,
