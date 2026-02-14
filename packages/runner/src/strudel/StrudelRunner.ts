@@ -48,6 +48,7 @@ interface StrudelReplLike {
 
 interface UnlockPromptElements {
     root: HTMLDivElement;
+    card: HTMLDivElement;
     title: HTMLHeadingElement;
     description: HTMLParagraphElement;
     button: HTMLButtonElement;
@@ -363,73 +364,108 @@ export class StrudelRunner {
         document.body.style.margin = '0';
         document.body.style.background = 'transparent';
 
+        const style = document.createElement('style');
+        style.textContent = `
+            .strudel-unlock-root {
+                position: fixed;
+                inset: 0;
+                display: none;
+                pointer-events: none;
+                color: #f4f4f5;
+                font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+                box-sizing: border-box;
+            }
+            .strudel-unlock-card {
+                width: 100%;
+                height: 100%;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(24, 24, 27, 0.97) 0%, rgba(9, 9, 11, 0.98) 100%);
+                box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
+                padding: 10px 10px 9px;
+                display: grid;
+                grid-template-rows: auto auto auto auto;
+                gap: 8px;
+                pointer-events: auto;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            .strudel-unlock-title {
+                margin: 0;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: 1.3;
+                letter-spacing: 0.01em;
+                color: rgba(255, 255, 255, 0.96);
+            }
+            .strudel-unlock-description {
+                margin: 0;
+                font-size: 11px;
+                line-height: 1.45;
+                color: rgba(212, 212, 216, 0.9);
+                max-width: 36ch;
+            }
+            .strudel-unlock-button {
+                height: 30px;
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                border-radius: 8px;
+                padding: 0 10px;
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                background: rgba(39, 39, 42, 0.88);
+                color: rgba(250, 250, 250, 0.95);
+                text-transform: lowercase;
+                transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+            }
+            .strudel-unlock-button:hover {
+                background: rgba(63, 63, 70, 0.95);
+                border-color: rgba(255, 255, 255, 0.22);
+            }
+            .strudel-unlock-button:active {
+                transform: translateY(1px);
+            }
+            .strudel-unlock-button:focus-visible {
+                outline: 2px solid rgba(161, 161, 170, 0.35);
+                outline-offset: 1px;
+            }
+            .strudel-unlock-button:disabled {
+                cursor: default;
+                opacity: 0.72;
+            }
+            .strudel-unlock-status {
+                margin: 0;
+                font-size: 10px;
+                min-height: 13px;
+                line-height: 1.3;
+                color: #fda4af;
+                display: none;
+            }
+        `;
+        document.head.appendChild(style);
+
         const root = document.createElement('div');
-        root.style.position = 'fixed';
-        root.style.inset = '0';
-        root.style.display = 'none';
-        root.style.alignItems = 'stretch';
-        root.style.justifyContent = 'stretch';
-        root.style.padding = '0';
-        root.style.boxSizing = 'border-box';
-        root.style.pointerEvents = 'none';
-        root.style.color = '#f5f5f5';
-        root.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif';
+        root.className = 'strudel-unlock-root';
 
         const card = document.createElement('div');
-        card.style.width = '100%';
-        card.style.height = '100%';
-        card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-        card.style.borderRadius = '12px';
-        card.style.background = 'rgba(9, 9, 11, 0.97)';
-        card.style.boxShadow = '0 24px 64px rgba(0, 0, 0, 0.45)';
-        card.style.padding = '14px 14px 12px';
-        card.style.display = 'grid';
-        card.style.gridTemplateRows = 'auto auto 1fr auto';
-        card.style.gap = '10px';
-        card.style.pointerEvents = 'auto';
-        card.style.boxSizing = 'border-box';
-        card.style.overflow = 'hidden';
+        card.className = 'strudel-unlock-card';
 
         const title = document.createElement('h1');
         title.textContent = 'enable strudel audio';
-        title.style.margin = '0';
-        title.style.fontSize = '13px';
-        title.style.fontWeight = '600';
-        title.style.lineHeight = '1.3';
-        title.style.letterSpacing = '0.01em';
-        title.style.color = 'rgba(255, 255, 255, 0.96)';
+        title.className = 'strudel-unlock-title';
 
         const description = document.createElement('p');
         description.textContent = 'browser policy blocked autoplay. tap once to unlock audio playback.';
-        description.style.margin = '0';
-        description.style.fontSize = '12px';
-        description.style.lineHeight = '1.45';
-        description.style.color = 'rgba(212, 212, 216, 0.92)';
-        description.style.maxWidth = '34ch';
+        description.className = 'strudel-unlock-description';
 
         const button = document.createElement('button');
         button.type = 'button';
         button.textContent = 'enable audio';
-        button.style.border = '1px solid rgba(16, 185, 129, 0.45)';
-        button.style.borderRadius = '8px';
-        button.style.padding = '10px 12px';
-        button.style.fontSize = '12px';
-        button.style.fontWeight = '600';
-        button.style.cursor = 'pointer';
-        button.style.background = 'rgba(16, 185, 129, 0.18)';
-        button.style.color = '#6ee7b7';
-        button.style.minHeight = '40px';
-        button.style.transition = 'background 120ms ease';
-        button.style.width = '100%';
+        button.className = 'strudel-unlock-button';
         button.addEventListener('click', this.handleUnlockButtonClick);
 
         const status = document.createElement('p');
-        status.style.margin = '0';
-        status.style.fontSize = '11px';
-        status.style.minHeight = '18px';
-        status.style.lineHeight = '1.35';
-        status.style.color = '#fda4af';
-        status.style.display = 'none';
+        status.className = 'strudel-unlock-status';
 
         card.appendChild(title);
         card.appendChild(description);
@@ -438,7 +474,7 @@ export class StrudelRunner {
         root.appendChild(card);
         document.body.appendChild(root);
 
-        this.unlockPrompt = { root, title, description, button, status };
+        this.unlockPrompt = { root, card, title, description, button, status };
         this.showUnlockPrompt();
     }
 
