@@ -352,7 +352,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 
 	private processRunnerMessage(message: StrudelRunnerToParentMessage): void {
 		switch (message.type) {
-			case 'STR_READY':
+			case 'STR_READY': {
 				const wasReady = this.isReady;
 				const wasInitialized = this._isInitialized;
 				this.isReady = true;
@@ -376,6 +376,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				}
 				this.flushQueuedCode();
 				break;
+			}
 
 			case 'STR_AUDIO_UNLOCK_REQUIRED':
 				this.showUnlockOverlay();
