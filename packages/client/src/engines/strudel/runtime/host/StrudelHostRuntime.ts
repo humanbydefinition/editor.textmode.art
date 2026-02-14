@@ -3,7 +3,7 @@ import type {
 	StrudelPattern,
 	StrudelRuntimeOptions,
 	IStrudelRuntime,
-} from '../StrudelRuntime';
+} from '../types';
 import {
 	STRUDEL_PROTOCOL_VERSION,
 	type StrudelParentToRunnerMessage,
@@ -19,7 +19,7 @@ import {
 	STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT,
 	STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT,
 	STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT,
-} from '@/platform/ui/popoverEvents';
+} from '@/platform/events/popoverEvents';
 import { StrudelHostTransportState } from './StrudelHostTransportState';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;

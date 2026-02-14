@@ -4,5 +4,5 @@ export type {
 	IStrudelRuntime,
 	StrudelPattern,
 	StrudelHap,
-} from './StrudelRuntime';
+} from './types';
 
