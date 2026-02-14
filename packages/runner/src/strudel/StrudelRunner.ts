@@ -17,7 +17,7 @@ import {
 	type StrudelRunnerToParentMessage,
 	type StrudelWindowToRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
-import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
+import { BaseRunner } from '@/core/runner/BaseRunner';
 
 const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
@@ -56,9 +56,7 @@ interface UnlockPromptElements {
     status: HTMLParagraphElement;
 }
 
-export class StrudelRunner {
-    private messagePort: MessagePort | null = null;
-    private readonly allowedParentOrigins: Set<string>;
+export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
     private repl: StrudelReplLike | null = null;
     private currentPattern: StrudelPatternLike | null = null;
     private runtimeInitPromise: Promise<void> | null = null;
@@ -74,12 +72,12 @@ export class StrudelRunner {
     private initAudioRequestPromise: Promise<void> | null = null;
 
     constructor() {
-        this.allowedParentOrigins = new Set(this.getAllowedParentOrigins());
+        super();
     }
 
     start(): void {
         this.setupUnlockPrompt();
-        this.setupErrorHandlers();
+        this.setupGlobalErrorHandlers((error) => this.sendRunError(error));
         window.addEventListener('message', this.handleWindowMessage);
     };
 
@@ -742,10 +740,8 @@ export class StrudelRunner {
         return normalized.length > 0 ? normalized : undefined;
     }
 
-    private sendMessage(message: StrudelRunnerToParentMessage): void {
-        if (this.messagePort) {
-            this.messagePort.postMessage(message);
-        }
+    protected override sendMessage(message: StrudelRunnerToParentMessage): void {
+        super.sendMessage(message);
 
         // Fallback channel for browsers where MessagePort runner->parent delivery is flaky.
         // Keep this limited to control/state messages to avoid duplicating high-rate FFT traffic.
@@ -766,15 +762,6 @@ export class StrudelRunner {
         );
     }
 
-    private attachPort(port: MessagePort): void {
-        if (this.messagePort) {
-            this.messagePort.close();
-        }
-        this.messagePort = port;
-        this.messagePort.onmessage = this.handlePortMessage;
-        this.messagePort.start();
-    }
-
     private handleWindowMessage = (event: MessageEvent<StrudelWindowToRunnerMessage | StrudelParentToRunnerMessage>): void => {
         if (event.source !== window.parent) return;
         if (!this.isAllowedOrigin(event.origin)) return;
@@ -784,7 +771,7 @@ export class StrudelRunner {
             this.activeParentOrigin = event.origin;
             const port = event.ports?.[0];
             if (port) {
-                this.attachPort(port);
+                this.attachPort(port, this.handlePortMessage as (event: MessageEvent) => void);
             }
             this.sendReady();
             return;
@@ -796,22 +783,4 @@ export class StrudelRunner {
         }
     };
 
-    private setupErrorHandlers(): void {
-        window.addEventListener('error', (event) => {
-            this.sendRunError(event.error ?? event.message);
-        });
-
-        window.addEventListener('unhandledrejection', (event) => {
-            this.sendRunError(event.reason);
-        });
-    }
-
-    private isAllowedOrigin(origin: string): boolean {
-        if (this.allowedParentOrigins.has('*')) return true;
-        return this.allowedParentOrigins.has(origin);
-    }
-
-    private getAllowedParentOrigins(): string[] {
-        return parseAllowedParentOrigins(import.meta.env.VITE_RUNNER_PARENT_ORIGINS, import.meta.env.DEV);
-    }
 }
