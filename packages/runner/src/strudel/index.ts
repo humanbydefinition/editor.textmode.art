@@ -1,4 +1,6 @@
 import { StrudelRunner } from './StrudelRunner';
+import { startInIframe } from '@/core/bootstrap/startInIframe';
+import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 
 const runner = new StrudelRunner();
 
@@ -9,25 +11,25 @@ if (document.readyState === 'loading') {
 }
 
 function startRunner(): void {
-    if (window.self === window.top) {
-        const isDev = import.meta.env.DEV;
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
+	const allowedParentOrigins = parseAllowedParentOrigins(
+		import.meta.env.VITE_RUNNER_PARENT_ORIGINS,
+		import.meta.env.DEV
+	);
 
-        if (isDev && isDebug) {
-            console.warn('Strudel runner is running in top-level window (debug mode).');
-        } else {
-            const origins = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
-            const firstOrigin =
-                origins && typeof origins === 'string' && origins.length > 0
-                    ? (origins.split(',')[0]?.trim() ?? null)
-                    : null;
-            const redirectUrl = isDev
-                ? `http://${window.location.hostname}:5173`
-                : firstOrigin || 'https://synth.textmode.art';
-            window.location.href = redirectUrl;
-            return;
-        }
-    }
-
-    runner.start();
+	startInIframe({
+		start: () => runner.start(),
+		isTopLevel: window.self === window.top,
+		isDev: import.meta.env.DEV,
+		search: window.location.search,
+		hostname: window.location.hostname,
+		allowedParentOrigins,
+		productionFallbackUrl: 'https://synth.textmode.art',
+		debugWarningMessage: 'Strudel runner is running in top-level window (debug mode).',
+		onRedirect: (url) => {
+			window.location.href = url;
+		},
+		onWarn: (message) => {
+			console.warn(message);
+		},
+	});
 }

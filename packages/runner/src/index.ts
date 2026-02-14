@@ -2,6 +2,8 @@
  * Entry point for the Textmode runner iframe.
  */
 import { TextmodeRunner } from './TextmodeRunner';
+import { startInIframe } from '@/core/bootstrap/startInIframe';
+import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 
 const runner = new TextmodeRunner();
 
@@ -13,28 +15,25 @@ if (document.readyState === 'loading') {
 }
 
 function startRunner() {
-    // Security: Redirect if accessed directly (not in iframe)
-    if (window.self === window.top) {
-        // Allow direct access in dev only if explicitly requested
-        const isDev = import.meta.env.DEV;
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
+	const allowedParentOrigins = parseAllowedParentOrigins(
+		import.meta.env.VITE_RUNNER_PARENT_ORIGINS,
+		import.meta.env.DEV
+	);
 
-        if (isDev && isDebug) {
-            console.warn('Runner is running in top-level window (debug mode).');
-        } else {
-            // Redirect to main app (derived from allowed parent origins, or fallback)
-            const origins = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
-            const firstOrigin =
-                origins && typeof origins === 'string' && origins.length > 0
-                    ? (origins.split(',')[0]?.trim() ?? null)
-                    : null;
-            const redirectUrl = isDev
-                ? `http://${window.location.hostname}:5173`
-                : firstOrigin || 'https://synth.textmode.art';
-            window.location.href = redirectUrl;
-            return;
-        }
-    }
-
-    runner.start();
+	startInIframe({
+		start: () => runner.start(),
+		isTopLevel: window.self === window.top,
+		isDev: import.meta.env.DEV,
+		search: window.location.search,
+		hostname: window.location.hostname,
+		allowedParentOrigins,
+		productionFallbackUrl: 'https://synth.textmode.art',
+		debugWarningMessage: 'Runner is running in top-level window (debug mode).',
+		onRedirect: (url) => {
+			window.location.href = url;
+		},
+		onWarn: (message) => {
+			console.warn(message);
+		},
+	});
 }

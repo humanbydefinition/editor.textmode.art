@@ -17,6 +17,7 @@ import {
 	type StrudelRunnerToParentMessage,
 	type StrudelWindowToRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
+import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 
 const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
@@ -811,15 +812,6 @@ export class StrudelRunner {
     }
 
     private getAllowedParentOrigins(): string[] {
-        const raw = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
-        if (!raw || typeof raw !== 'string') {
-            if (import.meta.env.DEV) return ['*'];
-            return [];
-        }
-
-        return raw
-            .split(',')
-            .map((value) => value.trim())
-            .filter((value) => value.length > 0);
+        return parseAllowedParentOrigins(import.meta.env.VITE_RUNNER_PARENT_ORIGINS, import.meta.env.DEV);
     }
 }

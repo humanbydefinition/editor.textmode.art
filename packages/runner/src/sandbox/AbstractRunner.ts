@@ -5,6 +5,7 @@
 import { ErrorReporter } from './errors/ErrorReporter';
 import { FrameScheduler } from './scheduling/FrameScheduler';
 import { AudioReceiver } from './scheduling/AudioReceiver';
+import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 import type {
 	ParentToRunnerMessage,
 	RunnerToParentMessage,
@@ -177,14 +178,6 @@ export abstract class AbstractRunner implements RunnerImplementation {
     }
 
     private getAllowedParentOrigins(): string[] {
-        const raw = import.meta.env.VITE_RUNNER_PARENT_ORIGINS;
-        if (!raw || typeof raw !== 'string') {
-            if (import.meta.env.DEV) return ['*'];
-            return [];
-        }
-        return raw
-            .split(',')
-            .map((value) => value.trim())
-            .filter((value) => value.length > 0);
+        return parseAllowedParentOrigins(import.meta.env.VITE_RUNNER_PARENT_ORIGINS, import.meta.env.DEV);
     }
 }
