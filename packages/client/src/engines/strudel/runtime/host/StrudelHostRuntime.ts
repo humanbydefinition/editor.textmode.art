@@ -300,11 +300,11 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		const initMessage: StrudelInitMessage = {
 			type: 'STR_INIT',
 			v: STRUDEL_PROTOCOL_VERSION,
-			};
-			const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
-			this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
-			this.transportState.startHandshakeTimer(HANDSHAKE_TIMEOUT_MS, () => this.failHandshake());
-		}
+		};
+		const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
+		this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
+		this.transportState.startHandshakeTimer(HANDSHAKE_TIMEOUT_MS, () => this.failHandshake());
+	}
 
 	private handlePortMessage = (event: MessageEvent): void => {
 		const message = event.data as unknown;
