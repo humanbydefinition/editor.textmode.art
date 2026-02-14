@@ -12,7 +12,7 @@ import {
 	type StrudelInitMessage,
 	type StrudelMiniLocationDto,
 	isStrudelRunnerMessage,
-} from '@/engines/strudel/sandbox/protocol';
+} from '@synth.textmode.art/contracts/runner/strudel';
 import { clearStrudelAudioFrame, setStrudelAudioFrame } from '@/engines/strudel/audio/StrudelAudioFrameStore';
 import {
 	STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT,

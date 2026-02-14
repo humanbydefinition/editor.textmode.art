@@ -5,8 +5,13 @@
 import { ErrorReporter } from './errors/ErrorReporter';
 import { FrameScheduler } from './scheduling/FrameScheduler';
 import { AudioReceiver } from './scheduling/AudioReceiver';
-import type { ParentToRunnerMessage, RunnerToParentMessage, AudioDataMessage, WindowToRunnerMessage } from './protocol';
-import { isInitMessage, isParentMessage } from './protocol';
+import type {
+	ParentToRunnerMessage,
+	RunnerToParentMessage,
+	AudioDataMessage,
+	WindowToRunnerMessage,
+} from '@synth.textmode.art/contracts/runner/textmode';
+import { isInitMessage, isParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
 
 /**
  * Interface that concrete runners must implement

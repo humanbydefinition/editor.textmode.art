@@ -8,15 +8,15 @@ import {
     samples as loadSamples,
 } from '@strudel/web';
 import {
-    isStrudelInitMessage,
-    isStrudelParentMessage,
-    type StrudelHapDto,
-    type StrudelMiniLocationDto,
-    type StrudelAudioDataMessage,
-    type StrudelParentToRunnerMessage,
-    type StrudelRunnerToParentMessage,
-    type StrudelWindowToRunnerMessage,
-} from './protocol';
+	isStrudelInitMessage,
+	isStrudelParentMessage,
+	type StrudelHapDto,
+	type StrudelMiniLocationDto,
+	type StrudelAudioDataMessage,
+	type StrudelParentToRunnerMessage,
+	type StrudelRunnerToParentMessage,
+	type StrudelWindowToRunnerMessage,
+} from '@synth.textmode.art/contracts/runner/strudel';
 
 const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 

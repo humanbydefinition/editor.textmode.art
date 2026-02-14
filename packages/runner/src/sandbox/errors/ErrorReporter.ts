@@ -1,5 +1,5 @@
 import type { IErrorReporter, CodeError } from '../types';
-import type { RunnerToParentMessage } from '../protocol';
+import type { RunnerToParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
 
 export type RunnerMessageSender = (msg: RunnerToParentMessage) => void;
 
