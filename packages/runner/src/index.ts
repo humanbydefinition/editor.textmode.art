@@ -1,4 +1,4 @@
 import { TextmodeEngine } from './engines/textmode/TextmodeEngine';
 import { createRunner } from './shared/createRunner';
 
-createRunner(new TextmodeEngine(), 'Runner is running in top-level window (debug mode).');
+createRunner(TextmodeEngine, 'Runner is running in top-level window (debug mode).');

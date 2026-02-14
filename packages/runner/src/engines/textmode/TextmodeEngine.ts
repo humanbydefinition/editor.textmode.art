@@ -37,8 +37,8 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 		}
 	};
 
-	constructor() {
-		super();
+	constructor(allowedParentOrigins: Set<string>) {
+		super(allowedParentOrigins);
 		this.errorReporter = new ErrorReporter((msg) => this.sendMessage(msg));
 		this.audioReceiver = new AudioReceiver();
 		this.scheduler = new FrameScheduler({

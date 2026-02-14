@@ -12,7 +12,7 @@ describe('StrudelRunner integration flow', () => {
 
 	it('emits RUN_OK -> PLAY_STATE -> AUDIO_DATA in order while playing', async () => {
 		vi.useFakeTimers();
-		const runner = new StrudelRunner() as unknown as {
+		const runner = new StrudelRunner(new Set(['*'])) as unknown as {
 			runtimeAdapter: {
 				ensureRuntimeInitialized: (cb: (error: Error) => void) => Promise<void>;
 				isAudioInitialized: () => boolean;

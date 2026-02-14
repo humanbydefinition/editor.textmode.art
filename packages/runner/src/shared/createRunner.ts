@@ -5,15 +5,20 @@ export interface BaseRunnerInterface {
 	start(): void;
 }
 
+export type RunnerConstructor = new (allowedParentOrigins: Set<string>) => BaseRunnerInterface;
+
 /**
  * Common boilerplate for initializing and starting a runner in an iframe.
  */
-export function createRunner(runner: BaseRunnerInterface, debugWarningMessage: string) {
+export function createRunner(RunnerClass: RunnerConstructor, debugWarningMessage: string) {
 	const startRunner = () => {
-		const allowedParentOrigins = parseAllowedParentOrigins(
+		const allowedParentOriginsArray = parseAllowedParentOrigins(
 			import.meta.env.VITE_RUNNER_PARENT_ORIGINS,
 			import.meta.env.DEV
 		);
+		const allowedParentOrigins = new Set(allowedParentOriginsArray);
+
+		const runner = new RunnerClass(allowedParentOrigins);
 
 		startInIframe({
 			start: () => runner.start(),
@@ -21,7 +26,7 @@ export function createRunner(runner: BaseRunnerInterface, debugWarningMessage: s
 			isDev: import.meta.env.DEV,
 			search: window.location.search,
 			hostname: window.location.hostname,
-			allowedParentOrigins,
+			allowedParentOrigins: allowedParentOriginsArray,
 			productionFallbackUrl: 'https://synth.textmode.art',
 			debugWarningMessage,
 			onRedirect: (url) => {

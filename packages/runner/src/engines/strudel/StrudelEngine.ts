@@ -28,8 +28,8 @@ export class StrudelEngine extends BaseRunner<StrudelRunnerToParentMessage> {
 	private pendingAutostartCode: string | null = null;
 	private initAudioRequestPromise: Promise<void> | null = null;
 
-	constructor() {
-		super();
+	constructor(allowedParentOrigins: Set<string>) {
+		super(allowedParentOrigins);
 		this.runtimeAdapter = new StrudelRuntimeAdapter();
 		this.timerManager = new BroadcastTimerManager({
 			onCycleTick: () => this.sendPlayState(),

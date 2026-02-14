@@ -76,7 +76,7 @@ describe('TextmodeRunner lifecycle', () => {
 	it('cleans up listeners/resources on dispose()', () => {
 		const addSpy = vi.spyOn(window, 'addEventListener');
 		const removeSpy = vi.spyOn(window, 'removeEventListener');
-		const runner = new TextmodeRunner() as unknown as {
+		const runner = new TextmodeRunner(new Set(['*'])) as unknown as {
 			start: () => void;
 			dispose: () => void;
 			attachPort: (port: any, onMessage: any) => void;
@@ -108,7 +108,7 @@ describe('TextmodeRunner lifecycle', () => {
 	});
 
 	it('can start and dispose repeatedly without leaking handlers', () => {
-		const runner = new TextmodeRunner() as unknown as { start: () => void; dispose: () => void };
+		const runner = new TextmodeRunner(new Set(['*'])) as unknown as { start: () => void; dispose: () => void };
 
 		expect(() => {
 			runner.start();
@@ -124,7 +124,7 @@ describe('TextmodeRunner lifecycle', () => {
 	});
 
 	it('keeps RUN_CODE and SOFT_RESET scheduling behavior unchanged', () => {
-		const runner = new TextmodeRunner() as unknown as {
+		const runner = new TextmodeRunner(new Set(['*'])) as unknown as {
 			start: () => void;
 			handlePortMessage: (event: MessageEvent) => void;
 		};

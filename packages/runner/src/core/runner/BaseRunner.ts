@@ -1,4 +1,3 @@
-import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 import { MessagePortTransport } from '@/core/transport/MessagePortTransport';
 
 export type GlobalErrorReporter = (error: unknown) => void;
@@ -9,10 +8,8 @@ export abstract class BaseRunner<TRunnerMessage> {
 	private errorHandler: ((event: ErrorEvent) => void) | null = null;
 	private rejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
 
-	constructor() {
-		this.allowedParentOrigins = new Set(
-			parseAllowedParentOrigins(import.meta.env.VITE_RUNNER_PARENT_ORIGINS, import.meta.env.DEV)
-		);
+	constructor(allowedParentOrigins: Set<string>) {
+		this.allowedParentOrigins = allowedParentOrigins;
 	}
 
 	protected attachPort(port: MessagePort, onMessage: (event: MessageEvent) => void): void {
