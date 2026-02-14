@@ -29,7 +29,7 @@ import { Label } from '@/shared/ui/label';
 import { Separator } from '@/shared/ui/separator';
 import { Textarea } from '@/shared/ui/textarea';
 import type { SketchRequest } from '../types';
-import { formatDate, getLinks, normalizeSocialLink } from '../utils';
+import { formatDate, getLinks, normalizeSocialLink } from '../model/adminUtils';
 import { SocialIcon } from './SocialIcon';
 
 type RequestCardProps = {

@@ -12,14 +12,15 @@ import {
     REVIEWER_STORAGE_KEY,
     type StatusCounts,
     TOKEN_STORAGE_KEY,
-} from './types';
-import { AdminHeader } from './components/AdminHeader';
-import { AdminLoginPage } from './components/AdminLoginPage';
-import { AdminSidebar } from './components/AdminSidebar';
-import { FilterTabs } from './components/FilterTabs';
-import { MobileSettings } from './components/MobileSettings';
-import { RequestList } from './components/RequestList';
-import { getApiErrorMessage } from './utils';
+} from '../types';
+import { AdminHeader } from './AdminHeader';
+import { AdminLoginPage } from './AdminLoginPage';
+import { AdminSidebar } from './AdminSidebar';
+import { FilterTabs } from './FilterTabs';
+import { MobileSettings } from './MobileSettings';
+import { RequestList } from './RequestList';
+import { getApiErrorMessage } from '../model/adminUtils';
+
 import { Toaster } from '@/shared/ui/sonner';
 
 type AuthenticateOptions = {

@@ -2,7 +2,7 @@
  * Admin module utility functions
  */
 
-import type { SocialLink, SketchRequest } from './types';
+import type { SocialLink, SketchRequest } from '../types';
 
 /**
  * Format a date string for display
