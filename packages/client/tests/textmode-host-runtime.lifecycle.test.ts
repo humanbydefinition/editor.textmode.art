@@ -143,4 +143,26 @@ describe('TextmodeRuntime lifecycle', () => {
 		expect(secondIframe).not.toBe(firstIframe);
 		expect(container.querySelectorAll('iframe').length).toBe(1);
 	});
+
+	it('sends DISPOSE to runner when runtime is disposed while ready', () => {
+		const container = document.createElement('div');
+		document.body.appendChild(container);
+
+		const runtime = new TextmodeRuntime({
+			container,
+			runnerUrl: 'http://runner.test/index.html',
+			onReady: vi.fn(),
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+		});
+
+		const port = createMockPort();
+		(runtime as unknown as { messagePort: MockPort }).messagePort = port;
+		(runtime as unknown as { _isReady: boolean })._isReady = true;
+
+		runtime.dispose();
+
+		expect(port.postMessage).toHaveBeenCalledWith({ type: 'DISPOSE' });
+		expect(port.close).toHaveBeenCalledTimes(1);
+	});
 });

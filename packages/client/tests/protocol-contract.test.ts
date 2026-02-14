@@ -18,6 +18,7 @@ describe('Protocol Contracts', () => {
 		const validParentMessages: unknown[] = [
 			{ type: 'RUN_CODE', code: 't.draw(() => {})' },
 			{ type: 'SOFT_RESET', code: 't.draw(() => {})' },
+			{ type: 'DISPOSE' },
 			{ type: 'AUDIO_DATA', fft: [1, 2], waveform: [128, 127], timestamp: 1 },
 		];
 

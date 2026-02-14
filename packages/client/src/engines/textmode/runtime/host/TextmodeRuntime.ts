@@ -116,6 +116,9 @@ export class TextmodeRuntime implements IHostRuntime {
 	dispose(): void {
 		this.clearHandshakeTimer();
 		if (this.messagePort) {
+			if (this._isReady) {
+				this.sendMessage({ type: 'DISPOSE' });
+			}
 			this.messagePort.close();
 			this.messagePort = null;
 		}
