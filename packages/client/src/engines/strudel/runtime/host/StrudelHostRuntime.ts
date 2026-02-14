@@ -1,4 +1,3 @@
-import type { CodeError } from '@/core/app.types';
 import type {
 	StrudelHap,
 	StrudelPattern,
@@ -87,7 +86,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.createIframe();
 		// Warm up runner handshake so the first play click can unlock audio immediately.
 		void this.waitUntilReady().catch(() => {
-			// Handshake errors are surfaced by failHandshake.
+			// Intentionally silent: textmode runner availability handles global offline UX.
 		});
 	}
 
@@ -266,7 +265,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		await this.ensureRunnerReady();
 		if (this._isInitialized) return;
 		if (!this.messagePort) {
-			throw new Error('Strudel runner channel is unavailable.');
+			return;
 		}
 
 		this.audioInitPromise = new Promise<void>((resolve, reject) => {
@@ -311,7 +310,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	};
 
 	private handleIframeError = (): void => {
-		this.failHandshake(new Error('Failed to load Strudel runner iframe'));
+		this.failHandshake();
 	};
 
 	private initializeMessagePort(): void {
@@ -515,7 +514,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	private startHandshakeTimer(): void {
 		this.clearHandshakeTimer();
 		this.handshakeTimer = window.setTimeout(() => {
-			this.failHandshake(new Error('Timed out waiting for Strudel runner handshake'));
+			this.failHandshake();
 		}, HANDSHAKE_TIMEOUT_MS);
 	}
 
@@ -552,23 +551,20 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		return !this.isReady && !this.messagePort && this.handshakeTimer === null;
 	}
 
-	private failHandshake(error: Error): void {
+	private failHandshake(): void {
 		this.clearHandshakeTimer();
 		this.isReady = false;
 		this._isInitialized = false;
 		this.hideUnlockOverlay();
-		if (this.readyRejecter) {
-			this.readyRejecter(error);
+		if (this.readyResolver) {
+			this.readyResolver?.();
 		}
-		if (this.audioInitRejecter) {
-			this.audioInitRejecter(error);
+		if (this.audioInitResolver) {
+			this.audioInitResolver?.();
 		}
 		this.clearAudioInitPromise();
 		this.readyPromise = null;
 		this.readyResolver = null;
 		this.readyRejecter = null;
-
-		const codeError: CodeError = { message: error.message };
-		this.options.onError?.(codeError);
 	}
 }
