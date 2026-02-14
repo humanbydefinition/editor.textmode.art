@@ -20,6 +20,7 @@ export class TextmodeEngine implements IEngine {
 		customStateOnInit: {
 			runnerUnavailable: false,
 			runnerReconnecting: false,
+			runnerReady: false,
 		},
 	};
 

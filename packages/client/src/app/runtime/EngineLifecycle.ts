@@ -329,10 +329,12 @@ export class EngineLifecycle {
 			context.onRunnerConnected = () => {
 				this.deps.store.engine.setCustomState(engine.id, 'runnerUnavailable', false);
 				this.deps.store.engine.setCustomState(engine.id, 'runnerReconnecting', false);
+				this.deps.store.engine.setCustomState(engine.id, 'runnerReady', true);
 			};
 			context.onRunnerDisconnected = () => {
 				this.deps.store.engine.setCustomState(engine.id, 'runnerUnavailable', true);
 				this.deps.store.engine.setCustomState(engine.id, 'runnerReconnecting', false);
+				this.deps.store.engine.setCustomState(engine.id, 'runnerReady', false);
 			};
 		}
 

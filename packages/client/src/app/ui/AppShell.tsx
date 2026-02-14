@@ -10,6 +10,7 @@ import {
     selectError,
     selectHasLastWorkingForError,
     selectShareState,
+    selectTextmodeRunnerReady,
     selectTextmodeRunnerReconnecting,
     selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
@@ -45,6 +46,7 @@ export function AppShell() {
     const share = useAppStore(selectShareState);
     const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
     const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
+    const textmodeRunnerReady = useAppStore(selectTextmodeRunnerReady);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
     const hasLastWorking = useAppStore(selectHasLastWorkingForError);
@@ -194,6 +196,9 @@ export function AppShell() {
                                 onMakeRandomChange={actions.makeRandomChange}
                                 strudelEnabled={runtimeState.strudelEnabled}
                                 strudelTransport={runtimeState.strudelTransport}
+                                strudelRunnerReady={textmodeRunnerReady}
+                                strudelRunnerUnavailable={textmodeRunnerUnavailable}
+                                strudelRunnerReconnecting={textmodeRunnerReconnecting}
                                 randomizeLoading={runtimeState.randomizeLoading}
                                 onClearStorage={actions.clearStorage}
                                 renderExamplesTab={(onClose) => (
