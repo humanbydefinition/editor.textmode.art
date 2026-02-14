@@ -15,7 +15,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
-import { MAX_SHARE_URL_LENGTH, ShareService } from '@/shared/lib/ShareService';
+import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
 import type { SharePayload } from '@/features/share/share.types';
 
 import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';

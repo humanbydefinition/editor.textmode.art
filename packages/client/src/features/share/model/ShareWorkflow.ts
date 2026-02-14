@@ -1,6 +1,6 @@
 import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
-import { ShareService } from '@/shared/lib/ShareService';
+import { ShareService } from './ShareService';
 import type { SharePayload } from '../share.types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 

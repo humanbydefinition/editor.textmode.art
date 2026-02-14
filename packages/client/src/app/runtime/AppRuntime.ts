@@ -8,7 +8,7 @@ import { AppShell } from '@/app/ui/AppShell';
 import { ShareSessionManager } from '@/features/share/model/ShareSessionManager';
 import { EditorManager } from '@/platform/input/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
-import { CodeRandomizer } from '@/shared/lib/CodeRandomizer';
+import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch, defaultStrudelSketch } from '@/features/examples/content/default-sketches';
 import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
 import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
