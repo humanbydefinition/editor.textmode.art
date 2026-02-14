@@ -42,21 +42,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 /**
- * Host services provided by the application to managers and engines.
- * Consolidates application-level callbacks into a single interface.
- */
-export interface HostServices {
-	/** Get current application settings */
-	getSettings: () => AppSettings;
-	/** Trigger overlay re-render */
-	renderOverlay: () => void;
-	/** Toggle UI visibility */
-	toggleUI: () => void;
-	/** Change font size by delta */
-	changeFontSize: (delta: number) => void;
-}
-
-/**
  * Error information for display in the UI and marker creation.
  * Consolidates error reporting across runtimes and controllers.
  */
