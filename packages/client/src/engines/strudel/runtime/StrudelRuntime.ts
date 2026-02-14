@@ -26,16 +26,14 @@ export interface StrudelPattern {
 	queryArc(begin: number, end: number): StrudelHap[];
 }
 
-export interface StrudelHapLocation {
-	start: number;
-	end: number;
-}
-
 export interface StrudelHap {
 	whole?: { begin: { valueOf(): number }; end: { valueOf(): number }; duration: number };
 	part?: { begin: { valueOf(): number }; end: { valueOf(): number } };
 	context?: {
-		locations?: StrudelHapLocation[];
+		locations?: {
+			start: number;
+			end: number;
+		}[];
 	};
 	value?: Record<string, unknown>;
 	hasOnset(): boolean;

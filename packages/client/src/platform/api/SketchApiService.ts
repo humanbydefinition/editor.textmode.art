@@ -34,23 +34,6 @@ function getApiBase(): string {
 }
 
 /**
- * Fetch an approved sketch by slug.
- * Returns null if not found or not approved.
- */
-export async function fetchApprovedSketch(slug: string): Promise<ApprovedSketch | null> {
-    try {
-        const response = await fetch(`${getApiBase()}/api/sketches/${encodeURIComponent(slug)}`);
-        if (!response.ok) {
-            return null;
-        }
-        return (await response.json()) as ApprovedSketch;
-    } catch {
-        console.warn(`[SketchApiService] Failed to fetch sketch: ${slug}`);
-        return null;
-    }
-}
-
-/**
  * Fetch a slug-access sketch payload (approved or pending).
  * Returns null if not found.
  */
