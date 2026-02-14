@@ -126,7 +126,6 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.latestHaps = [];
 		this.isPlaying = false;
 		this.hideUnlockOverlay();
-		clearStrudelAudioFrame();
 		if (this.transportState.ready) {
 			this.sendMessage({ type: 'STR_HUSH' });
 		}
@@ -385,7 +384,6 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				if (!this.isPlaying) {
 					this.currentPattern = null;
 					this.latestHaps = [];
-					clearStrudelAudioFrame();
 					this.options.onPatternUpdate?.(null);
 				}
 				break;
@@ -394,7 +392,9 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				setStrudelAudioFrame({
 					fft: message.fft,
 					waveform: message.waveform,
-					timestamp: message.timestamp,
+					// Normalize to parent-context clock. iframe `performance.now()` is not
+					// comparable to parent `performance.now()` for age/decay calculations.
+					timestamp: performance.now(),
 				});
 				break;
 		}

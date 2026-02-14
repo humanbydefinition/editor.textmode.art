@@ -1,6 +1,8 @@
 import type { IAudioSource } from '@/platform/audio/AudioService';
 import { getStrudelAudioFrame } from './StrudelAudioFrameStore';
 
+const STRUDEL_FRAME_DECAY_MS = 850;
+
 /**
  * Options for StrudelAudioSource
  */
@@ -71,7 +73,8 @@ class ProxyAnalyser {
 			array.fill(0);
 			return;
 		}
-		fillFromSource(array, frame.fft, 0);
+		const gain = getFrameGain(frame.timestamp);
+		fillFromSource(array, frame.fft, 0, (value) => value * gain);
 	}
 
 	getByteTimeDomainData(array: Uint8Array): void {
@@ -80,11 +83,24 @@ class ProxyAnalyser {
 			array.fill(128);
 			return;
 		}
-		fillFromSource(array, frame.waveform, 128);
+		const gain = getFrameGain(frame.timestamp);
+		fillFromSource(array, frame.waveform, 128, (value) => 128 + (value - 128) * gain);
 	}
 }
 
-function fillFromSource(target: Uint8Array, source: ArrayLike<number>, fallback: number): void {
+function getFrameGain(timestamp: number): number {
+	const ageMs = Math.max(0, performance.now() - timestamp);
+	if (!Number.isFinite(ageMs)) return 0;
+	if (ageMs >= STRUDEL_FRAME_DECAY_MS) return 0;
+	return 1 - ageMs / STRUDEL_FRAME_DECAY_MS;
+}
+
+function fillFromSource(
+	target: Uint8Array,
+	source: ArrayLike<number>,
+	fallback: number,
+	transform: (value: number) => number = (value) => value
+): void {
 	if (source.length === 0) {
 		target.fill(fallback);
 		return;
@@ -93,7 +109,7 @@ function fillFromSource(target: Uint8Array, source: ArrayLike<number>, fallback:
 	const len = Math.min(target.length, source.length);
 	for (let i = 0; i < len; i++) {
 		const value = source[i];
-		target[i] = Number.isFinite(value) ? clampToByte(value) : fallback;
+		target[i] = Number.isFinite(value) ? clampToByte(transform(value)) : fallback;
 	}
 	for (let i = len; i < target.length; i++) {
 		target[i] = fallback;
