@@ -24,7 +24,7 @@ import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeCon
 import {
 	emitSlugInfoPopoverDismiss,
 	emitStrudelUnlockPopoverAllow,
-} from '@/platform/ui/popoverEvents';
+} from '@/platform/events/popoverEvents';
 
 /**
  * Main application composition root.

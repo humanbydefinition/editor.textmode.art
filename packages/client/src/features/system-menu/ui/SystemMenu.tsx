@@ -24,7 +24,7 @@ import type { StrudelTransportState } from '@/core/app.types';
 import {
     emitStrudelUnlockPopoverDismiss,
     emitStrudelUnlockPopoverSuppress,
-} from '@/platform/ui/popoverEvents';
+} from '@/platform/events/popoverEvents';
 
 export interface SystemMenuProps {
     onShare: () => void;

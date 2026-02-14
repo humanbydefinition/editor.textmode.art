@@ -6,7 +6,7 @@ import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
-import { SLUG_INFO_POPOVER_DISMISS_EVENT } from '@/platform/ui/popoverEvents';
+import { SLUG_INFO_POPOVER_DISMISS_EVENT } from '@/platform/events/popoverEvents';
 
 interface SlugInfoAlertProps {
 	className?: string;
