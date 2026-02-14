@@ -498,6 +498,11 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	private failHandshake(): void {
 		this.transportState.clearHandshakeTimer();
 		this.hideUnlockOverlay();
+		this.transportState.setInboundPortHealthy(false);
+		if (this.messagePort) {
+			this.messagePort.close();
+			this.messagePort = null;
+		}
 		this.transportState.markHandshakeFailed(new RunnerUnavailableError());
 	}
 }
