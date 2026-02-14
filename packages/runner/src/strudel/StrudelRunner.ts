@@ -1,10 +1,8 @@
 import {
-	isStrudelInitMessage,
 	isStrudelParentMessage,
 	type StrudelAudioDataMessage,
 	type StrudelParentToRunnerMessage,
 	type StrudelRunnerToParentMessage,
-	type StrudelWindowToRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
 import { BaseRunner } from '@/core/runner/BaseRunner';
 import { BroadcastTimerManager } from '@/strudel/broadcast/BroadcastTimerManager';
@@ -12,19 +10,21 @@ import { collectHapsFromPattern } from '@/strudel/serialization/haps';
 import { collectMiniLocationsFromPattern, serializeMiniLocations } from '@/strudel/serialization/miniLocations';
 import { StrudelRuntimeAdapter } from '@/strudel/runtime/StrudelRuntimeAdapter';
 import type { StrudelPatternLike } from '@/strudel/runtime/types';
+import { StrudelRunnerTransportState } from '@/strudel/transport/StrudelRunnerTransportState';
 import { StrudelUnlockPromptManager } from '@/strudel/ui/StrudelUnlockPromptManager';
-
-const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
 export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 	private readonly runtimeAdapter: StrudelRuntimeAdapter;
 	private readonly timerManager: BroadcastTimerManager;
 	private readonly unlockPrompt: StrudelUnlockPromptManager;
+	private readonly transportState: StrudelRunnerTransportState;
+	private readonly windowMessageHandler: (
+		event: MessageEvent
+	) => void;
 
 	private currentPattern: StrudelPatternLike | null = null;
 	private isPlaying = false;
 	private pendingAutostartCode: string | null = null;
-	private activeParentOrigin: string | null = null;
 	private initAudioRequestPromise: Promise<void> | null = null;
 
 	constructor() {
@@ -38,12 +38,22 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 		this.unlockPrompt = new StrudelUnlockPromptManager({
 			onUnlockClick: async () => this.handleUnlockButtonClick(),
 		});
+		this.transportState = new StrudelRunnerTransportState({
+			isAllowedOrigin: (origin) => this.isAllowedOrigin(origin),
+			isPortAttached: () => Boolean(this.messagePort),
+			attachPort: (port, onMessage) => this.attachPort(port, onMessage),
+			sendReady: () => this.sendReady(),
+			handleParentMessage: (message) => {
+				void this.handleParentMessage(message);
+			},
+		});
+		this.windowMessageHandler = this.transportState.getWindowMessageHandler(this.handlePortMessage);
 	}
 
 	start(): void {
 		this.unlockPrompt.setup();
 		this.setupGlobalErrorHandlers((error) => this.sendRunError(error));
-		window.addEventListener('message', this.handleWindowMessage);
+		window.addEventListener('message', this.windowMessageHandler);
 	}
 
 	private handlePortMessage = (event: MessageEvent<StrudelParentToRunnerMessage>): void => {
@@ -204,7 +214,7 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 	private dispose(): void {
 		this.hush();
 		this.timerManager.dispose();
-		window.removeEventListener('message', this.handleWindowMessage);
+		window.removeEventListener('message', this.windowMessageHandler);
 		this.unlockPrompt.dispose();
 		this.teardownGlobalErrorHandlers();
 		this.detachPort();
@@ -339,35 +349,7 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 	}
 
 	private postWindowMessage(message: StrudelRunnerToParentMessage): void {
-		if (window.parent === window) return;
-		const targetOrigin = this.activeParentOrigin ?? (import.meta.env.DEV ? '*' : window.location.origin);
-		window.parent.postMessage(
-			{
-				type: STRUDEL_WINDOW_EVENT_TYPE,
-				message,
-			},
-			targetOrigin
-		);
+		this.transportState.postWindowFallbackMessage(message, import.meta.env.DEV);
 	}
 
-	private handleWindowMessage = (event: MessageEvent<StrudelWindowToRunnerMessage | StrudelParentToRunnerMessage>): void => {
-		if (event.source !== window.parent) return;
-		if (!this.isAllowedOrigin(event.origin)) return;
-
-		const data = event.data as unknown;
-		if (isStrudelInitMessage(data)) {
-			this.activeParentOrigin = event.origin;
-			const port = event.ports?.[0];
-			if (port) {
-				this.attachPort(port, this.handlePortMessage as (event: MessageEvent) => void);
-			}
-			this.sendReady();
-			return;
-		}
-
-		// Window-message fallback path when MessagePort is unavailable.
-		if (isStrudelParentMessage(data) && (data.type === 'STR_INIT_AUDIO' || !this.messagePort)) {
-			void this.handleParentMessage(data);
-		}
-	};
 }

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StrudelHostRuntime } from '../src/engines/strudel/runtime/host/StrudelHostRuntime';
+import { createStrudelWindowEventEnvelope } from '@synth.textmode.art/contracts/runner/strudel';
 
 describe('StrudelHostRuntime lifecycle', () => {
 	const originalCreateElement = document.createElement.bind(document);
@@ -53,7 +54,7 @@ describe('StrudelHostRuntime lifecycle', () => {
 		runtime.dispose();
 	});
 
-	it('handles handshake failure path by clearing readiness/init state', () => {
+	it('handles handshake failure path by clearing readiness/init state', async () => {
 		installIframeSandboxShim();
 		const runtime = new StrudelHostRuntime({
 			runnerUrl: 'http://runner.test/strudel.html',
@@ -62,13 +63,12 @@ describe('StrudelHostRuntime lifecycle', () => {
 			onPatternUpdate: vi.fn(),
 			onPlayStateChange: vi.fn(),
 		});
+		const readyPromise = (runtime as unknown as { waitUntilReady: () => Promise<void> }).waitUntilReady();
 
 		(runtime as unknown as { failHandshake: () => void }).failHandshake();
 
+		await expect(readyPromise).rejects.toThrow('Strudel runner is unavailable');
 		expect(runtime.isInitialized()).toBe(false);
-		expect((runtime as unknown as { isReady: boolean }).isReady).toBe(false);
-		expect((runtime as unknown as { audioInitPromise: Promise<void> | null }).audioInitPromise).toBeNull();
-		expect((runtime as unknown as { readyPromise: Promise<void> | null }).readyPromise).toBeNull();
 
 		runtime.dispose();
 	});
@@ -91,7 +91,11 @@ describe('StrudelHostRuntime lifecycle', () => {
 			configurable: true,
 			value: iframeWindow,
 		});
-		(runtime as unknown as { portInboundHealthy: boolean }).portInboundHealthy = false;
+		(
+			runtime as unknown as {
+				transportState: { setInboundPortHealthy: (healthy: boolean) => void };
+			}
+		).transportState.setInboundPortHealthy(false);
 
 		(
 			runtime as unknown as {
@@ -100,15 +104,12 @@ describe('StrudelHostRuntime lifecycle', () => {
 		).handleWindowMessage({
 			source: iframeWindow,
 			origin: 'http://runner.test',
-			data: {
-				type: 'STRUDEL_RUNNER_EVENT',
-				message: {
+			data: createStrudelWindowEventEnvelope({
 					type: 'STR_PLAY_STATE',
 					isPlaying: true,
 					cycle: 4,
 					haps: [],
-				},
-			},
+				}),
 		} as MessageEvent);
 
 		expect(onPlayStateChange).toHaveBeenCalledWith(true);

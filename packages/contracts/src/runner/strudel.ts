@@ -1,4 +1,5 @@
 export const STRUDEL_PROTOCOL_VERSION = 1;
+export const STRUDEL_RUNNER_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
 export interface StrudelInitMessage {
 	type: 'STR_INIT';
@@ -91,6 +92,18 @@ export type StrudelRunnerToParentMessage =
 
 export type StrudelWindowToRunnerMessage = StrudelInitMessage;
 
+export interface StrudelWindowEventEnvelope {
+	type: typeof STRUDEL_RUNNER_EVENT_TYPE;
+	message: StrudelRunnerToParentMessage;
+}
+
+export function createStrudelWindowEventEnvelope(message: StrudelRunnerToParentMessage): StrudelWindowEventEnvelope {
+	return {
+		type: STRUDEL_RUNNER_EVENT_TYPE,
+		message,
+	};
+}
+
 export function isStrudelInitMessage(msg: unknown): msg is StrudelInitMessage {
 	if (typeof msg !== 'object' || msg === null) return false;
 	const candidate = msg as { type?: string; v?: number };
@@ -119,4 +132,10 @@ export function isStrudelRunnerMessage(msg: unknown): msg is StrudelRunnerToPare
 		candidate.type === 'STR_PLAY_STATE' ||
 		candidate.type === 'STR_AUDIO_DATA'
 	);
+}
+
+export function isStrudelWindowEventEnvelope(msg: unknown): msg is StrudelWindowEventEnvelope {
+	if (typeof msg !== 'object' || msg === null) return false;
+	const candidate = msg as { type?: string; message?: unknown };
+	return candidate.type === STRUDEL_RUNNER_EVENT_TYPE && isStrudelRunnerMessage(candidate.message);
 }

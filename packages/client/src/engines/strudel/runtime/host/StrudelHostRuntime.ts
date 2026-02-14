@@ -11,6 +11,7 @@ import {
 	type StrudelHapDto,
 	type StrudelInitMessage,
 	type StrudelMiniLocationDto,
+	isStrudelWindowEventEnvelope,
 	isStrudelRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
 import { clearStrudelAudioFrame, setStrudelAudioFrame } from '@/engines/strudel/audio/StrudelAudioFrameStore';
@@ -19,10 +20,10 @@ import {
 	STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT,
 	STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT,
 } from '@/platform/ui/popoverEvents';
+import { StrudelHostTransportState } from './StrudelHostTransportState';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
 const STRUDEL_RUNNER_OVERLAY_Z_INDEX = '460';
-const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
 export class RunnerUnavailableError extends Error {
 	constructor(message = 'Strudel runner is unavailable') {
@@ -44,9 +45,8 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	private readonly options: StrudelHostRuntimeOptions;
 	private readonly container: HTMLElement;
 	private readonly runnerOrigin: string;
+	private readonly transportState = new StrudelHostTransportState();
 
-	private _isInitialized = false;
-	private isReady = false;
 	private isPlaying = false;
 	private currentPattern: StrudelPattern | null = null;
 	private latestHaps: StrudelHap[] = [];
@@ -54,15 +54,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 
 	private pendingCode: string | null = null;
 	private queuedCode: string | null = null;
-	private handshakeTimer: number | null = null;
-	private readyPromise: Promise<void> | null = null;
-	private readyResolver: (() => void) | null = null;
-	private readyRejecter: ((reason: Error) => void) | null = null;
-	private audioInitPromise: Promise<void> | null = null;
-	private audioInitResolver: (() => void) | null = null;
-	private audioInitRejecter: ((reason: Error) => void) | null = null;
 	private disposed = false;
-	private portInboundHealthy = false;
 	private unlockPopoverSuppressed = false;
 	private readonly windowMessageListener: (event: MessageEvent) => void;
 	private readonly dismissUnlockOverlayListener: () => void;
@@ -104,18 +96,18 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	}
 
 	isInitialized(): boolean {
-		return this._isInitialized;
+		return this.transportState.initialized;
 	}
 
 	forceRun(code: string): void {
 		if (this.disposed) return;
-		if (!this._isInitialized) {
+		if (!this.transportState.initialized) {
 			this.showUnlockOverlay();
 			void this.requestAudioInitialization().catch(() => {
 				// Unlock failures are surfaced by runner/UI callbacks.
 			});
 		}
-		if (!this.isReady) {
+		if (!this.transportState.ready) {
 			this.pendingCode = code;
 			return;
 		}
@@ -135,7 +127,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.isPlaying = false;
 		this.hideUnlockOverlay();
 		clearStrudelAudioFrame();
-		if (this.isReady) {
+		if (this.transportState.ready) {
 			this.sendMessage({ type: 'STR_HUSH' });
 		}
 		this.options.onPlayStateChange?.(false);
@@ -145,13 +137,13 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	dispose(): void {
 		this.disposed = true;
 		this.hush();
-		this.clearHandshakeTimer();
+		this.transportState.clearHandshakeTimer();
 		window.removeEventListener('message', this.windowMessageListener);
 		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_DISMISS_EVENT, this.dismissUnlockOverlayListener);
 		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_SUPPRESS_EVENT, this.suppressUnlockOverlayListener);
 		window.removeEventListener(STRUDEL_UNLOCK_POPOVER_ALLOW_EVENT, this.allowUnlockOverlayListener);
 
-		if (this.isReady) {
+		if (this.transportState.ready) {
 			this.sendMessage({ type: 'STR_DISPOSE' });
 		}
 
@@ -167,18 +159,9 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 			this.iframe = null;
 		}
 
-		if (this.readyRejecter) {
-			this.readyRejecter(new Error('Strudel runtime disposed'));
-		}
-		if (this.audioInitRejecter) {
-			this.audioInitRejecter(new Error('Strudel runtime disposed'));
-		}
+		this.transportState.dispose(new Error('Strudel runtime disposed'));
 		this.hideUnlockOverlay();
 		clearStrudelAudioFrame();
-		this.clearAudioInitPromise();
-		this.readyPromise = null;
-		this.readyResolver = null;
-		this.readyRejecter = null;
 	}
 
 	getIsPlaying(): boolean {
@@ -210,10 +193,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 			this.messagePort = null;
 		}
 
-		this.isReady = false;
-		this._isInitialized = false;
-		this.portInboundHealthy = false;
-		this.clearAudioInitPromise();
+		this.transportState.resetConnectionState();
 		this.iframe = document.createElement('iframe');
 		this.iframe.id = 'strudel-runner-frame';
 		this.iframe.src = this.options.runnerUrl;
@@ -237,22 +217,15 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.iframe.addEventListener('load', this.handleIframeLoad);
 		this.iframe.addEventListener('error', this.handleIframeError);
 		this.container.appendChild(this.iframe);
-		this.startHandshakeTimer();
+		this.transportState.startHandshakeTimer(HANDSHAKE_TIMEOUT_MS, () => this.failHandshake());
 	}
 
 	private waitUntilReady(): Promise<void> {
-		if (this.isReady) return Promise.resolve();
-		if (this.readyPromise) return this.readyPromise;
-
-		this.readyPromise = new Promise<void>((resolve, reject) => {
-			this.readyResolver = resolve;
-			this.readyRejecter = reject;
-		});
-		return this.readyPromise;
+		return this.transportState.waitUntilReady();
 	}
 
 	private flushQueuedCode(): void {
-		if (!this.isReady || !this.messagePort) return;
+		if (!this.transportState.ready || !this.messagePort) return;
 
 		const code = this.queuedCode ?? this.pendingCode;
 		if (code === null) return;
@@ -262,26 +235,22 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	}
 
 	private async requestAudioInitialization(): Promise<void> {
-		if (this._isInitialized) return;
-		if (this.audioInitPromise) {
-			await this.audioInitPromise;
+		if (this.transportState.initialized) return;
+		if (this.transportState.hasAudioInitPromise()) {
+			await this.transportState.beginAudioInit();
 			return;
 		}
 
 		this.showUnlockOverlay();
 		await this.ensureRunnerReady();
-		if (this._isInitialized) return;
+		if (this.transportState.initialized) return;
 		if (!this.messagePort) {
 			return;
 		}
 
-		this.audioInitPromise = new Promise<void>((resolve, reject) => {
-			this.audioInitResolver = resolve;
-			this.audioInitRejecter = reject;
-		});
-
+		const initPromise = this.transportState.beginAudioInit();
 		this.sendMessage({ type: 'STR_INIT_AUDIO' });
-		await this.audioInitPromise;
+		await initPromise;
 	}
 
 	private showUnlockOverlay(): void {
@@ -331,52 +300,42 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		const initMessage: StrudelInitMessage = {
 			type: 'STR_INIT',
 			v: STRUDEL_PROTOCOL_VERSION,
-		};
-		const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
-		this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
-		this.startHandshakeTimer();
-	}
+			};
+			const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
+			this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
+			this.transportState.startHandshakeTimer(HANDSHAKE_TIMEOUT_MS, () => this.failHandshake());
+		}
 
 	private handlePortMessage = (event: MessageEvent): void => {
 		const message = event.data as unknown;
 		if (!isStrudelRunnerMessage(message)) return;
-		this.portInboundHealthy = true;
+		this.transportState.setInboundPortHealthy(true);
 		this.processRunnerMessage(message);
 	};
 
 	private handleWindowMessage(event: MessageEvent): void {
 		if (this.disposed) return;
-		if (this.portInboundHealthy) return;
+		if (this.transportState.inboundPortHealthy) return;
 		if (!this.iframe?.contentWindow || event.source !== this.iframe.contentWindow) return;
 		if (!import.meta.env.DEV && event.origin !== this.runnerOrigin) return;
-		if (typeof event.data !== 'object' || event.data === null) return;
-
-		const envelope = event.data as { type?: string; message?: unknown };
-		if (envelope.type !== STRUDEL_WINDOW_EVENT_TYPE) return;
-		if (!isStrudelRunnerMessage(envelope.message)) return;
+		if (!isStrudelWindowEventEnvelope(event.data)) return;
+		const envelope = event.data;
 		this.processRunnerMessage(envelope.message);
 	}
 
 	private processRunnerMessage(message: StrudelRunnerToParentMessage): void {
 		switch (message.type) {
 			case 'STR_READY': {
-				const wasReady = this.isReady;
-				const wasInitialized = this._isInitialized;
-				this.isReady = true;
-				this._isInitialized = message.audioInitialized;
+				const { wasReady, wasInitialized } = this.transportState.markReady(message.audioInitialized);
 				if (message.audioInitialized) {
 					this.hideUnlockOverlay();
 				}
-				this.clearHandshakeTimer();
-				if (!wasReady && this.readyResolver) {
-					this.readyResolver();
+				this.transportState.clearHandshakeTimer();
+				if (!wasReady) {
+					this.transportState.resolveReady();
 				}
-				this.readyPromise = null;
-				this.readyResolver = null;
-				this.readyRejecter = null;
 				if (message.audioInitialized) {
-					this.audioInitResolver?.();
-					this.clearAudioInitPromise();
+					this.transportState.resolveAudioInit();
 					if (!wasInitialized) {
 						this.options.onReady?.();
 					}
@@ -400,10 +359,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 				break;
 
 			case 'STR_RUN_ERROR':
-				if (this.audioInitRejecter) {
-					this.audioInitRejecter(new Error(message.message));
-					this.clearAudioInitPromise();
-				}
+				this.transportState.rejectAudioInit(new Error(message.message));
 				this.hideUnlockOverlay();
 				this.options.onError?.({
 					message: message.message,
@@ -519,26 +475,6 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		};
 	}
 
-	private startHandshakeTimer(): void {
-		this.clearHandshakeTimer();
-		this.handshakeTimer = window.setTimeout(() => {
-			this.failHandshake();
-		}, HANDSHAKE_TIMEOUT_MS);
-	}
-
-	private clearHandshakeTimer(): void {
-		if (this.handshakeTimer !== null) {
-			window.clearTimeout(this.handshakeTimer);
-			this.handshakeTimer = null;
-		}
-	}
-
-	private clearAudioInitPromise(): void {
-		this.audioInitPromise = null;
-		this.audioInitResolver = null;
-		this.audioInitRejecter = null;
-	}
-
 	private async ensureRunnerReady(): Promise<void> {
 		if (this.disposed) return;
 		if (!this.iframe || this.shouldRecreateRunner()) {
@@ -556,24 +492,12 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 	}
 
 	private shouldRecreateRunner(): boolean {
-		return !this.isReady && !this.messagePort && this.handshakeTimer === null;
+		return this.transportState.shouldRecreateRunner(Boolean(this.messagePort));
 	}
 
 	private failHandshake(): void {
-		this.clearHandshakeTimer();
-		this.isReady = false;
-		this._isInitialized = false;
+		this.transportState.clearHandshakeTimer();
 		this.hideUnlockOverlay();
-		const unavailableError = new RunnerUnavailableError();
-		if (this.readyRejecter) {
-			this.readyRejecter(unavailableError);
-		}
-		if (this.audioInitRejecter) {
-			this.audioInitRejecter(unavailableError);
-		}
-		this.clearAudioInitPromise();
-		this.readyPromise = null;
-		this.readyResolver = null;
-		this.readyRejecter = null;
+		this.transportState.markHandshakeFailed(new RunnerUnavailableError());
 	}
 }
