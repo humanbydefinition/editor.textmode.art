@@ -2,6 +2,8 @@ import type { IAudioSource } from '@/platform/audio/AudioService';
 import { getStrudelAudioFrame } from './StrudelAudioFrameStore';
 
 const STRUDEL_FRAME_DECAY_MS = 850;
+const STRUDEL_FRAME_ATTACK_MS = 320;
+const STRUDEL_ATTACK_RETRIGGER_GAP_MS = 120;
 
 /**
  * Options for StrudelAudioSource
@@ -58,6 +60,9 @@ export class StrudelAudioSource implements IAudioSource {
 class ProxyAnalyser {
 	fftSize: number;
 	smoothingTimeConstant = 0.8;
+	private hadFreshFrame = false;
+	private attackStartMs: number | null = null;
+	private lastFrameTimestamp: number | null = null;
 
 	constructor(fftSize: number) {
 		this.fftSize = fftSize;
@@ -70,26 +75,65 @@ class ProxyAnalyser {
 	getByteFrequencyData(array: Uint8Array): void {
 		const frame = getStrudelAudioFrame();
 		if (!frame) {
+			this.resetEnvelopeState();
 			array.fill(0);
 			return;
 		}
-		const gain = getFrameGain(frame.timestamp);
+		const gain = this.getEnvelopeGain(frame.timestamp);
 		fillFromSource(array, frame.fft, 0, (value) => value * gain);
 	}
 
 	getByteTimeDomainData(array: Uint8Array): void {
 		const frame = getStrudelAudioFrame();
 		if (!frame) {
+			this.resetEnvelopeState();
 			array.fill(128);
 			return;
 		}
-		const gain = getFrameGain(frame.timestamp);
+		const gain = this.getEnvelopeGain(frame.timestamp);
 		fillFromSource(array, frame.waveform, 128, (value) => 128 + (value - 128) * gain);
+	}
+
+	private getEnvelopeGain(frameTimestamp: number): number {
+		const now = performance.now();
+		const decayGain = getDecayGain(now, frameTimestamp);
+		if (decayGain <= 0) {
+			this.resetEnvelopeState();
+			return 0;
+		}
+
+		// Retrigger attack when a new frame arrives after a noticeable gap.
+		if (
+			this.lastFrameTimestamp !== null &&
+			frameTimestamp > this.lastFrameTimestamp + STRUDEL_ATTACK_RETRIGGER_GAP_MS
+		) {
+			this.hadFreshFrame = false;
+			this.attackStartMs = null;
+		}
+		this.lastFrameTimestamp = frameTimestamp;
+
+		if (!this.hadFreshFrame) {
+			this.hadFreshFrame = true;
+			this.attackStartMs = now;
+		}
+
+		const attackElapsedMs = Math.max(0, now - (this.attackStartMs ?? now));
+		const attackGain =
+			STRUDEL_FRAME_ATTACK_MS <= 0
+				? 1
+				: Math.min(1, attackElapsedMs / STRUDEL_FRAME_ATTACK_MS);
+		return decayGain * attackGain;
+	}
+
+	private resetEnvelopeState(): void {
+		this.hadFreshFrame = false;
+		this.attackStartMs = null;
+		this.lastFrameTimestamp = null;
 	}
 }
 
-function getFrameGain(timestamp: number): number {
-	const ageMs = Math.max(0, performance.now() - timestamp);
+function getDecayGain(now: number, timestamp: number): number {
+	const ageMs = Math.max(0, now - timestamp);
 	if (!Number.isFinite(ageMs)) return 0;
 	if (ageMs >= STRUDEL_FRAME_DECAY_MS) return 0;
 	return 1 - ageMs / STRUDEL_FRAME_DECAY_MS;
