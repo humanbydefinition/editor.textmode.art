@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppRuntime } from '@/app/runtime/AppRuntime';
 import { AdminApp } from '@/features/admin';
+import { ensureMonacoClipboardCompatibility } from '@/platform/compat/monacoClipboardShim';
 
 interface RuntimeWindow extends Window {
 	__synthBootStarted__?: boolean;
@@ -14,6 +15,8 @@ interface RuntimeWindow extends Window {
  * Boots either the main live-coding app or admin app based on the URL path.
  */
 export function startClientApp(): void {
+	ensureMonacoClipboardCompatibility();
+
 	const runtimeWindow = window as RuntimeWindow;
 	if (runtimeWindow.__synthBootStarted__) return;
 	runtimeWindow.__synthBootStarted__ = true;

@@ -128,14 +128,6 @@ export class TextmodeManager implements ITextmodeManager {
     }
 
     /**
-     * Create a safe proxy for the textmode instance
-     * This is a pass-through; actual proxy creation is delegated to SafeProxyFactory
-     */
-    createSafeProxy(): Textmodifier | null {
-        return this.instance;
-    }
-
-    /**
      * Handle window resize
      */
     private handleResize = (): void => {
@@ -174,5 +166,6 @@ export class TextmodeManager implements ITextmodeManager {
         setGlobalErrorCallback(null);
 
         this.instance?.destroy();
+        this.instance = null;
     }
 }

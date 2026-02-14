@@ -70,7 +70,7 @@ npm run -w @synth.textmode.art/server playwright:install
 
 To run the textmode runner on a separate origin (recommended for isolation), set:
 
-- `VITE_RUNNER_URL` (client): Full URL to the runner HTML (e.g. `https://runner.synth.textmode.art/runner/index.html`)
+- `VITE_RUNNER_URL` (client): Full URL to the textmode runner HTML (e.g. `https://runner.synth.textmode.art/runner/textmode.html`)
 - `VITE_RUNNER_PARENT_ORIGINS` (runner): Comma-separated list of allowed parent origins (e.g. `https://synth.textmode.art`)
 - `VITE_MEDIA_PROXY_URL` (runner, optional): Full URL to the media proxy endpoint (defaults to `${firstParentOrigin}/api/media` when unset)
 - `RUNNER_PUBLIC_URL` (server): Public runner origin for CSP and CORS (e.g. `https://runner.synth.textmode.art`)

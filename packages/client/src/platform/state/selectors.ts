@@ -14,6 +14,8 @@ export const selectTextmodeRunnerUnavailable = (state: AppState): boolean =>
 	state.engineStates.textmode?.customState.runnerUnavailable === true;
 export const selectTextmodeRunnerReconnecting = (state: AppState): boolean =>
 	state.engineStates.textmode?.customState.runnerReconnecting === true;
+export const selectTextmodeRunnerReady = (state: AppState): boolean =>
+	state.engineStates.textmode?.customState.runnerReady === true;
 
 export const selectHasLastWorkingForError = (state: AppState): boolean => {
 	if (!state.error?.source) return false;

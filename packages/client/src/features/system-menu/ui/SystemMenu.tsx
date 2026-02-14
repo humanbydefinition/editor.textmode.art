@@ -21,6 +21,10 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
 import type { StrudelTransportState } from '@/core/app.types';
+import {
+    emitStrudelUnlockPopoverDismiss,
+    emitStrudelUnlockPopoverSuppress,
+} from '@/platform/ui/popoverEvents';
 
 export interface SystemMenuProps {
     onShare: () => void;
@@ -28,6 +32,9 @@ export interface SystemMenuProps {
     onToggleStrudelTransport: () => void;
     onMakeRandomChange?: () => void;
     strudelEnabled: boolean;
+    strudelRunnerReady: boolean;
+    strudelRunnerUnavailable: boolean;
+    strudelRunnerReconnecting: boolean;
     strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
     onClearStorage: () => void;
@@ -40,6 +47,9 @@ export function SystemMenu({
     onToggleStrudelTransport,
     onMakeRandomChange,
     strudelEnabled,
+    strudelRunnerReady,
+    strudelRunnerUnavailable,
+    strudelRunnerReconnecting,
     strudelTransport,
     randomizeLoading,
     onClearStorage,
@@ -51,6 +61,8 @@ export function SystemMenu({
     const [open, setOpen] = useState(false);
 
     const handleRandomize = async () => {
+        emitStrudelUnlockPopoverDismiss();
+        emitStrudelUnlockPopoverSuppress();
         const success = await onRandomize();
         if (!success) {
             toast.error('failed to load random sketch', {
@@ -59,13 +71,28 @@ export function SystemMenu({
         }
     };
 
+    const isStrudelRunnerAvailable =
+        strudelRunnerReady && !strudelRunnerUnavailable && !strudelRunnerReconnecting;
+
+    const strudelTooltipText = !strudelEnabled
+        ? 'enable strudel in settings first'
+        : strudelRunnerUnavailable
+            ? 'audio runner is offline'
+            : strudelRunnerReconnecting
+                ? 'audio runner is reconnecting...'
+                : !strudelRunnerReady
+                    ? 'audio runner is starting...'
+                    : strudelTransport === 'playing'
+                        ? 'pause strudel audio'
+                        : 'play strudel audio';
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
                         onClick={onToggleStrudelTransport}
-                        disabled={!strudelEnabled}
+                        disabled={!strudelEnabled || !isStrudelRunnerAvailable}
                         onMouseDown={(e) => e.preventDefault()}
                         className={cn(
                             'fixed top-2 right-10 z-50 pointer-events-auto',
@@ -90,13 +117,7 @@ export function SystemMenu({
                     </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>
-                        {!strudelEnabled
-                            ? 'enable strudel in settings first'
-                            : strudelTransport === 'playing'
-                                ? 'pause strudel audio'
-                                : 'play strudel audio'}
-                    </p>
+                    <p>{strudelTooltipText}</p>
                 </TooltipContent>
             </Tooltip>
 

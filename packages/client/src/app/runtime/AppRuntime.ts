@@ -21,6 +21,10 @@ import { createPaneStoreAdapter, type PaneStoreAdapter } from '@/platform/state/
 import type { AppSettings, StrudelTransportState } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
+import {
+	emitSlugInfoPopoverDismiss,
+	emitStrudelUnlockPopoverAllow,
+} from '@/platform/ui/popoverEvents';
 
 /**
  * Main application composition root.
@@ -236,6 +240,10 @@ export class AppRuntime {
 	private toggleStrudelTransport(): void {
 		const nextTransport: StrudelTransportState =
 			this.settings.strudelTransport === 'playing' ? 'paused' : 'playing';
+		if (nextTransport === 'playing') {
+			emitSlugInfoPopoverDismiss();
+			emitStrudelUnlockPopoverAllow();
+		}
 		this.setStrudelTransport(nextTransport);
 	}
 

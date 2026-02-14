@@ -1,11 +1,13 @@
-import { StrudelRuntime, type StrudelPattern } from './runtime';
+import type { IStrudelRuntime, StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';
+
+const RUNNER_UNAVAILABLE_ERROR_NAME = 'RunnerUnavailableError';
 
 /**
  * Strudel-specific dependencies.
  */
-export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, StrudelRuntime> {
+export interface StrudelControllerDependencies extends BaseControllerDependencies<StrudelEditor, IStrudelRuntime> {
 	getPlaybackEnabled: () => boolean;
 }
 
@@ -35,7 +37,7 @@ export interface StrudelState {
 /**
  * StrudelController - manages Strudel audio runtime and code evaluation.
  */
-export class StrudelController extends BaseController<StrudelEditor, StrudelRuntime> implements IStrudelController {
+export class StrudelController extends BaseController<StrudelEditor, IStrudelRuntime> implements IStrudelController {
 	// Engine ID for generic state management
 	protected readonly engineId = 'strudel';
 
@@ -56,21 +58,16 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 		const state = this.getStrudelState();
 		if (!state.isInitialized) {
-			this.handleInitAudio().then(() => {
-				if (!this.isPlaybackEnabled()) {
-					this.deps.getRuntime()?.clearPendingCode();
-					this.deps.getRuntime()?.hush();
+			void this.handleInitAudio().catch((error) => {
+				if (this.isRunnerUnavailableError(error)) {
 					return;
 				}
-				this.deps.getRuntime()?.forceRun(code);
-			}).catch((error) => {
 				const message = error instanceof Error ? error.message : 'Failed to initialize Strudel audio';
 				this.deps.store.setError({ message: this.formatErrorMessage(message), source: this.errorSource });
 				this.callbacks.onRenderOverlay();
 			});
-		} else {
-			this.deps.getRuntime()?.forceRun(code);
 		}
+		this.deps.getRuntime()?.forceRun(code);
 	}
 
 	/**
@@ -154,7 +151,7 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 	handlePlayStateChange(isPlaying: boolean): void {
 		this.updateStrudelState({ isPlaying });
 
-		if (!isPlaying) {
+		if (!isPlaying && !this.isPlaybackEnabled()) {
 			this.deps.getEditor()?.stopHighlighting();
 		}
 
@@ -185,5 +182,9 @@ export class StrudelController extends BaseController<StrudelEditor, StrudelRunt
 
 	private isPlaybackEnabled(): boolean {
 		return (this.deps as StrudelControllerDependencies).getPlaybackEnabled();
+	}
+
+	private isRunnerUnavailableError(error: unknown): boolean {
+		return error instanceof Error && error.name === RUNNER_UNAVAILABLE_ERROR_NAME;
 	}
 }

@@ -1,4 +1,4 @@
-import type { ExecutionResult, ValidationResult } from '@/sandbox/types';
+import type { ExecutionResult, ValidationResult } from '@/types/internal';
 import { SafeProxyFactory } from './SafeProxyFactory';
 import { ErrorReporter } from '@/sandbox/errors/ErrorReporter';
 import type { AudioReceiver } from '@/sandbox/scheduling/AudioReceiver';

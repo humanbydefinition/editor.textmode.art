@@ -25,6 +25,14 @@
     "./sketch": {
       "types": "./dist/sketch.d.ts",
       "default": "./dist/sketch.js"
+    },
+    "./runner/textmode": {
+      "types": "./dist/runner/textmode.d.ts",
+      "default": "./dist/runner/textmode.js"
+    },
+    "./runner/strudel": {
+      "types": "./dist/runner/strudel.d.ts",
+      "default": "./dist/runner/strudel.js"
     }
   },
   "dependencies": {

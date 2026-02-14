@@ -23,8 +23,6 @@ export interface ITextmodeManager {
     clearAllSynths(): void;
     /** Set up a handler for synth dynamic parameter errors */
     setupSynthErrorHandler(handler: (error: Error) => void): void;
-    /** Create a safe proxy for the textmode instance */
-    createSafeProxy(): Textmodifier | null;
 }
 
 /**

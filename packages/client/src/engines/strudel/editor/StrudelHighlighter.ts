@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import type { Pattern, Hap } from '@strudel/core';
+import type { StrudelPattern as Pattern, StrudelHap as Hap } from '../runtime';
 
 export type { Pattern };
 
@@ -101,6 +101,7 @@ export class StrudelHighlighter {
 		try {
 			const currentCycle = this.getCycle();
 			const docLength = model.getValueLength();
+			const sourceCode = model.getValue();
 
 			// Track which locations should be active this frame
 			const activeLocationsThisFrame = new Map<
@@ -123,7 +124,7 @@ export class StrudelHighlighter {
 
 				// Check if this hap is currently active
 				if (currentCycle >= hapBegin && currentCycle < hapEnd) {
-					this.processHapLocations(hap, hapEnd, activeLocationsThisFrame, docLength);
+					this.processHapLocations(hap, hapEnd, activeLocationsThisFrame, docLength, model, sourceCode);
 				}
 			}
 
@@ -164,7 +165,9 @@ export class StrudelHighlighter {
 		hap: Hap,
 		hapEnd: number,
 		activeLocations: Map<string, { offset: { start: number; end: number }; hapEnd: number }>,
-		docLength: number
+		docLength: number,
+		model: monaco.editor.ITextModel,
+		sourceCode: string
 	): void {
 		// Primary strategy: Use hap.context.locations if available
 		if (hap.context?.locations && hap.context.locations.length > 0) {
@@ -186,6 +189,12 @@ export class StrudelHighlighter {
 					continue;
 				}
 
+				// Sandbox runner can occasionally emit a stale location that resolves into
+				// the initial comment header. Keep this narrowly scoped to early offsets.
+				if (location.start < 220 && this.isInsideComment(location.start, model, sourceCode)) {
+					continue;
+				}
+
 				const key = `${location.start}:${location.end}`;
 				const existing = activeLocations.get(key);
 				if (!existing || hapEnd > existing.hapEnd) {
@@ -196,6 +205,22 @@ export class StrudelHighlighter {
 				}
 			}
 		}
+	}
+
+	private isInsideComment(offset: number, model: monaco.editor.ITextModel, sourceCode: string): boolean {
+		const position = model.getPositionAt(offset);
+		const lineContent = model.getLineContent(position.lineNumber);
+		const columnIndex = Math.max(0, position.column - 1);
+
+		const lineCommentIndex = lineContent.indexOf('//');
+		if (lineCommentIndex >= 0 && columnIndex >= lineCommentIndex) {
+			return true;
+		}
+
+		const beforeOffset = sourceCode.slice(0, offset);
+		const lastBlockOpen = beforeOffset.lastIndexOf('/*');
+		const lastBlockClose = beforeOffset.lastIndexOf('*/');
+		return lastBlockOpen > lastBlockClose;
 	}
 
 	/**
