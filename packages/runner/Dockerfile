@@ -17,6 +17,9 @@ COPY packages/ packages/
 # Install dependencies (only runner workspace + shared packages)
 RUN npm ci --workspace=@synth.textmode.art/runner --include-workspace-root
 
+# Build shared contracts before building runner
+RUN npm run build -w @synth.textmode.art/contracts
+
 # Copy runner source
 COPY packages/runner/ packages/runner/
 
