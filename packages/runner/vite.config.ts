@@ -1,4 +1,5 @@
 import path from 'path';
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -17,5 +18,12 @@ export default defineConfig({
     },
     build: {
         outDir: 'dist',
+        rollupOptions: {
+            input: {
+                index: resolve(__dirname, 'index.html'),
+                textmode: resolve(__dirname, 'textmode.html'),
+                strudel: resolve(__dirname, 'strudel.html'),
+            },
+        },
     },
 });

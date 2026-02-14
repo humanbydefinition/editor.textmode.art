@@ -4,34 +4,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Textmode Runner</title>
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000000;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    <title>redirect | runner.textmode.art</title>
+    <meta http-equiv="refresh" content="0; url=/textmode.html" />
 </head>
 
 <body>
-    <script type="module" src="./src/index.ts"></script>
+    <script>
+        const target = new URL('./textmode.html', window.location.href);
+        target.search = window.location.search;
+        target.hash = window.location.hash;
+        window.location.replace(target.toString());
+    </script>
 </body>
 
 </html>

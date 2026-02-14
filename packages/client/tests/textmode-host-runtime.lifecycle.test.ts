@@ -47,7 +47,7 @@ describe('TextmodeRuntime lifecycle', () => {
 
 		const runtime = new TextmodeRuntime({
 			container,
-			runnerUrl: 'http://runner.test/index.html',
+			runnerUrl: 'http://runner.test/textmode.html',
 			onReady,
 			onRunOk: vi.fn(),
 			onRunError: vi.fn(),
@@ -78,7 +78,7 @@ describe('TextmodeRuntime lifecycle', () => {
 		const onRunnerConnected = vi.fn();
 		const runtime = new TextmodeRuntime({
 			container,
-			runnerUrl: 'http://runner.test/index.html',
+			runnerUrl: 'http://runner.test/textmode.html',
 			onReady: vi.fn(),
 			onRunOk: vi.fn(),
 			onRunError: vi.fn(),
@@ -100,7 +100,7 @@ describe('TextmodeRuntime lifecycle', () => {
 		const onRunnerDisconnected = vi.fn();
 		const runtime = new TextmodeRuntime({
 			container,
-			runnerUrl: 'http://runner.test/index.html',
+			runnerUrl: 'http://runner.test/textmode.html',
 			onReady: vi.fn(),
 			onRunOk: vi.fn(),
 			onRunError: vi.fn(),
@@ -125,7 +125,7 @@ describe('TextmodeRuntime lifecycle', () => {
 
 		const runtime = new TextmodeRuntime({
 			container,
-			runnerUrl: 'http://runner.test/index.html',
+			runnerUrl: 'http://runner.test/textmode.html',
 			onReady: vi.fn(),
 			onRunOk: vi.fn(),
 			onRunError: vi.fn(),
@@ -150,7 +150,7 @@ describe('TextmodeRuntime lifecycle', () => {
 
 		const runtime = new TextmodeRuntime({
 			container,
-			runnerUrl: 'http://runner.test/index.html',
+			runnerUrl: 'http://runner.test/textmode.html',
 			onReady: vi.fn(),
 			onRunOk: vi.fn(),
 			onRunError: vi.fn(),
