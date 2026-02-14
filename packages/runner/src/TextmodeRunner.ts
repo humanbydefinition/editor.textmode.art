@@ -20,9 +20,19 @@ export class TextmodeRunner extends BaseRunner<RunnerToParentMessage> {
 	private readonly scheduler: FrameScheduler;
 	private readonly audioReceiver: AudioReceiver;
 	private lastWorkingCode: string | null = null;
+	private hasStarted = false;
 	private textmode: TextmodeManager;
 	private context: ExecutionContext;
 	private synthErrorReported = false;
+	private readonly handleUserInteraction = (): void => {
+		this.sendMessage({ type: 'USER_INTERACTION' });
+	};
+	private readonly handleKeyDown = (event: KeyboardEvent): void => {
+		if (event.ctrlKey && event.shiftKey && (event.key === 'H' || event.key === 'h')) {
+			event.preventDefault();
+			this.sendMessage({ type: 'TOGGLE_UI' });
+		}
+	};
 
 	constructor() {
 		super();
@@ -42,6 +52,8 @@ export class TextmodeRunner extends BaseRunner<RunnerToParentMessage> {
 	}
 
 	start(): void {
+		if (this.hasStarted) return;
+		this.hasStarted = true;
 		this.setupGlobalErrorHandlers((error) => this.errorReporter.report(error as Error | string | Event));
 		this.init();
 		window.addEventListener('message', this.handleInitMessage);
@@ -71,6 +83,9 @@ export class TextmodeRunner extends BaseRunner<RunnerToParentMessage> {
 			case 'SOFT_RESET':
 				this.scheduleCode(msg.code, true);
 				break;
+			case 'DISPOSE':
+				this.dispose();
+				break;
 			case 'AUDIO_DATA':
 				this.audioReceiver.update(msg as AudioDataMessage);
 				break;
@@ -90,21 +105,8 @@ export class TextmodeRunner extends BaseRunner<RunnerToParentMessage> {
      */
 	init(): void {
 		this.textmode.init();
-
-		const reportInteraction = (): void => {
-			this.sendMessage({ type: 'USER_INTERACTION' });
-		};
-
-		window.addEventListener('pointerdown', reportInteraction, { passive: true });
-
-		// Listen for shortcuts (forward to host)
-		window.addEventListener('keydown', (e) => {
-			// Toggle UI: Ctrl + Shift + H
-			if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
-				e.preventDefault();
-				this.sendMessage({ type: 'TOGGLE_UI' });
-			}
-		});
+		window.addEventListener('pointerdown', this.handleUserInteraction, { passive: true });
+		window.addEventListener('keydown', this.handleKeyDown);
 
 		// Setup synth error handler
 		this.textmode.setupSynthErrorHandler((error) => {
@@ -116,6 +118,23 @@ export class TextmodeRunner extends BaseRunner<RunnerToParentMessage> {
 				});
 			}
 		});
+	}
+
+	dispose(): void {
+		if (!this.hasStarted) return;
+		this.hasStarted = false;
+
+		this.scheduler.cancel();
+		this.context.dispose();
+		this.textmode.dispose();
+		this.synthErrorReported = false;
+
+		window.removeEventListener('message', this.handleInitMessage);
+		window.removeEventListener('pointerdown', this.handleUserInteraction);
+		window.removeEventListener('keydown', this.handleKeyDown);
+
+		this.teardownGlobalErrorHandlers();
+		this.detachPort();
 	}
 
     /**

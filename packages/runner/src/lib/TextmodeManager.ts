@@ -174,5 +174,6 @@ export class TextmodeManager implements ITextmodeManager {
         setGlobalErrorCallback(null);
 
         this.instance?.destroy();
+        this.instance = null;
     }
 }

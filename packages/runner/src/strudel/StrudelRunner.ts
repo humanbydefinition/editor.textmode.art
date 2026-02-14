@@ -206,10 +206,8 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 		this.timerManager.dispose();
 		window.removeEventListener('message', this.handleWindowMessage);
 		this.unlockPrompt.dispose();
-		if (this.messagePort) {
-			this.messagePort.close();
-			this.messagePort = null;
-		}
+		this.teardownGlobalErrorHandlers();
+		this.detachPort();
 	}
 
 	private sendReady(): void {
