@@ -4,7 +4,7 @@ import { EditorPane } from './EditorPane';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectActivePanel, selectIsMobile } from '@/platform/state/selectors';
-import type { PaneConfig } from './types';
+import type { PaneConfig } from '../types';
 
 export interface EditorLayoutProps {
     /** Pane configurations */
