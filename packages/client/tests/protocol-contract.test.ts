@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import * as clientTextmodeProtocol from '../src/engines/textmode/sandbox/protocol';
-import * as runnerTextmodeProtocol from '../../runner/src/sandbox/protocol';
-import * as clientStrudelProtocol from '../src/engines/strudel/sandbox/protocol';
-import * as runnerStrudelProtocol from '../../runner/src/strudel/protocol';
+import * as clientTextmodeProtocol from '@synth.textmode.art/contracts/runner/textmode';
+import * as runnerTextmodeProtocol from '@synth.textmode.art/contracts/runner/textmode';
+import * as clientStrudelProtocol from '@synth.textmode.art/contracts/runner/strudel';
+import * as runnerStrudelProtocol from '@synth.textmode.art/contracts/runner/strudel';
 
 describe('Protocol Contracts', () => {
 	describe('Textmode Protocol', () => {
@@ -23,6 +23,13 @@ describe('Protocol Contracts', () => {
 
 		it('keeps protocol versions aligned between client and runner', () => {
 			expect(clientTextmodeProtocol.PROTOCOL_VERSION).toBe(runnerTextmodeProtocol.PROTOCOL_VERSION);
+		});
+
+		it('re-exports identical textmode protocol functions/constants', () => {
+			expect(clientTextmodeProtocol.PROTOCOL_VERSION).toBe(runnerTextmodeProtocol.PROTOCOL_VERSION);
+			expect(clientTextmodeProtocol.isInitMessage).toBe(runnerTextmodeProtocol.isInitMessage);
+			expect(clientTextmodeProtocol.isParentMessage).toBe(runnerTextmodeProtocol.isParentMessage);
+			expect(clientTextmodeProtocol.isRunnerMessage).toBe(runnerTextmodeProtocol.isRunnerMessage);
 		});
 
 		it('accepts valid runner-to-parent fixtures in both guards', () => {
@@ -99,6 +106,12 @@ describe('Protocol Contracts', () => {
 
 		it('keeps protocol versions aligned between client and runner', () => {
 			expect(clientStrudelProtocol.STRUDEL_PROTOCOL_VERSION).toBe(runnerStrudelProtocol.STRUDEL_PROTOCOL_VERSION);
+		});
+
+		it('re-exports identical strudel protocol functions/constants', () => {
+			expect(clientStrudelProtocol.STRUDEL_PROTOCOL_VERSION).toBe(runnerStrudelProtocol.STRUDEL_PROTOCOL_VERSION);
+			expect(clientStrudelProtocol.isStrudelInitMessage).toBe(runnerStrudelProtocol.isStrudelInitMessage);
+			expect(clientStrudelProtocol.isStrudelParentMessage).toBe(runnerStrudelProtocol.isStrudelParentMessage);
 		});
 
 		it('accepts valid runner-to-parent fixtures in both guards', () => {
