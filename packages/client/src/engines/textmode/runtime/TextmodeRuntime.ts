@@ -1,7 +1,7 @@
 
 import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@synth.textmode.art/contracts/runner/textmode';
 import { isRunnerMessage, PROTOCOL_VERSION } from '@synth.textmode.art/contracts/runner/textmode';
-import type { IHostRuntime, HostRuntimeOptions } from '@/engines/textmode/runtime/types';
+import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/core/app.types';
 import type { AudioData } from '@/platform/audio/AudioService';
 

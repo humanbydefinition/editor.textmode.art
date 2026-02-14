@@ -1,4 +1,4 @@
-import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
+import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '@/core/app.types';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';

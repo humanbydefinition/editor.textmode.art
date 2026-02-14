@@ -1,7 +1,7 @@
 import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
 import type { AudioData } from '@/platform/audio/AudioService';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
-import { TextmodeRuntime } from './runtime/host/TextmodeRuntime';
+import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
 import type { BaseControllerCallbacks } from '@/core/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
