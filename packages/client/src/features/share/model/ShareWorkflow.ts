@@ -1,7 +1,7 @@
 import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
 import { ShareService } from './ShareService';
-import type { SharePayload } from '../share.types';
+import type { SharePayload } from '../types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 
 interface ShareWorkflowDependencies {

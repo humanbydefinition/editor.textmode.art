@@ -16,7 +16,7 @@ import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
-import type { SharePayload } from '@/features/share/share.types';
+import type { SharePayload } from '@/features/share/types';
 
 import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';
 import { Check, Link2, Sparkles, Code2, Music2, Info } from 'lucide-react';
