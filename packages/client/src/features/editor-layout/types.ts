@@ -2,6 +2,7 @@
  * Layout type definitions.
  * Types for the extensible pane-based layout system.
  */
+import { MOBILE_BREAKPOINT } from '@/core/app.types';
 
 /**
  * Direction for split panes.
@@ -65,11 +66,6 @@ export interface LayoutContextValue {
     /** Get container for a pane */
     getPaneContainer: (paneId: string) => HTMLElement | null;
 }
-
-/**
- * Mobile breakpoint in pixels.
- */
-export const MOBILE_BREAKPOINT = 768;
 
 /**
  * Default layout state.

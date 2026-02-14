@@ -1,7 +1,6 @@
 import type { StateCreator } from 'zustand';
+import { MOBILE_BREAKPOINT } from '@/core/app.types';
 import type { AppState } from '../appStore';
-
-const MOBILE_BREAKPOINT = 768;
 
 export interface Panel {
     id: string;

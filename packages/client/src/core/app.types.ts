@@ -66,3 +66,9 @@ export interface CodeError {
  * - error: execution failed
  */
 export type StatusState = 'ready' | 'running' | 'updated' | 'error';
+
+/**
+ * Mobile breakpoint in pixels.
+ */
+export const MOBILE_BREAKPOINT = 768;
+
