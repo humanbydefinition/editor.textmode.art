@@ -1,4 +1,4 @@
-export { StrudelHostRuntime } from './host/StrudelHostRuntime';
+export { StrudelHostRuntime } from './StrudelHostRuntime';
 export type {
 	StrudelRuntimeOptions,
 	IStrudelRuntime,

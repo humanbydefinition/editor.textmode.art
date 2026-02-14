@@ -3,7 +3,7 @@ import type {
 	StrudelPattern,
 	StrudelRuntimeOptions,
 	IStrudelRuntime,
-} from '../types';
+} from './types';
 import {
 	STRUDEL_PROTOCOL_VERSION,
 	type StrudelParentToRunnerMessage,
