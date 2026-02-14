@@ -2,6 +2,8 @@ import type { IStrudelRuntime, StrudelPattern } from './runtime';
 import type { StrudelEditor } from './editor/StrudelEditor';
 import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';
 
+const RUNNER_UNAVAILABLE_ERROR_NAME = 'RunnerUnavailableError';
+
 /**
  * Strudel-specific dependencies.
  */
@@ -57,6 +59,9 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 		const state = this.getStrudelState();
 		if (!state.isInitialized) {
 			void this.handleInitAudio().catch((error) => {
+				if (this.isRunnerUnavailableError(error)) {
+					return;
+				}
 				const message = error instanceof Error ? error.message : 'Failed to initialize Strudel audio';
 				this.deps.store.setError({ message: this.formatErrorMessage(message), source: this.errorSource });
 				this.callbacks.onRenderOverlay();
@@ -177,5 +182,9 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 
 	private isPlaybackEnabled(): boolean {
 		return (this.deps as StrudelControllerDependencies).getPlaybackEnabled();
+	}
+
+	private isRunnerUnavailableError(error: unknown): boolean {
+		return error instanceof Error && error.name === RUNNER_UNAVAILABLE_ERROR_NAME;
 	}
 }

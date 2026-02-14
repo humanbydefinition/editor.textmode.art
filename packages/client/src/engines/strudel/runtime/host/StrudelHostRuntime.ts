@@ -24,6 +24,13 @@ const HANDSHAKE_TIMEOUT_MS = 5000;
 const STRUDEL_RUNNER_OVERLAY_Z_INDEX = '460';
 const STRUDEL_WINDOW_EVENT_TYPE = 'STRUDEL_RUNNER_EVENT';
 
+export class RunnerUnavailableError extends Error {
+	constructor(message = 'Strudel runner is unavailable') {
+		super(message);
+		this.name = 'RunnerUnavailableError';
+	}
+}
+
 export interface StrudelHostRuntimeOptions extends StrudelRuntimeOptions {
 	runnerUrl: string;
 	container?: HTMLElement;
@@ -557,11 +564,12 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.isReady = false;
 		this._isInitialized = false;
 		this.hideUnlockOverlay();
-		if (this.readyResolver) {
-			this.readyResolver?.();
+		const unavailableError = new RunnerUnavailableError();
+		if (this.readyRejecter) {
+			this.readyRejecter(unavailableError);
 		}
-		if (this.audioInitResolver) {
-			this.audioInitResolver?.();
+		if (this.audioInitRejecter) {
+			this.audioInitRejecter(unavailableError);
 		}
 		this.clearAudioInitPromise();
 		this.readyPromise = null;
