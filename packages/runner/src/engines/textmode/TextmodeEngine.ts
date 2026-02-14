@@ -12,6 +12,8 @@ import type {
 } from '@synth.textmode.art/contracts/runner/textmode';
 import { isInitMessage, isParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
 
+import { HandshakeHandler } from '@/core/transport/HandshakeHandler';
+
 /**
  * Concrete engine implementation for Textmode sketches.
  */
@@ -19,6 +21,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	private readonly errorReporter: ErrorReporter;
 	private readonly scheduler: FrameScheduler;
 	private readonly audioReceiver: AudioReceiver;
+	private readonly handshakeHandler: HandshakeHandler;
 	private lastWorkingCode: string | null = null;
 	private hasStarted = false;
 	private textmode: TextmodeManager;
@@ -49,6 +52,18 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 			errorReporter: this.errorReporter,
 			audioReceiver: this.audioReceiver,
 		});
+
+		this.handshakeHandler = new HandshakeHandler({
+			isAllowedOrigin: (origin) => this.isAllowedOrigin(origin),
+			isInitMessage: (data) => isInitMessage(data),
+			onPortExtracted: (port) => {
+				this.attachPort(port, this.handlePortMessage as (event: MessageEvent) => void);
+			},
+			onReady: () => {
+				window.removeEventListener('message', this.handleInitMessage);
+				this.sendMessage({ type: 'READY' });
+			},
+		});
 	}
 
 	start(): void {
@@ -60,16 +75,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	}
 
 	private handleInitMessage = (event: MessageEvent<WindowToRunnerMessage>): void => {
-		const msg = event.data;
-		if (!isInitMessage(msg)) return;
-		if (!this.isAllowedOrigin(event.origin)) return;
-		if (event.source !== window.parent) return;
-		const port = event.ports?.[0];
-		if (!port) return;
-
-		this.attachPort(port, this.handlePortMessage as (event: MessageEvent) => void);
-		window.removeEventListener('message', this.handleInitMessage);
-		this.sendMessage({ type: 'READY' });
+		this.handshakeHandler.createWindowMessageHandler()(event as MessageEvent);
 	};
 
 	private handlePortMessage = (event: MessageEvent<ParentToRunnerMessage>): void => {
