@@ -18,11 +18,11 @@ import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/f
 import { PublishRequestDialog } from '@/features/publish';
 import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
 import { ExamplesTab } from '@/features/examples';
-import { Lock, RotateCcw } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import { Button } from '@/shared/ui/button';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
 import { SlugInfoAlert } from './SlugInfoAlert';
+import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 
 /**
  * Root component for the application.
@@ -73,48 +73,12 @@ export function AppShell() {
                 id="shell-container"
                 className="fixed inset-0 z-[100] pointer-events-none"
             >
-                {/* Orientation Toggle Button (Desktop Only) removed */}
+                <RunnerUnavailableAlert
+                    isVisible={textmodeRunnerUnavailable}
+                    isReconnecting={textmodeRunnerReconnecting}
+                    onReconnect={actions.reconnectTextmodeRunner}
+                />
 
-                {textmodeRunnerUnavailable && (
-                    <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center p-3 sm:p-6">
-                        <div
-                            className={cn(
-                                'pointer-events-auto',
-                                'w-full max-w-xl rounded-xl border border-white/12',
-                                'bg-zinc-950/70 backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.55)]',
-                                'px-4 py-3 sm:px-5 sm:py-4 text-zinc-100'
-                            )}
-                        >
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-amber-300/95">runner offline</p>
-                            <h2 className="mt-1 text-sm sm:text-base font-semibold text-zinc-100">sandbox runner is not reachable</h2>
-                            <p className="mt-1 text-xs sm:text-sm leading-relaxed text-zinc-300/95">
-                                visuals and audio are paused because the sandbox runner failed to load.
-                            </p>
-                            <div className="mt-3 sm:mt-4 flex justify-end">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={actions.reconnectTextmodeRunner}
-                                    disabled={textmodeRunnerReconnecting}
-                                    className="gap-2 bg-zinc-900/95 text-zinc-100 shadow-lg hover:bg-zinc-800"
-                                    aria-live="polite"
-                                    aria-busy={textmodeRunnerReconnecting}
-                                >
-                                    <RotateCcw
-                                        className={cn(
-                                            'h-3.5 w-3.5 transition-transform duration-300',
-                                            textmodeRunnerReconnecting ? 'animate-spin' : ''
-                                        )}
-                                    />
-                                    {textmodeRunnerReconnecting ? 'reconnecting…' : 'reconnect runner'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Mobile Navigation */}
                 <MobileNav />
 
                 <WelcomeDialog onOpenChange={setWelcomeOpen} />
