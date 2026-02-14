@@ -1,4 +1,4 @@
-import type { ExecutionResult, ValidationResult } from '@/types/internal';
+import type { ExecutionResult, ValidationResult } from './textmode.types';
 import { SafeProxyFactory } from './SafeProxyFactory';
 import { ErrorReporter } from '@/engines/textmode/ErrorReporter';
 import type { AudioReceiver } from '@/engines/textmode/AudioReceiver';

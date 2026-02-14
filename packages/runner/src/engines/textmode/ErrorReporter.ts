@@ -1,4 +1,4 @@
-import type { IErrorReporter } from '@/types/internal';
+import type { IErrorReporter } from './textmode.types';
 import type { RunnerToParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
 import { normalizeError } from '@/core/errors/normalizeError';
 
