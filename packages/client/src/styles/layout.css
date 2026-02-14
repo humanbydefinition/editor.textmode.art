@@ -69,24 +69,6 @@ body.admin-mode #app-container {
     background: rgba(255, 255, 255, 0.35);
 }
 
-#split-resizer.resizer-horizontal::before {
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 100%;
-    height: 1px;
-}
-
-#split-resizer.resizer-horizontal:hover::before,
-#split-resizer.resizer-horizontal.dragging::before {
-    background: rgba(255, 255, 255, 0.2);
-    height: 2px;
-}
-
-#split-resizer.resizer-horizontal.dragging::before {
-    background: rgba(255, 255, 255, 0.35);
-}
-
 /* Hide resizer on mobile */
 @media (max-width: 768px) {
     #split-resizer {
