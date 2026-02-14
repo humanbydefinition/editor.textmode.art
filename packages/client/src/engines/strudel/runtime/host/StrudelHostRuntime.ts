@@ -200,7 +200,7 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.iframe.style.top = 'calc(2rem + 8px)';
 		this.iframe.style.right = '0.5rem';
 		this.iframe.style.width = 'min(17rem, calc(100vw - 1rem))';
-		this.iframe.style.height = '7.5rem';
+		this.iframe.style.height = '6rem';
 		this.iframe.style.border = '0';
 		this.iframe.style.background = 'transparent';
 		this.iframe.style.borderRadius = '0';

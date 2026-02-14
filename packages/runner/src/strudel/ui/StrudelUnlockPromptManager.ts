@@ -42,10 +42,9 @@ export class StrudelUnlockPromptManager {
 				border-radius: 10px;
 				background: linear-gradient(180deg, rgba(24, 24, 27, 0.97) 0%, rgba(9, 9, 11, 0.98) 100%);
 				box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
-				padding: 10px 10px 9px;
+				padding: 10px 10px 0px;
 				display: grid;
 				grid-template-rows: auto auto auto auto;
-				gap: 8px;
 				pointer-events: auto;
 				box-sizing: border-box;
 				overflow: hidden;
@@ -115,7 +114,7 @@ export class StrudelUnlockPromptManager {
 		title.className = 'strudel-unlock-title';
 
 		const description = document.createElement('p');
-		description.textContent = 'browser policy blocked autoplay. tap once to unlock audio playback.';
+		description.textContent = 'tap once to unlock audio playback.';
 		description.className = 'strudel-unlock-description';
 
 		const button = document.createElement('button');
