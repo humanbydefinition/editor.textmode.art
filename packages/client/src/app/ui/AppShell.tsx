@@ -15,8 +15,7 @@ import {
     selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
-import { PublishRequestDialog } from '@/features/publish';
-import { SubmissionsPausedDialog } from '@/features/publish/ui/SubmissionsPausedDialog';
+import { PublishRequestDialog, SubmissionsPausedDialog } from '@/features/publish';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
