@@ -66,19 +66,8 @@ export class EngineLifecycle {
 		}
 	}
 
-	/**
-	 * Backwards-compatible alias for older call sites.
-	 */
-	async initTextmodeEngine(): Promise<void> {
-		await this.initEagerEngines();
-	}
-
 	async enableStrudel(): Promise<boolean> {
 		return this.enableEngine('strudel');
-	}
-
-	disableStrudel(): boolean {
-		return this.disableEngineById('strudel');
 	}
 
 	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
@@ -101,10 +90,6 @@ export class EngineLifecycle {
 
 	applyEditorSettings(): void {
 		this.deps.editorManager.applySettings(this.deps.store.settings.getSettings());
-	}
-
-	hushStrudel(): void {
-		this.pauseTransportEngines();
 	}
 
 	getCode(engineId: EngineId): string {
