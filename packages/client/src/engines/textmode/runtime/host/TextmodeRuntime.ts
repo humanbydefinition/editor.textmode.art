@@ -195,14 +195,20 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (!isRunnerMessage(msg)) return;
 
 		switch (msg.type) {
-			case 'READY':
-				this._isReady = true;
-				this.iframe?.style.setProperty('opacity', '1');
-				this.clearHandshakeTimer();
-				this.setRunnerUnavailable(false);
-				this.onReadyCallback?.();
-				// Run pending code if any
-				if (this.pendingCode !== null) {
+				case 'READY':
+					const wasUnavailable = this.runnerUnavailable;
+					this._isReady = true;
+					this.iframe?.style.setProperty('opacity', '1');
+					this.clearHandshakeTimer();
+					this.setRunnerUnavailable(false);
+					// Initial successful handshake should mark runner connected even
+					// when unavailable state never flipped to true.
+					if (!wasUnavailable) {
+						this.onRunnerConnected?.();
+					}
+					this.onReadyCallback?.();
+					// Run pending code if any
+					if (this.pendingCode !== null) {
 					this.forceRun(this.pendingCode);
 					this.pendingCode = null;
 				}

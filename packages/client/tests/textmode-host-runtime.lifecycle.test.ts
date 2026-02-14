@@ -71,6 +71,28 @@ describe('TextmodeRuntime lifecycle', () => {
 		});
 	});
 
+	it('emits onRunnerConnected on initial READY handshake', () => {
+		const container = document.createElement('div');
+		document.body.appendChild(container);
+
+		const onRunnerConnected = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container,
+			runnerUrl: 'http://runner.test/index.html',
+			onReady: vi.fn(),
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+			onRunnerConnected,
+		});
+
+		(runtime as unknown as { messagePort: MockPort }).messagePort = createMockPort();
+		(runtime as unknown as { handlePortMessage: (event: MessageEvent) => void }).handlePortMessage({
+			data: { type: 'READY' },
+		} as MessageEvent);
+
+		expect(onRunnerConnected).toHaveBeenCalledTimes(1);
+	});
+
 	it('handles unavailable/timeout path and preserves last requested code', () => {
 		const container = document.createElement('div');
 		document.body.appendChild(container);
