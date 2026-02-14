@@ -27,7 +27,10 @@ export default [
 	{
 		files: ['**/*.{ts,js}'],
 		languageOptions: {
-			globals: globals.browser,
+			globals: {
+				...globals.browser,
+				...globals.node,
+			},
 		},
 	},
 	pluginJs.configs.recommended,
