@@ -1,4 +1,4 @@
-import type { AudioDataMessage } from '../protocol';
+import type { AudioDataMessage } from '@synth.textmode.art/contracts/runner/textmode';
 
 /** Default FFT bin count */
 const DEFAULT_BIN_COUNT = 512;
