@@ -41,7 +41,7 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 		});
 		this.transportState = new StrudelRunnerTransportState({
 			isAllowedOrigin: (origin) => this.isAllowedOrigin(origin),
-			isPortAttached: () => Boolean(this.messagePort),
+			isPortAttached: () => this.isPortAttached(),
 			attachPort: (port, onMessage) => this.attachPort(port, onMessage),
 			sendReady: () => this.sendReady(),
 			handleParentMessage: (message) => {

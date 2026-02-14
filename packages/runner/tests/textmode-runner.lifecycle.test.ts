@@ -79,12 +79,18 @@ describe('TextmodeRunner lifecycle', () => {
 		const runner = new TextmodeRunner() as unknown as {
 			start: () => void;
 			dispose: () => void;
-			messagePort: { close: () => void } | null;
+			attachPort: (port: any, onMessage: any) => void;
+			isPortAttached: () => boolean;
 		};
 		const portClose = vi.fn();
-		runner.messagePort = { close: portClose };
+		const mockPort = {
+			close: portClose,
+			start: vi.fn(),
+			onmessage: null,
+		};
 
 		runner.start();
+		runner.attachPort(mockPort, vi.fn());
 		runner.dispose();
 
 		expect(addSpy).toHaveBeenCalledWith('message', expect.any(Function));
@@ -98,7 +104,7 @@ describe('TextmodeRunner lifecycle', () => {
 		expect(mocked.contextInstances[0]?.dispose).toHaveBeenCalledTimes(1);
 		expect(mocked.textmodeInstances[0]?.dispose).toHaveBeenCalledTimes(1);
 		expect(portClose).toHaveBeenCalledTimes(1);
-		expect(runner.messagePort).toBeNull();
+		expect(runner.isPortAttached()).toBe(false);
 	});
 
 	it('can start and dispose repeatedly without leaking handlers', () => {

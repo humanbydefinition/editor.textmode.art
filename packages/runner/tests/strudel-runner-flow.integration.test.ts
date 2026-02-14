@@ -24,14 +24,17 @@ describe('StrudelRunner integration flow', () => {
 				hush: () => void;
 			};
 			handleParentMessage: (message: unknown) => Promise<void>;
-			messagePort: { postMessage: (msg: unknown) => void };
+			attachPort: (port: any, onMessage: any) => void;
 			timerManager: { dispose: () => void };
 		};
 
 		const postMessage = vi.fn();
-		runner.messagePort = {
+		const mockPort = {
 			postMessage,
+			start: vi.fn(),
+			onmessage: null,
 		};
+		runner.attachPort(mockPort, vi.fn());
 
 		runner.runtimeAdapter = {
 			ensureRuntimeInitialized: async () => {},

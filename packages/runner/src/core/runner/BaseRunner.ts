@@ -1,9 +1,10 @@
 import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
+import { MessagePortTransport } from '@/core/transport/MessagePortTransport';
 
 export type GlobalErrorReporter = (error: unknown) => void;
 
 export abstract class BaseRunner<TRunnerMessage> {
-	protected messagePort: MessagePort | null = null;
+	protected readonly transport = new MessagePortTransport<TRunnerMessage>();
 	private readonly allowedParentOrigins: Set<string>;
 	private errorHandler: ((event: ErrorEvent) => void) | null = null;
 	private rejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
@@ -15,23 +16,19 @@ export abstract class BaseRunner<TRunnerMessage> {
 	}
 
 	protected attachPort(port: MessagePort, onMessage: (event: MessageEvent) => void): void {
-		if (this.messagePort) {
-			this.messagePort.close();
-		}
-		this.messagePort = port;
-		this.messagePort.onmessage = onMessage;
-		this.messagePort.start();
+		this.transport.attach(port, onMessage);
 	}
 
 	protected sendMessage(message: TRunnerMessage): void {
-		if (!this.messagePort) return;
-		this.messagePort.postMessage(message);
+		this.transport.send(message);
 	}
 
 	protected detachPort(): void {
-		if (!this.messagePort) return;
-		this.messagePort.close();
-		this.messagePort = null;
+		this.transport.detach();
+	}
+
+	public isPortAttached(): boolean {
+		return this.transport.isAttached();
 	}
 
 	protected isAllowedOrigin(origin: string): boolean {
