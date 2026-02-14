@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectMiniLocationsFromPattern, normalizeMiniLocation, serializeMiniLocations } from '../src/strudel/serialization/miniLocations';
+import { collectMiniLocationsFromPattern, normalizeMiniLocation, serializeMiniLocations } from '../src/engines/strudel/serialization/miniLocations';
 
 describe('strudel mini location serialization', () => {
 	it('normalizes classic mini location shape', () => {

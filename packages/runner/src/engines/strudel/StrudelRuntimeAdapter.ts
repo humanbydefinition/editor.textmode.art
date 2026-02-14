@@ -6,7 +6,7 @@ import {
 	registerZZFXSounds,
 	samples as loadSamples,
 } from '@strudel/web';
-import type { StrudelPatternLike, StrudelReplLike, StrudelStateLike } from './types';
+import type { StrudelPatternLike, StrudelReplLike, StrudelStateLike } from './strudel.types';
 
 export class StrudelRuntimeAdapter {
 	private repl: StrudelReplLike | null = null;

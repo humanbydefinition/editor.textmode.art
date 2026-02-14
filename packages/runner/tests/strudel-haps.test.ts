@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectHapsFromPattern } from '../src/strudel/serialization/haps';
+import { collectHapsFromPattern } from '../src/engines/strudel/serialization/haps';
 
 describe('strudel hap serialization', () => {
 	it('collects normalized haps from queryArc', () => {

@@ -5,20 +5,20 @@ import {
 	type StrudelRunnerToParentMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
 import { BaseRunner } from '@/core/runner/BaseRunner';
-import { BroadcastTimerManager } from '@/strudel/broadcast/BroadcastTimerManager';
-import { collectHapsFromPattern } from '@/strudel/serialization/haps';
-import { collectMiniLocationsFromPattern, serializeMiniLocations } from '@/strudel/serialization/miniLocations';
-import { StrudelRuntimeAdapter } from '@/strudel/runtime/StrudelRuntimeAdapter';
-import type { StrudelPatternLike } from '@/strudel/runtime/types';
-import { StrudelRunnerTransportState } from '@/strudel/transport/StrudelRunnerTransportState';
-import { StrudelUnlockPromptManager } from '@/strudel/ui/StrudelUnlockPromptManager';
+import { BroadcastTimerManager } from '@/engines/strudel/BroadcastTimerManager';
+import { collectHapsFromPattern } from '@/engines/strudel/serialization/haps';
+import { collectMiniLocationsFromPattern, serializeMiniLocations } from '@/engines/strudel/serialization/miniLocations';
+import { StrudelRuntimeAdapter } from '@/engines/strudel/StrudelRuntimeAdapter';
+import type { StrudelPatternLike } from '@/engines/strudel/strudel.types';
+import { StrudelTransportState } from '@/engines/strudel/StrudelTransportState';
+import { StrudelUnlockPromptManager } from '@/engines/strudel/StrudelUnlockPromptManager';
 import { normalizeError } from '@/core/errors/normalizeError';
 
-export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
+export class StrudelEngine extends BaseRunner<StrudelRunnerToParentMessage> {
 	private readonly runtimeAdapter: StrudelRuntimeAdapter;
 	private readonly timerManager: BroadcastTimerManager;
 	private readonly unlockPrompt: StrudelUnlockPromptManager;
-	private readonly transportState: StrudelRunnerTransportState;
+	private readonly transportState: StrudelTransportState;
 	private readonly windowMessageHandler: (
 		event: MessageEvent
 	) => void;
@@ -39,7 +39,7 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 		this.unlockPrompt = new StrudelUnlockPromptManager({
 			onUnlockClick: async () => this.handleUnlockButtonClick(),
 		});
-		this.transportState = new StrudelRunnerTransportState({
+		this.transportState = new StrudelTransportState({
 			isAllowedOrigin: (origin) => this.isAllowedOrigin(origin),
 			isPortAttached: () => this.isPortAttached(),
 			attachPort: (port, onMessage) => this.attachPort(port, onMessage),

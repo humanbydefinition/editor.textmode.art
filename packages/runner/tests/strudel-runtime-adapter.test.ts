@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { StrudelRuntimeAdapter } from '../src/strudel/runtime/StrudelRuntimeAdapter';
+import { StrudelRuntimeAdapter } from '../src/engines/strudel/StrudelRuntimeAdapter';
 
 const {
 	mockEvaluate,

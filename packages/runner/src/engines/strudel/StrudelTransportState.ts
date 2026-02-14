@@ -7,7 +7,7 @@ import {
 	type StrudelWindowToRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/strudel';
 
-interface StrudelRunnerTransportStateOptions {
+interface StrudelTransportStateOptions {
 	isAllowedOrigin: (origin: string) => boolean;
 	isPortAttached: () => boolean;
 	attachPort: (port: MessagePort, onMessage: (event: MessageEvent) => void) => void;
@@ -15,11 +15,11 @@ interface StrudelRunnerTransportStateOptions {
 	handleParentMessage: (message: StrudelParentToRunnerMessage) => void;
 }
 
-export class StrudelRunnerTransportState {
+export class StrudelTransportState {
 	private activeParentOrigin: string | null = null;
-	private readonly options: StrudelRunnerTransportStateOptions;
+	private readonly options: StrudelTransportStateOptions;
 
-	constructor(options: StrudelRunnerTransportStateOptions) {
+	constructor(options: StrudelTransportStateOptions) {
 		this.options = options;
 	}
 

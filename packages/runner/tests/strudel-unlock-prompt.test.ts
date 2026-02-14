@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { StrudelUnlockPromptManager } from '../src/strudel/ui/StrudelUnlockPromptManager';
+import { StrudelUnlockPromptManager } from '../src/engines/strudel/StrudelUnlockPromptManager';
 
 describe('StrudelUnlockPromptManager', () => {
 	afterEach(() => {

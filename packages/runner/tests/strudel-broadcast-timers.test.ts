@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BroadcastTimerManager } from '../src/strudel/broadcast/BroadcastTimerManager';
+import { BroadcastTimerManager } from '../src/engines/strudel/BroadcastTimerManager';
 
 describe('BroadcastTimerManager', () => {
 	afterEach(() => {

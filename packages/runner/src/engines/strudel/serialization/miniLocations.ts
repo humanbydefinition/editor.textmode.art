@@ -1,9 +1,8 @@
-import type { MiniLocation } from '@strudel/core';
 import type { StrudelMiniLocationDto } from '@synth.textmode.art/contracts/runner/strudel';
-import type { StrudelPatternLike } from '@/strudel/runtime/types';
+import type { StrudelPatternLike, StrudelMiniLocation } from '@/engines/strudel/strudel.types';
 
 export function serializeMiniLocations(
-	miniLocations: Array<MiniLocation | { start?: unknown; end?: unknown }> | undefined
+	miniLocations: Array<StrudelMiniLocation | { start?: unknown; end?: unknown }> | undefined
 ): StrudelMiniLocationDto[] | undefined {
 	if (!miniLocations || miniLocations.length === 0) return undefined;
 
@@ -20,7 +19,7 @@ export function serializeMiniLocations(
 }
 
 export function normalizeMiniLocation(
-	location: MiniLocation | { start?: unknown; end?: unknown }
+	location: StrudelMiniLocation | { start?: unknown; end?: unknown }
 ): StrudelMiniLocationDto | null {
 	const start = (location as { start?: unknown }).start;
 	const end = (location as { end?: unknown }).end;

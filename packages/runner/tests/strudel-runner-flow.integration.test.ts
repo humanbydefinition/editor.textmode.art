@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { StrudelRunner } from '../src/strudel/StrudelRunner';
+import { StrudelEngine as StrudelRunner } from '../src/engines/strudel/StrudelEngine';
 
 describe('StrudelRunner integration flow', () => {
 	afterEach(() => {

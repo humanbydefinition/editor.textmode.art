@@ -1,5 +1,5 @@
 import type { StrudelHapDto } from '@synth.textmode.art/contracts/runner/strudel';
-import type { StrudelPatternLike } from '@/strudel/runtime/types';
+import type { StrudelPatternLike } from '@/engines/strudel/strudel.types';
 
 export function collectHapsFromPattern(pattern: StrudelPatternLike | undefined, cycle: number): StrudelHapDto[] | undefined {
 	if (!pattern?.queryArc) return undefined;
