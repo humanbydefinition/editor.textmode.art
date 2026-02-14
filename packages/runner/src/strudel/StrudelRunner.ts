@@ -12,6 +12,7 @@ import { StrudelRuntimeAdapter } from '@/strudel/runtime/StrudelRuntimeAdapter';
 import type { StrudelPatternLike } from '@/strudel/runtime/types';
 import { StrudelRunnerTransportState } from '@/strudel/transport/StrudelRunnerTransportState';
 import { StrudelUnlockPromptManager } from '@/strudel/ui/StrudelUnlockPromptManager';
+import { normalizeError } from '@/core/errors/normalizeError';
 
 export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 	private readonly runtimeAdapter: StrudelRuntimeAdapter;
@@ -290,7 +291,7 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 	}
 
 	private sendRunError(error: unknown): void {
-		const normalized = this.normalizeError(error);
+		const normalized = normalizeError(error);
 		this.sendMessage({
 			type: 'STR_RUN_ERROR',
 			message: normalized.message,
@@ -298,34 +299,6 @@ export class StrudelRunner extends BaseRunner<StrudelRunnerToParentMessage> {
 			line: normalized.line,
 			column: normalized.column,
 		});
-	}
-
-	private normalizeError(error: unknown): { message: string; stack?: string; line?: number; column?: number } {
-		if (!(error instanceof Error)) {
-			return { message: String(error) };
-		}
-
-		let line: number | undefined;
-		let column: number | undefined;
-
-		const lineMatch = error.message.match(/line (\d+)/i);
-		const columnMatch = error.message.match(/column (\d+)/i);
-
-		const lineValue = lineMatch?.[1];
-		if (lineValue) {
-			line = parseInt(lineValue, 10);
-		}
-		const columnValue = columnMatch?.[1];
-		if (columnValue) {
-			column = parseInt(columnValue, 10);
-		}
-
-		return {
-			message: error.message,
-			stack: error.stack,
-			line,
-			column,
-		};
 	}
 
 	protected override sendMessage(message: StrudelRunnerToParentMessage): void {
