@@ -4,7 +4,7 @@ import { ShareService } from './ShareService';
 import type { SharePayload } from '../types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 
-interface ShareWorkflowDependencies {
+export interface ShareWorkflowDependencies {
 	store: AppStoreAdapter;
 	render: () => void;
 	clearShareLockIfPresent: () => void;
