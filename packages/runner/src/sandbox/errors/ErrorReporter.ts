@@ -1,4 +1,4 @@
-import type { IErrorReporter, CodeError } from '../types';
+import type { IErrorReporter, CodeError } from '@/types/internal';
 import type { RunnerToParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
 
 export type RunnerMessageSender = (msg: RunnerToParentMessage) => void;
