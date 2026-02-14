@@ -7,7 +7,8 @@
         "dev": "vite --host",
         "build": "tsc && vite build",
         "preview": "vite preview",
-        "check-types": "tsc --noEmit"
+        "check-types": "tsc --noEmit",
+        "test": "vitest run"
     },
     "dependencies": {
         "@synth.textmode.art/contracts": "file:../contracts",
@@ -19,6 +20,7 @@
     "devDependencies": {
         "@types/node": "^24.10.1",
         "typescript": "~5.9.3",
-        "vite": "^7.2.4"
+        "vite": "^7.2.4",
+        "vitest": "^4.0.18"
     }
 }
