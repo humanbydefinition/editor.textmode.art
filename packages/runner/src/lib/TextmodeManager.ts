@@ -77,14 +77,14 @@ export class TextmodeManager implements ITextmodeManager {
             base.rotateZ(0);
             base.bpm(60);
             base.show();
-            base.grid?.reset();
+            //base.grid?.reset();
         } catch {
             // Ignore - base layer might be in unexpected state
         }
 
         // Reset global instance state and rendering properties
         try {
-            this.instance.background(0);
+            //this.instance.clear();
             this.instance.lineWeight(1);
             this.instance.resetShader();
 
