@@ -28,7 +28,7 @@ export class StrudelRunnerTransportState {
 			if (event.source !== window.parent) return;
 			if (!this.options.isAllowedOrigin(event.origin)) return;
 
-			const data = event.data as unknown;
+			const data = event.data;
 			if (isStrudelInitMessage(data)) {
 				this.activeParentOrigin = event.origin;
 				const port = event.ports?.[0];
