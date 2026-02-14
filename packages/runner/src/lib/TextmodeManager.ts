@@ -66,11 +66,38 @@ export class TextmodeManager implements ITextmodeManager {
     cleanupLayers(isSoftReset: boolean): void {
         if (!this.instance) return;
 
-        // Clear base layer's draw callback to prevent stale references
+        // Reset base layer to default state to prevent property leakage between sketches
+        const base = this.instance.layers.base;
         try {
-            this.instance.layers.base.draw(() => { });
+            base.draw(() => { });
+            base.fontSize(16);
+            base.opacity(1);
+            base.blendMode('normal');
+            base.offset(0, 0);
+            base.rotateZ(0);
+            base.bpm(60);
+            base.show();
+            base.grid?.reset();
         } catch {
             // Ignore - base layer might be in unexpected state
+        }
+
+        // Reset global instance state and rendering properties
+        try {
+            this.instance.background(0);
+            this.instance.lineWeight(1);
+            this.instance.resetShader();
+
+            // @ts-ignore - injected by textmode.synth.js
+            if (typeof this.instance.bpm === 'function') {
+                this.instance.bpm(60);
+            }
+            // @ts-ignore - injected by textmode.synth.js
+            if (typeof this.instance.seed === 'function') {
+                this.instance.seed(null);
+            }
+        } catch {
+            // Ignore optional plugin or rendering methods
         }
 
         // Clear draw callbacks on all user layers
