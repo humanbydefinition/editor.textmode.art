@@ -3,6 +3,10 @@
  * Centralized types used across the UI and application logic.
  */
 
+import type { CodeError } from '@synth.textmode.art/contracts/runner/common';
+
+export type { CodeError };
+
 /**
  * Application settings persisted to localStorage.
  */
@@ -54,23 +58,6 @@ export interface HostServices {
 	toggleUI: () => void;
 	/** Change font size by delta */
 	changeFontSize: (delta: number) => void;
-}
-
-/**
- * Error information for display in the UI and marker creation.
- * Consolidates error reporting across runtimes and controllers.
- */
-export interface CodeError {
-	/** Error message */
-	message: string;
-	/** Full stack trace */
-	stack?: string;
-	/** Line number in user code (1-indexed) */
-	line?: number;
-	/** Column number in user code (1-indexed) */
-	column?: number;
-	/** Source of the error (e.g., 'textmode' or 'strudel') */
-	source?: string;
 }
 
 /**

@@ -1,26 +1,6 @@
-export interface CodeError {
-	message: string;
-	stack?: string;
-	line?: number;
-	column?: number;
-	source?: string;
-}
+import type { CodeError, ExecutionResult, ValidationResult, PendingExecution } from '@synth.textmode.art/contracts/runner/common';
 
-export interface ExecutionResult {
-	success: boolean;
-	error?: CodeError;
-	disposeCallback?: () => void;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	error?: Error;
-}
-
-export interface PendingExecution {
-	code: string;
-	isSoftReset: boolean;
-}
+export type { CodeError, ExecutionResult, ValidationResult, PendingExecution };
 
 export interface IErrorReporter {
 	report(error: Error | string | Event): void;

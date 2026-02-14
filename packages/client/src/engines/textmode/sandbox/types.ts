@@ -4,6 +4,9 @@
  */
 
 import type { CodeError } from '@/core/app.types';
+import type { ExecutionResult, ValidationResult, PendingExecution } from '@synth.textmode.art/contracts/runner/common';
+
+export type { ExecutionResult, ValidationResult, PendingExecution };
 
 /**
  * Events emitted by the runtime
@@ -98,38 +101,6 @@ export interface HostRuntimeOptions extends Partial<IRuntimeEvents> {
     onRunnerConnected?: () => void;
     /** Called when runner is unreachable or disconnected */
     onRunnerDisconnected?: () => void;
-}
-
-/**
- * Result of code execution
- */
-export interface ExecutionResult {
-    /** Whether execution succeeded */
-    success: boolean;
-    /** Error information if failed */
-    error?: CodeError;
-    /** Optional cleanup function returned by user code */
-    disposeCallback?: () => void;
-}
-
-/**
- * Validation result for code syntax checking
- */
-export interface ValidationResult {
-    /** Whether the code is syntactically valid */
-    valid: boolean;
-    /** Syntax error if invalid */
-    error?: Error;
-}
-
-/**
- * Pending execution request
- */
-export interface PendingExecution {
-    /** Code to execute */
-    code: string;
-    /** Whether this is a soft reset */
-    isSoftReset: boolean;
 }
 
 /**

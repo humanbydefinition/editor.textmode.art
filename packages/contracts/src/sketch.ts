@@ -35,35 +35,30 @@ export const approvedSketchSchema = z.object({
 });
 export type ApprovedSketch = z.infer<typeof approvedSketchSchema>;
 
-const publicSketchAccessBaseSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  description: z.string().nullable(),
-  authorName: z.string().nullable(),
-  license: z.string().nullable(),
-  textmodeCode: z.string(),
-  strudelCode: z.string().nullable(),
-  createdAt: z.string(),
-});
+interface PublicSketchAccessBase {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  authorName: string | null;
+  license: string | null;
+  textmodeCode: string;
+  strudelCode: string | null;
+  createdAt: string;
+}
 
-export const publicApprovedSketchAccessSchema = publicSketchAccessBaseSchema.extend({
-  status: z.literal('APPROVED'),
-  socialLinks: z.array(socialLinkSchema).nullable(),
-  ogImageUrl: z.string().nullable(),
-});
-export type PublicApprovedSketchAccess = z.infer<typeof publicApprovedSketchAccessSchema>;
+export interface PublicApprovedSketchAccess extends PublicSketchAccessBase {
+  status: 'APPROVED';
+  socialLinks: SocialLink[] | null;
+  ogImageUrl: string | null;
+}
 
-export const publicPendingSketchAccessSchema = publicSketchAccessBaseSchema.extend({
-  status: z.literal('PENDING'),
-});
-export type PublicPendingSketchAccess = z.infer<typeof publicPendingSketchAccessSchema>;
+export interface PublicPendingSketchAccess extends PublicSketchAccessBase {
+  status: 'PENDING';
+}
 
-export const publicSketchAccessSchema = z.discriminatedUnion('status', [
-  publicApprovedSketchAccessSchema,
-  publicPendingSketchAccessSchema,
-]);
-export type PublicSketchAccess = z.infer<typeof publicSketchAccessSchema>;
+export type PublicSketchAccess = PublicApprovedSketchAccess | PublicPendingSketchAccess;
+
 export const antiSpamChallengeSchema = z.object({
   algorithm: antiSpamAlgorithmSchema,
   challengeId: z.string().regex(/^[a-f0-9]{32}$/),
@@ -82,18 +77,17 @@ export const antiSpamProofSchema = z.object({
 });
 export type AntiSpamProof = z.infer<typeof antiSpamProofSchema>;
 
-export const sketchRequestHashPayloadSchema = z.object({
-  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
-  title: z.string().min(1).max(120),
-  description: z.string().max(300).nullable(),
-  authorName: z.string().max(80).nullable(),
-  license: z.string().max(120).nullable(),
-  socialLinks: z.array(socialLinkSchema).max(6).nullable(),
-  textmodeCode: z.string().min(1).max(300_000),
-  strudelCode: z.string().max(300_000).nullable(),
-  publishConsent: publishConsentSchema,
-});
-export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
+export interface SketchRequestHashPayload {
+  slug: string;
+  title: string;
+  description: string | null;
+  authorName: string | null;
+  license: string | null;
+  socialLinks: SocialLink[] | null;
+  textmodeCode: string;
+  strudelCode: string | null;
+  publishConsent: PublishConsent;
+}
 
 export const createSketchRequestSchema = z.object({
   slug: z.string().min(1).max(SLUG_MAX_LENGTH),
@@ -130,13 +124,12 @@ export function serializeSketchRequestForAntiSpam(payload: SketchRequestHashPayl
   return JSON.stringify(payload);
 }
 
-export const sketchRequestResultSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  status: sketchStatusSchema,
-  createdAt: z.string(),
-});
-export type SketchRequestResult = z.infer<typeof sketchRequestResultSchema>;
+export interface SketchRequestResult {
+  id: string;
+  slug: string;
+  status: SketchStatus;
+  createdAt: string;
+}
 
 export const slugAvailabilityResultSchema = z.object({
   available: z.boolean(),

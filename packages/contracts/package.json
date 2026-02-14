@@ -33,6 +33,10 @@
     "./runner/strudel": {
       "types": "./dist/runner/strudel.d.ts",
       "default": "./dist/runner/strudel.js"
+    },
+    "./runner/common": {
+      "types": "./dist/runner/common.d.ts",
+      "default": "./dist/runner/common.js"
     }
   },
   "dependencies": {
