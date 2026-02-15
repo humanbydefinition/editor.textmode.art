@@ -4,7 +4,6 @@ import { useLegalLanguage } from '@/features/legal/hooks/useLegalLanguage';
 import { useLegalSeo } from '@/features/legal/hooks/useLegalSeo';
 import { getLegalUiCopy } from '@/features/legal/content/legalUiCopy';
 import { LEGAL_DOCUMENT_ORDER, getLegalDocuments, type LegalDocumentId } from '@/features/legal/content/legalDocuments';
-import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { ScrollArea } from '@/shared/ui/scroll-area';
