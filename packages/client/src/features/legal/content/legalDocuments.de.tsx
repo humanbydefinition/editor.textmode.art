@@ -238,7 +238,7 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 					>
 						Hetzner
 					</a>
-					 betrieben. Beim Zugriff koennen technisch erforderliche Verbindungsdaten verarbeitet werden, zum Beispiel
+					{' '}betrieben. Beim Zugriff koennen technisch erforderliche Verbindungsdaten verarbeitet werden, zum Beispiel
 					IP-Adresse, Zeitstempel, angeforderte URL, Referrer, User-Agent und Response-Status.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
