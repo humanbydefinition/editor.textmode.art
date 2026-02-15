@@ -4,7 +4,7 @@ import {
   slugAvailabilityQuerySchema,
   type SlugAvailabilityResult,
 } from '@synth.textmode.art/contracts/sketch';
-import { normalizeSlug, validateSlug } from '../../shared/slug.js';
+import { normalizeAndValidateSlug } from '../../shared/slug.js';
 import { toApprovedSketch, toPublicSketchAccess } from './sketches.mapper.js';
 import {
   findApprovedSketchBySlug,
@@ -21,16 +21,15 @@ const sketchesRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    const normalizedSlug = normalizeSlug(parsed.data.slug);
-    const slugValidation = validateSlug(normalizedSlug);
-    if (!slugValidation.valid) {
-      const response: SlugAvailabilityResult = { available: false, reason: slugValidation.reason, slug: normalizedSlug };
+    const slugResult = normalizeAndValidateSlug(parsed.data.slug);
+    if (!slugResult.valid) {
+      const response: SlugAvailabilityResult = { available: false, reason: slugResult.reason, slug: slugResult.slug };
       reply.status(200).send(response);
       return;
     }
 
-    const taken = await isSlugTaken(normalizedSlug);
-    const response: SlugAvailabilityResult = { available: !taken, slug: normalizedSlug };
+    const taken = await isSlugTaken(slugResult.slug);
+    const response: SlugAvailabilityResult = { available: !taken, slug: slugResult.slug };
     reply.status(200).send(response);
   });
 
@@ -43,13 +42,12 @@ const sketchesRoutes: FastifyPluginAsync = async (app) => {
 
     let excludeSlug: string | undefined;
     if (parsed.data.excludeSlug) {
-      const normalizedExclude = normalizeSlug(parsed.data.excludeSlug);
-      const excludeValidation = validateSlug(normalizedExclude);
-      if (!excludeValidation.valid) {
+      const excludeResult = normalizeAndValidateSlug(parsed.data.excludeSlug);
+      if (!excludeResult.valid) {
         reply.status(400).send({ error: 'Invalid excludeSlug' });
         return;
       }
-      excludeSlug = normalizedExclude;
+      excludeSlug = excludeResult.slug;
     }
 
     const sketch = await findRandomApprovedSketch(excludeSlug);
