@@ -135,7 +135,7 @@ export function ContactForm() {
                         id="contact-name"
                         value={name}
                         onChange={(e) => handleFieldChange('name', e.target.value, setName)}
-                        placeholder="Your name"
+                        placeholder="your name"
                         aria-invalid={Boolean(fieldErrors.name)}
                         className="bg-zinc-900/50 border-white/10 focus:border-emerald-500/50 h-9 text-zinc-200"
                         disabled={status === 'submitting'}
@@ -174,7 +174,7 @@ export function ContactForm() {
                     id="contact-subject"
                     value={subject}
                     onChange={(e) => handleFieldChange('subject', e.target.value, setSubject)}
-                    placeholder="What is this about?"
+                    placeholder="what is this about?"
                     aria-invalid={Boolean(fieldErrors.subject)}
                     className="bg-zinc-900/50 border-white/10 focus:border-emerald-500/50 h-9 text-zinc-200"
                     disabled={status === 'submitting'}
@@ -193,7 +193,7 @@ export function ContactForm() {
                     id="contact-message"
                     value={message}
                     onChange={(e) => handleFieldChange('message', e.target.value, setMessage)}
-                    placeholder="Your message..."
+                    placeholder="your message..."
                     aria-invalid={Boolean(fieldErrors.message)}
                     rows={5}
                     className="bg-zinc-900/50 border-white/10 focus:border-emerald-500/50 resize-none min-h-[120px] text-zinc-200 break-words whitespace-pre-wrap"
@@ -218,7 +218,7 @@ export function ContactForm() {
                         {turnstileError && <p className="text-[11px] text-red-400 mt-1">{turnstileError}</p>}
                         {turnstileToken && !turnstileError && (
                             <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-                                Verification complete.
+                                verification complete.
                             </p>
                         )}
                     </>

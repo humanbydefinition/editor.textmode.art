@@ -396,7 +396,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 										id="author"
 										value={authorName}
 										onChange={(e) => setAuthorName(e.target.value)}
-										placeholder="Your name or handle"
+										placeholder="your name or handle"
 										className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
 										maxLength={32}
 									/>
@@ -630,7 +630,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											{turnstileError && <p className="text-xs text-red-400">{turnstileError}</p>}
 											{turnstileToken && !turnstileError && (
 												<p className="text-xs text-emerald-400">
-													security verification complete.
+													verification complete.
 												</p>
 											)}
 										</>
