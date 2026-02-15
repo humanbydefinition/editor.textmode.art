@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AppRuntime } from '@/app/runtime/AppRuntime';
 import { AdminApp } from '@/features/admin';
-import { LegalDocumentPage, type LegalDocumentId } from '@/features/legal';
+import { LegalContactPage, LegalDocumentPage, type LegalDocumentId } from '@/features/legal';
 import { ensureMonacoClipboardCompatibility } from '@/platform/polyfills/monacoClipboardShim';
 
 interface RuntimeWindow extends Window {
@@ -25,7 +25,7 @@ export function startClientApp(): void {
 
 	const boot = (): void => {
 		const adminPath = window.location.pathname.startsWith('/nest');
-		const legalPath = mapLegalPath(window.location.pathname);
+		const legalRoute = mapLegalRoute(window.location.pathname);
 		const container = document.getElementById('app-container');
 		if (!container) return;
 
@@ -43,7 +43,7 @@ export function startClientApp(): void {
 			return;
 		}
 
-		if (legalPath) {
+		if (legalRoute) {
 			runtimeWindow.__synthAppRuntime__?.dispose();
 			runtimeWindow.__synthAppRuntime__ = undefined;
 			runtimeWindow.__synthAdminRoot__?.unmount();
@@ -53,7 +53,11 @@ export function startClientApp(): void {
 
 			const root = createRoot(container);
 			runtimeWindow.__synthLegalRoot__ = root;
-			root.render(createElement(LegalDocumentPage, { documentId: legalPath }));
+			if (legalRoute === 'contact') {
+				root.render(createElement(LegalContactPage));
+			} else {
+				root.render(createElement(LegalDocumentPage, { documentId: legalRoute }));
+			}
 			return;
 		}
 
@@ -82,10 +86,11 @@ export function startClientApp(): void {
 	boot();
 }
 
-function mapLegalPath(pathname: string): LegalDocumentId | null {
+function mapLegalRoute(pathname: string): LegalDocumentId | 'contact' | null {
 	const normalizedPath = pathname.toLowerCase();
 	if (normalizedPath === '/imprint') return 'imprint';
 	if (normalizedPath === '/tos') return 'terms';
 	if (normalizedPath === '/privacy') return 'privacy';
+	if (normalizedPath === '/contact') return 'contact';
 	return null;
 }
