@@ -218,7 +218,6 @@ export function ContactForm() {
                         {turnstileError && <p className="text-[11px] text-red-400 mt-1">{turnstileError}</p>}
                         {turnstileToken && !turnstileError && (
                             <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
                                 Verification complete.
                             </p>
                         )}
