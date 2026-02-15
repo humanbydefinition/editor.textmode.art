@@ -13,6 +13,7 @@ import adminRoutes from './modules/admin/admin.routes.js';
 import slugPageRoutes from './modules/slug-page/slug-page.routes.js';
 import mediaRoutes from './modules/media/media.routes.js';
 import screenshotRoutes from './modules/screenshot/screenshot.routes.js';
+import contactRoutes from './modules/contact/contact.routes.js';
 
 export function buildServer(): FastifyInstance {
   const app = fastify({
@@ -33,6 +34,7 @@ export function buildServer(): FastifyInstance {
   app.register(slugPageRoutes);
   app.register(mediaRoutes);
   app.register(screenshotRoutes);
+  app.register(contactRoutes);
 
   // --- Static files, storage, and SPA fallback ---
   app.register(staticFilesPlugin);

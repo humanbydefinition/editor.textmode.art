@@ -30,6 +30,11 @@ const envSchema = z.object({
   DISCORD_BOT_TOKEN: z.string().optional(),
   DISCORD_CHANNEL_ID: z.string().optional(),
   DISCORD_APPROVED_CHANNEL_ID: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  CONTACT_EMAIL_RECIPIENT: z.string().email().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
