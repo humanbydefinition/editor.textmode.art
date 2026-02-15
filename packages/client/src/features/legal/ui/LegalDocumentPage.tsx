@@ -37,8 +37,12 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 					</CardHeader>
 
 					<CardContent className="min-h-0 flex-1 flex flex-col gap-4">
-						<div className="flex items-center justify-between gap-3">
-							<nav aria-label="Legal pages navigation" className="flex flex-wrap items-center gap-2">
+						<div className="relative flex items-center justify-between gap-3">
+							<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-900/70 to-transparent pointer-events-none z-10 sm:hidden" />
+							<nav
+								aria-label="Legal pages navigation"
+								className="flex items-center gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pr-6 sm:pr-0 sm:overflow-visible"
+							>
 								{LEGAL_DOCUMENT_ORDER.map((id) => {
 									const doc = LEGAL_DOCUMENTS[id];
 									const active = id === documentId;
@@ -49,7 +53,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 											variant={active ? 'default' : 'outline'}
 											size="sm"
 											className={cn(
-												'min-w-[6rem]',
+												'min-w-[6rem] flex-shrink-0 snap-start',
 												active
 													? 'bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 border border-emerald-400/40'
 													: 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100'
@@ -59,12 +63,21 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 										</Button>
 									);
 								})}
+								<Button
+									asChild
+									size="sm"
+									className="min-w-[6rem] flex-shrink-0 snap-start bg-zinc-900/40 border border-white/10 text-zinc-300 hover:bg-zinc-800/60 hover:text-white sm:hidden"
+								>
+									<a href="/contact">
+										<MessageSquare className="w-4 h-4" />
+										Contact
+									</a>
+								</Button>
 							</nav>
-
 							<Button
 								asChild
 								size="sm"
-								className="bg-zinc-900/40 border border-white/10 text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
+								className="hidden sm:inline-flex bg-zinc-900/40 border border-white/10 text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
 							>
 								<a href="/contact">
 									<MessageSquare className="w-4 h-4" />
