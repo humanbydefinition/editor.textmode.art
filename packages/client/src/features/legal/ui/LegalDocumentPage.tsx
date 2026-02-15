@@ -16,8 +16,8 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 	const DocumentContent = currentDocument.Content;
 
 	return (
-		<div className="w-full h-screen overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900/95 text-zinc-100">
-			<div className="h-full max-w-4xl mx-auto px-4 py-5 sm:px-6 sm:py-8">
+		<div className="w-full h-dvh overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900/95 text-zinc-100">
+			<div className="h-full max-w-4xl mx-auto px-4 py-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:px-6 sm:py-8 flex flex-col min-h-0">
 				<div className="flex items-center justify-between gap-3 mb-4">
 					<Button asChild variant="ghost" className="text-zinc-300 hover:text-white hover:bg-zinc-800/60">
 						<a href="/" aria-label="Return to synth.textmode.art app">
@@ -30,7 +30,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 					</Badge>
 				</div>
 
-				<Card className="h-[calc(100%-3.5rem)] border-zinc-800/80 bg-zinc-900/70 backdrop-blur-sm shadow-xl">
+				<Card className="flex-1 min-h-0 border-zinc-800/80 bg-zinc-900/70 backdrop-blur-sm shadow-xl">
 					<CardHeader>
 						<CardTitle className="text-xl sm:text-2xl text-zinc-100">{currentDocument.title}</CardTitle>
 						<CardDescription className="text-zinc-400">{currentDocument.description}</CardDescription>
@@ -94,14 +94,12 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 
 						<Separator className="bg-zinc-800" />
 
-						<div className="flex flex-col gap-2 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-							<p>
-								(c) {new Date().getFullYear()} synth.textmode.art. AGPL-3.0-or-later. 
-								<br />
-								All third-party marks remain
-								the property of their respective owners.
+						<div className="rounded-lg border border-white/5 bg-zinc-950/40 p-3 text-xs text-zinc-500 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0">
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+							<p className="leading-relaxed">
+								(c) {new Date().getFullYear()} synth.textmode.art 
 							</p>
-							<div className="flex items-center gap-3">
+							<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 								<a href="/imprint" className="text-zinc-400 hover:text-zinc-200 transition-colors">
 									Imprint
 								</a>
@@ -115,6 +113,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 									Contact
 								</a>
 							</div>
+						</div>
 						</div>
 					</CardContent>
 				</Card>
