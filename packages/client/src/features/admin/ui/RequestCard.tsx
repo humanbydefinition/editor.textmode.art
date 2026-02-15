@@ -30,7 +30,7 @@ import { Separator } from '@/shared/ui/separator';
 import { Textarea } from '@/shared/ui/textarea';
 import type { SketchRequest } from '../types';
 import { formatDate, getLinks, normalizeSocialLink } from '../model/adminUtils';
-import { SocialIcon } from './SocialIcon';
+import { SocialIcon } from '@/shared/components/SocialIcon';
 
 type RequestCardProps = {
     request: SketchRequest;
@@ -203,7 +203,7 @@ export function RequestCard({
                                                 rel="noreferrer"
                                                 className="inline-flex items-center gap-1.5 rounded-md border-2 border-border bg-background px-2.5 py-1 text-xs transition-colors duration-200 motion-reduce:transition-none hover:bg-card"
                                             >
-                                                <SocialIcon label={link.label} />
+                                                <SocialIcon label={link.label} className="h-3.5 w-3.5" />
                                                 <span>{link.label}</span>
                                                 <Link2 className="h-3 w-3 text-muted-foreground" />
                                             </a>

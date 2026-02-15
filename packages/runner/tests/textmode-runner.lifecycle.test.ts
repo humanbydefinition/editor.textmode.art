@@ -79,7 +79,7 @@ describe('TextmodeRunner lifecycle', () => {
 		const runner = new TextmodeRunner(new Set(['*'])) as unknown as {
 			start: () => void;
 			dispose: () => void;
-			attachPort: (port: any, onMessage: any) => void;
+			attachPort: (port: unknown, onMessage: unknown) => void;
 			isPortAttached: () => boolean;
 		};
 		const portClose = vi.fn();

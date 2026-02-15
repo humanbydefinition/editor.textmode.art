@@ -4,9 +4,9 @@ import { buildLocalizedLegalPath, type LegalLocale } from '@/features/legal/mode
 const MANAGED_SEO_ATTR = 'data-legal-seo-managed';
 
 function upsertLink(rel: string, attributes: Record<string, string>): void {
-	const selectorParts = [`link[${MANAGED_SEO_ATTR}=\"true\"]`, `[rel=\"${rel}\"]`];
+	const selectorParts = [`link[${MANAGED_SEO_ATTR}="true"]`, `[rel="${rel}"]`];
 	if (attributes.hreflang) {
-		selectorParts.push(`[hreflang=\"${attributes.hreflang}\"]`);
+		selectorParts.push(`[hreflang="${attributes.hreflang}"]`);
 	}
 	const selector = selectorParts.join('');
 	let link = document.head.querySelector<HTMLLinkElement>(selector);
@@ -45,7 +45,7 @@ export function useLegalSeo(locale: LegalLocale, legalPath: '/imprint' | '/tos' 
 		});
 
 		return () => {
-			document.head.querySelectorAll(`link[${MANAGED_SEO_ATTR}=\"true\"]`).forEach((node) => node.remove());
+			document.head.querySelectorAll(`link[${MANAGED_SEO_ATTR}="true"]`).forEach((node) => node.remove());
 		};
 	}, [legalPath, locale, title]);
 }
