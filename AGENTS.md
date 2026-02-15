@@ -24,8 +24,10 @@
 | **Visual engine** | textmode.js + textmode.synth.js + textmode.filters.js |
 | **Audio engine** | @strudel/web |
 | **Server framework** | Fastify 5 |
-| **Database** | PostgreSQL + Prisma ORM |
+| **Database** | PostgreSQL + Prisma 7 (with `@prisma/adapter-pg`) |
+| **Notifications** | Discord.js (bot integration) |
 | **Validation** | Zod (shared contracts) |
+| **Testing** | Vitest (client + runner) |
 | **Package manager** | npm (workspaces) |
 | **License** | AGPL-3.0-or-later |
 
@@ -35,14 +37,23 @@ Run from the **repo root**:
 
 ```bash
 npm install                    # Install all workspace dependencies
-npm run client:dev                    # Start client dev server (Vite)
+npm run client:dev             # Start client dev server (Vite)
 npm run server:dev             # Start server dev (Fastify + Prisma migrate)
-npm run build                  # Production build (contracts → client → server)
-npm run lint                   # Lint client + server
-npm run check-types            # Typecheck contracts → client → server
+npm run runner:dev             # Start runner dev server (Vite)
+npm run build                  # Production build (contracts → client → server → runner)
+npm run lint                   # Lint client + server + runner
+npm run check-types            # Typecheck contracts → client → server → runner
 npm run format                 # Prettier auto-format
 npm run format:check           # Prettier check
 npm run extract-types          # Regenerate Monaco type definitions
+```
+
+### Workspace-specific builds:
+
+```bash
+npm run client:build           # Build contracts + client only
+npm run server:build           # Build contracts + server only
+npm run runner:build           # Build runner only
 ```
 
 ### Server-specific:
@@ -50,80 +61,169 @@ npm run extract-types          # Regenerate Monaco type definitions
 ```bash
 npm run -w @synth.textmode.art/server prisma:migrate       # Create new migration
 npm run -w @synth.textmode.art/server prisma:migrate:deploy # Deploy migrations
+npm run -w @synth.textmode.art/server prisma:generate      # Regenerate Prisma client
 npm run -w @synth.textmode.art/server prisma:studio        # Open Prisma Studio
 npm run -w @synth.textmode.art/server playwright:install   # Install Chromium for screenshots
 npm run -w @synth.textmode.art/server screenshots:regenerate # Regenerate all approved screenshots
+```
+
+### Testing:
+
+```bash
+npm run test -w @synth.textmode.art/client   # Run client tests (Vitest, jsdom)
+npm run test -w @synth.textmode.art/runner   # Run runner tests (Vitest, node)
 ```
 
 ## Monorepo Structure
 
 ```
 synth.textmode.art/
+├── .env.example                         # Environment template with descriptions
+├── package.json                         # Root workspace config & dev scripts
+├── scripts/
+│   └── check-max-lines.mjs             # Lint script for file length limits
 └── packages/
-    ├── client/                      # Vite + React SPA
+    ├── client/                          # Vite + React SPA
+    │   ├── tests/                       # Vitest tests (jsdom environment)
     │   └── src/
-    │       ├── app/                 # Bootstrap, runtime, orchestration
-    │       │   ├── bootstrap/       # startClientApp.ts (entry routing)
-    │       │   └── runtime/         # AppRuntime (composition root)
-    │       ├── engines/             # Engine implementations
-    │       │   ├── textmode/        # Visual engine (Editor + Runtime + Controller)
-    │       │   └── strudel/         # Audio engine (Editor + Runtime + Controller)
-    │       ├── sandbox/             # Iframe protocol & runner communication
-    │       ├── platform/state/      # Zustand store + slices + adapters
-    │       ├── features/            # Feature modules (admin, editor, share, publish)
-    │       ├── services/            # API services (SketchApi, Share, Audio, Storage)
-    │       ├── components/          # Shared React components (AppShell, dialogs)
-    │       ├── shared/ui/           # shadcn/ui primitives
-    │       ├── managers/            # Editor & shortcuts managers
-    │       ├── core/                # Base classes (BaseController, BaseEditor)
-    │       ├── types/               # TypeScript type definitions
-    │       └── styles/              # CSS entry point
-    ├── server/                      # Fastify API server
+    │       ├── app/                     # Bootstrap, runtime, orchestration
+    │       │   ├── bootstrap/           # startClientApp.ts (entry routing)
+    │       │   ├── runtime/             # AppRuntime, EngineLifecycle, UIActions
+    │       │   └── ui/                  # AppShell, RunnerUnavailableAlert, SlugInfoAlert
+    │       ├── engines/                 # Engine implementations
+    │       │   ├── registry.ts          # Engine registration
+    │       │   ├── textmode/            # Visual engine
+    │       │   │   ├── TextmodeEngine.ts
+    │       │   │   ├── TextmodeController.ts
+    │       │   │   ├── editor/          # TextmodeEditor (Monaco wrapper)
+    │       │   │   ├── runtime/host/    # TextmodeRuntime (iframe host-side)
+    │       │   │   ├── sandbox/         # Sandbox type definitions
+    │       │   │   └── config/          # generatedTypes.ts (auto-generated)
+    │       │   └── strudel/             # Audio engine
+    │       │       ├── StrudelEngine.ts
+    │       │       ├── StrudelController.ts
+    │       │       ├── editor/          # StrudelEditor, StrudelHighlighter
+    │       │       ├── runtime/         # StrudelRuntime, host transport
+    │       │       └── audio/           # StrudelAudioSource, AudioFrameStore
+    │       ├── platform/                # Platform services & infrastructure
+    │       │   ├── api/                 # SketchApiService
+    │       │   ├── audio/               # AudioService
+    │       │   ├── storage/             # StorageService
+    │       │   ├── state/               # Zustand store + slices + adapters + selectors
+    │       │   ├── input/               # EditorManager, ShortcutsManager
+    │       │   ├── ui/                  # Popover events
+    │       │   └── compat/              # Monaco clipboard shim
+    │       ├── features/                # Feature modules
+    │       │   ├── admin/               # Moderation dashboard (AdminApp)
+    │       │   ├── editor-layout/       # Editor layout model & UI
+    │       │   ├── examples/            # Example sketches content & UI
+    │       │   ├── publish/             # Sketch publish flow + Turnstile
+    │       │   ├── share/               # Share link model & UI
+    │       │   └── system-menu/         # System menu UI
+    │       ├── shared/                  # Shared code
+    │       │   ├── ui/                  # shadcn/ui primitives
+    │       │   ├── components/          # Reusable React components (ErrorOverlay, WelcomeDialog, etc.)
+    │       │   ├── lib/                 # Utilities (cn, CodeRandomizer, ShareService)
+    │       │   └── types/               # Shared TypeScript types
+    │       ├── core/                    # Base classes (BaseController, BaseEditor, engine.types)
+    │       └── styles/                  # CSS entry point
+    │
+    ├── runner/                          # Isolated iframe runner bundle (separate Vite build)
+    │   ├── tests/                       # Vitest tests (node environment)
+    │   ├── textmode.html                # Textmode runner entry HTML
+    │   ├── strudel.html                 # Strudel runner entry HTML
+    │   └── src/
+    │       ├── TextmodeRunner.ts        # Main textmode runner class
+    │       ├── core/                    # Bootstrap, runner lifecycle, security
+    │       ├── execution/               # ExecutionContext, SafeProxyFactory
+    │       ├── sandbox/                 # Error handling, scheduling
+    │       ├── strudel/                 # Strudel runner (StrudelRunner, broadcast, transport, UI)
+    │       ├── lib/                     # TextmodeManager, textmode type helpers
+    │       └── types/                   # Internal runner types
+    │
+    ├── server/                          # Fastify API server
+    │   ├── tests/                       # (none currently)
     │   ├── src/
-    │   │   ├── app.ts               # Slim application orchestrator
-    │   │   ├── config/env.ts        # Zod-validated environment config
-    │   │   ├── modules/             # Feature modules (routes, services, mappers)
-    │   │   │   └── [feature]/       # e.g. admin, sketches
-    │   │   │       ├── *.routes.ts  # HTTP layer (validation, response)
-    │   │   │       ├── *.service.ts # Business logic & data access
-    │   │   │       └── *.mapper.ts  # Data mapping (DTOs)
-    │   │   ├── plugins/             # Fastify plugins (cors, helmet, error-handler)
-    │   │   ├── middleware/          # Request middleware
-    │   │   ├── security/            # Auth & anti-spam guards
-    │   │   ├── database/            # Prisma client & lifecycle
-    │   │   └── shared/              # Shared utilities (mappers, slug, errors)
-    │   ├── scripts/                 # Utility scripts (test-screenshot, regenerate)
+    │   │   ├── app.ts                   # Application orchestrator (plugin + route registration)
+    │   │   ├── config/env.ts            # Zod-validated environment config
+    │   │   ├── modules/                 # Feature modules
+    │   │   │   ├── admin/               # Admin routes, service, mapper
+    │   │   │   ├── sketches/            # Public sketch routes, service, mapper
+    │   │   │   ├── submissions/         # Sketch publish routes + service
+    │   │   │   ├── slug-page/           # Server-rendered SEO pages + template
+    │   │   │   ├── screenshot/          # Playwright OG image generation
+    │   │   │   ├── media/               # CORS proxy for external media
+    │   │   │   └── discord/             # Discord bot notification service
+    │   │   ├── plugins/                 # Fastify plugins
+    │   │   │   ├── cors.ts
+    │   │   │   ├── database.ts
+    │   │   │   ├── discord.ts           # Discord bot lifecycle plugin
+    │   │   │   ├── error-handler.ts
+    │   │   │   ├── runner-csp.ts        # CSP headers for runner iframe
+    │   │   │   ├── security-headers.ts  # Helmet security headers
+    │   │   │   └── static-files.ts      # Static file serving + SPA fallback
+    │   │   ├── middleware/              # admin-auth middleware
+    │   │   ├── security/               # anti-spam.guard, turnstile.guard
+    │   │   ├── database/               # Prisma client & lifecycle
+    │   │   ├── generated/              # Prisma generated client output
+    │   │   └── shared/                 # Utilities (mappers, slug, errors, net)
+    │   ├── scripts/                    # Utility scripts (test-screenshot, regenerate, backfill)
     │   └── prisma/
-    │       └── schema.prisma        # Database schema
-    ├── runner/                      # Isolated iframe runner bundle
-    └── contracts/                   # Shared types & validation (client ↔ server)
+    │       └── schema.prisma           # Database schema
+    │
+    └── contracts/                       # Shared types & validation (client ↔ server ↔ runner)
         └── src/
-            ├── sketch.ts            # Sketch request types + anti-spam serialization
-            ├── admin.ts             # Admin API types
-            └── share.ts             # Share link types
+            ├── index.ts                 # Re-exports
+            ├── sketch.ts                # Sketch request types + anti-spam serialization
+            ├── admin.ts                 # Admin API types
+            ├── share.ts                 # Share link encoding types
+            └── runner/                  # Iframe message protocols
+                ├── textmode.ts          # Textmode runner protocol (INIT, RUN_CODE, etc.)
+                └── strudel.ts           # Strudel runner protocol (STR_INIT, STR_RUN_CODE, etc.)
 ```
 
 ## Key Architectures
 
 ### Engine Pattern
 
-Each engine (textmode, strudel) follows a consistent **Editor + Runtime + Controller** triad:
+Each engine (textmode, strudel) follows a consistent **Engine + Editor + Runtime + Controller** pattern:
 
-- **Editor**: Monaco Editor wrapper with engine-specific keybindings and syntax
-- **Runtime**: Execution environment (iframe runner for textmode, Web Audio for strudel)
-- **Controller**: Mediates between editor and runtime, handles auto-execute, debouncing, and state sync
+- **Engine**: Top-level orchestrator that wires the editor, runtime, and controller together
+- **Editor**: Monaco Editor wrapper with engine-specific language support and keybindings
+- **Runtime**: Execution environment — iframe-based for textmode, iframe + Web Audio for strudel
+- **Controller**: Mediates between editor and runtime; handles auto-execute, debouncing, and state sync
 
-Engines are initialized by `AppRuntime` (the composition root at `packages/client/src/app/runtime/AppRuntime.ts`), which orchestrates lifecycle, settings, share workflows, and rendering.
+Engines are initialized by `AppRuntime` (the composition root at `packages/client/src/app/runtime/AppRuntime.ts`), which orchestrates lifecycle, settings, share workflows, and rendering via `EngineLifecycle` and `UIActions`.
 
-### Sandbox Protocol
+### Runner Package
 
-Textmode visuals execute in an **iframe runner** for isolation. Communication uses a typed message protocol defined in `packages/client/src/sandbox/protocol.ts`:
+The `packages/runner/` package is a **standalone Vite build** that produces the isolated iframe bundles. It has two entry points:
 
-- **Parent → Runner**: `RUN_CODE`, `SOFT_RESET`, `AUDIO_DATA`
+- `textmode.html` — Textmode visual runner (textmode.js + textmode.synth.js + textmode.filters.js)
+- `strudel.html` — Strudel audio runner (@strudel/web)
+
+The runner dependencies (`textmode.js`, `textmode.synth.js`, `textmode.filters.js`, `@strudel/web`) live in the **runner** package. The client only has these as devDependencies for type extraction.
+
+The runner can be hosted on a separate origin (`VITE_RUNNER_URL` / `VITE_STRUDEL_RUNNER_URL`) for security isolation.
+
+### Sandbox Protocols
+
+Both engines use typed message protocols defined in `@synth.textmode.art/contracts/runner/*`:
+
+**Textmode protocol** (`contracts/src/runner/textmode.ts`):
+
+- **Window → Runner**: `INIT` (versioned handshake, `PROTOCOL_VERSION = 1`)
+- **Parent → Runner**: `RUN_CODE`, `SOFT_RESET`, `DISPOSE`, `AUDIO_DATA`
 - **Runner → Parent**: `READY`, `RUN_OK`, `RUN_ERROR`, `SYNTH_ERROR`, `TOGGLE_UI`, `USER_INTERACTION`
-- **Window → Runner**: `INIT` (versioned handshake)
+- Type guards: `isInitMessage()`, `isParentMessage()`, `isRunnerMessage()`
 
-The runner can optionally be hosted on a separate origin (`VITE_RUNNER_URL`) for additional security isolation.
+**Strudel protocol** (`contracts/src/runner/strudel.ts`):
+
+- **Window → Runner**: `STR_INIT` (versioned handshake, `STRUDEL_PROTOCOL_VERSION = 1`)
+- **Parent → Runner**: `STR_INIT_AUDIO`, `STR_RUN_CODE`, `STR_HUSH`, `STR_DISPOSE`
+- **Runner → Parent**: `STR_READY`, `STR_AUDIO_UNLOCK_REQUIRED`, `STR_RUN_OK`, `STR_RUN_ERROR`, `STR_PLAY_STATE`, `STR_AUDIO_DATA`
+- Uses `StrudelWindowEventEnvelope` wrapper for dispatching runner messages
+- Type guards: `isStrudelInitMessage()`, `isStrudelParentMessage()`, `isStrudelRunnerMessage()`, `isStrudelWindowEventEnvelope()`
 
 ### State Management
 
@@ -136,13 +236,13 @@ Zustand store at `packages/client/src/platform/state/appStore.ts` is composed fr
 | `shareSlice` | Share link loading, URL parsing, lock state |
 | `uiSlice` | Panel visibility, window dimensions, responsive layout |
 
-Store uses `devtools` (dev only) and `subscribeWithSelector` middleware.
+Store uses `devtools` (dev only) and `subscribeWithSelector` middleware. Selectors live in `selectors.ts`, store adapters in `adapters/`.
 
 ### Server Architecture
 
 The server uses a **Layered Architecture** to separate concerns:
 
-1.  **Plugins (`plugins/`)**: Cross-cutting concerns (CORS, Helmet, Error Handling, Database Lifecycle) registered in `app.ts`.
+1.  **Plugins (`plugins/`)**: Cross-cutting concerns (CORS, Helmet, Error Handling, Database Lifecycle, Discord) registered in `app.ts`.
 2.  **Routes (`*.routes.ts`)**: HTTP layer. Handles request validation, auth middleware, and response formatting. **No business logic or DB calls.**
 3.  **Services (`*.service.ts`)**: Domain logic and data access (Prisma). Reusable and independent of HTTP transport.
 4.  **Mappers (`*.mapper.ts` / `shared/mappers.ts`)**: Transforms internal DB entities into public API contracts (DTOs).
@@ -159,6 +259,15 @@ Server routes are organized by feature under `packages/server/src/modules/`:
 | `slug-page` | Server-rendered SEO pages | `GET /s/:slug` |
 | `screenshot` | Playwright-based OG image generation | Internal preview routes |
 | `media` | CORS proxy for external media | `GET /api/media?url=...` |
+| `discord` | Discord bot notifications for submissions | Service only (no HTTP routes) |
+
+### Discord Integration
+
+The server includes a Discord bot integration (`discord.js`) that notifies configured channels about sketch submissions and approvals:
+
+- **Plugin**: `plugins/discord.ts` — initializes and tears down the Discord client
+- **Service**: `modules/discord/discord.service.ts` — singleton service for sending embeds
+- **Config**: Requires `DISCORD_BOT_TOKEN`, `DISCORD_CHANNEL_ID`, and optionally `DISCORD_APPROVED_CHANNEL_ID`
 
 ### Anti-Spam System
 
@@ -168,15 +277,22 @@ Sketch submissions use a **proof-of-work challenge** system:
 3. Client submits with nonce, challenge ID, payload hash, and Cloudflare Turnstile token
 4. Server validates challenge, PoW, Turnstile, and idempotency
 
+Tunable via environment variables: `ANTI_SPAM_POW_DIFFICULTY`, `ANTI_SPAM_CHALLENGE_TTL_SECONDS`, `ANTI_SPAM_MAX_CHALLENGES_PER_MINUTE`, `ANTI_SPAM_MAX_SUBMISSIONS_PER_MINUTE`, `ANTI_SPAM_MAX_PENDING_REQUESTS`, `ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS`.
+
 ### Shared Contracts
 
-The `@synth.textmode.art/contracts` package provides **shared Zod schemas and TypeScript types** consumed by both client and server:
+The `@synth.textmode.art/contracts` package provides **shared Zod schemas, TypeScript types, and message protocols** consumed by client, server, and runner:
 
-- `sketch.ts` — Sketch request payloads, anti-spam serialization, result types
-- `admin.ts` — Admin API request/response types
-- `share.ts` — Share link encoding types
+| Export path | Content |
+|-------------|---------|
+| `.` | Re-exports (index) |
+| `./sketch` | Sketch request payloads, anti-spam serialization, result types |
+| `./admin` | Admin API request/response types |
+| `./share` | Share link encoding types |
+| `./runner/textmode` | Textmode iframe message protocol + type guards |
+| `./runner/strudel` | Strudel iframe message protocol + type guards |
 
-**Build order matters**: contracts must build before client or server (`npm run build` handles this).
+**Build order matters**: contracts must build before client, server, or runner (`npm run build` handles this).
 
 ## Routing
 
@@ -208,28 +324,44 @@ Environment is validated with Zod in `packages/server/src/config/env.ts`. Reads 
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server secret |
 | `SCREENSHOT_PREVIEW_TOKEN` | Internal preview authentication (≥16 chars) |
 
-### Optional:
+### Optional (server):
 
 | Variable | Description |
 |----------|-------------|
 | `HOST` / `PORT` | Server bind (default: `0.0.0.0:3000`) |
 | `STATIC_DIR` | Override static asset directory |
 | `PUBLIC_BASE_URL` | Canonical URL for SEO/CORS |
-| `VITE_DEV_SERVER_URL` | Dev SSR proxy for slug pages |
 | `RUNNER_PUBLIC_URL` | Runner origin for CSP/CORS |
 | `SCREENSHOT_BASE_URL` | Internal URL for screenshot capture |
 | `SCREENSHOT_STORAGE_DIR` | Persistent screenshot storage path |
+| `PUBLISH_CONSENT_POLICY_VERSION` | Consent policy version (default: `2026-02-08`) |
+| `DISCORD_BOT_TOKEN` | Discord bot token for notifications |
+| `DISCORD_CHANNEL_ID` | Discord channel for new submission alerts |
+| `DISCORD_APPROVED_CHANNEL_ID` | Discord channel for approval announcements |
+
+### Optional (anti-spam tuning):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ANTI_SPAM_POW_DIFFICULTY` | `14` | Leading zero bits (8–24) |
+| `ANTI_SPAM_CHALLENGE_TTL_SECONDS` | `180` | Challenge validity window |
+| `ANTI_SPAM_MAX_CHALLENGES_PER_MINUTE` | `600` | Rate limit: challenges |
+| `ANTI_SPAM_MAX_SUBMISSIONS_PER_MINUTE` | `60` | Rate limit: submissions |
+| `ANTI_SPAM_MAX_PENDING_REQUESTS` | `5000` | Max pending sketch requests |
+| `ANTI_SPAM_IDEMPOTENCY_TTL_SECONDS` | `600` | Idempotency key lifetime |
 
 ### Client-side (`VITE_` prefix):
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_RUNNER_URL` | Full URL to iframe runner HTML |
-| `VITE_RUNNER_PARENT_ORIGINS` | Allowed parent origins for runner |
+| `VITE_RUNNER_URL` | Full URL to textmode runner HTML |
+| `VITE_STRUDEL_RUNNER_URL` | Full URL to strudel runner HTML |
+| `VITE_RUNNER_PARENT_ORIGINS` | Allowed parent origins for runner iframe |
 | `VITE_MEDIA_PROXY_URL` | Media proxy endpoint URL |
 | `VITE_API_BASE_URL` | Override API base URL |
 | `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile client key |
 | `VITE_PUBLISH_CONSENT_POLICY_VERSION` | Consent policy version string |
+| `VITE_DEV_SERVER_URL` | Dev SSR proxy for slug pages |
 
 See `.env.example` for a complete template with descriptions.
 
@@ -239,13 +371,15 @@ See `.env.example` for a complete template with descriptions.
 1. Update Zod schemas in `packages/contracts/src/`
 2. Rebuild contracts: `npm run build -w @synth.textmode.art/contracts`
 3. Update server route handler in `packages/server/src/modules/`
-4. Update client service in `packages/client/src/services/SketchApiService.ts`
+4. Update client service in `packages/client/src/platform/api/SketchApiService.ts`
 5. Update admin types in `packages/client/src/features/admin/` if applicable
 
 ### When modifying engine behavior:
-1. Check all three files in the engine folder: `*Engine.ts`, `*Controller.ts`, and the `editor/` and `runtime/` subdirectories
-2. If changing the sandbox protocol, update `packages/client/src/sandbox/protocol.ts` **and** the runner's message handler in `packages/client/src/engines/textmode/runner/`
-3. If adding new message types, update the type guards (`isRunnerMessage`, `isParentMessage`)
+1. Check all files in the engine folder: `*Engine.ts`, `*Controller.ts`, and the `editor/` and `runtime/` subdirectories
+2. If changing a sandbox protocol, update the contract in `packages/contracts/src/runner/` (either `textmode.ts` or `strudel.ts`)
+3. Update the corresponding runner implementation in `packages/runner/src/`
+4. If adding new message types, update the type guards (`isRunnerMessage`, `isParentMessage`, or the Strudel equivalents)
+5. Run protocol contract tests: `npm run test -w @synth.textmode.art/client`
 
 ### When changing the Prisma schema:
 1. Edit `packages/server/prisma/schema.prisma`
@@ -255,15 +389,21 @@ See `.env.example` for a complete template with descriptions.
 
 ### When adding new shared types:
 1. Add types/schemas in `packages/contracts/src/`
-2. Export from the appropriate entry point (`index.ts`, `admin.ts`, `share.ts`, or `sketch.ts`)
+2. Export from the appropriate entry point (`index.ts`, `admin.ts`, `share.ts`, `sketch.ts`, or `runner/*.ts`)
 3. Update `exports` map in `packages/contracts/package.json` if adding a new entry point
 4. Rebuild contracts before testing
 
 ### When adding UI components:
 - Use shadcn/ui primitives from `packages/client/src/shared/ui/`
-- Follow existing patterns in `packages/client/src/components/` and `packages/client/src/features/`
+- Follow existing patterns in `packages/client/src/shared/components/` and `packages/client/src/features/`
 - Use Radix UI primitives for accessible components
 - Icons: `lucide-react`
+
+### When modifying the runner:
+1. Edit runner source in `packages/runner/src/`
+2. If protocol changes, update contracts first (`packages/contracts/src/runner/`)
+3. Run runner tests: `npm run test -w @synth.textmode.art/runner`
+4. Verify build produces expected entries: `npm run runner:build` (runs `verifyDistEntries.js`)
 
 ## Code Style
 
@@ -276,9 +416,11 @@ See `.env.example` for a complete template with descriptions.
 - Arrow parens: always
 - End of line: LF
 
-### Import alias:
-- `@` resolves to `packages/client/src/`
+### Import aliases:
+- `@` resolves to `packages/client/src/` (client and runner)
 - `@synth.textmode.art/contracts` for shared contracts
+- `@synth.textmode.art/contracts/runner/textmode` for textmode protocol
+- `@synth.textmode.art/contracts/runner/strudel` for strudel protocol
 
 ### TypeScript:
 - Strict mode
@@ -286,7 +428,7 @@ See `.env.example` for a complete template with descriptions.
 - Server uses `.js` extension in imports (for Node ESM resolution)
 
 ### ESLint:
-- Separate configs per workspace: `packages/client/eslint.config.js`, `packages/server/eslint.config.js`
+- Separate configs per workspace: `packages/client/eslint.config.js`, `packages/server/eslint.config.js`, `packages/runner/eslint.config.js`
 
 ## Type Generation (Monaco)
 
@@ -299,35 +441,50 @@ Monaco Editor loads custom type definitions for `textmode.js`, `textmode.synth.j
 
 > Do not manually edit `generatedTypes.ts` — it is auto-generated.
 
+The type extraction reads from the textmode libraries installed as devDependencies in the client package.
+
 ## Database
 
-PostgreSQL with a single model:
+PostgreSQL with Prisma 7 (`@prisma/adapter-pg`). Single model:
 
 ```prisma
 model SketchRequest {
   id, slug, status (PENDING/APPROVED/DENIED),
   title, description?, authorName?, license?,
   socialLinks? (JSON), textmodeCode, strudelCode?,
-  publishConsent fields, ogImageUrl?,
-  timestamps, review fields
+  publishConsentAccepted, publishConsentAcceptedAt?,
+  publishConsentPolicyVersion?, ogImageUrl?,
+  createdAt, updatedAt,
+  reviewedAt?, reviewedBy?, denialReason?
 }
 ```
+
+Generated client output goes to `packages/server/src/generated/prisma/`.
+
+## Testing
+
+```bash
+npm run test -w @synth.textmode.art/client   # Client tests (jsdom)
+npm run test -w @synth.textmode.art/runner   # Runner tests (node)
+```
+
+Client tests cover protocol contracts and host runtime lifecycle. Runner tests cover origin validation, runner lifecycle, and Strudel integration (broadcast timers, haps, runtime adapter).
 
 ## Validation
 
 ```bash
-npm run lint             # ESLint (client + server)
-npm run check-types      # TypeScript (contracts → client → server)
+npm run lint             # ESLint (client + server + runner)
+npm run check-types      # TypeScript (contracts → client → server → runner)
 npm run format:check     # Prettier check
-npm run build            # Full production build
+npm run build            # Full production build (contracts → client → server → runner)
 ```
-
-No automated test suite is currently configured beyond lint/typecheck.
 
 ## Troubleshooting
 
 - **If Monaco types are missing**: Run `npm run extract-types` and verify `generatedTypes.ts` exists in `packages/client/src/engines/textmode/config/`
 - **If `/s/:slug` fails in dev**: Ensure server is running on `PORT` and Vite proxy is active in `packages/client/vite.config.ts`
-- **If contracts aren't found**: Run `npm run build -w @synth.textmode.art/contracts` — contracts must build before `@synth.textmode.art/client` and `@synth.textmode.art/server`
+- **If contracts aren't found**: Run `npm run build -w @synth.textmode.art/contracts` — contracts must build before client, server, and runner
 - **If Prisma client errors**: Run `npm run -w @synth.textmode.art/server prisma:generate` after schema changes
 - **If screenshot generation fails**: Ensure Playwright is installed (`npm run -w @synth.textmode.art/server playwright:install`) and `SCREENSHOT_BASE_URL` points to a running server
+- **If runner build fails verification**: Check `packages/runner/scripts/verifyDistEntries.js` — it validates that `textmode.html` and `strudel.html` are present in the build output
+- **If Discord notifications fail**: Verify `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are set; check server logs for `[Discord] Setup failed`
