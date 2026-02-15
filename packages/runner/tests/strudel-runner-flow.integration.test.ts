@@ -24,7 +24,7 @@ describe('StrudelRunner integration flow', () => {
 				hush: () => void;
 			};
 			handleParentMessage: (message: unknown) => Promise<void>;
-			attachPort: (port: any, onMessage: any) => void;
+			attachPort: (port: unknown, onMessage: unknown) => void;
 			timerManager: { dispose: () => void };
 		};
 

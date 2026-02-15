@@ -88,11 +88,11 @@ export class TextmodeManager implements ITextmodeManager {
             this.instance.lineWeight(1);
             this.instance.resetShader();
 
-            // @ts-ignore - injected by textmode.synth.js
+            // @ts-expect-error - injected by textmode.synth.js
             if (typeof this.instance.bpm === 'function') {
                 this.instance.bpm(60);
             }
-            // @ts-ignore - injected by textmode.synth.js
+            // @ts-expect-error - injected by textmode.synth.js
             if (typeof this.instance.seed === 'function') {
                 this.instance.seed(null);
             }
