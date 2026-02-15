@@ -15,7 +15,6 @@ interface LegalSectionLabels {
 }
 
 export interface LegalUiCopy {
-	legalBadgeLabel: string;
 	contactBadgeLabel: string;
 	backToAppLabel: string;
 	backToAppAriaLabel: string;
@@ -30,7 +29,6 @@ export interface LegalUiCopy {
 
 export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 	en: {
-		legalBadgeLabel: 'Legal',
 		contactBadgeLabel: 'Contact',
 		backToAppLabel: 'Back to App',
 		backToAppAriaLabel: 'Return to synth.textmode.art app',
@@ -52,7 +50,6 @@ export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 		},
 	},
 	de: {
-		legalBadgeLabel: 'Rechtliches',
 		contactBadgeLabel: 'Kontakt',
 		backToAppLabel: 'Zur App',
 		backToAppAriaLabel: 'Zurueck zur synth.textmode.art App',
