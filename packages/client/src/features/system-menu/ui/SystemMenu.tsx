@@ -204,7 +204,15 @@ export function SystemMenu({
                 </TooltipContent>
             </Tooltip>
 
-            <DialogContent showCloseButton={false} className="sm:max-w-[600px] h-[85vh] sm:h-[600px] bg-zinc-950/95 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col">
+            <DialogContent
+                showCloseButton={false}
+                onOpenAutoFocus={(event) => {
+                    event.preventDefault();
+                    const content = event.currentTarget as HTMLElement | null;
+                    content?.focus();
+                }}
+                className="sm:max-w-[600px] h-[85vh] sm:h-[600px] bg-zinc-950/95 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col"
+            >
                 <DialogDescription className="sr-only">
                     System Menu containing settings, shortcuts, about information, and legal documents.
                 </DialogDescription>
