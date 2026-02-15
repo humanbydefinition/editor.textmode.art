@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
 import {
 	ImprintLegalContent,
@@ -38,16 +39,22 @@ export function LegalTab() {
 						)}
 					/>
 				</button>
-				<a
-					href="/imprint"
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="Open Imprint in a new tab"
-					title="Open Imprint in full screen"
-					className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1 rounded"
-				>
-					<ExternalLink className="w-3.5 h-3.5" />
-				</a>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href="/imprint"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Open Imprint in a new tab"
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>open imprint in new tab</p>
+					</TooltipContent>
+				</Tooltip>
 			</div>
 
 			<div
@@ -82,16 +89,22 @@ export function LegalTab() {
 						)}
 					/>
 				</button>
-				<a
-					href="/tos"
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="Open Terms and Acceptable Use in a new tab"
-					title="Open Terms and Acceptable Use in full screen"
-					className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1 rounded"
-				>
-					<ExternalLink className="w-3.5 h-3.5" />
-				</a>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href="/tos"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Open Terms and Acceptable Use in a new tab"
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>open terms in new tab</p>
+					</TooltipContent>
+				</Tooltip>
 			</div>
 
 			<div
@@ -126,16 +139,22 @@ export function LegalTab() {
 						)}
 					/>
 				</button>
-				<a
-					href="/privacy"
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="Open Privacy Policy in a new tab"
-					title="Open Privacy Policy in full screen"
-					className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1 rounded"
-				>
-					<ExternalLink className="w-3.5 h-3.5" />
-				</a>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href="/privacy"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Open Privacy Policy in a new tab"
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>open privacy in new tab</p>
+					</TooltipContent>
+				</Tooltip>
 			</div>
 
 			<div
