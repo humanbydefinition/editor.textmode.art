@@ -55,7 +55,7 @@ export function normalizeAndValidateSlug(rawSlug: string): { valid: true; slug: 
   const normalizedSlug = normalizeSlug(rawSlug);
   const slugValidation = validateSlug(normalizedSlug);
   if (!slugValidation.valid) {
-    return { valid: false, slug: normalizedSlug, reason: slugValidation.reason };
+    return { ...slugValidation, slug: normalizedSlug };
   }
   return { valid: true, slug: normalizedSlug };
 }
