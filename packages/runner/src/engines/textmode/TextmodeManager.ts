@@ -88,13 +88,15 @@ export class TextmodeManager implements ITextmodeManager {
             this.instance.lineWeight(1);
             this.instance.resetShader();
 
-            // @ts-expect-error - injected by textmode.synth.js
-            if (typeof this.instance.bpm === 'function') {
-                this.instance.bpm(60);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof (this.instance as any).bpm === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (this.instance as any).bpm(60);
             }
-            // @ts-expect-error - injected by textmode.synth.js
-            if (typeof this.instance.seed === 'function') {
-                this.instance.seed(null);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof (this.instance as any).seed === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (this.instance as any).seed(null);
             }
         } catch {
             // Ignore optional plugin or rendering methods
