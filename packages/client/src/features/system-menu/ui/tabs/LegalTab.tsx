@@ -3,22 +3,31 @@ import { ChevronDown, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
-import {
-	ImprintLegalContent,
-	PrivacyLegalContent,
-	TermsLegalContent,
-} from '@/features/legal/content/legalDocuments';
+import { getLegalDocuments, type LegalDocumentId } from '@/features/legal/content/legalDocuments';
+import { getLegalSectionLabel, getLegalUiCopy } from '@/features/legal/content/legalUiCopy';
+import { useLegalLanguage } from '@/features/legal/hooks/useLegalLanguage';
+import { LegalLanguageToggle } from '@/features/legal/ui/LegalLanguageToggle';
 import { ContactDialog } from './ContactDialog';
 
 export function LegalTab() {
-	const [openSection, setOpenSection] = useState<'imprint' | 'terms' | 'privacy' | null>(null);
+	const { locale, setLocale, buildLocalizedLegalHref } = useLegalLanguage();
+	const legalDocuments = getLegalDocuments(locale);
+	const legalCopy = getLegalUiCopy(locale);
+	const [openSection, setOpenSection] = useState<LegalDocumentId | null>(null);
 
-	const toggleSection = (section: 'imprint' | 'terms' | 'privacy') => {
-		setOpenSection(openSection === section ? null : section);
+	const toggleSection = (section: LegalDocumentId) => {
+		setOpenSection((currentSection) => (currentSection === section ? null : section));
 	};
 
 	return (
 		<div className="h-full flex flex-col px-6 pt-6 gap-3 overflow-hidden">
+			<div className="flex items-center gap-2 shrink-0">
+				<div className="flex-1 min-w-0">
+					<ContactDialog buttonClassName="h-[34px] py-0" />
+				</div>
+				<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
+			</div>
+
 			<div className="relative">
 				<button
 					onClick={() => toggleSection('imprint')}
@@ -31,7 +40,7 @@ export function LegalTab() {
 							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
 					)}
 				>
-					<span className="font-medium">Imprint</span>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'imprint')}</span>
 					<ChevronDown
 						className={cn(
 							'w-4 h-4 transition-transform duration-300 ease-out',
@@ -42,17 +51,17 @@ export function LegalTab() {
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<a
-							href="/imprint"
+							href={buildLocalizedLegalHref(legalDocuments.imprint.path)}
 							target="_blank"
 							rel="noopener noreferrer"
-							aria-label="Open Imprint in a new tab"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'imprint')}`}
 							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
 						>
 							<ExternalLink className="w-3.5 h-3.5" />
 						</a>
 					</TooltipTrigger>
 					<TooltipContent>
-						<p>open imprint in new tab</p>
+						<p>{legalCopy.openInNewTabLabel}</p>
 					</TooltipContent>
 				</Tooltip>
 			</div>
@@ -65,7 +74,9 @@ export function LegalTab() {
 				)}
 			>
 				<ScrollArea className="h-full">
-					<ImprintLegalContent className="p-4" />
+					<section lang={locale}>
+						<legalDocuments.imprint.Content className="p-4" />
+					</section>
 				</ScrollArea>
 			</div>
 
@@ -81,7 +92,7 @@ export function LegalTab() {
 							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
 					)}
 				>
-					<span className="font-medium">Terms & Acceptable Use</span>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'terms')}</span>
 					<ChevronDown
 						className={cn(
 							'w-4 h-4 transition-transform duration-300 ease-out',
@@ -92,17 +103,17 @@ export function LegalTab() {
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<a
-							href="/tos"
+							href={buildLocalizedLegalHref(legalDocuments.terms.path)}
 							target="_blank"
 							rel="noopener noreferrer"
-							aria-label="Open Terms and Acceptable Use in a new tab"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'terms')}`}
 							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
 						>
 							<ExternalLink className="w-3.5 h-3.5" />
 						</a>
 					</TooltipTrigger>
 					<TooltipContent>
-						<p>open terms in new tab</p>
+						<p>{legalCopy.openInNewTabLabel}</p>
 					</TooltipContent>
 				</Tooltip>
 			</div>
@@ -115,7 +126,9 @@ export function LegalTab() {
 				)}
 			>
 				<ScrollArea className="h-full">
-					<TermsLegalContent className="p-4" />
+					<section lang={locale}>
+						<legalDocuments.terms.Content className="p-4" />
+					</section>
 				</ScrollArea>
 			</div>
 
@@ -131,7 +144,7 @@ export function LegalTab() {
 							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
 					)}
 				>
-					<span className="font-medium">Privacy Policy</span>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'privacy')}</span>
 					<ChevronDown
 						className={cn(
 							'w-4 h-4 transition-transform duration-300 ease-out',
@@ -142,17 +155,17 @@ export function LegalTab() {
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<a
-							href="/privacy"
+							href={buildLocalizedLegalHref(legalDocuments.privacy.path)}
 							target="_blank"
 							rel="noopener noreferrer"
-							aria-label="Open Privacy Policy in a new tab"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'privacy')}`}
 							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
 						>
 							<ExternalLink className="w-3.5 h-3.5" />
 						</a>
 					</TooltipTrigger>
 					<TooltipContent>
-						<p>open privacy in new tab</p>
+						<p>{legalCopy.openInNewTabLabel}</p>
 					</TooltipContent>
 				</Tooltip>
 			</div>
@@ -165,12 +178,10 @@ export function LegalTab() {
 				)}
 			>
 				<ScrollArea className="h-full">
-					<PrivacyLegalContent className="p-4" />
+					<section lang={locale}>
+						<legalDocuments.privacy.Content className="p-4" />
+					</section>
 				</ScrollArea>
-			</div>
-
-			<div className="mt-auto pt-2 shrink-0">
-				<ContactDialog />
 			</div>
 		</div>
 	);

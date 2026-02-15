@@ -1,5 +1,9 @@
 import { ArrowLeft, MessageSquare } from 'lucide-react';
-import { LEGAL_DOCUMENT_ORDER, LEGAL_DOCUMENTS } from '@/features/legal/content/legalDocuments';
+import { LegalLanguageToggle } from '@/features/legal/ui/LegalLanguageToggle';
+import { useLegalLanguage } from '@/features/legal/hooks/useLegalLanguage';
+import { useLegalSeo } from '@/features/legal/hooks/useLegalSeo';
+import { getLegalUiCopy } from '@/features/legal/content/legalUiCopy';
+import { LEGAL_DOCUMENT_ORDER, getLegalDocuments } from '@/features/legal/content/legalDocuments';
 import { ContactForm } from '@/features/system-menu/ui/tabs/ContactForm';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -8,38 +12,47 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Separator } from '@/shared/ui/separator';
 
 export function LegalContactPage() {
+	const { locale, setLocale, buildLocalizedLegalHref } = useLegalLanguage({
+		syncUrlOnChange: true,
+		syncDocumentLang: true,
+	});
+	const legalDocuments = getLegalDocuments(locale);
+	const legalCopy = getLegalUiCopy(locale);
+	useLegalSeo(locale, '/contact', legalCopy.contactLabel);
+
 	return (
 		<div className="w-full h-dvh overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900/95 text-zinc-100">
 			<div className="h-full max-w-4xl mx-auto px-4 py-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:px-6 sm:py-8 flex flex-col min-h-0">
 				<div className="flex items-center justify-between gap-3 mb-4">
 					<Button asChild variant="ghost" className="text-zinc-300 hover:text-white hover:bg-zinc-800/60">
-						<a href="/" aria-label="Return to synth.textmode.art app">
+						<a href="/" aria-label={legalCopy.backToAppAriaLabel}>
 							<ArrowLeft className="h-4 w-4" />
-							Back to App
+							{legalCopy.backToAppLabel}
 						</a>
 					</Button>
-					<Badge variant="secondary" className="bg-zinc-800/70 text-zinc-300 border border-zinc-700/80">
-						Contact
-					</Badge>
+					<div className="flex items-center gap-2">
+						<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
+						<Badge variant="secondary" className="bg-zinc-800/70 text-zinc-300 border border-zinc-700/80">
+							{legalCopy.contactBadgeLabel}
+						</Badge>
+					</div>
 				</div>
 
 				<Card className="flex-1 min-h-0 border-zinc-800/80 bg-zinc-900/70 backdrop-blur-sm shadow-xl">
 					<CardHeader>
-						<CardTitle className="text-xl sm:text-2xl text-zinc-100">Contact Us</CardTitle>
-						<CardDescription className="text-zinc-400">
-							Have a question, legal request, or feedback? Send a message and we&apos;ll respond as soon as possible.
-						</CardDescription>
+						<CardTitle className="text-xl sm:text-2xl text-zinc-100">{legalCopy.contactPageTitle}</CardTitle>
+						<CardDescription className="text-zinc-400">{legalCopy.contactPageDescription}</CardDescription>
 					</CardHeader>
 
-					<CardContent className="min-h-0 flex-1 flex flex-col gap-4">
+					<CardContent lang={locale} className="min-h-0 flex-1 flex flex-col gap-4">
 						<div className="relative flex items-center justify-between gap-3">
 							<div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-900/70 to-transparent pointer-events-none z-10 sm:hidden" />
 							<nav
-								aria-label="Legal pages navigation"
+								aria-label={legalCopy.legalPagesNavAriaLabel}
 								className="flex items-center gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pr-6 sm:pr-0 sm:overflow-visible"
 							>
 								{LEGAL_DOCUMENT_ORDER.map((id) => {
-									const doc = LEGAL_DOCUMENTS[id];
+									const doc = legalDocuments[id];
 									return (
 										<Button
 											key={id}
@@ -48,7 +61,7 @@ export function LegalContactPage() {
 											size="sm"
 											className="min-w-[6rem] flex-shrink-0 snap-start border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
 										>
-											<a href={doc.path}>{doc.navLabel}</a>
+											<a href={buildLocalizedLegalHref(doc.path)}>{doc.navLabel}</a>
 										</Button>
 									);
 								})}
@@ -57,9 +70,9 @@ export function LegalContactPage() {
 									size="sm"
 									className="min-w-[6rem] flex-shrink-0 snap-start bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 border border-emerald-400/40 sm:hidden"
 								>
-									<a href="/contact" aria-current="page">
+									<a href={buildLocalizedLegalHref('/contact')} aria-current="page">
 										<MessageSquare className="w-4 h-4" />
-										Contact
+										{legalCopy.contactLabel}
 									</a>
 								</Button>
 							</nav>
@@ -68,9 +81,9 @@ export function LegalContactPage() {
 								size="sm"
 								className="hidden sm:inline-flex bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 border border-emerald-400/40"
 							>
-								<a href="/contact" aria-current="page">
+								<a href={buildLocalizedLegalHref('/contact')} aria-current="page">
 									<MessageSquare className="w-4 h-4" />
-									Contact
+									{legalCopy.contactLabel}
 								</a>
 							</Button>
 						</div>
@@ -91,17 +104,17 @@ export function LegalContactPage() {
 								(c) {new Date().getFullYear()} synth.textmode.art
 							</p>
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-								<a href="/imprint" className="text-zinc-400 hover:text-zinc-200 transition-colors">
-									Imprint
+								<a href={buildLocalizedLegalHref('/imprint')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
+									{legalCopy.footer.imprint}
 								</a>
-								<a href="/tos" className="text-zinc-400 hover:text-zinc-200 transition-colors">
-									Terms
+								<a href={buildLocalizedLegalHref('/tos')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
+									{legalCopy.footer.terms}
 								</a>
-								<a href="/privacy" className="text-zinc-400 hover:text-zinc-200 transition-colors">
-									Privacy
+								<a href={buildLocalizedLegalHref('/privacy')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
+									{legalCopy.footer.privacy}
 								</a>
-								<a href="/contact" className="text-zinc-400 hover:text-zinc-200 transition-colors">
-									Contact
+								<a href={buildLocalizedLegalHref('/contact')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
+									{legalCopy.footer.contact}
 								</a>
 							</div>
 						</div>

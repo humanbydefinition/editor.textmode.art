@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { AppRuntime } from '@/app/runtime/AppRuntime';
 import { AdminApp } from '@/features/admin';
 import { LegalContactPage, LegalDocumentPage, type LegalDocumentId } from '@/features/legal';
+import { stripLocalePrefix } from '@/features/legal/model/legalLocale';
 import { ensureMonacoClipboardCompatibility } from '@/platform/polyfills/monacoClipboardShim';
 
 interface RuntimeWindow extends Window {
@@ -87,7 +88,8 @@ export function startClientApp(): void {
 }
 
 function mapLegalRoute(pathname: string): LegalDocumentId | 'contact' | null {
-	const normalizedPath = pathname.toLowerCase();
+	const { path } = stripLocalePrefix(pathname);
+	const normalizedPath = path.toLowerCase();
 	if (normalizedPath === '/imprint') return 'imprint';
 	if (normalizedPath === '/tos') return 'terms';
 	if (normalizedPath === '/privacy') return 'privacy';
