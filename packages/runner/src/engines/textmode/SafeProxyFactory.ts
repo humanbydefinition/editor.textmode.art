@@ -16,6 +16,8 @@ export interface SafeProxyOptions {
  */
 export class SafeProxyFactory {
     private options: SafeProxyOptions;
+    private readonly assetLoadCache = new Map<string, Promise<unknown>>();
+    private static readonly MAX_ASSET_CACHE_ENTRIES = 64;
 
     constructor(options: SafeProxyOptions) {
         this.options = options;
@@ -34,11 +36,16 @@ export class SafeProxyFactory {
                 }
 
                 if (prop === 'loadImage') {
-                    return (src: string) => this.wrapMediaLoad(target, value, src);
+                    return (src: string) => this.wrapMediaLoad(target, value, src, 'image');
                 }
 
                 if (prop === 'loadVideo') {
-                    return (src: string) => this.wrapMediaLoad(target, value, src);
+                    return (src: string) => this.wrapMediaLoad(target, value, src, 'video');
+                }
+
+                if (prop === 'loadFont') {
+                    return (fontSource: string | unknown, setActive?: boolean) =>
+                        this.wrapTextmodeFontLoad(target, value, fontSource, setActive);
                 }
 
                 if (prop === 'layers') {
@@ -90,6 +97,10 @@ export class SafeProxyFactory {
                     return (callback: () => void) => target.draw(this.wrapDrawCallback(callback));
                 }
 
+                if (prop === 'loadFont') {
+                    return (fontSource: string | unknown) => this.wrapLayerFontLoad(target, value, fontSource);
+                }
+
                 if (typeof value === 'function') {
                     return value.bind(target);
                 }
@@ -116,7 +127,8 @@ export class SafeProxyFactory {
     private wrapMediaLoad(
         target: Textmodifier,
         value: unknown,
-        src: string
+        src: string,
+        type: 'image' | 'video'
     ): Promise<unknown> {
         if (typeof value !== 'function') {
             return Promise.reject(new Error('loadImage/loadVideo is not a function'));
@@ -125,12 +137,81 @@ export class SafeProxyFactory {
         const originalUrl = src;
         const fallbackUrl = this.getProxyUrl(src);
         const invoke = (url: string) => (value as (arg: string) => Promise<unknown>).call(target, url);
+        const loadUrl = fallbackUrl && fallbackUrl !== originalUrl ? fallbackUrl : originalUrl;
+        const cacheKey = `${type}:${loadUrl}`;
+        return this.getOrSetCachedLoad(cacheKey, () => invoke(loadUrl));
+    }
 
-        if (fallbackUrl && fallbackUrl !== originalUrl) {
-            return invoke(fallbackUrl);
+    private wrapTextmodeFontLoad(
+        target: Textmodifier,
+        value: unknown,
+        fontSource: string | unknown,
+        setActive?: boolean
+    ): Promise<unknown> {
+        if (typeof value !== 'function') {
+            return Promise.reject(new Error('loadFont is not a function'));
         }
 
-        return invoke(originalUrl);
+        const invoke = (source: unknown, active?: boolean) =>
+            (value as (source: unknown, setActive?: boolean) => Promise<unknown>).call(target, source, active);
+
+        if (typeof fontSource !== 'string') {
+            return invoke(fontSource, setActive);
+        }
+
+        const fallbackUrl = this.getProxyUrl(fontSource);
+        const loadUrl = fallbackUrl && fallbackUrl !== fontSource ? fallbackUrl : fontSource;
+        const cacheKey = `font:${loadUrl}`;
+        const activeRequested = setActive !== false;
+        const cachedFontPromise = this.getOrSetCachedLoad(cacheKey, () => invoke(loadUrl, false));
+
+        if (!activeRequested) {
+            return cachedFontPromise;
+        }
+
+        return cachedFontPromise.then((font) => invoke(font, true));
+    }
+
+    private wrapLayerFontLoad(layer: TextmodeLayer, value: unknown, fontSource: string | unknown): Promise<unknown> {
+        if (typeof value !== 'function') {
+            return Promise.reject(new Error('loadFont is not a function'));
+        }
+
+        const invoke = (source: unknown) => (value as (arg: unknown) => Promise<unknown>).call(layer, source);
+
+        if (typeof fontSource !== 'string') {
+            return invoke(fontSource);
+        }
+
+        const fallbackUrl = this.getProxyUrl(fontSource);
+        const loadUrl = fallbackUrl && fallbackUrl !== fontSource ? fallbackUrl : fontSource;
+        const cacheKey = `layer-font:${loadUrl}`;
+        const cachedFontPromise = this.getOrSetCachedLoad(cacheKey, () => invoke(loadUrl));
+
+        return cachedFontPromise.then((font) => invoke(font));
+    }
+
+    private getOrSetCachedLoad(cacheKey: string, loader: () => Promise<unknown>): Promise<unknown> {
+        const cached = this.assetLoadCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const loadPromise = loader().catch((error) => {
+            // Don't keep failed entries cached so future edits can retry.
+            this.assetLoadCache.delete(cacheKey);
+            throw error;
+        });
+
+        this.assetLoadCache.set(cacheKey, loadPromise);
+        if (this.assetLoadCache.size > SafeProxyFactory.MAX_ASSET_CACHE_ENTRIES) {
+            const oldestKey = this.assetLoadCache.keys().next().value;
+            if (oldestKey) {
+                this.assetLoadCache.delete(oldestKey);
+            }
+        }
+
+        return loadPromise;
     }
 
     private getProxyUrl(src: string): string | null {

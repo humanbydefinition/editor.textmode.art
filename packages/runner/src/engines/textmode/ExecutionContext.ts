@@ -72,7 +72,7 @@ export class ExecutionContext {
      */
     validateSyntax(code: string): ValidationResult {
         try {
-            new Function(code);
+            new Function(this.wrapUserCode(code));
             return { valid: true };
         } catch (error) {
             return { valid: false, error: error as Error };
@@ -82,7 +82,7 @@ export class ExecutionContext {
     /**
      * Execute user code
      */
-    execute(code: string): ExecutionResult {
+    async execute(code: string): Promise<ExecutionResult> {
         // Reset draw error state
         this.drawErrorOccurred = false;
 
@@ -121,9 +121,9 @@ export class ExecutionContext {
         const globalValues = Object.values(globals);
 
         try {
-            // Create and execute function
-            const fn = new Function(...globalKeys, `"use strict";\n${code}`);
-            const result = fn(...globalValues);
+            // Create and execute async function wrapper to support top-level await
+            const fn = new Function(...globalKeys, this.wrapUserCode(code));
+            const result = await fn(...globalValues);
 
             // Store dispose callback if returned
             if (typeof result === 'function') {
@@ -143,6 +143,13 @@ export class ExecutionContext {
                 },
             };
         }
+    }
+
+    /**
+     * Wrap user code in an async IIFE so sketches can use top-level await.
+     */
+    private wrapUserCode(code: string): string {
+        return `"use strict";\nreturn (async () => {\n${code}\n})();`;
     }
 
     /**

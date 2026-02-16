@@ -4,7 +4,7 @@ export interface FrameSchedulerOptions {
     /** Callback to check if currently rendering */
     isRendering: () => boolean;
     /** Callback to execute the code */
-    onExecute: (code: string, isSoftReset: boolean) => void;
+    onExecute: (code: string, isSoftReset: boolean) => void | Promise<void>;
 }
 
 /**

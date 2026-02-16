@@ -27,6 +27,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	private textmode: TextmodeManager;
 	private context: ExecutionContext;
 	private synthErrorReported = false;
+	private isExecuting = false;
 	private readonly handleUserInteraction = (): void => {
 		this.sendMessage({ type: 'USER_INTERACTION' });
 	};
@@ -103,7 +104,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	}
 
 	private executeInternal(code: string, isSoftReset: boolean): void {
-		this.execute(code, isSoftReset);
+		void this.execute(code, isSoftReset);
 	}
 
     /**
@@ -147,15 +148,16 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
      * Check if Textmode is rendering (to prevent frame drops during execution)
      */
 	isRendering(): boolean {
-		return this.textmode.isRendering();
+		return this.isExecuting || this.textmode.isRendering();
 	}
 
     /**
      * Execute code
      */
-	execute(code: string, isSoftReset: boolean): void {
+	async execute(code: string, isSoftReset: boolean): Promise<void> {
 		// Reset synth error flags
 		this.synthErrorReported = false;
+		this.isExecuting = true;
 
 		// Pause animation
 		this.textmode.pause();
@@ -172,7 +174,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 			this.textmode.cleanupLayers(isSoftReset);
 
 			// Execute
-			const result = this.context.execute(code);
+			const result = await this.context.execute(code);
 
 			if (result.success) {
 				// Success!
@@ -184,10 +186,11 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 
 				// Attempt restore
 				if (this.lastWorkingCode && this.lastWorkingCode !== code) {
-					this.restoreLastWorking();
+					await this.restoreLastWorking();
 				}
 			}
 		} finally {
+			this.isExecuting = false;
 			this.textmode.resume();
 		}
 	}
@@ -195,12 +198,12 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
     /**
      * Restore last working code
      */
-	private restoreLastWorking(): void {
+	private async restoreLastWorking(): Promise<void> {
 		if (!this.lastWorkingCode) return;
 
 		try {
 			this.textmode.cleanupLayers(false);
-			const result = this.context.execute(this.lastWorkingCode);
+			const result = await this.context.execute(this.lastWorkingCode);
 			if (!result.success) {
 				console.warn('Failed to restore last working code:', result.error?.message);
 			}
