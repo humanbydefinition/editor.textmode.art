@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, Github, X } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -63,6 +63,22 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <a
+                                        href="https://github.com/humanbydefinition/synth.textmode.art"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                                    >
+                                        <Github className="w-4 h-4" />
+                                    </a>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>view source on github</p>
+                                </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <a
                                         href="https://discord.gg/sjrw8QXNks"
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -88,7 +104,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         </div>
                     </div>
                     <DialogDescription className="text-sm text-zinc-400">
-                        live coding environment for ascii synthesis. create procedural and generative text art with textmode.js.
+                        a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -128,13 +144,47 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         continue
                     </button>
 
-                    {/* License info */}
-                    <div className="text-right">
+                    {/* Legal footer */}
+                    <div className="flex w-full items-center justify-between gap-3 text-left">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <a
+                                href="/imprint?lang=en"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                                Imprint
+                            </a>
+                            <a
+                                href="/tos?lang=en"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                                Terms
+                            </a>
+                            <a
+                                href="/privacy?lang=en"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                                Privacy
+                            </a>
+                            <a
+                                href="/contact?lang=en"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                                Contact
+                            </a>
+                        </div>
                         <a
                             href="https://github.com/humanbydefinition/synth.textmode.art/blob/main/LICENSE"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                            className="ml-auto whitespace-nowrap text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                         >
                             licensed under GNU AGPLv3
                         </a>
