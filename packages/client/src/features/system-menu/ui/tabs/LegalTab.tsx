@@ -23,7 +23,7 @@ export function LegalTab() {
 		<div className="h-full flex flex-col px-6 pt-6 gap-3 overflow-hidden">
 			<div className="flex items-center gap-2 shrink-0">
 				<div className="flex-1 min-w-0">
-					<ContactDialog buttonClassName="h-[34px] py-0" />
+					<ContactDialog buttonClassName="h-[34px] py-0" locale={locale} />
 				</div>
 				<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
 			</div>
