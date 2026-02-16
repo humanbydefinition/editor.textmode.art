@@ -39,7 +39,16 @@ export function ImprintLegalContent({ className }: LegalContentProps) {
 						</a>
 					</p>
 					<p className="text-zinc-500 text-[11px] leading-relaxed italic">
-						Alternative: Use the contact form button at the bottom of the legal tab.
+						Alternative:{' '}
+						<a
+							href="/en/contact"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-emerald-400 hover:text-emerald-300 transition-colors"
+						>
+							Open contact form in a new tab
+						</a>
+						.
 					</p>
 				</div>
 			</div>
