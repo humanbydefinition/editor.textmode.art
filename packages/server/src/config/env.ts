@@ -50,6 +50,9 @@ if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.TURNSTILE_SECRET_KEY) {
 if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.SCREENSHOT_PREVIEW_TOKEN) {
   throw new Error('SCREENSHOT_PREVIEW_TOKEN must be set in production and be at least 16 characters long.');
 }
+if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.PUBLIC_BASE_URL) {
+  throw new Error('PUBLIC_BASE_URL must be set in production.');
+}
 
 export const env: Env = {
   ...parsedEnv,
