@@ -163,6 +163,7 @@ export function AppShell() {
                                 strudelRunnerUnavailable={textmodeRunnerUnavailable}
                                 strudelRunnerReconnecting={textmodeRunnerReconnecting}
                                 randomizeLoading={runtimeState.randomizeLoading}
+                                onResetRunners={actions.resetRunners}
                                 onClearStorage={actions.clearStorage}
                                 renderExamplesTab={(onClose) => (
                                     <ExamplesTab onLoadExample={actions.loadExample} onClose={onClose} />

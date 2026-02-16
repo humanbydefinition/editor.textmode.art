@@ -42,6 +42,15 @@ export class UIActions {
 	clearStorage(): void {
 		this.deps.storage.clearCode();
 		this.deps.engineLifecycle.resetAll();
+		this.resetRunners();
+	}
+
+	resetRunners(): void {
+		this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', true);
+		this.deps.engineLifecycle.reconnectAllRunners();
+		setTimeout(() => {
+			this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
+		}, 10000);
 	}
 
 	loadExample(code: string, engineId: string): void {

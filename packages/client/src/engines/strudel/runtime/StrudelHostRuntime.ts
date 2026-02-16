@@ -115,6 +115,13 @@ export class StrudelHostRuntime implements IStrudelRuntime {
 		this.flushQueuedCode();
 	}
 
+	reconnect(): void {
+		if (this.disposed) return;
+		this.hideUnlockOverlay();
+		this.transportState.clearHandshakeTimer();
+		this.createIframe();
+	}
+
 	clearPendingCode(): void {
 		this.pendingCode = null;
 		this.queuedCode = null;

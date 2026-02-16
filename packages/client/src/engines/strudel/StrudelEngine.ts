@@ -20,6 +20,7 @@ export class StrudelEngine implements IEngine {
 		bootStrategy: 'toggleable',
 		requiresTransportGate: true,
 		supportsTransportControl: true,
+		supportsReconnect: true,
 		producesAudioSource: true,
 		customStateOnInit: {
 			state: {
@@ -121,6 +122,10 @@ export class StrudelEngine implements IEngine {
 	 */
 	isPlaying(): boolean {
 		return this.runtime?.getIsPlaying() ?? false;
+	}
+
+	reconnectRuntime(): void {
+		this.runtime?.reconnect();
 	}
 
 	private createEditor(context: EngineContext, initialCode: string): StrudelEditor {

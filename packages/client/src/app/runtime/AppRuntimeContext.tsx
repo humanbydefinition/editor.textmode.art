@@ -14,6 +14,7 @@ export interface AppRuntimeContextValue {
         randomize: () => Promise<boolean>;
         toggleStrudelTransport: () => void;
         makeRandomChange: () => void;
+        resetRunners: () => void;
         clearStorage: () => void;
         loadExample: (code: string, engineId: string) => void;
         revertToLastWorking: () => void;

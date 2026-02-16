@@ -118,6 +118,20 @@ export class EngineLifecycle {
 		this.reconnectEngine('textmode');
 	}
 
+	reconnectAllRunners(): void {
+		for (const engine of this.getRegisteredEngines()) {
+			if (!engine.capabilities.supportsReconnect || !engine.isInitialized()) continue;
+			if (!hasReconnectRuntime(engine)) continue;
+			engine.reconnectRuntime();
+		}
+
+		for (const engine of this.getRegisteredEngines()) {
+			if (!engine.capabilities.supportsReconnect || !engine.isInitialized()) continue;
+			if (!this.shouldRunEngine(engine)) continue;
+			engine.getController()?.handleForceRun();
+		}
+	}
+
 	loadExample(engineId: EngineId, code: string): boolean {
 		const engine = this.getEngine(engineId);
 		if (!engine) return false;

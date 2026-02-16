@@ -1,5 +1,5 @@
 
-import { Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2 } from 'lucide-react';
+import { RotateCcw, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered, Music2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Switch } from '@/shared/ui/switch';
 import { Slider } from '@/shared/ui/slider';
@@ -12,6 +12,7 @@ import type { AppSettings } from '@/core/app.types';
 export interface PreferencesTabProps {
     settings: AppSettings;
     onSettingsChange: (settings: AppSettings) => void;
+    onResetRunners: () => void;
     onClearStorage: () => void;
     onClose: () => void;
 }
@@ -19,6 +20,7 @@ export interface PreferencesTabProps {
 export function PreferencesTab({
     settings,
     onSettingsChange,
+    onResetRunners,
     onClearStorage,
     onClose
 }: PreferencesTabProps) {
@@ -160,6 +162,25 @@ export function PreferencesTab({
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
+                                    variant="secondary"
+                                    className="flex-1 justify-center gap-2 bg-zinc-900/50 border-white/10 hover:bg-zinc-800/60 text-zinc-200"
+                                    onClick={() => {
+                                        onResetRunners();
+                                        onClose();
+                                    }}
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    reset runner
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>reload iframe runners without changing code</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
                                     variant="destructive"
                                     className="flex-1 justify-center gap-2 bg-red-950/30 border-red-900/50 hover:bg-red-900/50 text-red-400"
                                     onClick={() => {
@@ -172,7 +193,7 @@ export function PreferencesTab({
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>reset to default sketch</p>
+                                <p>reload runners and reset to default sketches</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>
