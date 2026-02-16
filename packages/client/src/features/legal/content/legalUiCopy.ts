@@ -15,7 +15,6 @@ interface LegalSectionLabels {
 }
 
 export interface LegalUiCopy {
-	contactBadgeLabel: string;
 	backToAppLabel: string;
 	backToAppAriaLabel: string;
 	contactLabel: string;
@@ -29,7 +28,6 @@ export interface LegalUiCopy {
 
 export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 	en: {
-		contactBadgeLabel: 'Contact',
 		backToAppLabel: 'Back to App',
 		backToAppAriaLabel: 'Return to synth.textmode.art app',
 		contactLabel: 'Contact',
@@ -50,13 +48,13 @@ export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 		},
 	},
 	de: {
-		contactBadgeLabel: 'Kontakt',
 		backToAppLabel: 'Zur App',
-		backToAppAriaLabel: 'Zurueck zur synth.textmode.art App',
+		backToAppAriaLabel: 'Zurück zur synth.textmode.art App',
 		contactLabel: 'Kontakt',
 		contactPageTitle: 'kontakt',
-		contactPageDescription: 'hast du eine frage, eine rechtliche anfrage oder feedback? sende uns eine nachricht und wir antworten schnellstmoeglich.',
-		openInNewTabLabel: 'in neuem tab oeffnen',
+		contactPageDescription:
+			'hast du eine frage, eine rechtliche anfrage oder feedback? sende uns eine nachricht und wir antworten schnellstmöglich.',
+		openInNewTabLabel: 'in neuem tab öffnen',
 		legalPagesNavAriaLabel: 'Navigation der Rechtstexte',
 		footer: {
 			imprint: 'Impressum',
@@ -67,7 +65,7 @@ export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 		sectionLabels: {
 			imprint: 'Impressum',
 			terms: 'Nutzungsbedingungen',
-			privacy: 'Datenschutzerklaerung',
+			privacy: 'Datenschutzerklärung',
 		},
 	},
 };
