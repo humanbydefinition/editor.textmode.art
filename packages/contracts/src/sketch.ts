@@ -3,6 +3,60 @@ import { z } from 'zod';
 export const SLUG_MIN_LENGTH = 3;
 export const SLUG_MAX_LENGTH = 32;
 
+export const RESERVED_SLUGS = new Set([
+  'api',
+  'admin',
+  's',
+  'share',
+  'assets',
+  'static',
+  'favicon',
+  'favicon.ico',
+  'robots',
+  'robots.txt',
+  'sitemap',
+  'sitemap.xml',
+]);
+
+export function normalizeSlug(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function isReservedSlug(slug: string): boolean {
+  return RESERVED_SLUGS.has(slug);
+}
+
+export function validateSlug(slug: string): { valid: true } | { valid: false; reason: string } {
+  if (slug.length < SLUG_MIN_LENGTH) {
+    return { valid: false, reason: `Slug must be at least ${SLUG_MIN_LENGTH} characters.` };
+  }
+  if (slug.length > SLUG_MAX_LENGTH) {
+    return { valid: false, reason: `Slug must be at most ${SLUG_MAX_LENGTH} characters.` };
+  }
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    return { valid: false, reason: 'Slug may only contain lowercase letters, numbers, and hyphens.' };
+  }
+  if (isReservedSlug(slug)) {
+    return { valid: false, reason: 'Slug is reserved.' };
+  }
+  return { valid: true };
+}
+
+export function normalizeAndValidateSlug(rawSlug: string): { valid: true; slug: string } | { valid: false; slug: string; reason: string } {
+  const normalizedSlug = normalizeSlug(rawSlug);
+  const slugValidation = validateSlug(normalizedSlug);
+  if (!slugValidation.valid) {
+    return { ...slugValidation, slug: normalizedSlug };
+  }
+  return { valid: true, slug: normalizedSlug };
+}
+
 export const sketchStatusSchema = z.enum(['PENDING', 'APPROVED', 'DENIED']);
 export type SketchStatus = z.infer<typeof sketchStatusSchema>;
 export const antiSpamAlgorithmSchema = z.literal('sha256-leading-zero-bits-v1');
@@ -83,7 +137,7 @@ export const antiSpamProofSchema = z.object({
 export type AntiSpamProof = z.infer<typeof antiSpamProofSchema>;
 
 export const sketchRequestHashPayloadSchema = z.object({
-  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
+  slug: z.string().transform(normalizeSlug).pipe(z.string().min(SLUG_MIN_LENGTH).max(SLUG_MAX_LENGTH).regex(/^[a-z0-9-]+$/)),
   title: z.string().min(1).max(120),
   description: z.string().max(300).nullable(),
   authorName: z.string().max(80).nullable(),
@@ -96,7 +150,7 @@ export const sketchRequestHashPayloadSchema = z.object({
 export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
 
 export const createSketchRequestSchema = z.object({
-  slug: z.string().min(1).max(SLUG_MAX_LENGTH),
+  slug: z.string().transform(normalizeSlug).pipe(z.string().min(SLUG_MIN_LENGTH).max(SLUG_MAX_LENGTH).regex(/^[a-z0-9-]+$/)),
   title: z.string().min(1).max(120),
   description: z.string().max(300).optional().nullable(),
   authorName: z.string().max(80).optional().nullable(),
