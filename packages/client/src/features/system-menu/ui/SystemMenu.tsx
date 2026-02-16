@@ -37,6 +37,7 @@ export interface SystemMenuProps {
     strudelRunnerReconnecting: boolean;
     strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
+    onResetRunners: () => void;
     onClearStorage: () => void;
     renderExamplesTab: (onClose: () => void) => ReactNode;
 }
@@ -52,6 +53,7 @@ export function SystemMenu({
     strudelRunnerReconnecting,
     strudelTransport,
     randomizeLoading,
+    onResetRunners,
     onClearStorage,
     renderExamplesTab,
 }: SystemMenuProps) {
@@ -281,6 +283,7 @@ export function SystemMenu({
                         <PreferencesTab
                             settings={settings}
                             onSettingsChange={setSettings}
+                            onResetRunners={onResetRunners}
                             onClearStorage={onClearStorage}
                             onClose={() => setOpen(false)}
                         />

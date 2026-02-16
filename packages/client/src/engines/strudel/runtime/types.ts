@@ -12,6 +12,7 @@ export interface IStrudelRuntime {
 	init(): Promise<void>;
 	isInitialized(): boolean;
 	forceRun(code: string): void;
+	reconnect(): void;
 	dispose(): void;
 	hush(): void;
 	clearPendingCode(): void;

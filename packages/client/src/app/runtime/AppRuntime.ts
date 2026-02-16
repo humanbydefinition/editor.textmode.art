@@ -310,6 +310,7 @@ export class AppRuntime {
 				randomize: () => this.shareWorkflow.randomize(),
 				toggleStrudelTransport: () => this.toggleStrudelTransport(),
 				makeRandomChange: () => this.makeRandomChange(),
+				resetRunners: () => this.uiActions.resetRunners(),
 				clearStorage: () => this.uiActions.clearStorage(),
 				loadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),
 				revertToLastWorking: () => {
