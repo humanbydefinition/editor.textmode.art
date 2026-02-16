@@ -157,7 +157,7 @@ export function PreferencesTab({
                 <Separator className="bg-white/5" />
 
                 <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Storage</h3>
+                    <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">reset</h3>
                     <div className="flex gap-3">
                         <Tooltip>
                             <TooltipTrigger asChild>
