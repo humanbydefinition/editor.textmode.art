@@ -4,7 +4,7 @@ import type { ContactFormPayload } from '@synth.textmode.art/contracts/contact';
 
 export async function sendContactEmail(payload: ContactFormPayload): Promise<{ success: boolean; error?: string }> {
     if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS || !env.CONTACT_EMAIL_RECIPIENT) {
-        console.warn('[Contact] SMTP not configured, logging message instead:', payload);
+        console.warn('[Contact] SMTP not configured! Skipping email sending.');
         return { success: true }; // Return success to not leak config issues to user
     }
 
