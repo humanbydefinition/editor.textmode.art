@@ -32,9 +32,6 @@ export function LegalContactPage() {
 					</Button>
 					<div className="flex items-center gap-2">
 						<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
-						<Badge variant="secondary" className="bg-zinc-800/70 text-zinc-300 border border-zinc-700/80">
-							{legalCopy.contactBadgeLabel}
-						</Badge>
 					</div>
 				</div>
 
@@ -92,7 +89,7 @@ export function LegalContactPage() {
 
 						<ScrollArea className="min-h-0 flex-1 pr-4">
 							<div className="w-full">
-								<ContactForm />
+								<ContactForm locale={locale} />
 							</div>
 						</ScrollArea>
 
