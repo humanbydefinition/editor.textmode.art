@@ -111,6 +111,16 @@ export function renderSlugPage({
   const safeDescription = escapeHtml(description);
   const safeSlug = escapeHtml(sketch.slug);
   const robotsMeta = isPending ? '  <meta name="robots" content="noindex, nofollow" />\n' : '';
+  const legalFallbackMarkup = `
+  <noscript>
+    <footer data-synth-legal-fallback style="padding:12px 16px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; font-size:12px; color:#a1a1aa; background:#09090b; border-top:1px solid rgba(255,255,255,0.08);">
+      <a href="/imprint" style="color:#a1a1aa; margin-right:12px;">Imprint</a>
+      <a href="/tos" style="color:#a1a1aa; margin-right:12px;">Terms</a>
+      <a href="/privacy" style="color:#a1a1aa; margin-right:12px;">Privacy</a>
+      <a href="/contact" style="color:#a1a1aa;">Contact</a>
+    </footer>
+  </noscript>
+`;
 
   // Dynamic meta tags to inject
   const dynamicHead = `
@@ -153,6 +163,7 @@ ${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
 
       // Inject dynamic head content before </head>
       html = html.replace('</head>', `${dynamicHead}</head>`);
+      html = html.replace('</body>', `${legalFallbackMarkup}</body>`);
 
       return html;
     }
@@ -182,6 +193,7 @@ ${dynamicHead}
 </head>
 <body>
   <div id="app-container"></div>
+${legalFallbackMarkup}
   <script type="module" src="${devServerUrl}/@vite/client"></script>
   <script type="module">
     import RefreshRuntime from "${devServerUrl}/@react-refresh";
