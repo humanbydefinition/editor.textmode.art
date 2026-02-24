@@ -127,6 +127,9 @@ export class StrudelEngine extends BaseRunner<StrudelRunnerToParentMessage> {
 				}
 
 				const evaluatedPattern = await this.runtimeAdapter.evaluate(code, false);
+				if (!evaluatedPattern) {
+					return;
+				}
 				this.isPlaying = false;
 				this.timerManager.stopCycleBroadcast();
 				this.timerManager.stopAudioBroadcast();
@@ -153,6 +156,9 @@ export class StrudelEngine extends BaseRunner<StrudelRunnerToParentMessage> {
 
 			this.pendingAutostartCode = null;
 			const evaluatedPattern = await this.runtimeAdapter.evaluate(code, autostart);
+			if (!evaluatedPattern) {
+				return;
+			}
 			this.isPlaying = autostart;
 			if (this.isPlaying) {
 				this.timerManager.startCycleBroadcast();

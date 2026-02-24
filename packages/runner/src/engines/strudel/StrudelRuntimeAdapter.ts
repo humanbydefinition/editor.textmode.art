@@ -52,8 +52,10 @@ export class StrudelRuntimeAdapter {
 		this.audioInitialized = true;
 	}
 
-	async evaluate(code: string, autostart: boolean): Promise<StrudelPatternLike> {
-		return await evaluateStrudel(code, autostart) as StrudelPatternLike;
+	async evaluate(code: string, autostart: boolean): Promise<StrudelPatternLike | undefined> {
+		// @strudel/web reports many eval/runtime failures via onEvalError and returns
+		// undefined instead of throwing. Callers must treat undefined as failure.
+		return await evaluateStrudel(code, autostart) as StrudelPatternLike | undefined;
 	}
 
 	hush(): void {

@@ -99,13 +99,24 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	}
 
 	/**
+	 * Override: Format error message with [textmode] prefix.
+	 */
+	protected override formatErrorMessage(message: string): string {
+		return `[textmode] ${message}`;
+	}
+
+	/**
 	 * Handle synth dynamic parameter error.
 	 * These errors don't affect code execution status.
 	 */
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
 		this.deps.store.setStatus('error');
-		this.deps.store.setError({ ...error, source: 'textmode' });
+		this.deps.store.setError({
+			...error,
+			message: this.formatErrorMessage(error.message),
+			source: 'textmode',
+		});
 		this.callbacks.onRenderOverlay();
 	}
 }
