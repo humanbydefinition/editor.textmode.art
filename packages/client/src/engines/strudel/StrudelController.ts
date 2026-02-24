@@ -63,18 +63,11 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 					return;
 				}
 				const message = error instanceof Error ? error.message : 'Failed to initialize Strudel audio';
-				this.deps.store.setError({ message: this.formatErrorMessage(message), source: this.errorSource });
+				this.deps.store.setEngineError(this.engineId, { message: this.formatErrorMessage(message), source: this.errorSource });
 				this.callbacks.onRenderOverlay();
 			});
 		}
 		this.deps.getRuntime()?.forceRun(code);
-	}
-
-	/**
-	 * Override: Format error message with [strudel] prefix.
-	 */
-	protected formatErrorMessage(message: string): string {
-		return `[strudel] ${message}`;
 	}
 
 	/**
@@ -124,7 +117,7 @@ export class StrudelController extends BaseController<StrudelEditor, IStrudelRun
 
 		// Pattern evaluated successfully, clear any errors
 		editor?.clearMarkers();
-		this.deps.store.setError(null);
+		this.deps.store.clearEngineError(this.engineId);
 
 		// Start pending working code confirmation (uses BaseController default)
 		const code = editor?.getValue() ?? '';

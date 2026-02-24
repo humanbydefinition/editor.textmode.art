@@ -18,6 +18,7 @@ export interface AppRuntimeContextValue {
         clearStorage: () => void;
         loadExample: (code: string, engineId: string) => void;
         revertToLastWorking: () => void;
+        revertToLastWorkingForEngine: (engineId: string) => void;
         reconnectTextmodeRunner: () => void;
 
         // Share / Export

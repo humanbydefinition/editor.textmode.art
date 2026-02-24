@@ -18,10 +18,13 @@ export interface EngineState {
 
 export interface EngineSlice {
     error: CodeError | null;
+    engineErrors: Record<string, CodeError | null>;
     status: StatusState;
     engineStates: Record<string, EngineState>;
 
     setError: (error: CodeError | null) => void;
+    setEngineError: (engineId: string, error: CodeError | null) => void;
+    clearEngineError: (engineId: string) => void;
     setStatus: (status: StatusState) => void;
     initEngineState: (engineId: string) => void;
     setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
@@ -47,10 +50,56 @@ export const createEngineSlice: StateCreator<
     EngineSlice
 > = (set) => ({
     error: null,
+    engineErrors: {},
     status: 'ready',
     engineStates: {},
 
-    setError: (error) => set({ error }),
+    setError: (error) => {
+        set((state) => {
+            if (!error) {
+                return { error: null, engineErrors: {} };
+            }
+
+            if (!error.source) {
+                return { error };
+            }
+
+            return {
+                error,
+                engineErrors: {
+                    ...state.engineErrors,
+                    [error.source]: error,
+                },
+            };
+        });
+    },
+    setEngineError: (engineId, error) => {
+        set((state) => {
+            const normalizedError = error ? { ...error, source: error.source ?? engineId } : null;
+            const nextEngineErrors = {
+                ...state.engineErrors,
+                [engineId]: normalizedError,
+            };
+
+            const nextGlobalError = normalizedError ?? getFirstEngineError(nextEngineErrors);
+            return {
+                error: nextGlobalError,
+                engineErrors: nextEngineErrors,
+            };
+        });
+    },
+    clearEngineError: (engineId) => {
+        set((state) => {
+            const nextEngineErrors = {
+                ...state.engineErrors,
+                [engineId]: null,
+            };
+            return {
+                error: getFirstEngineError(nextEngineErrors),
+                engineErrors: nextEngineErrors,
+            };
+        });
+    },
     setStatus: (status) => set({ status }),
 
     initEngineState: (engineId) => {
@@ -101,3 +150,10 @@ export const createEngineSlice: StateCreator<
         });
     },
 });
+
+function getFirstEngineError(errors: Record<string, CodeError | null>): CodeError | null {
+    for (const error of Object.values(errors)) {
+        if (error) return error;
+    }
+    return null;
+}
