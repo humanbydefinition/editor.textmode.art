@@ -436,9 +436,18 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 					unserem Setup werden keine Marketing-Cookies oder Cross-Site-Profile verwendet.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
+					Je nach Anfragekontext können Analytics-Ereignisse Seitenpfad/URL, Referrer, Browser- und Geräte-Metadaten sowie
+					eine aus dem IP-Kontext abgeleitete grobe Standortinformation enthalten. Analytics wird nicht für Nutzerkonten
+					oder Werbeprofiling verwendet.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
 					Zweck: Reichweitenmessung und Verbesserung der Produktqualität.
 					<br />
-					Rechtsgrundlage: Art. 6(1)(f) DSGVO.
+					Rechtsgrundlage: Art. 6(1)(f) DSGVO (berechtigte Interessen an Nutzungsanalyse und Verbesserung der
+					Dienstzuverlässigkeit).
+					<br />
+					Nach den deutschen Speicher-/Zugriffsregeln nutzen wir Analytics nur in diesem aggregierten, nicht-marketingbezogenen
+					Setup und stützen uns auf Section 25(2) no. 2 TDDDG, soweit Speicherung/Zugriff strikt technisch erforderlich ist.
 				</p>
 			</div>
 
@@ -487,8 +496,10 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 				</p>
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>technische Log-Daten: begrenzte Aufbewahrung für Sicherheit und Betrieb</li>
-					<li>Anti-Spam-Challenge-Status: kurzlebig, automatische In-Memory-Ablaufsteuerung</li>
-					<li>Turnstile-Token: für Verifikation verarbeitet, nicht langfristig gespeichert</li>
+					<li>Anti-Spam-Challenge-Status: automatische In-Memory-Ablaufsteuerung nach Challenge-TTL (Standard 180 Sekunden; maximal 900 Sekunden)</li>
+					<li>Anti-Spam-Idempotenzschlüssel: automatische In-Memory-Ablaufsteuerung (Standard 600 Sekunden; maximal 3600 Sekunden)</li>
+					<li>Turnstile-Token: für einmalige Verifikation verarbeitet und nicht in unserer Datenbank persistiert</li>
+					<li>Analytics-Ereignisse (Umami): Speicherung im Analytics-System bis zur Löschung gemäß den dortigen Retention-Einstellungen</li>
 					<li>Einreichungs- und Moderationsdaten: bis Moderationszweck endet oder Löschung angefordert wird</li>
 					<li>freigegebene Galerie-Einträge: bis Entfernung durch uns oder berechtigte Löschanfrage</li>
 					<li>Local-Storage-Daten: bis du sie im Browser löschst</li>
@@ -549,7 +560,7 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Zuletzt aktualisiert</h4>
-				<p className="text-zinc-500">2026-02-15</p>
+				<p className="text-zinc-500">2026-02-24</p>
 			</div>
 
 			<div>

@@ -430,9 +430,16 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 					setup, no marketing cookies or cross-site profiling are used.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
+					Depending on request context, analytics events can include page path/URL, referrer, browser and device metadata,
+					and coarse location derived from IP context. We do not use analytics for user accounts or ad profiling.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
 					Purpose: reach measurement and product quality improvements.
 					<br />
-					Legal basis: Art. 6(1)(f) GDPR.
+					Legal basis: Art. 6(1)(f) GDPR (legitimate interests in understanding service usage and improving reliability).
+					<br />
+					Under German device storage/access rules, we use analytics only in this aggregate, non-marketing setup and rely
+					on Section 25(2) no. 2 TDDDG where storage/access is strictly technically necessary.
 				</p>
 			</div>
 
@@ -481,8 +488,10 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 				</p>
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>technical log data: limited retention for security and operations</li>
-					<li>anti-spam challenge state: short-lived, automatically expiring in memory</li>
-					<li>turnstile verification tokens: processed for verification and not stored long-term</li>
+					<li>anti-spam challenge state: automatic in-memory expiry after challenge TTL (default 180 seconds; max 900 seconds)</li>
+					<li>anti-spam idempotency keys: automatic in-memory expiry (default 600 seconds; max 3600 seconds)</li>
+					<li>turnstile verification tokens: processed for one-time verification and not persisted in our database</li>
+					<li>analytics events (Umami): retained in the analytics system until deleted according to instance retention settings</li>
 					<li>submission and moderation data: until moderation purpose ends or deletion is requested</li>
 					<li>approved gallery entries: until removed by us or by justified deletion request</li>
 					<li>local storage data: until you delete it in your browser</li>
@@ -542,7 +551,7 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Last Updated</h4>
-				<p className="text-zinc-500">2026-02-15</p>
+				<p className="text-zinc-500">2026-02-24</p>
 			</div>
 
 			<div>
