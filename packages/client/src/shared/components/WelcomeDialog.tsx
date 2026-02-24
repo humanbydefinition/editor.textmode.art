@@ -11,7 +11,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/ui/tooltip";
 
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 interface WelcomeDialogProps {
     onOpenChange?: (isOpen: boolean) => void;
@@ -25,8 +25,8 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
         if (dismissedAt) {
             const dismissedTime = parseInt(dismissedAt, 10);
             const now = Date.now();
-            // If less than 7 days have passed, don't show
-            if (now - dismissedTime < SEVEN_DAYS_MS) {
+            // If less than 24 hours have passed, don't show
+            if (now - dismissedTime < TWENTY_FOUR_HOURS_MS) {
                 onOpenChange?.(false);
                 return;
             }
