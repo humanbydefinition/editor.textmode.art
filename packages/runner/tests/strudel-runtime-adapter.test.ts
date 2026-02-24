@@ -54,4 +54,18 @@ describe('StrudelRuntimeAdapter', () => {
 		expect(mockInitAudio).toHaveBeenCalledTimes(1);
 		expect(mockEvaluate).toHaveBeenCalledWith('s("bd")', true);
 	});
+
+	it('suppresses console.error during evaluate to avoid duplicate devtools noise', async () => {
+		const adapter = new StrudelRuntimeAdapter();
+		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		mockEvaluate.mockImplementation(async () => {
+			console.error(new ReferenceError('x is not defined'));
+			return { queryArc: () => [] };
+		});
+
+		await adapter.ensureRuntimeInitialized(vi.fn());
+		await adapter.evaluate('x()', true);
+
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
 });
