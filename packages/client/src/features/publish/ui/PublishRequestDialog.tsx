@@ -40,7 +40,7 @@ const LICENSE_LABELS: Record<(typeof LICENSE_OPTIONS)[number], string> = {
 	'CC BY-NC-ND 4.0': 'Attribution NonCommercial NoDerivatives',
 };
 
-const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-08';
+const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-24';
 
 function getPublishConsentPolicyVersion(): string {
 	const fromEnv = String(import.meta.env.VITE_PUBLISH_CONSENT_POLICY_VERSION ?? '').trim();
@@ -574,7 +574,9 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											<p className="text-xs text-zinc-400 leading-relaxed">
 												If approved, this submission can be publicly listed in the gallery and
 												shared via a public URL. Any optional author name or social links I
-												provide may be shown publicly.
+												provide may be shown publicly. Approved submissions may also be shared on
+												official project social media channels, with attribution and social links
+												where technically feasible.
 											</p>
 											<p className="text-[11px] text-zinc-500">
 												Policy version:{' '}

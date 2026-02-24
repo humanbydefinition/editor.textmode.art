@@ -149,7 +149,12 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 					Für Betrieb, Moderation und Veröffentlichung der Galerie räumst du uns ein nicht-ausschließliches,
 					weltweites und unentgeltliches Nutzungsrecht ein, deine Einreichung im Rahmen von synth.textmode.art und
 					zugehörigen Projektkanälen zu hosten, zu vervielfältigen, zu bearbeiten (zum Beispiel Vorschauen und
-					OG-Bilder) sowie öffentlich darzustellen und zugänglich zu machen.
+					OG-Bilder) sowie öffentlich darzustellen und zugänglich zu machen. Zu den zugehörigen Projektkanälen gehören auch
+					unsere offiziellen Social-Media-Kanäle.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Wenn wir freigegebene Einreichungen in diesen Kanälen vorstellen, nennen wir den angegebenen Autorennamen und
+					fügen angegebene Social-Profile-Links hinzu, soweit dies technisch möglich ist.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					Wenn Dritte wegen rechtswidriger Inhalte aus deiner Einreichung Ansprüche gegen uns geltend machen (zum Beispiel

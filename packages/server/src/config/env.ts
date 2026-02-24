@@ -17,7 +17,7 @@ const envSchema = z.object({
   SCREENSHOT_BASE_URL: z.string().url().optional(),
   SCREENSHOT_STORAGE_DIR: z.string().optional(),
   SCREENSHOT_PREVIEW_TOKEN: z.string().min(16).optional(),
-  PUBLISH_CONSENT_POLICY_VERSION: z.string().min(1).max(64).default('2026-02-08'),
+  PUBLISH_CONSENT_POLICY_VERSION: z.string().min(1).max(64).default('2026-02-24'),
   ANTI_SPAM_SECRET: z.string().min(32).optional(),
   ANTI_SPAM_POW_DIFFICULTY: z.coerce.number().int().min(8).max(24).default(14),
   ANTI_SPAM_CHALLENGE_TTL_SECONDS: z.coerce.number().int().min(30).max(900).default(180),

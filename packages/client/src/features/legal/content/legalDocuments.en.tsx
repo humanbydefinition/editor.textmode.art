@@ -147,7 +147,12 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 				<p className="text-zinc-500 mt-2 break-words">
 					For operating, moderating, and publishing the gallery, you grant us a non-exclusive, worldwide, royalty-free
 					license to host, reproduce, adapt (for example previews and OG images), publicly display, and make your
-					submission available within synth.textmode.art and related project channels.
+					submission available within synth.textmode.art and related project channels. Related project channels include
+					our official project social media accounts.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					When we feature approved submissions in these channels, we include the submitted author name and submitted
+					social profile links where technically feasible.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					If third-party claims are asserted against us due to unlawful content you submitted (for example copyright or
