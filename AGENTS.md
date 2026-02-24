@@ -403,8 +403,7 @@ See `.env.example` for a complete template with descriptions.
 1. Edit runner source in `packages/runner/src/`
 2. If protocol changes, update contracts first (`packages/contracts/src/runner/`)
 3. Run runner tests: `npm run test -w @synth.textmode.art/runner`
-4. Verify build produces expected entries: `npm run runner:build` (runs `verifyDistEntries.js`)
-
+4. Verify build produces expected entries: `npm run runner:build`
 ## Code Style
 
 ### Formatting (Prettier):
@@ -486,5 +485,4 @@ npm run build            # Full production build (contracts → client → serve
 - **If contracts aren't found**: Run `npm run build -w @synth.textmode.art/contracts` — contracts must build before client, server, and runner
 - **If Prisma client errors**: Run `npm run -w @synth.textmode.art/server prisma:generate` after schema changes
 - **If screenshot generation fails**: Ensure Playwright is installed (`npm run -w @synth.textmode.art/server playwright:install`) and `SCREENSHOT_BASE_URL` points to a running server
-- **If runner build fails verification**: Check `packages/runner/scripts/verifyDistEntries.js` — it validates that `textmode.html` and `strudel.html` are present in the build output
 - **If Discord notifications fail**: Verify `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are set; check server logs for `[Discord] Setup failed`
