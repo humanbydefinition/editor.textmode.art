@@ -1,7 +1,3 @@
-# =============================================================================
-# synth.textmode.art — Docker build context exclusions
-# =============================================================================
-
 # Dependencies (installed fresh inside containers)
 node_modules
 
