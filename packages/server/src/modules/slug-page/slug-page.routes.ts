@@ -42,7 +42,7 @@ const slugPageRoutes: FastifyPluginAsync = async (app) => {
 
     const baseUrl = getBaseUrl(request.hostname, request.protocol);
     const renderMode = sketch.status === 'PENDING' ? 'pending' : 'approved';
-    const devServerUrl = (env.VITE_DEV_SERVER_URL || 'http://localhost:5173').replace(/\/$/, '');
+    const devServerUrl = (env.VITE_DEV_SERVER_URL || 'http://localhost:5180').replace(/\/$/, '');
     const html = renderSlugPage({
       sketch,
       baseUrl,

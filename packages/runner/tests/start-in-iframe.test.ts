@@ -38,7 +38,7 @@ describe('startInIframe helpers', () => {
 				allowedParentOrigins: ['https://client.test'],
 				productionFallbackUrl: 'https://fallback.test',
 			})
-		).toBe('http://runner.test:5173');
+		).toBe('http://runner.test:5180');
 	});
 
 	it('resolves production redirect from first allowed parent origin', () => {

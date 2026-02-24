@@ -170,7 +170,7 @@ ${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
     // Fall through to dev template if production HTML not available
   }
 
-  const devServerUrl = (devServerUrlOverride || env.VITE_DEV_SERVER_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const devServerUrl = (devServerUrlOverride || env.VITE_DEV_SERVER_URL || 'http://localhost:5180').replace(/\/$/, '');
 
   // Development mode: hardcoded template for Vite dev server
   return `<!doctype html>

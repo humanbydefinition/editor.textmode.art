@@ -18,7 +18,7 @@ const runnerCspPlugin: FastifyPluginAsync = async (app) => {
                 parentOrigins.push(env.PUBLIC_BASE_URL.replace(/\/$/, ''));
             }
             if (env.NODE_ENV !== 'production') {
-                parentOrigins.push('http://localhost:5173');
+                parentOrigins.push('http://localhost:5180');
             }
             const frameAncestors = parentOrigins.length > 0 ? parentOrigins.join(' ') : "'none'";
             const runnerCsp = [

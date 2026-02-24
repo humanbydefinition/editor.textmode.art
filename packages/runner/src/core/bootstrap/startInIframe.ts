@@ -9,7 +9,7 @@ interface RedirectOptions {
 
 export function resolveTopLevelRedirectUrl(options: RedirectOptions): string {
 	if (options.isDev) {
-		return `http://${options.hostname}:5173`;
+		return `http://${options.hostname}:5180`;
 	}
 
 	return getFirstAllowedParentOrigin(options.allowedParentOrigins) ?? options.productionFallbackUrl;
