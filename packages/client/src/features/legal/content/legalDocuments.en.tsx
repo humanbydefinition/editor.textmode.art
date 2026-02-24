@@ -144,6 +144,15 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 					required rights to publish code/text/media references and that publication does not violate third-party rights
 					or applicable law.
 				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					For operating, moderating, and publishing the gallery, you grant us a non-exclusive, worldwide, royalty-free
+					license to host, reproduce, adapt (for example previews and OG images), publicly display, and make your
+					submission available within synth.textmode.art and related project channels.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					If third-party claims are asserted against us due to unlawful content you submitted (for example copyright or
+					personality-rights violations), you agree to indemnify us for resulting costs to the extent you are responsible.
+				</p>
 			</div>
 
 			<div>
@@ -156,6 +165,15 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 			</div>
 
 			<div>
+				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Notice and Action</h4>
+				<p className="text-zinc-500 break-words">
+					As a hosting service, we are not subject to a general obligation to proactively monitor all user submissions.
+					When we receive sufficiently specific notices about allegedly illegal content, we review and act without undue
+					delay where required by applicable law.
+				</p>
+			</div>
+
+			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">
 					Unreviewed Sketches and Execution Risk
 				</h4>
@@ -164,15 +182,23 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 					performance-heavy loops, or external network requests. You decide whether to execute shared code and should
 					review it first.
 				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Execution of shared sketches is optional and at your own risk. We do not guarantee that third-party sketches are
+					safe, lawful, error-free, or fit for a particular purpose.
+				</p>
 			</div>
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Liability</h4>
 				<p className="text-zinc-500 break-words">
-					We are liable under statutory law. To the extent legally permitted, liability for slight negligence is limited
-					to foreseeable, typical damages. Liability limitations do not apply in cases of intent, gross negligence, injury
-					to life/body/health, mandatory statutory liability (including product liability), or where liability cannot be
-					excluded under applicable law.
+					We are liable under statutory law. To the extent legally permitted, liability for slight negligence is excluded,
+					except for breaches of essential contractual obligations (cardinal obligations). In such cases, liability is
+					limited to foreseeable, typical damages.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Liability limitations do not apply in cases of intent, gross negligence, injury to life/body/health, fraudulent
+					concealment, guarantees, mandatory statutory liability (including product liability), or where liability cannot
+					be excluded under applicable law.
 				</p>
 			</div>
 
@@ -197,7 +223,7 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Last Updated</h4>
-				<p className="text-zinc-500">2026-02-15</p>
+				<p className="text-zinc-500">2026-02-24</p>
 			</div>
 		</div>
 	);

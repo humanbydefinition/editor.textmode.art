@@ -582,6 +582,27 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 													{PUBLISH_CONSENT_POLICY_VERSION}
 												</span>
 											</p>
+											<p className="text-[11px] text-zinc-500 leading-relaxed">
+												By confirming publication consent and publishing, you agree to the{' '}
+												<a
+													href="/tos?lang=en"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+												>
+													Terms &amp; Acceptable Use
+												</a>{' '}
+												and acknowledge the{' '}
+												<a
+													href="/privacy?lang=en"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+												>
+													Privacy Policy
+												</a>
+												.
+											</p>
 										</div>
 									</div>
 								</div>

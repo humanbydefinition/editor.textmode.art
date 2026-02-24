@@ -145,6 +145,17 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 					die erforderlichen Rechte zur Veröffentlichung von Code/Text/Medienverweisen verfügst und dass die
 					Veröffentlichung keine Rechte Dritter oder geltendes Recht verletzt.
 				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Für Betrieb, Moderation und Veröffentlichung der Galerie räumst du uns ein nicht-ausschließliches,
+					weltweites und unentgeltliches Nutzungsrecht ein, deine Einreichung im Rahmen von synth.textmode.art und
+					zugehörigen Projektkanälen zu hosten, zu vervielfältigen, zu bearbeiten (zum Beispiel Vorschauen und
+					OG-Bilder) sowie öffentlich darzustellen und zugänglich zu machen.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Wenn Dritte wegen rechtswidriger Inhalte aus deiner Einreichung Ansprüche gegen uns geltend machen (zum Beispiel
+					Urheber- oder Persönlichkeitsrechtsverletzungen), stellst du uns im Umfang deiner Verantwortlichkeit von den
+					daraus entstehenden Kosten frei.
+				</p>
 			</div>
 
 			<div>
@@ -158,6 +169,15 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 			</div>
 
 			<div>
+				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Hinweis- und Abhilfeverfahren</h4>
+				<p className="text-zinc-500 break-words">
+					Als Hosting-Dienst unterliegen wir keiner allgemeinen Pflicht zur proaktiven Überwachung sämtlicher
+					Nutzereinreichungen. Erhalten wir hinreichend konkrete Hinweise auf möglicherweise rechtswidrige Inhalte,
+					prüfen wir diese und ergreifen unverzüglich die gesetzlich erforderlichen Maßnahmen.
+				</p>
+			</div>
+
+			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">
 					Ungeprüfte Sketches und Ausführungsrisiko
 				</h4>
@@ -166,14 +186,22 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 					performance-intensive Schleifen oder externe Netzwerkanfragen auslösen. Du entscheidest selbst, ob du
 					geteilten Code ausführst, und solltest ihn vorher prüfen.
 				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Die Ausführung geteilter Sketches ist freiwillig und erfolgt auf eigenes Risiko. Für Sicherheit,
+					Rechtmäßigkeit, Fehlerfreiheit oder Eignung von Dritt-Sketches übernehmen wir keine Gewähr.
+				</p>
 			</div>
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Haftung</h4>
 				<p className="text-zinc-500 break-words">
 					Wir haften nach den gesetzlichen Vorschriften. Soweit gesetzlich zulässig, ist die Haftung für leichte
-					Fahrlässigkeit auf vorhersehbare, vertragstypische Schäden begrenzt. Haftungsbeschränkungen gelten nicht bei
-					Vorsatz, grober Fahrlässigkeit, Verletzung von Leben/Körper/Gesundheit, zwingender gesetzlicher Haftung
+					Fahrlässigkeit ausgeschlossen, außer bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten). In
+					diesem Fall ist die Haftung auf den vorhersehbaren, vertragstypischen Schaden begrenzt.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Haftungsbeschränkungen gelten nicht bei Vorsatz, grober Fahrlässigkeit, Verletzung von
+					Leben/Körper/Gesundheit, arglistigem Verschweigen, Garantieübernahme, zwingender gesetzlicher Haftung
 					(einschließlich Produkthaftung) oder soweit Haftung nach anwendbarem Recht nicht ausgeschlossen werden kann.
 				</p>
 			</div>
@@ -199,7 +227,7 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Zuletzt aktualisiert</h4>
-				<p className="text-zinc-500">2026-02-15</p>
+				<p className="text-zinc-500">2026-02-24</p>
 			</div>
 		</div>
 	);
