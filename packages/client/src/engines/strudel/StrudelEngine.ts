@@ -188,6 +188,6 @@ function getStrudelRunnerUrl(): string {
 	}
 
 	return import.meta.env.DEV
-		? `http://${window.location.hostname}:5174/strudel.html`
+		? `http://${window.location.hostname}:5181/strudel.html`
 		: '/runner/strudel.html';
 }

@@ -154,6 +154,6 @@ function getRunnerUrl(): string {
 	}
 	// Use window.location.hostname to support access from other devices on the network
 	return import.meta.env.DEV
-		? `http://${window.location.hostname}:5174/textmode.html`
+		? `http://${window.location.hostname}:5181/textmode.html`
 		: '/runner/textmode.html';
 }

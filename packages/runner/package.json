@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite --host",
+        "dev": "vite --host --port 5181",
         "build": "tsc && vite build && node ./scripts/verifyDistEntries.js",
         "preview": "vite preview",
         "check-types": "tsc --noEmit",
