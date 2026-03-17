@@ -187,8 +187,6 @@ ${robotsMeta}  <link rel="canonical" href="${canonicalUrl}" />
     html, body { background-color: #09090b; }
   </style>
 
-  <!-- Analytics -->
-  <script defer src="https://analytics.textmode.art/script.js" data-website-id="0bb35122-4cf9-4efe-b973-960bc8d3eba4"></script>
 ${dynamicHead}
 </head>
 <body>

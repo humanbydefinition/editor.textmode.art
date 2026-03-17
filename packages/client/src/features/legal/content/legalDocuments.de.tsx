@@ -1,4 +1,4 @@
-import { cn } from '@/shared/lib/cn';
+﻿import { cn } from '@/shared/lib/cn';
 import type { LegalContentProps, LegalDocumentDefinition, LegalDocumentId } from './legalDocument.types';
 
 const contentBaseClass = 'space-y-4 text-sm text-zinc-400 leading-relaxed';
@@ -426,37 +426,6 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 			</div>
 
 			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Analytics (Umami)</h4>
-				<p className="text-zinc-500 break-words">
-					Wir nutzen{' '}
-					<a
-						href="https://umami.is/"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-emerald-400 hover:text-emerald-300 transition-colors"
-					>
-						Umami
-					</a>{' '}
-					über <span className="text-zinc-300">analytics.textmode.art</span> zur aggregierten Nutzungsanalyse. Nach
-					unserem Setup werden keine Marketing-Cookies oder Cross-Site-Profile verwendet.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Je nach Anfragekontext können Analytics-Ereignisse Seitenpfad/URL, Referrer, Browser- und Geräte-Metadaten sowie
-					eine aus dem IP-Kontext abgeleitete grobe Standortinformation enthalten. Analytics wird nicht für Nutzerkonten
-					oder Werbeprofiling verwendet.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Zweck: Reichweitenmessung und Verbesserung der Produktqualität.
-					<br />
-					Rechtsgrundlage: Art. 6(1)(f) DSGVO (berechtigte Interessen an Nutzungsanalyse und Verbesserung der
-					Dienstzuverlässigkeit).
-					<br />
-					Nach den deutschen Speicher-/Zugriffsregeln nutzen wir Analytics nur in diesem aggregierten, nicht-marketingbezogenen
-					Setup und stützen uns auf Section 25(2) no. 2 TDDDG, soweit Speicherung/Zugriff strikt technisch erforderlich ist.
-				</p>
-			</div>
-
-			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Local Storage und Gerätezugriff</h4>
 				<p className="text-zinc-500 break-words">
 					Die App speichert Daten im Browser-Local-Storage, um Kernfunktionen und Präferenzen bereitzustellen,
@@ -504,7 +473,7 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 					<li>Anti-Spam-Challenge-Status: automatische In-Memory-Ablaufsteuerung nach Challenge-TTL (Standard 180 Sekunden; maximal 900 Sekunden)</li>
 					<li>Anti-Spam-Idempotenzschlüssel: automatische In-Memory-Ablaufsteuerung (Standard 600 Sekunden; maximal 3600 Sekunden)</li>
 					<li>Turnstile-Token: für einmalige Verifikation verarbeitet und nicht in unserer Datenbank persistiert</li>
-					<li>Analytics-Ereignisse (Umami): Speicherung im Analytics-System bis zur Löschung gemäß den dortigen Retention-Einstellungen</li>
+
 					<li>Einreichungs- und Moderationsdaten: bis Moderationszweck endet oder Löschung angefordert wird</li>
 					<li>freigegebene Galerie-Einträge: bis Entfernung durch uns oder berechtigte Löschanfrage</li>
 					<li>Local-Storage-Daten: bis du sie im Browser löschst</li>
