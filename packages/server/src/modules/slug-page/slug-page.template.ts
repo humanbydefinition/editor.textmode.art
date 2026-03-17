@@ -97,7 +97,7 @@ export function renderSlugPage({
 }: SlugPageOptions): string {
   const isPending = renderMode === 'pending';
   const title = isPending
-    ? 'Sketch Pending Review | synth.textmode.art'
+    ? 'sketch pending review | synth.textmode.art'
     : `${sketch.title} | synth.textmode.art`;
   const description = isPending
     ? 'This sketch is pending moderation review on synth.textmode.art.'
