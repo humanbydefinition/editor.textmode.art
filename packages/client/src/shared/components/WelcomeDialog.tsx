@@ -153,7 +153,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                             >
-                                Imprint
+                                imprint
                             </a>
                             <a
                                 href="/tos?lang=en"
@@ -161,7 +161,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                             >
-                                Terms
+                                terms
                             </a>
                             <a
                                 href="/privacy?lang=en"
@@ -169,7 +169,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                             >
-                                Privacy
+                                privacy
                             </a>
                             <a
                                 href="/contact?lang=en"
@@ -177,7 +177,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                             >
-                                Contact
+                                contact
                             </a>
                         </div>
                         <a
