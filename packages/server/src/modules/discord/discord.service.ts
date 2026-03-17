@@ -106,25 +106,36 @@ export class DiscordService {
 
             const publicUrl = env.PUBLIC_BASE_URL || 'https://synth.textmode.art';
             const sketchUrl = `${publicUrl}/s/${slug}`;
-            const userUrl = submission.socialLinks?.[0] ? submission.socialLinks[0].url : null;
+            const title = escapeInlineMarkdown(submission.title);
+            const author = submission.authorName?.trim()
+                ? escapeInlineMarkdown(submission.authorName.trim())
+                : 'anonymous';
+            const description = submission.description?.trim() || null;
+            const license = submission.license?.trim() || null;
+            const socialLinks = formatUnknownSocialLinks(submission.socialLinks);
+            const hasSocialLinks = socialLinks !== 'none';
 
-            const embed = new EmbedBuilder()
-                .setColor(0x0099FF)
-                .setTitle('A new gallery sketch submission has been received!')
-                .setURL(sketchUrl)
-                .setDescription(submission.description || 'No description provided.')
-                .addFields(
-                    { name: 'Title', value: submission.title, inline: true },
-                    { name: 'Author', value: submission.authorName || 'Anonymous', inline: true },
-                    { name: 'License', value: submission.license || 'None', inline: true },
-                )
-                .setTimestamp();
+            const lines: (string | null)[] = [
+                `## ${title}`,
+                description ? toQuotedBlock(description) : null,
+                '',
+                `**Author:** ${author}`,
+                license ? `**License:** ${escapeInlineMarkdown(license)}` : null,
+            ];
 
-            if (userUrl) {
-                embed.setAuthor({ name: submission.authorName || 'Author', url: userUrl });
+            if (hasSocialLinks) {
+                lines.push('', '**Links**', socialLinks);
             }
 
-            await channel.send({ embeds: [embed] });
+            const embed = new EmbedBuilder()
+                .setColor(0x5865f2)
+                .setTitle('New gallery submission')
+                .setURL(sketchUrl)
+                .setDescription(lines.filter((line) => line !== null).join('\n'))
+                .setTimestamp()
+                .setFooter({ text: 'synth.textmode.art' });
+
+            await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
             console.log(`[Discord] Notification sent for sketch ${slug}`);
         } catch (error) {
             console.error('[Discord] Failed to send notification:', error);
@@ -137,7 +148,9 @@ export class DiscordService {
             title: string;
             description?: string | null;
             authorName?: string | null;
+            license?: string | null;
             socialLinks?: unknown;
+            ogImageUrl?: string | null;
         },
         publicUrlOverride?: string
     ): Promise<void> {
@@ -155,33 +168,36 @@ export class DiscordService {
             const publicUrl = publicUrlOverride || env.PUBLIC_BASE_URL || 'https://synth.textmode.art';
             const sketchUrl = `${publicUrl}/s/${sketch.slug}`;
             const title = escapeInlineMarkdown(sketch.title);
-            const author = sketch.authorName?.trim() ? escapeInlineMarkdown(sketch.authorName.trim()) : 'unknown';
-            const description = sketch.description?.trim() ? sketch.description.trim() : null;
+            const author = sketch.authorName?.trim() ? escapeInlineMarkdown(sketch.authorName.trim()) : 'anonymous';
+            const description = sketch.description?.trim() || null;
             const socialLinks = formatUnknownSocialLinks(sketch.socialLinks);
             const hasSocialLinks = socialLinks !== 'none';
 
-            const lines = [
-                '**A new entry has been approved and added to the gallery!**',
-                sketchUrl,
+            const lines: (string | null)[] = [
+                `## ${title}`,
+                description ? toQuotedBlock(description) : null,
                 '',
-                `**"${title}"**`,
-                `by _${author}_`,
+                `**Author:** ${author}`,
+                sketch.license?.trim() ? `**License:** ${escapeInlineMarkdown(sketch.license.trim())}` : null,
             ];
-
-            if (description) {
-                lines.push('', toQuotedBlock(description));
-            }
 
             if (hasSocialLinks) {
                 lines.push('', '**Links**', socialLinks);
             }
 
-            const message = lines.join('\n');
+            const embed = new EmbedBuilder()
+                .setColor(0x57f287)
+                .setTitle('New gallery submission approved!')
+                .setURL(sketchUrl)
+                .setDescription(lines.filter((line) => line !== null).join('\n'))
+                .setTimestamp()
+                .setFooter({ text: 'synth.textmode.art' });
 
-            await channel.send({
-                content: message,
-                allowedMentions: { parse: [] },
-            });
+            if (sketch.ogImageUrl) {
+                embed.setImage(sketch.ogImageUrl);
+            }
+
+            await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
             console.log(`[Discord] Approval notification sent for sketch ${sketch.slug}`);
         } catch (error) {
             console.error('[Discord] Failed to send approval notification:', error);
