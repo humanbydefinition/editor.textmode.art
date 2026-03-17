@@ -4,7 +4,6 @@ import { AppRuntime } from '@/app/runtime/AppRuntime';
 import { AdminApp } from '@/features/admin';
 import { LegalContactPage, LegalDocumentPage, type LegalDocumentId } from '@/features/legal';
 import { stripLocalePrefix } from '@/features/legal/model/legalLocale';
-import { ensureMonacoClipboardCompatibility } from '@/platform/polyfills/monacoClipboardShim';
 
 interface RuntimeWindow extends Window {
 	__synthBootStarted__?: boolean;
@@ -18,7 +17,6 @@ interface RuntimeWindow extends Window {
  * Boots either the main live-coding app or admin app based on the URL path.
  */
 export function startClientApp(): void {
-	ensureMonacoClipboardCompatibility();
 
 	const runtimeWindow = window as RuntimeWindow;
 	if (runtimeWindow.__synthBootStarted__) return;
