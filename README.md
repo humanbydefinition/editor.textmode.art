@@ -12,9 +12,6 @@
 
 `synth.textmode.art` is a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. It combines the visual power of [`textmode.js`](https://github.com/humanbydefinition/textmode.js) with the algorithmic music patterns of [`Strudel`](https://codeberg.org/uzu/strudel) to create a unique hybrid creative coding experience.
 
-The environment is designed to be accessible yet powerful, providing a high-performance integrated editor for real-time creation of multi-layered textmode scenes and complex polyphonic patterns.
-
-
 ## Features
 
 - **Hybrid live coding**: Seamlessly blend procedural ASCII visuals with algorithmic audio patterns.
