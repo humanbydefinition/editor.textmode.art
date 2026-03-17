@@ -91,14 +91,29 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     try {
       const updated = await updateSketchRequest(id, { status, denialReason, reviewedBy });
 
-      if (updated.status === 'APPROVED' && !updated.ogImageUrl) {
-        enqueueScreenshotCapture({ id: updated.id, slug: updated.slug });
-      }
-
       if (updated.status === 'APPROVED') {
-        DiscordService.getInstance().sendApprovalNotification(updated).catch((err) => {
-          app.log.error({ err }, 'Failed to send Discord approval notification');
-        });
+        if (!updated.ogImageUrl) {
+          // Screenshot first, then Discord notification with the image
+          void screenshotService.capture(updated.slug)
+            .then(async (ogImageUrl) => {
+              await setOgImageUrl(updated.id, ogImageUrl);
+              app.log.info({ slug: updated.slug, ogImageUrl }, 'Generated OG image');
+              return ogImageUrl;
+            })
+            .then((ogImageUrl) =>
+              DiscordService.getInstance().sendApprovalNotification({ ...updated, ogImageUrl }),
+            )
+            .catch((error) => {
+              app.log.error({ err: error, slug: updated.slug }, 'Failed to generate OG image or send Discord notification');
+              // Still try to send notification without image
+              DiscordService.getInstance().sendApprovalNotification(updated).catch(() => {});
+            });
+        } else {
+          // Screenshot already exists, send notification immediately
+          DiscordService.getInstance().sendApprovalNotification(updated).catch((err) => {
+            app.log.error({ err }, 'Failed to send Discord approval notification');
+          });
+        }
       }
 
       reply.send(toAdminSketchRequest(updated));
