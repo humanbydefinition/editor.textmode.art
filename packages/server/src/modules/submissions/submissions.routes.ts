@@ -53,6 +53,7 @@ const submissionsRoutes: FastifyPluginAsync = async (app) => {
 
     const response: SketchSubmissionQueueStatus = {
       full: pending >= env.ANTI_SPAM_MAX_PENDING_REQUESTS,
+      publishConsentPolicyVersion: env.PUBLISH_CONSENT_POLICY_VERSION,
     };
 
     reply.status(200).send(sketchSubmissionQueueStatusSchema.parse(response));

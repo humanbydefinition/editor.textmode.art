@@ -40,14 +40,6 @@ const LICENSE_LABELS: Record<(typeof LICENSE_OPTIONS)[number], string> = {
 	'CC BY-NC-ND 4.0': 'Attribution NonCommercial NoDerivatives',
 };
 
-const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-24';
-
-function getPublishConsentPolicyVersion(): string {
-	const fromEnv = String(import.meta.env.VITE_PUBLISH_CONSENT_POLICY_VERSION ?? '').trim();
-	return fromEnv.length > 0 ? fromEnv : DEFAULT_PUBLISH_CONSENT_POLICY_VERSION;
-}
-
-const PUBLISH_CONSENT_POLICY_VERSION = getPublishConsentPolicyVersion();
 const TURNSTILE_SITE_KEY = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim();
 const TURNSTILE_CONFIGURED = TURNSTILE_SITE_KEY.length > 0;
 function normalizeMastodonUrl(value: string): string {
@@ -91,6 +83,7 @@ interface SlugState {
 interface SubmissionQueueState {
 	loading: boolean;
 	full: boolean;
+	publishConsentPolicyVersion: string | null;
 }
 
 export function PublishRequestDialog({ open, data, onOpenChange }: PublishRequestDialogProps) {
@@ -120,6 +113,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 	const [submissionQueue, setSubmissionQueue] = useState<SubmissionQueueState>({
 		loading: false,
 		full: false,
+		publishConsentPolicyVersion: null,
 	});
 
 	// Reset form when dialog opens
@@ -145,6 +139,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 			setSubmissionQueue({
 				loading: true,
 				full: false,
+				publishConsentPolicyVersion: null,
 			});
 
 			void (async () => {
@@ -153,6 +148,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 					setSubmissionQueue({
 						loading: false,
 						full: false,
+						publishConsentPolicyVersion: null,
 					});
 					return;
 				}
@@ -160,6 +156,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 				setSubmissionQueue({
 					loading: false,
 					full: queueStatus.full,
+					publishConsentPolicyVersion: queueStatus.publishConsentPolicyVersion,
 				});
 			})();
 		}
@@ -248,6 +245,11 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 			setSubmitError('Complete the security verification before submitting.');
 			return;
 		}
+		if (!submissionQueue.publishConsentPolicyVersion) {
+			setSubmitStatus('error');
+			setSubmitError('Unable to verify consent policy version. Please refresh and try again.');
+			return;
+		}
 
 		setSubmitStatus('submitting');
 		setSubmitError(null);
@@ -263,7 +265,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 			strudelCode: data.strudelCode ?? null,
 			publishConsent: {
 				accepted: true,
-				policyVersion: PUBLISH_CONSENT_POLICY_VERSION,
+				policyVersion: submissionQueue.publishConsentPolicyVersion,
 			},
 			turnstileToken,
 		});
@@ -277,7 +279,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 			setTurnstileToken(null);
 			setTurnstileResetNonce((value) => value + 1);
 		}
-	}, [data, isFormValid, slug, title, description, authorName, license, socialLinks, turnstileToken]);
+	}, [data, isFormValid, slug, title, description, authorName, license, socialLinks, turnstileToken, submissionQueue.publishConsentPolicyVersion]);
 
 	if (!data) return null;
 	const isSuccess = submitStatus === 'success';
@@ -581,7 +583,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											<p className="text-[11px] text-zinc-500">
 												Policy version:{' '}
 												<span className="font-mono text-zinc-400">
-													{PUBLISH_CONSENT_POLICY_VERSION}
+												{submissionQueue.publishConsentPolicyVersion ?? '...'}
 												</span>
 											</p>
 											<p className="text-[11px] text-zinc-500 leading-relaxed">

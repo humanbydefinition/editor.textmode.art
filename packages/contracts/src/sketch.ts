@@ -147,6 +147,7 @@ export type SlugAvailabilityResult = z.infer<typeof slugAvailabilityResultSchema
 
 export const sketchSubmissionQueueStatusSchema = z.object({
   full: z.boolean(),
+  publishConsentPolicyVersion: z.string(),
 });
 export type SketchSubmissionQueueStatus = z.infer<typeof sketchSubmissionQueueStatusSchema>;
 
