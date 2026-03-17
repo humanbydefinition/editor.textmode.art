@@ -13,6 +13,8 @@ export function createControllerStoreAdapter(): ControllerStoreAdapter {
     return {
         // Error / status
         setError: (error) => useAppStore.getState().setError(error),
+        setEngineError: (engineId, error) => useAppStore.getState().setEngineError(engineId, error),
+        clearEngineError: (engineId) => useAppStore.getState().clearEngineError(engineId),
         setStatus: (status) => useAppStore.getState().setStatus(status),
 
         // Engine state

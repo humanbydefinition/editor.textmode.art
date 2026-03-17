@@ -51,6 +51,8 @@ export interface ControllerEngineState {
 export interface ControllerStoreAdapter {
 	// Error / status
 	setError: (error: CodeError | null) => void;
+	setEngineError: (engineId: string, error: CodeError | null) => void;
+	clearEngineError: (engineId: string) => void;
 	setStatus: (status: StatusState) => void;
 
 	// Engine state
@@ -153,7 +155,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.setError(null);
+		this.deps.store.clearEngineError(this.engineId);
 		editor?.clearMarkers();
 
 		this.forceExecute(code);
@@ -172,7 +174,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const editor = this.deps.getEditor();
 		editor?.setValue(lastWorkingCode);
 		this.callbacks.onSaveCode(lastWorkingCode);
-		this.deps.store.setError(null);
+		this.deps.store.clearEngineError(this.engineId);
 		editor?.clearMarkers();
 
 		this.revertExecute(lastWorkingCode);
@@ -194,7 +196,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			source: this.errorSource,
 		};
 
-		this.deps.store.setError(errorInfo);
+		this.deps.store.setEngineError(this.engineId, errorInfo);
 
 		this.callbacks.onRenderOverlay();
 	}

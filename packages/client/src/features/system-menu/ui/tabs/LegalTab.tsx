@@ -1,595 +1,188 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { ScrollArea } from "@/shared/ui/scroll-area";
-import { cn } from "@/shared/lib/cn";
+import { useState } from 'react';
+import { ChevronDown, ExternalLink } from 'lucide-react';
+import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { cn } from '@/shared/lib/cn';
+import { getLegalDocuments, type LegalDocumentId } from '@/features/legal/content/legalDocuments';
+import { getLegalSectionLabel, getLegalUiCopy } from '@/features/legal/content/legalUiCopy';
+import { useLegalLanguage } from '@/features/legal/hooks/useLegalLanguage';
+import { LegalLanguageToggle } from '@/features/legal/ui/LegalLanguageToggle';
+import { ContactDialog } from './ContactDialog';
 
 export function LegalTab() {
-    const [openSection, setOpenSection] = useState<"imprint" | "terms" | "privacy" | null>(null);
+	const { locale, setLocale, buildLocalizedLegalHref } = useLegalLanguage();
+	const legalDocuments = getLegalDocuments(locale);
+	const legalCopy = getLegalUiCopy(locale);
+	const [openSection, setOpenSection] = useState<LegalDocumentId | null>(null);
 
-    const toggleSection = (section: "imprint" | "terms" | "privacy") => {
-        setOpenSection(openSection === section ? null : section);
-    };
+	const toggleSection = (section: LegalDocumentId) => {
+		setOpenSection((currentSection) => (currentSection === section ? null : section));
+	};
 
-    return (
-        <div className="h-full flex flex-col p-6 gap-3 overflow-hidden">
-            <button
-                onClick={() => toggleSection("imprint")}
-                className={cn(
-                    "flex items-center justify-between w-full px-4 py-3 text-sm shrink-0",
-                    "border border-white/5 rounded-lg",
-                    "transition-colors duration-200",
-                    openSection === "imprint"
-                        ? "text-white bg-zinc-800/60 rounded-b-none border-b-0"
-                        : "text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50"
-                )}
-            >
-                <span className="font-medium">Imprint</span>
-                <ChevronDown
-                    className={cn(
-                        "w-4 h-4 transition-transform duration-300 ease-out",
-                        openSection === "imprint" && "rotate-180"
-                    )}
-                />
-            </button>
+	return (
+		<div className="h-full flex flex-col px-6 pt-6 gap-3 overflow-hidden">
+			<div className="flex items-center gap-2 shrink-0">
+				<div className="flex-1 min-w-0">
+					<ContactDialog buttonClassName="h-[34px] py-0" locale={locale} />
+				</div>
+				<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
+			</div>
 
-            <div
-                className={cn(
-                    "overflow-hidden transition-all duration-300 ease-out -mt-3",
-                    "border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20",
-                    openSection === "imprint" ? "flex-1 min-h-0 opacity-100" : "h-0 opacity-0 border-0"
-                )}
-            >
-                <ScrollArea className="h-full">
-                    <div className="p-4 space-y-4 text-sm text-zinc-400 leading-relaxed">
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Scope</h4>
-                            <p>This imprint applies to:</p>
-                            <ul className="list-disc list-inside mt-1 text-zinc-500">
-                                <li>https://synth.textmode.art</li>
-                            </ul>
-                        </div>
+			<div className="relative">
+				<button
+					onClick={() => toggleSection('imprint')}
+					className={cn(
+						'flex items-center justify-between w-full px-4 py-3 pr-14 text-sm shrink-0',
+						'border border-white/5 rounded-lg',
+						'transition-colors duration-200',
+						openSection === 'imprint'
+							? 'text-white bg-zinc-800/60 rounded-b-none border-b-0'
+							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
+					)}
+				>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'imprint')}</span>
+					<ChevronDown
+						className={cn(
+							'w-4 h-4 transition-transform duration-300 ease-out',
+							openSection === 'imprint' && 'rotate-180'
+						)}
+					/>
+				</button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href={buildLocalizedLegalHref(legalDocuments.imprint.path)}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'imprint')}`}
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>{legalCopy.openInNewTabLabel}</p>
+					</TooltipContent>
+				</Tooltip>
+			</div>
 
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Provider Information (Section 5 DDG)</h4>
-                            <p>
-                                Christopher Dietrich
-                                <br />
-                                Herler Strasse 70/72
-                                <br />
-                                51067 Cologne
-                                <br />
-                                Germany
-                            </p>
-                        </div>
+			<div
+				className={cn(
+					'overflow-hidden transition-all duration-300 ease-out -mt-3',
+					'border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20',
+					openSection === 'imprint' ? 'flex-1 min-h-0 opacity-100' : 'h-0 opacity-0 border-0'
+				)}
+			>
+				<ScrollArea className="h-full">
+					<section lang={locale}>
+						<legalDocuments.imprint.Content className="p-4" />
+					</section>
+				</ScrollArea>
+			</div>
 
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Contact</h4>
-                            <p>
-                                Email:{" "}
-                                <a
-                                    href="mailto:hello@textmode.art"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    hello@textmode.art
-                                </a>
-                            </p>
-                        </div>
+			<div className="relative">
+				<button
+					onClick={() => toggleSection('terms')}
+					className={cn(
+						'flex items-center justify-between w-full px-4 py-3 pr-14 text-sm shrink-0',
+						'border border-white/5 rounded-lg',
+						'transition-colors duration-200',
+						openSection === 'terms'
+							? 'text-white bg-zinc-800/60 rounded-b-none border-b-0'
+							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
+					)}
+				>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'terms')}</span>
+					<ChevronDown
+						className={cn(
+							'w-4 h-4 transition-transform duration-300 ease-out',
+							openSection === 'terms' && 'rotate-180'
+						)}
+					/>
+				</button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href={buildLocalizedLegalHref(legalDocuments.terms.path)}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'terms')}`}
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>{legalCopy.openInNewTabLabel}</p>
+					</TooltipContent>
+				</Tooltip>
+			</div>
 
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">
-                                Responsible for Editorial Content (Section 18 (2) MStV, if applicable)
-                            </h4>
-                            <p>
-                                Christopher Dietrich
-                                <br />
-                                Herler Strasse 70/72
-                                <br />
-                                51067 Cologne
-                                <br />
-                                Germany
-                            </p>
-                        </div>
+			<div
+				className={cn(
+					'overflow-hidden transition-all duration-300 ease-out -mt-3',
+					'border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20',
+					openSection === 'terms' ? 'flex-1 min-h-0 opacity-100' : 'h-0 opacity-0 border-0'
+				)}
+			>
+				<ScrollArea className="h-full">
+					<section lang={locale}>
+						<legalDocuments.terms.Content className="p-4" />
+					</section>
+				</ScrollArea>
+			</div>
 
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Liability for Own and External Content</h4>
-                            <p className="text-zinc-500">
-                                We create and maintain our own content with due care. External links are checked at the time of
-                                linking. The respective third-party provider remains responsible for external content.
-                            </p>
-                        </div>
+			<div className="relative">
+				<button
+					onClick={() => toggleSection('privacy')}
+					className={cn(
+						'flex items-center justify-between w-full px-4 py-3 pr-14 text-sm shrink-0',
+						'border border-white/5 rounded-lg',
+						'transition-colors duration-200',
+						openSection === 'privacy'
+							? 'text-white bg-zinc-800/60 rounded-b-none border-b-0'
+							: 'text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50'
+					)}
+				>
+					<span className="font-medium">{getLegalSectionLabel(locale, 'privacy')}</span>
+					<ChevronDown
+						className={cn(
+							'w-4 h-4 transition-transform duration-300 ease-out',
+							openSection === 'privacy' && 'rotate-180'
+						)}
+					/>
+				</button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<a
+							href={buildLocalizedLegalHref(legalDocuments.privacy.path)}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`${legalCopy.openInNewTabLabel}: ${getLegalSectionLabel(locale, 'privacy')}`}
+							className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
+						>
+							<ExternalLink className="w-3.5 h-3.5" />
+						</a>
+					</TooltipTrigger>
+					<TooltipContent>
+						<p>{legalCopy.openInNewTabLabel}</p>
+					</TooltipContent>
+				</Tooltip>
+			</div>
 
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Legal References</h4>
-                            <ul className="list-disc list-inside mt-1 text-zinc-500 space-y-1">
-                                <li>
-                                    <a
-                                        href="https://www.gesetze-im-internet.de/ddg/__5.html"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        Section 5 DDG
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://www.die-medienanstalten.de/fileadmin/user_upload/Rechtsgrundlagen/Gesetze_Staatsvertraege/Medienstaatsvertrag_MStV.pdf"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        Media State Treaty (MStV)
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </ScrollArea>
-            </div>
-
-            <button
-                onClick={() => toggleSection("terms")}
-                className={cn(
-                    "flex items-center justify-between w-full px-4 py-3 text-sm shrink-0",
-                    "border border-white/5 rounded-lg",
-                    "transition-colors duration-200",
-                    openSection === "terms"
-                        ? "text-white bg-zinc-800/60 rounded-b-none border-b-0"
-                        : "text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50"
-                )}
-            >
-                <span className="font-medium">Terms & Acceptable Use</span>
-                <ChevronDown
-                    className={cn(
-                        "w-4 h-4 transition-transform duration-300 ease-out",
-                        openSection === "terms" && "rotate-180"
-                    )}
-                />
-            </button>
-
-            <div
-                className={cn(
-                    "overflow-hidden transition-all duration-300 ease-out -mt-3",
-                    "border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20",
-                    openSection === "terms" ? "flex-1 min-h-0 opacity-100" : "h-0 opacity-0 border-0"
-                )}
-            >
-                <ScrollArea className="h-full">
-                    <div className="p-4 space-y-4 text-sm text-zinc-400 leading-relaxed">
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Scope</h4>
-                            <p className="text-zinc-500">
-                                These terms apply to the use of synth.textmode.art and related features, including sketch sharing,
-                                gallery submission, and moderation workflows.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Nature of Service</h4>
-                            <p className="text-zinc-500">
-                                The platform is provided for creative coding and community sharing. Availability, performance, and
-                                compatibility may change over time. There is no guarantee that specific features are continuously
-                                available.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Acceptable Use</h4>
-                            <p className="text-zinc-500">You must not use the service to:</p>
-                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-                                <li>upload or distribute unlawful, infringing, or abusive content</li>
-                                <li>attempt unauthorized access, scraping abuse, or security bypasses</li>
-                                <li>disrupt service operation (for example by automated spam or denial patterns)</li>
-                                <li>misrepresent identity, rights ownership, or moderation history</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">User Content and Rights</h4>
-                            <p className="text-zinc-500">
-                                You remain responsible for the content you submit. By submitting to the gallery, you confirm that
-                                you have the required rights to publish code/text/media references and that publication does not
-                                violate third-party rights or applicable law.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Moderation and Enforcement</h4>
-                            <p className="text-zinc-500">
-                                We may review, deny, unpublish, or remove submissions where required for legal compliance, platform
-                                integrity, abuse prevention, or community safety. Queue limits and anti-spam controls may block or
-                                delay submissions when capacity is reached.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Unreviewed Sketches and Execution Risk</h4>
-                            <p className="text-zinc-500">
-                                Shared sketches can contain unreviewed third-party code. Running such code may trigger audio output,
-                                performance-heavy loops, or external network requests. You decide whether to execute shared code and
-                                should review it first.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Liability</h4>
-                            <p className="text-zinc-500">
-                                We are liable under statutory law. To the extent legally permitted, liability for slight negligence
-                                is limited to foreseeable, typical damages. Liability limitations do not apply in cases of intent,
-                                gross negligence, injury to life/body/health, mandatory statutory liability (including product
-                                liability), or where liability cannot be excluded under applicable law.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Applicable Law</h4>
-                            <p className="text-zinc-500">
-                                German law applies, without prejudice to mandatory consumer protection provisions that may apply in
-                                your country of residence.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Reporting and Contact</h4>
-                            <p className="text-zinc-500">
-                                For legal notices, rights claims, or abuse reports, contact{" "}
-                                <a
-                                    href="mailto:hello@textmode.art"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    hello@textmode.art
-                                </a>
-                                .
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Last Updated</h4>
-                            <p className="text-zinc-500">2026-02-08</p>
-                        </div>
-                    </div>
-                </ScrollArea>
-            </div>
-
-            <button
-                onClick={() => toggleSection("privacy")}
-                className={cn(
-                    "flex items-center justify-between w-full px-4 py-3 text-sm shrink-0",
-                    "border border-white/5 rounded-lg",
-                    "transition-colors duration-200",
-                    openSection === "privacy"
-                        ? "text-white bg-zinc-800/60 rounded-b-none border-b-0"
-                        : "text-zinc-300 bg-zinc-900/30 hover:text-white hover:bg-zinc-900/50"
-                )}
-            >
-                <span className="font-medium">Privacy Policy</span>
-                <ChevronDown
-                    className={cn(
-                        "w-4 h-4 transition-transform duration-300 ease-out",
-                        openSection === "privacy" && "rotate-180"
-                    )}
-                />
-            </button>
-
-            <div
-                className={cn(
-                    "overflow-hidden transition-all duration-300 ease-out -mt-3",
-                    "border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20",
-                    openSection === "privacy" ? "flex-1 min-h-0 opacity-100" : "h-0 opacity-0 border-0"
-                )}
-            >
-                <ScrollArea className="h-full">
-                    <div className="p-4 space-y-4 text-sm text-zinc-400 leading-relaxed">
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Controller</h4>
-                            <p>
-                                Christopher Dietrich
-                                <br />
-                                Herler Strasse 70/72
-                                <br />
-                                51067 Cologne
-                                <br />
-                                Germany
-                                <br />
-                                Email:{" "}
-                                <a
-                                    href="mailto:hello@textmode.art"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    hello@textmode.art
-                                </a>
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">General Information</h4>
-                            <p className="text-zinc-500">
-                                This policy explains how personal data is processed when using synth.textmode.art. Personal data
-                                means any information relating to an identified or identifiable natural person (Art. 4(1)
-                                GDPR/DSGVO).
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Hosting and Server Logs</h4>
-                            <p className="text-zinc-500">
-                                The service is hosted on infrastructure of{" "}
-                                <a
-                                    href="https://www.hetzner.com/legal/privacy-policy"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    Hetzner
-                                </a>
-                                . When you access this service, technically required connection data can be processed, such as
-                                IP address, timestamp, requested URL, referrer, user agent, and response status.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Purpose: secure and stable operation, debugging, abuse detection, and service defense.
-                                <br />
-                                Legal basis: Art. 6(1)(f) GDPR (legitimate interests).
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Publish Requests and Gallery Moderation</h4>
-                            <p className="text-zinc-500">
-                                If you submit content for the gallery, we process the data you send, including:
-                            </p>
-                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-                                <li>slug, title, description, code content, and optional license</li>
-                                <li>optional author name and optional social profile links</li>
-                                <li>moderation metadata (status, reviewed time, reviewer name, optional denial reason)</li>
-                                <li>publish-consent evidence (accepted flag, acceptance timestamp, policy version)</li>
-                            </ul>
-                            <p className="text-zinc-500 mt-2">
-                                Submission requires an explicit consent confirmation in the publish dialog before a request can be
-                                sent.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Purpose: processing and moderating your submission, operating the public gallery, and preventing
-                                abuse.
-                                <br />
-                                Legal basis: Art. 6(1)(b) GDPR (processing your submission request) and Art. 6(1)(f) GDPR
-                                (legitimate interests in secure and reliable operations).
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Important: Approved submissions are publicly visible by design, including any optional
-                                author/social information you provided.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Anti-Spam and Abuse Prevention</h4>
-                            <p className="text-zinc-500">
-                                We use layered anti-spam controls for gallery submissions: Cloudflare Turnstile verification,
-                                challenge + proof-of-work, idempotency guards, and global queue limits.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Cloudflare Turnstile may process technical signals required for bot detection (for example IP
-                                address, TLS fingerprint, user-agent, and sitekey/origin context). In this setup, Turnstile
-                                verification is used only for security/abuse prevention in publish requests.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Purpose: protect availability and moderation capacity.
-                                <br />
-                                Legal basis: Art. 6(1)(f) GDPR.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                For device storage/access rules under German law, processing is performed as technically
-                                necessary to provide a user-requested secure submission flow (Section 25(2) no. 2 TDDDG).
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Recipient/processor: Cloudflare, Inc. (USA). We rely on Cloudflare's DPA and transfer
-                                safeguards (including DPF/SCC mechanisms where applicable).
-                            </p>
-                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-                                <li>
-                                    <a
-                                        href="https://www.cloudflare.com/turnstile-privacy-policy/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        Cloudflare Turnstile Privacy Addendum
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://www.cloudflare.com/cloudflare-customer-dpa/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        Cloudflare Customer DPA
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://www.cloudflare.com/gdpr/subprocessors/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        Cloudflare Subprocessors
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Analytics (Umami)</h4>
-                            <p className="text-zinc-500">
-                                We use{" "}
-                                <a
-                                    href="https://umami.is/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    Umami
-                                </a>{" "}
-                                via{" "}
-                                <span className="text-zinc-300">analytics.textmode.art</span> to measure aggregate usage.
-                                According to our setup, no marketing cookies or cross-site profiling are used.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Purpose: reach measurement and product quality improvements.
-                                <br />
-                                Legal basis: Art. 6(1)(f) GDPR.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Local Storage and Device Access</h4>
-                            <p className="text-zinc-500">
-                                The app stores data in your browser local storage to provide core functionality and preferences,
-                                including code snippets and editor settings.
-                            </p>
-                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-                                <li>engine code and drafts</li>
-                                <li>app settings and UI preferences</li>
-                                <li>welcome dialog dismissal state</li>
-                            </ul>
-                            <p className="text-zinc-500 mt-2">
-                                Legal basis (GDPR): Art. 6(1)(b) and Art. 6(1)(f).
-                                <br />
-                                Legal basis (German telecommunications/data protection law): Section 25(2) no. 2 TDDDG for
-                                storage/access that is strictly necessary for the service requested by the user.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">External Resources and Third-Party Endpoints</h4>
-                            <p className="text-zinc-500">
-                                User code can load external media/resources. In those cases, your browser connects directly to
-                                external providers and transmits technically necessary connection data (including IP address).
-                                These providers process data under their own responsibility.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Recipients and Processors</h4>
-                            <p className="text-zinc-500">
-                                We use service providers for infrastructure operation (in particular hosting). Where required, we
-                                conclude data processing agreements under Art. 28 GDPR.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Storage Periods</h4>
-                            <p className="text-zinc-500">
-                                We store data only as long as necessary for the respective purpose and legal obligations:
-                            </p>
-                            <ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-                                <li>technical log data: limited retention for security and operations</li>
-                                <li>anti-spam challenge state: short-lived, automatically expiring in memory</li>
-                                <li>turnstile verification tokens: processed for verification and not stored long-term</li>
-                                <li>submission and moderation data: until moderation purpose ends or deletion is requested</li>
-                                <li>approved gallery entries: until removed by us or by justified deletion request</li>
-                                <li>local storage data: until you delete it in your browser</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Share-Link Execution Consent</h4>
-                            <p className="text-zinc-500">
-                                Before unreviewed shared code can run, users must explicitly confirm in the untrusted-sketch
-                                dialog.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Your Rights under GDPR</h4>
-                            <p className="text-zinc-500">
-                                You have rights under Arts. 15-22 GDPR, in particular access, rectification, erasure,
-                                restriction, data portability, and objection (Art. 21 GDPR). You may also withdraw consent at
-                                any time where processing is based on consent.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                To exercise your rights, contact{" "}
-                                <a
-                                    href="mailto:hello@textmode.art"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    hello@textmode.art
-                                </a>
-                                .
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Right to Lodge a Complaint</h4>
-                            <p className="text-zinc-500">
-                                You have the right to lodge a complaint with a supervisory authority, in particular in the
-                                member state of your habitual residence, place of work, or place of the alleged infringement.
-                            </p>
-                            <p className="text-zinc-500 mt-2">
-                                Competent authority for Cologne, NRW:
-                                <br />
-                                <a
-                                    href="https://www.ldi.nrw.de/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                >
-                                    Landesbeauftragte fuer Datenschutz und Informationsfreiheit Nordrhein-Westfalen
-                                </a>
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">No Automated Decision-Making</h4>
-                            <p className="text-zinc-500">
-                                We do not use automated decision-making or profiling under Art. 22 GDPR for legal or similarly
-                                significant effects.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Last Updated</h4>
-                            <p className="text-zinc-500">2026-02-08</p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium text-zinc-200 mb-2">Main Legal Sources</h4>
-                            <ul className="list-disc list-inside mt-1 text-zinc-500 space-y-1">
-                                <li>
-                                    <a
-                                        href="https://eur-lex.europa.eu/eli/reg/2016/679/oj"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        GDPR (EU) 2016/679
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://www.gesetze-im-internet.de/ddg/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        DDG
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://www.gesetze-im-internet.de/ttdsg/__25.html"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                        TDDDG Section 25
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </ScrollArea>
-            </div>
-        </div>
-    );
+			<div
+				className={cn(
+					'overflow-hidden transition-all duration-300 ease-out -mt-3',
+					'border-x border-b border-white/5 rounded-b-lg bg-zinc-900/20',
+					openSection === 'privacy' ? 'flex-1 min-h-0 opacity-100' : 'h-0 opacity-0 border-0'
+				)}
+			>
+				<ScrollArea className="h-full">
+					<section lang={locale}>
+						<legalDocuments.privacy.Content className="p-4" />
+					</section>
+				</ScrollArea>
+			</div>
+		</div>
+	);
 }

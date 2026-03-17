@@ -21,11 +21,11 @@ const securityHeadersPlugin: FastifyPluginAsync = async (app) => {
                     baseUri: ["'none'"],
                     frameAncestors: ["'self'"],
                     objectSrc: ["'none'"],
-                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://analytics.textmode.art', 'https://challenges.cloudflare.com'],
+                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://challenges.cloudflare.com'],
                     styleSrc: ["'self'", "'unsafe-inline'"],
                     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
                     mediaSrc: ["'self'", 'blob:', 'https:'],
-                    connectSrc: ["'self'", 'https:', 'https://analytics.textmode.art', 'https://challenges.cloudflare.com'],
+                    connectSrc: ["'self'", 'https:', 'https://challenges.cloudflare.com'],
                     frameSrc: ["'self'", runnerOrigin ?? "'self'", 'https://challenges.cloudflare.com'],
                 },
             }

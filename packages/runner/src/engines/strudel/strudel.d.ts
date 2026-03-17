@@ -10,7 +10,7 @@ declare module '@strudel/web' {
 			now: () => number;
 		};
 		state?: {
-			miniLocations?: any[];
+			miniLocations?: unknown[];
 		};
 		stop?: () => void;
 	}
@@ -19,6 +19,6 @@ declare module '@strudel/web' {
 	export function initAudio(): Promise<void>;
 	export function samples(config: string | object): Promise<void>;
 	export function registerZZFXSounds(): Promise<void>;
-	export function evaluate(code: string, autoplay?: boolean): Promise<any>;
+	export function evaluate(code: string, autoplay?: boolean): Promise<unknown>;
 	export function hush(): void;
 }

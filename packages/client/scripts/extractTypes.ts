@@ -10,6 +10,7 @@
  * - INJECTS augmented members directly into original type definitions
  * - Generates a minimal globals.d.ts for live coding environment
  * - Strips @example blocks to reduce bundle size
+ * - Excludes $- and _-prefixed callable declarations (e.g. $foo, _bar)
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -54,8 +55,18 @@ interface InterfaceAugmentation {
     members: string;  // The raw interface body content
 }
 
+interface ContentFilterResult {
+    content: string;
+    removedCount: number;
+}
+
 // Map: moduleName -> interfaceName -> augmentation info
 type AugmentationMap = Map<string, Map<string, InterfaceAugmentation>>;
+
+interface Range {
+    start: number;
+    end: number;
+}
 
 // ============================================================================
 // Augmentation Parsing
@@ -137,7 +148,8 @@ function extractInterfacesFromBlock(
         }
 
         // Include JSDoc with the interface body
-        const interfaceBody = jsdoc + blockContent.substring(braceStart + 1, pos - 1).trim();
+        const interfaceBodyRaw = jsdoc + blockContent.substring(braceStart + 1, pos - 1).trim();
+        const interfaceBody = filterDisallowedPrefixedMembers(interfaceBodyRaw).content;
 
         // Store the augmentation
         if (!augmentations.has(moduleName)) {
@@ -374,6 +386,145 @@ function stripExamples(content: string): string {
     );
 }
 
+/**
+ * Remove member declarations whose name starts with "$" or "_".
+ *
+ * Supported patterns:
+ * - function $name(...): ...;
+ * - function _name(...): ...;
+ * - $name(...): ...;
+ * - _name(...): ...;
+ * - $name?: (...args) => ...;
+ * - _name?: (...args) => ...;
+ * - $name?: SomeType;
+ * - _name!: SomeType;
+ * - static $name = ...;
+ */
+function filterDisallowedPrefixedMembers(content: string): ContentFilterResult {
+    const patterns = [
+        // function declarations
+        /^[ \t]*(?:export\s+)?(?:declare\s+)?function\s+[\$_][A-Za-z0-9_$]*\s*(?:<[^>{;]*>\s*)?\(/gm,
+        // method signatures
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare|async)\s+)*[\$_][A-Za-z0-9_$]*\??\s*(?:<[^>{;]*>\s*)?\(/gm,
+        // callable property signatures
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*:\s*(?:<[^>{;]*>\s*)?\(/gm
+        ,
+        // typed field/property declarations (covers class variables and similar members)
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*!?\s*:/gm,
+        // initialized field/property declarations
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*!?\s*=/gm
+    ];
+
+    const ranges: Range[] = [];
+
+    for (const pattern of patterns) {
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(content)) !== null) {
+            const start = match.index;
+            const end = findDeclarationEnd(content, start);
+            if (end > start) {
+                ranges.push({ start, end });
+            }
+        }
+    }
+
+    if (ranges.length === 0) {
+        return { content, removedCount: 0 };
+    }
+
+    const mergedRanges = mergeRanges(ranges);
+    let filtered = content;
+
+    for (let index = mergedRanges.length - 1; index >= 0; index--) {
+        const range = mergedRanges[index];
+        filtered = filtered.slice(0, range.start) + filtered.slice(range.end);
+    }
+
+    return { content: filtered, removedCount: mergedRanges.length };
+}
+
+function mergeRanges(ranges: Range[]): Range[] {
+    const sorted = [...ranges].sort((a, b) => a.start - b.start);
+    const merged: Range[] = [sorted[0]];
+
+    for (let index = 1; index < sorted.length; index++) {
+        const current = sorted[index];
+        const last = merged[merged.length - 1];
+
+        if (current.start <= last.end) {
+            last.end = Math.max(last.end, current.end);
+        } else {
+            merged.push({ ...current });
+        }
+    }
+
+    return merged;
+}
+
+function findDeclarationEnd(content: string, start: number): number {
+    let index = start;
+    let parenDepth = 0;
+    let bracketDepth = 0;
+    let braceDepth = 0;
+    let angleDepth = 0;
+
+    while (index < content.length) {
+        const char = content[index];
+        const nextChar = index + 1 < content.length ? content[index + 1] : '';
+
+        if (char === '/' && nextChar === '/') {
+            index += 2;
+            while (index < content.length && content[index] !== '\n') {
+                index++;
+            }
+            continue;
+        }
+
+        if (char === '/' && nextChar === '*') {
+            index += 2;
+            while (index + 1 < content.length && !(content[index] === '*' && content[index + 1] === '/')) {
+                index++;
+            }
+            index += 2;
+            continue;
+        }
+
+        if (char === '"' || char === '\'' || char === '`') {
+            const quote = char;
+            index++;
+            while (index < content.length) {
+                if (content[index] === '\\') {
+                    index += 2;
+                    continue;
+                }
+                if (content[index] === quote) {
+                    index++;
+                    break;
+                }
+                index++;
+            }
+            continue;
+        }
+
+        if (char === '(') parenDepth++;
+        else if (char === ')') parenDepth = Math.max(0, parenDepth - 1);
+        else if (char === '[') bracketDepth++;
+        else if (char === ']') bracketDepth = Math.max(0, bracketDepth - 1);
+        else if (char === '{') braceDepth++;
+        else if (char === '}') braceDepth = Math.max(0, braceDepth - 1);
+        else if (char === '<') angleDepth++;
+        else if (char === '>') angleDepth = Math.max(0, angleDepth - 1);
+
+        if (char === ';' && parenDepth === 0 && bracketDepth === 0 && braceDepth === 0 && angleDepth === 0) {
+            return index + 1;
+        }
+
+        index++;
+    }
+
+    return start;
+}
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -413,6 +564,10 @@ function processConfig(config: TypeGenerationConfig) {
             // Strip @example blocks
             content = stripExamples(content);
 
+            // Remove $- and _-prefixed members from source types
+            const filtered = filterDisallowedPrefixedMembers(content);
+            content = filtered.content;
+
             // Store for second pass
             fileContents.set(filePath, { virtualPath, content, lib: lib.name });
         }
@@ -423,7 +578,7 @@ function processConfig(config: TypeGenerationConfig) {
     for (const [moduleName, interfaces] of augmentations) {
         console.log(`   ${moduleName}:`);
         for (const [interfaceName, aug] of interfaces) {
-            const memberCount = (aug.members.match(/\w+\s*\(/g) || []).length;
+            const memberCount = (aug.members.match(/\b[A-Za-z][A-Za-z0-9_]*\s*\(/g) || []).length;
             console.log(`      - ${interfaceName} (${memberCount} method(s))`);
         }
     }

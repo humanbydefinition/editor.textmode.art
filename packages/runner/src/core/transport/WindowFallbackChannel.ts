@@ -2,11 +2,11 @@
  * Handles sending messages via window.parent.postMessage as a fallback
  * when MessagePort communication is unavailable or unreliable.
  */
-export class WindowFallbackChannel<TMessage = any> {
+export class WindowFallbackChannel<TMessage = unknown> {
 	private activeParentOrigin: string | null = null;
-	private readonly envelopeCreator?: (message: TMessage) => any;
+	private readonly envelopeCreator?: (message: TMessage) => unknown;
 
-	constructor(envelopeCreator?: (message: TMessage) => any) {
+	constructor(envelopeCreator?: (message: TMessage) => unknown) {
 		this.envelopeCreator = envelopeCreator;
 	}
 

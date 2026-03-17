@@ -26,6 +26,10 @@
       "types": "./dist/sketch.d.ts",
       "default": "./dist/sketch.js"
     },
+    "./contact": {
+      "types": "./dist/contact.d.ts",
+      "default": "./dist/contact.js"
+    },
     "./runner/textmode": {
       "types": "./dist/runner/textmode.d.ts",
       "default": "./dist/runner/textmode.js"

@@ -21,6 +21,10 @@ export interface EngineAdapter {
     setStatus: (status: StatusState) => void;
     getError: () => CodeError | null;
     setError: (error: CodeError | null) => void;
+    getEngineError: (engineId: string) => CodeError | null;
+    getEngineErrors: () => Record<string, CodeError | null>;
+    setEngineError: (engineId: string, error: CodeError | null) => void;
+    clearEngineError: (engineId: string) => void;
     getLastWorkingCode: (engineId: string) => string | null;
     setLastWorkingCode: (engineId: string, code: string | null) => void;
     getPendingWorkingCode: (engineId: string) => string | null;
@@ -84,6 +88,10 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
             setStatus: (status) => getState().setStatus(status),
             getError: () => getState().error,
             setError: (error) => getState().setError(error),
+            getEngineError: (engineId) => getState().engineErrors[engineId] ?? null,
+            getEngineErrors: () => getState().engineErrors,
+            setEngineError: (engineId, error) => getState().setEngineError(engineId, error),
+            clearEngineError: (engineId) => getState().clearEngineError(engineId),
             getLastWorkingCode: (engineId) => getState().engineStates[engineId]?.lastWorkingCode ?? null,
             setLastWorkingCode: (engineId, code) => getState().setEngineLastWorkingCode(engineId, code),
             getPendingWorkingCode: (engineId) => getState().engineStates[engineId]?.pendingWorkingCode ?? null,

@@ -17,6 +17,12 @@ body.admin-mode #app-container {
     overflow: auto;
 }
 
+/* Legal mode: enable interactions but keep viewport non-scrolling */
+body.legal-mode #app-container {
+    pointer-events: auto;
+    overflow: hidden;
+}
+
 .layout-pane {
     flex: 1;
     position: relative;

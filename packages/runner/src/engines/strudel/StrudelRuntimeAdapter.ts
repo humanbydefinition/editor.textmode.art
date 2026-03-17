@@ -13,6 +13,8 @@ export class StrudelRuntimeAdapter {
 	private runtimeInitPromise: Promise<void> | null = null;
 	private runtimeInitialized = false;
 	private audioInitialized = false;
+	private consoleErrorSuppressionDepth = 0;
+	private originalConsoleError: typeof console.error | null = null;
 
 	async ensureRuntimeInitialized(onEvalError: (error: Error) => void): Promise<void> {
 		if (this.runtimeInitialized) return;
@@ -52,8 +54,15 @@ export class StrudelRuntimeAdapter {
 		this.audioInitialized = true;
 	}
 
-	async evaluate(code: string, autostart: boolean): Promise<StrudelPatternLike> {
-		return await evaluateStrudel(code, autostart) as StrudelPatternLike;
+	async evaluate(code: string, autostart: boolean): Promise<StrudelPatternLike | undefined> {
+		// @strudel/web reports many eval/runtime failures via onEvalError and returns
+		// undefined instead of throwing. Callers must treat undefined as failure.
+		this.beginEvalConsoleErrorSuppression();
+		try {
+			return await evaluateStrudel(code, autostart) as StrudelPatternLike | undefined;
+		} finally {
+			this.endEvalConsoleErrorSuppression();
+		}
 	}
 
 	hush(): void {
@@ -87,5 +96,30 @@ export class StrudelRuntimeAdapter {
 
 	isAudioInitialized(): boolean {
 		return this.audioInitialized;
+	}
+
+	private beginEvalConsoleErrorSuppression(): void {
+		if (this.shouldPreserveEvalConsoleErrors()) return;
+		if (this.consoleErrorSuppressionDepth === 0) {
+			this.originalConsoleError = console.error;
+			console.error = () => {};
+		}
+		this.consoleErrorSuppressionDepth += 1;
+	}
+
+	private endEvalConsoleErrorSuppression(): void {
+		if (this.shouldPreserveEvalConsoleErrors()) return;
+		if (this.consoleErrorSuppressionDepth === 0) return;
+
+		this.consoleErrorSuppressionDepth -= 1;
+		if (this.consoleErrorSuppressionDepth === 0 && this.originalConsoleError) {
+			console.error = this.originalConsoleError;
+			this.originalConsoleError = null;
+		}
+	}
+
+	private shouldPreserveEvalConsoleErrors(): boolean {
+		// Opt-in debug escape hatch for diagnosing Strudel internals in dev.
+		return import.meta.env.DEV && import.meta.env.VITE_STRUDEL_PRESERVE_EVAL_CONSOLE_ERRORS === 'true';
 	}
 }

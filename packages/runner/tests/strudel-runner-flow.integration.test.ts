@@ -24,7 +24,7 @@ describe('StrudelRunner integration flow', () => {
 				hush: () => void;
 			};
 			handleParentMessage: (message: unknown) => Promise<void>;
-			attachPort: (port: any, onMessage: any) => void;
+			attachPort: (port: unknown, onMessage: unknown) => void;
 			timerManager: { dispose: () => void };
 		};
 
@@ -80,6 +80,57 @@ describe('StrudelRunner integration flow', () => {
 		expect(runOkIndex).toBeGreaterThanOrEqual(0);
 		expect(playStateIndex).toBeGreaterThan(runOkIndex);
 		expect(audioDataIndex).toBeGreaterThan(playStateIndex);
+
+		runner.timerManager.dispose();
+	});
+
+	it('does not emit RUN_OK when evaluate fails via onEvalError', async () => {
+		const runner = new StrudelRunner(new Set(['*'])) as unknown as {
+			runtimeAdapter: {
+				ensureRuntimeInitialized: (cb: (error: Error) => void) => Promise<void>;
+				isAudioInitialized: () => boolean;
+				evaluate: (code: string, autostart: boolean) => Promise<unknown>;
+				getMiniLocations: () => undefined;
+				getCycle: () => number;
+				isRuntimeInitialized: () => boolean;
+				initializeAudio: () => Promise<void>;
+				hush: () => void;
+			};
+			handleParentMessage: (message: unknown) => Promise<void>;
+			attachPort: (port: unknown, onMessage: unknown) => void;
+			timerManager: { dispose: () => void };
+		};
+
+		const postMessage = vi.fn();
+		const mockPort = {
+			postMessage,
+			start: vi.fn(),
+			onmessage: null,
+		};
+		runner.attachPort(mockPort, vi.fn());
+
+		runner.runtimeAdapter = {
+			ensureRuntimeInitialized: async (onEvalError) => {
+				onEvalError(new ReferenceError('ala is not defined'));
+			},
+			isAudioInitialized: () => true,
+			evaluate: async () => undefined,
+			getMiniLocations: () => undefined,
+			getCycle: () => 0,
+			isRuntimeInitialized: () => true,
+			initializeAudio: async () => {},
+			hush: () => {},
+		};
+
+		await runner.handleParentMessage({
+			type: 'STR_RUN_CODE',
+			code: 'ala()',
+			autostart: true,
+		});
+
+		const messageTypes = postMessage.mock.calls.map((call) => (call[0] as { type: string }).type);
+		expect(messageTypes).toContain('STR_RUN_ERROR');
+		expect(messageTypes).not.toContain('STR_RUN_OK');
 
 		runner.timerManager.dispose();
 	});

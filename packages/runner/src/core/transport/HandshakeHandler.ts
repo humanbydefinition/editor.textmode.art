@@ -5,7 +5,7 @@ export interface HandshakeHandlerOptions {
 	/** Callback to check if the message origin is allowed */
 	isAllowedOrigin: (origin: string) => boolean;
 	/** Type guard to check if a message is an initialization message */
-	isInitMessage: (data: any) => boolean;
+	isInitMessage: (data: unknown) => boolean;
 	/** Callback to attach the extracted MessagePort */
 	onPortExtracted: (port: MessagePort) => void;
 	/** Callback to signal that the handshake is complete and the runner is ready */

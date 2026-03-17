@@ -47,7 +47,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.setError(null);
+		this.deps.store.clearEngineError(this.engineId);
 		this.deps.store.setStatus('ready');
 		editor?.clearMarkers();
 		this.deps.getRuntime()?.softReset(code);
@@ -84,7 +84,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		this.setPendingWorkingCode(code);
 
 		this.deps.store.setStatus('running');
-		this.deps.store.setError(null);
+		this.deps.store.clearEngineError(this.engineId);
 		editor?.clearMarkers();
 		this.callbacks.onRenderOverlay();
 	}
@@ -105,7 +105,11 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
 		this.deps.store.setStatus('error');
-		this.deps.store.setError({ ...error, source: 'textmode' });
+		this.deps.store.setEngineError(this.engineId, {
+			...error,
+			message: this.formatErrorMessage(error.message),
+			source: 'textmode',
+		});
 		this.callbacks.onRenderOverlay();
 	}
 }

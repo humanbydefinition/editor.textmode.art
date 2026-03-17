@@ -51,6 +51,15 @@ export function validateSlug(slug: string): { valid: true } | { valid: false; re
   return { valid: true };
 }
 
+export function normalizeAndValidateSlug(rawSlug: string): { valid: true; slug: string } | { valid: false; slug: string; reason: string } {
+  const normalizedSlug = normalizeSlug(rawSlug);
+  const slugValidation = validateSlug(normalizedSlug);
+  if (!slugValidation.valid) {
+    return { ...slugValidation, slug: normalizedSlug };
+  }
+  return { valid: true, slug: normalizedSlug };
+}
+
 /** Check whether a slug is already in use by an active (PENDING | APPROVED) sketch. */
 export async function isSlugTaken(slug: string): Promise<boolean> {
   const existing = await prisma.sketchRequest.findFirst({

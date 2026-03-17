@@ -11,7 +11,7 @@ export interface PublishRequestSuccessDialogProps {
 export function PublishRequestSuccessDialog({ submittedSlug, onClose }: PublishRequestSuccessDialogProps) {
 	const [copied, setCopied] = useState(false);
 	const slug = submittedSlug || 'your-sketch';
-	const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+	const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5180';
 	const url = `${baseOrigin}/s/${slug}`;
 
 	useEffect(() => {

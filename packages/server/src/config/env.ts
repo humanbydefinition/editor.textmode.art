@@ -17,7 +17,7 @@ const envSchema = z.object({
   SCREENSHOT_BASE_URL: z.string().url().optional(),
   SCREENSHOT_STORAGE_DIR: z.string().optional(),
   SCREENSHOT_PREVIEW_TOKEN: z.string().min(16).optional(),
-  PUBLISH_CONSENT_POLICY_VERSION: z.string().min(1).max(64).default('2026-02-08'),
+  PUBLISH_CONSENT_POLICY_VERSION: z.string().min(1).max(64).default('2026-02-24'),
   ANTI_SPAM_SECRET: z.string().min(32).optional(),
   ANTI_SPAM_POW_DIFFICULTY: z.coerce.number().int().min(8).max(24).default(14),
   ANTI_SPAM_CHALLENGE_TTL_SECONDS: z.coerce.number().int().min(30).max(900).default(180),
@@ -30,6 +30,11 @@ const envSchema = z.object({
   DISCORD_BOT_TOKEN: z.string().optional(),
   DISCORD_CHANNEL_ID: z.string().optional(),
   DISCORD_APPROVED_CHANNEL_ID: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  CONTACT_EMAIL_RECIPIENT: z.string().email().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -44,6 +49,9 @@ if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.TURNSTILE_SECRET_KEY) {
 }
 if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.SCREENSHOT_PREVIEW_TOKEN) {
   throw new Error('SCREENSHOT_PREVIEW_TOKEN must be set in production and be at least 16 characters long.');
+}
+if (parsedEnv.NODE_ENV === 'production' && !parsedEnv.PUBLIC_BASE_URL) {
+  throw new Error('PUBLIC_BASE_URL must be set in production.');
 }
 
 export const env: Env = {

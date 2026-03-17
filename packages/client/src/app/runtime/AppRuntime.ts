@@ -318,6 +318,9 @@ export class AppRuntime {
 					if (!errorSource) return;
 					this.engineLifecycle.getEngine(errorSource as EngineId)?.getController()?.handleRevertToLastWorking();
 				},
+				revertToLastWorkingForEngine: (engineId: string) => {
+					this.engineLifecycle.getEngine(engineId as EngineId)?.getController()?.handleRevertToLastWorking();
+				},
 				reconnectTextmodeRunner: () => {
 					this.storeAdapter.engine.setCustomState('textmode', 'runnerReconnecting', true);
 					this.engineLifecycle.reconnectTextmodeRunner();

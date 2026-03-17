@@ -1,14 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EditorLayout, MobileNav } from '@/features/editor-layout';
 import { SystemMenu } from '@/features/system-menu';
-import { ErrorOverlay } from '@/shared/components/ErrorOverlay';
 import { Toaster } from '@/shared/ui/sonner';
 import { WelcomeDialog } from '@/shared/components/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {
-    selectError,
-    selectHasLastWorkingForError,
+    selectEngineErrors,
     selectShareState,
     selectTextmodeRunnerReady,
     selectTextmodeRunnerReconnecting,
@@ -22,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
 import { SlugInfoAlert } from './SlugInfoAlert';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
+import { toast } from 'sonner';
 
 /**
  * Root component for the application.
@@ -40,17 +39,45 @@ export function AppShell() {
     const { actions, state: runtimeState, layout } = useAppRuntime();
 
     // Store State
-    const error = useAppStore(selectError);
-    const setError = useAppStore((state) => state.setError);
+    const engineErrors = useAppStore(selectEngineErrors);
+    const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.engineStates.textmode?.lastWorkingCode));
+    const strudelHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.engineStates.strudel?.lastWorkingCode));
+    const clearEngineError = useAppStore((state) => state.clearEngineError);
     const share = useAppStore(selectShareState);
     const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
     const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
     const textmodeRunnerReady = useAppStore(selectTextmodeRunnerReady);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
-    const hasLastWorking = useAppStore(selectHasLastWorkingForError);
+    useEffect(() => {
+        for (const engineId of ERROR_TOAST_ENGINE_IDS) {
+            const error = engineErrors[engineId];
+            const toastId = getEngineErrorToastId(engineId);
+            if (!error) {
+                toast.dismiss(toastId);
+                continue;
+            }
 
-    const onDismissError = () => setError(null);
+            toast.error(getEngineErrorTitle(engineId), {
+                id: toastId,
+                toasterId: ENGINE_ERROR_TOASTER_ID,
+                description: getEngineErrorDescription(error),
+                duration: Number.POSITIVE_INFINITY,
+                closeButton: true,
+                action: hasLastWorkingForEngine(engineId, textmodeHasLastWorking, strudelHasLastWorking)
+                    ? {
+                        label: 'revert',
+                        onClick: () => {
+                            actions.revertToLastWorkingForEngine(engineId);
+                        },
+                    }
+                    : undefined,
+                onDismiss: () => {
+                    clearEngineError(engineId);
+                },
+            });
+        }
+    }, [engineErrors, textmodeHasLastWorking, strudelHasLastWorking, clearEngineError]);
 
     const handleShare = () => {
         const data = actions.getShareExportData();
@@ -172,15 +199,46 @@ export function AppShell() {
                         </>
                     )}
 
-                    <ErrorOverlay
-                        error={error}
-                        hasLastWorking={hasLastWorking}
-                        onDismiss={onDismissError}
-                        onRevert={actions.revertToLastWorking}
-                    />
                 </div>
             </div>
             <Toaster />
+            <Toaster
+                id={ENGINE_ERROR_TOASTER_ID}
+                position="bottom-left"
+                visibleToasts={2}
+                swipeDirections={[]}
+                offset={8}
+                className="pointer-events-auto"
+            />
         </>
     );
+}
+
+const ERROR_TOAST_ENGINE_IDS = ['textmode', 'strudel'] as const;
+const ENGINE_ERROR_TOASTER_ID = 'engine-errors';
+
+function getEngineErrorToastId(engineId: string): string {
+    return `engine-error-${engineId}`;
+}
+
+function getEngineErrorTitle(engineId: string): string {
+    return `${engineId} pane error`;
+}
+
+function getEngineErrorDescription(error: { message: string; line?: number; column?: number }): string {
+    const location = error.line !== undefined
+        ? `line ${error.line}${error.column !== undefined ? `:${error.column}` : ''}`
+        : null;
+
+    return location ? `${location}: ${error.message}` : error.message;
+}
+
+function hasLastWorkingCode(code: string | null | undefined): boolean {
+    return code !== null && code !== undefined;
+}
+
+function hasLastWorkingForEngine(engineId: string, textmodeHasLastWorking: boolean, strudelHasLastWorking: boolean): boolean {
+    if (engineId === 'textmode') return textmodeHasLastWorking;
+    if (engineId === 'strudel') return strudelHasLastWorking;
+    return false;
 }

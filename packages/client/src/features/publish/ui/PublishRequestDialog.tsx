@@ -17,7 +17,8 @@ import {
 } from '@/platform/api/SketchApiService';
 import { SLUG_MAX_LENGTH } from '@synth.textmode.art/contracts/sketch';
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
-import { Check, Loader2, X, Send, AlertCircle, Globe, ExternalLink } from 'lucide-react';
+import { SocialIcon } from '@/shared/components/SocialIcon';
+import { Check, Loader2, X, Send, AlertCircle, ExternalLink } from 'lucide-react';
 
 const LICENSE_OPTIONS = [
 	'None',
@@ -39,7 +40,7 @@ const LICENSE_LABELS: Record<(typeof LICENSE_OPTIONS)[number], string> = {
 	'CC BY-NC-ND 4.0': 'Attribution NonCommercial NoDerivatives',
 };
 
-const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-08';
+const DEFAULT_PUBLISH_CONSENT_POLICY_VERSION = '2026-02-24';
 
 function getPublishConsentPolicyVersion(): string {
 	const fromEnv = String(import.meta.env.VITE_PUBLISH_CONSENT_POLICY_VERSION ?? '').trim();
@@ -396,7 +397,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 										id="author"
 										value={authorName}
 										onChange={(e) => setAuthorName(e.target.value)}
-										placeholder="Your name or handle"
+										placeholder="your name or handle"
 										className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600"
 										maxLength={32}
 									/>
@@ -456,7 +457,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 									{/* Website */}
 									<div className="flex items-center gap-2">
 										<span className="w-7 flex justify-center shrink-0">
-											<Globe className="w-4 h-4 text-zinc-400" />
+											<SocialIcon label="Website" className="w-4 h-4 text-zinc-400" />
 										</span>
 										<Input
 											value={website}
@@ -470,13 +471,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 									{/* GitHub */}
 									<div className="flex items-center gap-2">
 										<span className="w-7 flex justify-center shrink-0">
-											<svg
-												className="w-4 h-4 text-zinc-400"
-												viewBox="0 0 24 24"
-												fill="currentColor"
-											>
-												<path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-											</svg>
+											<SocialIcon label="GitHub" className="w-4 h-4 text-zinc-400" />
 										</span>
 										<div className="flex-1 relative">
 											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -495,13 +490,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 									{/* Instagram */}
 									<div className="flex items-center gap-2">
 										<span className="w-7 flex justify-center shrink-0">
-											<svg
-												className="w-4 h-4 text-zinc-400"
-												viewBox="0 0 24 24"
-												fill="currentColor"
-											>
-												<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
-											</svg>
+											<SocialIcon label="Instagram" className="w-4 h-4 text-zinc-400" />
 										</span>
 										<div className="flex-1 relative">
 											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -522,13 +511,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 									{/* Bluesky */}
 									<div className="flex items-center gap-2">
 										<span className="w-7 flex justify-center shrink-0">
-											<svg
-												className="w-4 h-4 text-zinc-400"
-												viewBox="0 0 24 24"
-												fill="currentColor"
-											>
-												<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.785 2.627 3.585 3.493 6.18 3.254-.02.028-3.876.89-3.876 3.636 0 4.063 5.572 4.396 7.476 1.281.354-.578.598-1.258.598-2.068 0 .81.244 1.49.598 2.068 1.904 3.115 7.476 2.782 7.476-1.281 0-2.747-3.856-3.608-3.876-3.636 2.595.239 5.395-.627 6.18-3.254.246-.828.624-5.788.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C14.046 4.747 11.087 8.686 12 10.8z" />
-											</svg>
+											<SocialIcon label="Bluesky" className="w-4 h-4 text-zinc-400" />
 										</span>
 										<div className="flex-1 relative">
 											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -547,15 +530,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 									{/* Mastodon */}
 									<div className="flex items-center gap-2">
 										<span className="w-7 flex justify-center shrink-0">
-											<svg
-												className="w-4 h-4 text-zinc-400"
-												viewBox="0 0 24 24"
-												fill="currentColor"
-												role="img"
-												aria-label="Mastodon"
-											>
-												<path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z" />
-											</svg>
+											<SocialIcon label="Mastodon" className="w-4 h-4 text-zinc-400" />
 										</span>
 										<Input
 											value={mastodon}
@@ -599,13 +574,36 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											<p className="text-xs text-zinc-400 leading-relaxed">
 												If approved, this submission can be publicly listed in the gallery and
 												shared via a public URL. Any optional author name or social links I
-												provide may be shown publicly.
+												provide may be shown publicly. Approved submissions may also be shared on
+												official project social media channels, with attribution and social links
+												where technically feasible.
 											</p>
 											<p className="text-[11px] text-zinc-500">
 												Policy version:{' '}
 												<span className="font-mono text-zinc-400">
 													{PUBLISH_CONSENT_POLICY_VERSION}
 												</span>
+											</p>
+											<p className="text-[11px] text-zinc-500 leading-relaxed">
+												By confirming publication consent and publishing, you agree to the{' '}
+												<a
+													href="/tos?lang=en"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+												>
+													Terms &amp; Acceptable Use
+												</a>{' '}
+												and acknowledge the{' '}
+												<a
+													href="/privacy?lang=en"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+												>
+													Privacy Policy
+												</a>
+												.
 											</p>
 										</div>
 									</div>
@@ -630,7 +628,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											{turnstileError && <p className="text-xs text-red-400">{turnstileError}</p>}
 											{turnstileToken && !turnstileError && (
 												<p className="text-xs text-emerald-400">
-													security verification complete.
+													verification complete.
 												</p>
 											)}
 										</>

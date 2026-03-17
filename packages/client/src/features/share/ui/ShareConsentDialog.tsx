@@ -135,10 +135,23 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent side="top">
-								<p>loads your saved or default sketches</p>
+								<p>loads your saved or the default sketch</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>
+
+					<p className="text-[11px] text-zinc-500 leading-relaxed">
+						by unlocking, you agree to the{' '}
+						<a
+							href="/tos?lang=en"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+						>
+							terms &amp; acceptable use
+						</a>
+						.
+					</p>
 				</div>
 			</DialogContent>
 		</Dialog>
