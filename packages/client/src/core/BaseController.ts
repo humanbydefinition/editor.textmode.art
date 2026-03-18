@@ -272,7 +272,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	/**
 	 * Format error message.
 	 * Default implementation returns message as-is.
-	 * Override to add prefixes like "[strudel]".
+	 * Override to add engine-specific prefixes when needed.
 	 */
 	protected formatErrorMessage(message: string): string {
 		return message;
@@ -292,12 +292,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	private clearApprovedSketchIfCustomized(code: string): void {
 		const approvedSketch = this.deps.store.getApprovedSketch();
 		if (approvedSketch) {
-			const approvedCodeForEngine =
-				this.engineId === 'strudel'
-					? approvedSketch.strudelCode ?? ''
-					: approvedSketch.textmodeCode;
-
-			if (code !== approvedCodeForEngine) {
+			if (code !== approvedSketch.textmodeCode) {
 				this.deps.store.setApprovedSketch(null);
 				this.deps.store.setSlugSketchInfo(null);
 			}
@@ -307,12 +302,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		// Check if reverted code matches the original gallery sketch
 		const originalSketch = this.deps.store.getOriginalApprovedSketch();
 		if (originalSketch) {
-			const originalCodeForEngine =
-				this.engineId === 'strudel'
-					? originalSketch.strudelCode ?? ''
-					: originalSketch.textmodeCode;
-
-			if (code === originalCodeForEngine) {
+			if (code === originalSketch.textmodeCode) {
 				const originalSlugInfo = this.deps.store.getOriginalSlugSketchInfo();
 				this.deps.store.setApprovedSketch(originalSketch);
 				if (originalSlugInfo) {
@@ -335,11 +325,6 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	private getSharePayloadCodeForEngine(payload: SharePayload | null): string | null {
 		if (!payload?.engines) return null;
-
-		if (this.engineId === 'strudel') {
-			return payload.engines.strudel ?? '';
-		}
-
 		return payload.engines.textmode ?? '';
 	}
 

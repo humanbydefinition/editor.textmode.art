@@ -2,7 +2,7 @@ import type { AppSettings } from '@/core/app.types';
 import type { IController, BaseControllerCallbacks } from './BaseController';
 import type { BaseEditor } from './BaseEditor';
 
-export type EngineId = 'textmode' | 'strudel';
+export type EngineId = 'textmode';
 
 /**
  * Lifecycle capability model used by EngineLifecycle to keep orchestration generic.
@@ -10,15 +10,15 @@ export type EngineId = 'textmode' | 'strudel';
 export interface EngineLifecycleCapabilities {
     /** Whether engine is initialized at app boot or enabled dynamically. */
     bootStrategy: 'eager' | 'toggleable';
-    /** Engine execution should be gated by global transport state (e.g. play/pause). */
+    /** Engine execution should be gated by global transport state. */
     requiresTransportGate?: boolean;
-    /** Engine controller can react to transport pause/play semantics. */
+    /** Engine controller can react to transport state changes. */
     supportsTransportControl?: boolean;
     /** Engine runtime supports reconnecting its execution environment. */
     supportsReconnect?: boolean;
     /** Engine can consume audio reactivity input data. */
     consumesAudioInput?: boolean;
-    /** Engine can produce/drive audio reactivity source data. */
+    /** Engine can produce audio reactivity source data. */
     producesAudioSource?: boolean;
     /** Custom engine state defaults to apply during initialization. */
     customStateOnInit?: Record<string, unknown>;

@@ -6,8 +6,6 @@
 /**
  * Application settings persisted to localStorage.
  */
-export type StrudelTransportState = 'paused' | 'playing';
-
 export interface AppSettings {
 	/** Run code automatically on changes */
 	autoExecute: boolean;
@@ -21,10 +19,6 @@ export interface AppSettings {
 	lineNumbers: boolean;
 	/** Delay in milliseconds before auto-executing code */
 	autoExecuteDelay: number;
-	/** Whether Strudel audio is enabled */
-	strudelEnabled: boolean;
-	/** Whether Strudel transport should currently play audio */
-	strudelTransport: StrudelTransportState;
 }
 
 /**
@@ -37,8 +31,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	uiVisible: true,
 	lineNumbers: false,
 	autoExecuteDelay: 500,
-	strudelEnabled: true,
-	strudelTransport: 'paused',
 };
 
 /**
@@ -54,7 +46,7 @@ export interface CodeError {
 	line?: number;
 	/** Column number in user code (1-indexed) */
 	column?: number;
-	/** Source of the error (e.g., 'textmode' or 'strudel') */
+	/** Source of the error (e.g., 'textmode') */
 	source?: string;
 }
 
