@@ -8,7 +8,6 @@ import { useAppStore } from '@/platform/state/appStore';
 import {
     selectEngineErrors,
     selectShareState,
-    selectTextmodeRunnerReady,
     selectTextmodeRunnerReconnecting,
     selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
@@ -41,12 +40,10 @@ export function AppShell() {
     // Store State
     const engineErrors = useAppStore(selectEngineErrors);
     const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.engineStates.textmode?.lastWorkingCode));
-    const strudelHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.engineStates.strudel?.lastWorkingCode));
     const clearEngineError = useAppStore((state) => state.clearEngineError);
     const share = useAppStore(selectShareState);
     const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
     const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
-    const textmodeRunnerReady = useAppStore(selectTextmodeRunnerReady);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
     useEffect(() => {
@@ -64,7 +61,7 @@ export function AppShell() {
                 description: getEngineErrorDescription(error),
                 duration: Number.POSITIVE_INFINITY,
                 closeButton: true,
-                action: hasLastWorkingForEngine(engineId, textmodeHasLastWorking, strudelHasLastWorking)
+                action: hasLastWorkingForEngine(engineId, textmodeHasLastWorking)
                     ? {
                         label: 'revert',
                         onClick: () => {
@@ -77,7 +74,7 @@ export function AppShell() {
                 },
             });
         }
-    }, [engineErrors, textmodeHasLastWorking, strudelHasLastWorking, clearEngineError]);
+    }, [engineErrors, textmodeHasLastWorking, clearEngineError]);
 
     const handleShare = () => {
         const data = actions.getShareExportData();
@@ -128,7 +125,7 @@ export function AppShell() {
 
                 <PublishRequestDialog
                     open={publishOpen}
-                    data={shareExportData ? { textmodeCode: shareExportData.textmodeCode, strudelCode: shareExportData.strudelCode } : null}
+                    data={shareExportData ? { textmodeCode: shareExportData.textmodeCode } : null}
                     onOpenChange={setPublishOpen}
                 />
 
@@ -182,13 +179,7 @@ export function AppShell() {
                             <SystemMenu
                                 onShare={handleShare}
                                 onRandomize={actions.randomize}
-                                onToggleStrudelTransport={actions.toggleStrudelTransport}
                                 onMakeRandomChange={actions.makeRandomChange}
-                                strudelEnabled={runtimeState.strudelEnabled}
-                                strudelTransport={runtimeState.strudelTransport}
-                                strudelRunnerReady={textmodeRunnerReady}
-                                strudelRunnerUnavailable={textmodeRunnerUnavailable}
-                                strudelRunnerReconnecting={textmodeRunnerReconnecting}
                                 randomizeLoading={runtimeState.randomizeLoading}
                                 onResetRunners={actions.resetRunners}
                                 onClearStorage={actions.clearStorage}
@@ -214,7 +205,7 @@ export function AppShell() {
     );
 }
 
-const ERROR_TOAST_ENGINE_IDS = ['textmode', 'strudel'] as const;
+const ERROR_TOAST_ENGINE_IDS = ['textmode'] as const;
 const ENGINE_ERROR_TOASTER_ID = 'engine-errors';
 
 function getEngineErrorToastId(engineId: string): string {
@@ -237,8 +228,7 @@ function hasLastWorkingCode(code: string | null | undefined): boolean {
     return code !== null && code !== undefined;
 }
 
-function hasLastWorkingForEngine(engineId: string, textmodeHasLastWorking: boolean, strudelHasLastWorking: boolean): boolean {
+function hasLastWorkingForEngine(engineId: string, textmodeHasLastWorking: boolean): boolean {
     if (engineId === 'textmode') return textmodeHasLastWorking;
-    if (engineId === 'strudel') return strudelHasLastWorking;
     return false;
 }

@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
 import type { PaneConfig } from '@/features/editor-layout';
-import type { StrudelTransportState } from '@/core/app.types';
 import type { ShareExportData } from '@/features/share';
 
 /**
@@ -12,7 +11,6 @@ export interface AppRuntimeContextValue {
         // Core
         share: () => void;
         randomize: () => Promise<boolean>;
-        toggleStrudelTransport: () => void;
         makeRandomChange: () => void;
         resetRunners: () => void;
         clearStorage: () => void;
@@ -33,8 +31,6 @@ export interface AppRuntimeContextValue {
     };
 
     state: {
-        strudelEnabled: boolean;
-        strudelTransport: StrudelTransportState;
         randomizeLoading: boolean;
         editorBackdrop: boolean;
     };

@@ -9,7 +9,6 @@ export interface ShareWorkflowDependencies {
 	render: () => void;
 	clearShareLockIfPresent: () => void;
 	applyApprovedSketch: (sketch: ApprovedSketch) => void;
-	applyApprovedSketchToStrudel: (sketch: ApprovedSketch) => void;
 	getServerInjectedSlug: () => string | undefined;
 	replaceUrl: (url: string) => void;
 }
@@ -69,12 +68,6 @@ export class ShareWorkflow {
 		const sketch = this.pendingApprovedSketch;
 		this.pendingApprovedSketch = null;
 		this.applyApprovedSketch(sketch);
-	}
-
-	syncApprovedSketchToStrudelIfPresent(): void {
-		const approvedSketch = this.deps.store.share.getApprovedSketch();
-		if (!approvedSketch) return;
-		this.deps.applyApprovedSketchToStrudel(approvedSketch);
 	}
 
 	async randomize(): Promise<boolean> {

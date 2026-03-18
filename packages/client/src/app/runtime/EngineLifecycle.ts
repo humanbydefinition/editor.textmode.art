@@ -2,26 +2,21 @@ import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { IController } from '@/core/BaseController';
 import type { EngineContext, EngineId, IEngine } from '@/core/engine.types';
-import type { StrudelTransportState } from '@/core/app.types';
 import { registry } from '@/engines/registry';
 import { PaneCoordinator } from '@/features/editor-layout';
-import { audioService, type AudioData, type IAudioSource } from '@/platform/audio/AudioService';
+import { audioService, type AudioData } from '@/platform/audio/AudioService';
 import { EditorManager } from '@/platform/input/EditorManager';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { IStorageService } from '@/platform/storage/StorageService';
-import { StrudelAudioSource } from '@/engines/strudel/audio/StrudelAudioSource';
 
 interface EngineLifecycleDependencies {
 	paneCoordinator: PaneCoordinator;
-	paneStore: PaneStoreAdapter;
 	editorManager: EditorManager;
 	storage: IStorageService;
 	store: AppStoreAdapter;
 	render: () => void;
 	toggleUI: () => void;
 	changeFontSize: (delta: number) => void;
-	createAudioSource: () => IAudioSource;
 }
 
 interface ReconnectableEngine extends IEngine {
@@ -50,42 +45,16 @@ interface HushableEngine extends IEngine {
  */
 export class EngineLifecycle {
 	private readonly deps: EngineLifecycleDependencies;
-	private readonly enableEnginePromises = new Map<EngineId, Promise<void>>();
 	private audioUnsubscribe: (() => void) | null = null;
 
-	constructor(deps: Omit<EngineLifecycleDependencies, 'createAudioSource'> & { createAudioSource?: () => IAudioSource }) {
-		this.deps = {
-			...deps,
-			createAudioSource: deps.createAudioSource ?? (() => new StrudelAudioSource()),
-		};
+	constructor(deps: EngineLifecycleDependencies) {
+		this.deps = deps;
 	}
 
 	async initEagerEngines(): Promise<void> {
 		for (const engine of this.getRegisteredEngines().filter((candidate) => candidate.capabilities.bootStrategy === 'eager')) {
 			await this.initEngine(engine);
 		}
-	}
-
-	async enableStrudel(): Promise<boolean> {
-		return this.enableEngine('strudel');
-	}
-
-	async setStrudelEnabled(enabled: boolean): Promise<boolean> {
-		return this.setEngineEnabled('strudel', enabled);
-	}
-
-	setStrudelTransport(transport: StrudelTransportState): void {
-		const transportEngines = this.getTransportEngines().filter((engine) => engine.isInitialized());
-		if (transportEngines.length === 0) return;
-
-		if (transport === 'playing') {
-			for (const engine of transportEngines) {
-				engine.getController()?.handleForceRun();
-			}
-			return;
-		}
-
-		this.pauseTransportEngines(transportEngines);
 	}
 
 	applyEditorSettings(): void {
@@ -182,11 +151,6 @@ export class EngineLifecycle {
 
 	applyApprovedSketch(sketch: ApprovedSketch): void {
 		this.applyApprovedSketchToEngine('textmode', sketch);
-		this.applyApprovedSketchToEngine('strudel', sketch);
-	}
-
-	applyApprovedSketchToStrudel(sketch: ApprovedSketch): void {
-		this.applyApprovedSketchToEngine('strudel', sketch);
 	}
 
 	resetAll(): void {
@@ -215,7 +179,6 @@ export class EngineLifecycle {
 
 	dispose(): void {
 		this.stopAudioReactivity();
-		this.enableEnginePromises.clear();
 
 		for (const engine of this.getRegisteredEngines()) {
 			this.deps.editorManager.unregisterEditor(engine.id);
@@ -235,60 +198,6 @@ export class EngineLifecycle {
 
 	private getRegisteredEngines(): IEngine[] {
 		return registry.getAll();
-	}
-
-	private async setEngineEnabled(engineId: EngineId, enabled: boolean): Promise<boolean> {
-		this.deps.paneCoordinator.sync(this.deps.store.settings.getSettings(), this.deps.paneStore);
-		this.deps.render();
-
-		if (enabled) {
-			await this.deps.paneCoordinator.waitForPanes(this.deps.paneCoordinator.getPaneIds());
-			return this.enableEngine(engineId);
-		}
-
-		this.disableEngineById(engineId);
-		return false;
-	}
-
-	private async enableEngine(engineId: EngineId): Promise<boolean> {
-		const engine = this.getEngine(engineId);
-		if (!engine) return false;
-		if (engine.isInitialized()) return false;
-
-		const pendingInit = this.enableEnginePromises.get(engineId);
-		if (pendingInit) {
-			await pendingInit;
-			return false;
-		}
-
-		const initPromise = this.initEngine(engine);
-		this.enableEnginePromises.set(engineId, initPromise);
-		try {
-			await initPromise;
-		} finally {
-			this.enableEnginePromises.delete(engineId);
-		}
-		return true;
-	}
-
-	private disableEngineById(engineId: EngineId): boolean {
-		const engine = this.getEngine(engineId);
-		if (!engine || !engine.isInitialized()) return false;
-
-		if (engine.capabilities.supportsTransportControl) {
-			this.pauseTransportEngines([engine]);
-		}
-
-		if (engine.capabilities.producesAudioSource) {
-			this.stopAudioReactivity();
-		}
-
-		this.deps.editorManager.unregisterEditor(engine.id);
-		engine.dispose();
-		this.deps.paneCoordinator.removePane(engine.id);
-		this.deps.store.engine.setInitialized(engine.id, false);
-		this.applyCustomState(engine.id, engine.capabilities.customStateOnDisable);
-		return true;
 	}
 
 	private async initEngine(engine: IEngine): Promise<void> {
@@ -348,8 +257,7 @@ export class EngineLifecycle {
 	}
 
 	private shouldRunEngine(engine: IEngine): boolean {
-		if (!engine.capabilities.requiresTransportGate) return true;
-		return this.deps.store.settings.getSettings().strudelTransport === 'playing';
+		return !engine.capabilities.requiresTransportGate;
 	}
 
 	private getTransportEngines(): IEngine[] {
@@ -415,9 +323,6 @@ export class EngineLifecycle {
 		if (engineId === 'textmode') {
 			return sketch.textmodeCode;
 		}
-		if (engineId === 'strudel') {
-			return sketch.strudelCode ?? null;
-		}
 		return null;
 	}
 
@@ -444,7 +349,6 @@ export class EngineLifecycle {
 	private startAudioReactivity(): void {
 		if (this.audioUnsubscribe || !this.hasAudioPipeline()) return;
 
-		audioService.setSource(this.deps.createAudioSource());
 		this.audioUnsubscribe = audioService.subscribe((data) => {
 			this.broadcastAudioData(data);
 		});

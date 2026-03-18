@@ -25,7 +25,6 @@ export class UIActions {
 		return {
 			createdAt: Date.now(),
 			textmodeCode: this.deps.engineLifecycle.getCode('textmode'),
-			strudelCode: this.deps.engineLifecycle.getCode('strudel') || null,
 		};
 	}
 
