@@ -22,7 +22,6 @@ export default defineConfig({
             input: {
                 index: resolve(__dirname, 'index.html'),
                 textmode: resolve(__dirname, 'textmode.html'),
-                strudel: resolve(__dirname, 'strudel.html'),
             },
         },
     },
