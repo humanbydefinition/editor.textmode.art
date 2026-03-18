@@ -50,7 +50,7 @@ export interface AudioServiceOptions {
 /**
  * Central audio analysis service.
  * Runs the analysis loop and dispatches audio data to subscribers.
- * Agnostic to the underlying audio source (Strudel, Tone.js, etc.)
+ * Agnostic to the underlying audio source implementation.
  */
 export class AudioService {
     private source: IAudioSource | null = null;

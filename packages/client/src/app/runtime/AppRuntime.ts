@@ -172,7 +172,6 @@ export class AppRuntime {
 					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
-				toggleStrudelAudio: () => {},
 				runCodeForEngine: (engineId: string) => this.uiActions.runCodeForEngine(engineId),
 			},
 		});
