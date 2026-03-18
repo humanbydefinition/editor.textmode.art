@@ -18,7 +18,6 @@
 - **Visual synthesis**: Driven by `textmode.js`, offering a rich set of ASCII/textmode graphics tools and a modern WebGL2 pipeline.
 - **Algorithmic audio**: Integrated with `@strudel/web` for complex, live-coded musical compositions.
 - **High-performance editor**: Built on Monaco Editor (the power behind VS Code) with custom syntax highlighting and tailored type definitions.
-- **Plugin-based architecture**: Modular design that separates visual and audio concerns, allowing for easy updates and future extensions.
 - **Local persistence**: Automatically saves your work and settings to your browser's local storage.
 - **Responsive layout**: Designed for both desktop and mobile devices, ensuring your sketches look great everywhere.
 
@@ -41,38 +40,18 @@ To run the project locally:
 # Install dependencies
 npm install
 
-# Start development server
-npm run dev
+# Start client dev server (Vite)
+npm run client:dev
 
-# Build for production
+# Start server dev (Fastify + Prisma migrate)
+npm run server:dev
+
+# Start runner dev server (Vite)
+npm run runner:dev
+
+# Build for production (contracts → client → server → runner)
 npm run build
 ```
-
-### Server Development
-
-The server provides sketch moderation, slug pages, and screenshot generation:
-
-```bash
-# Start server in development mode
-npm run -w @synth.textmode.art/server dev
-
-# Regenerate all approved sketch screenshots
-npm run -w @synth.textmode.art/server screenshots:regenerate
-
-# Install Playwright/Chromium for screenshot service
-npm run -w @synth.textmode.art/server playwright:install
-```
-
-### Sandbox configuration (recommended)
-
-To run the textmode runner on a separate origin (recommended for isolation), set:
-
-- `VITE_RUNNER_URL` (client): Full URL to the textmode runner HTML (e.g. `https://runner.synth.textmode.art/runner/textmode.html`)
-- `VITE_RUNNER_PARENT_ORIGINS` (runner): Comma-separated list of allowed parent origins (e.g. `https://synth.textmode.art`)
-- `VITE_MEDIA_PROXY_URL` (runner, optional): Full URL to the media proxy endpoint (defaults to `${firstParentOrigin}/api/media` when unset)
-- `RUNNER_PUBLIC_URL` (server): Public runner origin for CSP and CORS (e.g. `https://runner.synth.textmode.art`)
-
-The media proxy endpoint is exposed at `GET /api/media?url=...` on the app server and is used as a CORS fallback for `t.loadImage`/`t.loadVideo`.
 
 ## License
 
