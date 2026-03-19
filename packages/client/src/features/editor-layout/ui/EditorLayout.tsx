@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useSplitResize } from './useSplitResize';
 import { EditorPane } from './EditorPane';
 
@@ -23,7 +23,7 @@ export interface EditorLayoutProps {
  */
 export function EditorLayout({
     panes,
-    initialSplitRatio = 0.5,
+    initialSplitRatio: _initialSplitRatio = 0.5,
     editorBackdrop = false,
     onPaneReady,
 }: EditorLayoutProps) {

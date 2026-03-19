@@ -19,6 +19,10 @@ export interface AppSettings {
 	lineNumbers: boolean;
 	/** Delay in milliseconds before auto-executing code */
 	autoExecuteDelay: number;
+	/** Editor orientation (horizontal/vertical) */
+	editorOrientation: 'horizontal' | 'vertical';
+	/** Split ratio between panes (0.0 to 1.0) */
+	splitRatio: number;
 }
 
 /**
@@ -31,6 +35,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	uiVisible: true,
 	lineNumbers: false,
 	autoExecuteDelay: 500,
+	editorOrientation: 'horizontal',
+	splitRatio: 0.5,
 };
 
 /**
