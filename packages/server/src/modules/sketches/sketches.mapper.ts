@@ -22,7 +22,6 @@ export interface PublicSketchRecord {
   license: string | null;
   socialLinks: unknown;
   textmodeCode: string;
-  strudelCode: string | null;
   ogImageUrl: string | null;
   createdAt: Date | string;
 }
@@ -46,7 +45,6 @@ export function toApprovedSketch(sketch: PublicSketchRecord): ApprovedSketch {
     license: sketch.license,
     socialLinks: toSocialLinks(sketch.socialLinks),
     textmodeCode: sketch.textmodeCode,
-    strudelCode: sketch.strudelCode,
     ogImageUrl: sketch.ogImageUrl,
     createdAt: toIsoDate(sketch.createdAt),
   };
@@ -61,7 +59,6 @@ export function toPublicSketchAccess(sketch: PublicSketchRecord): PublicSketchAc
     authorName: sketch.authorName,
     license: sketch.license,
     textmodeCode: sketch.textmodeCode,
-    strudelCode: sketch.strudelCode,
     createdAt: toIsoDate(sketch.createdAt),
   };
 

@@ -18,7 +18,6 @@ export const publicSketchSelect = {
   license: true,
   socialLinks: true,
   textmodeCode: true,
-  strudelCode: true,
   ogImageUrl: true,
   createdAt: true,
 } as const;

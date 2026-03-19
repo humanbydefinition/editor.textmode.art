@@ -21,7 +21,6 @@ export async function createSketchRequest(payload: SketchRequestPayload, normali
         license: payload.license ?? null,
         socialLinks: payload.socialLinks ?? undefined,
         textmodeCode: payload.textmodeCode,
-        strudelCode: payload.strudelCode ?? null,
         publishConsentAccepted: payload.publishConsent.accepted,
         publishConsentAcceptedAt: new Date(),
         publishConsentPolicyVersion: payload.publishConsent.policyVersion,
