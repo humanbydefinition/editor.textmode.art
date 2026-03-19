@@ -10,13 +10,11 @@
 > [!IMPORTANT]
 > **Work in progress**: This project is currently in active development. Features and APIs are subject to change.
 
-`synth.textmode.art` is a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. It combines the visual power of [`textmode.js`](https://github.com/humanbydefinition/textmode.js) with the algorithmic music patterns of [`Strudel`](https://codeberg.org/uzu/strudel) to create a unique hybrid creative coding experience.
+`synth.textmode.art` is a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution, share links, and moderation tools.
 
 ## Features
 
-- **Hybrid live coding**: Seamlessly blend procedural ASCII visuals with algorithmic audio patterns.
 - **Visual synthesis**: Driven by `textmode.js`, offering a rich set of ASCII/textmode graphics tools and a modern WebGL2 pipeline.
-- **Algorithmic audio**: Integrated with `@strudel/web` for complex, live-coded musical compositions.
 - **High-performance editor**: Built on Monaco Editor (the power behind VS Code) with custom syntax highlighting and tailored type definitions.
 - **Local persistence**: Automatically saves your work and settings to your browser's local storage.
 - **Responsive layout**: Designed for both desktop and mobile devices, ensuring your sketches look great everywhere.
@@ -77,9 +75,6 @@ This project is licensed under the **GNU Affero General Public License v3.0** - 
 - **[Sonner](https://sonner.emilkowal.ski/)** - MIT License
 - **[yet-another-react-lightbox](https://yet-another-react-lightbox.com/)** - MIT License
 - **[lz-string](https://github.com/pieroxy/lz-string)** - MIT License
-
-#### Runner
-- **[@strudel/web](https://strudel.cc/)** - AGPL-3.0 License
 
 #### Server
 - **[Fastify](https://fastify.dev/)** - MIT License

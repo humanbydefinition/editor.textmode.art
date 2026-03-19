@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**synth.textmode.art**: Live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. Combines [`textmode.js`](https://github.com/humanbydefinition/textmode.js) visuals with [`Strudel`](https://strudel.cc/) audio in a hybrid creative coding editor with real-time execution, share links, and admin moderation.
+**synth.textmode.art**: Live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. Built around [`textmode.js`](https://github.com/humanbydefinition/textmode.js) in a browser-based creative coding editor with real-time execution, share links, and admin moderation.
 
 ## Workflow Rules
 
@@ -22,7 +22,6 @@
 | **UI components** | Radix UI + shadcn/ui |
 | **Styling** | Tailwind CSS 4 |
 | **Visual engine** | textmode.js + textmode.synth.js + textmode.filters.js |
-| **Audio engine** | @strudel/web |
 | **Server framework** | Fastify 5 |
 | **Database** | PostgreSQL + Prisma 7 (with `@prisma/adapter-pg`) |
 | **Notifications** | Discord.js (bot integration) |
@@ -99,12 +98,6 @@ synth.textmode.art/
     │       │   │   ├── runtime/host/    # TextmodeRuntime (iframe host-side)
     │       │   │   ├── sandbox/         # Sandbox type definitions
     │       │   │   └── config/          # generatedTypes.ts (auto-generated)
-    │       │   └── strudel/             # Audio engine
-    │       │       ├── StrudelEngine.ts
-    │       │       ├── StrudelController.ts
-    │       │       ├── editor/          # StrudelEditor, StrudelHighlighter
-    │       │       ├── runtime/         # StrudelRuntime, host transport
-    │       │       └── audio/           # StrudelAudioSource, AudioFrameStore
     │       ├── platform/                # Platform services & infrastructure
     │       │   ├── api/                 # SketchApiService
     │       │   ├── audio/               # AudioService
@@ -131,13 +124,11 @@ synth.textmode.art/
     ├── runner/                          # Isolated iframe runner bundle (separate Vite build)
     │   ├── tests/                       # Vitest tests (node environment)
     │   ├── textmode.html                # Textmode runner entry HTML
-    │   ├── strudel.html                 # Strudel runner entry HTML
     │   └── src/
     │       ├── TextmodeRunner.ts        # Main textmode runner class
     │       ├── core/                    # Bootstrap, runner lifecycle, security
     │       ├── execution/               # ExecutionContext, SafeProxyFactory
     │       ├── sandbox/                 # Error handling, scheduling
-    │       ├── strudel/                 # Strudel runner (StrudelRunner, broadcast, transport, UI)
     │       ├── lib/                     # TextmodeManager, textmode type helpers
     │       └── types/                   # Internal runner types
     │
@@ -179,36 +170,34 @@ synth.textmode.art/
             ├── share.ts                 # Share link encoding types
             └── runner/                  # Iframe message protocols
                 ├── textmode.ts          # Textmode runner protocol (INIT, RUN_CODE, etc.)
-                └── strudel.ts           # Strudel runner protocol (STR_INIT, STR_RUN_CODE, etc.)
 ```
 
 ## Key Architectures
 
 ### Engine Pattern
 
-Each engine (textmode, strudel) follows a consistent **Engine + Editor + Runtime + Controller** pattern:
+The textmode engine follows a consistent **Engine + Editor + Runtime + Controller** pattern:
 
 - **Engine**: Top-level orchestrator that wires the editor, runtime, and controller together
 - **Editor**: Monaco Editor wrapper with engine-specific language support and keybindings
-- **Runtime**: Execution environment — iframe-based for textmode, iframe + Web Audio for strudel
+- **Runtime**: Execution environment hosted in an isolated iframe
 - **Controller**: Mediates between editor and runtime; handles auto-execute, debouncing, and state sync
 
 Engines are initialized by `AppRuntime` (the composition root at `packages/client/src/app/runtime/AppRuntime.ts`), which orchestrates lifecycle, settings, share workflows, and rendering via `EngineLifecycle` and `UIActions`.
 
 ### Runner Package
 
-The `packages/runner/` package is a **standalone Vite build** that produces the isolated iframe bundles. It has two entry points:
+The `packages/runner/` package is a **standalone Vite build** that produces the isolated iframe bundle. It has one entry point:
 
 - `textmode.html` — Textmode visual runner (textmode.js + textmode.synth.js + textmode.filters.js)
-- `strudel.html` — Strudel audio runner (@strudel/web)
 
-The runner dependencies (`textmode.js`, `textmode.synth.js`, `textmode.filters.js`, `@strudel/web`) live in the **runner** package. The client only has these as devDependencies for type extraction.
+The runner dependencies (`textmode.js`, `textmode.synth.js`, `textmode.filters.js`) live in the **runner** package. The client only has these as devDependencies for type extraction.
 
-The runner can be hosted on a separate origin (`VITE_RUNNER_URL` / `VITE_STRUDEL_RUNNER_URL`) for security isolation.
+The runner can be hosted on a separate origin (`VITE_RUNNER_URL`) for security isolation.
 
 ### Sandbox Protocols
 
-Both engines use typed message protocols defined in `@synth.textmode.art/contracts/runner/*`:
+The runner uses typed message protocols defined in `@synth.textmode.art/contracts/runner/*`:
 
 **Textmode protocol** (`contracts/src/runner/textmode.ts`):
 
@@ -216,14 +205,6 @@ Both engines use typed message protocols defined in `@synth.textmode.art/contrac
 - **Parent → Runner**: `RUN_CODE`, `SOFT_RESET`, `DISPOSE`, `AUDIO_DATA`
 - **Runner → Parent**: `READY`, `RUN_OK`, `RUN_ERROR`, `SYNTH_ERROR`, `TOGGLE_UI`, `USER_INTERACTION`
 - Type guards: `isInitMessage()`, `isParentMessage()`, `isRunnerMessage()`
-
-**Strudel protocol** (`contracts/src/runner/strudel.ts`):
-
-- **Window → Runner**: `STR_INIT` (versioned handshake, `STRUDEL_PROTOCOL_VERSION = 1`)
-- **Parent → Runner**: `STR_INIT_AUDIO`, `STR_RUN_CODE`, `STR_HUSH`, `STR_DISPOSE`
-- **Runner → Parent**: `STR_READY`, `STR_AUDIO_UNLOCK_REQUIRED`, `STR_RUN_OK`, `STR_RUN_ERROR`, `STR_PLAY_STATE`, `STR_AUDIO_DATA`
-- Uses `StrudelWindowEventEnvelope` wrapper for dispatching runner messages
-- Type guards: `isStrudelInitMessage()`, `isStrudelParentMessage()`, `isStrudelRunnerMessage()`, `isStrudelWindowEventEnvelope()`
 
 ### State Management
 
@@ -290,7 +271,6 @@ The `@synth.textmode.art/contracts` package provides **shared Zod schemas, TypeS
 | `./admin` | Admin API request/response types |
 | `./share` | Share link encoding types |
 | `./runner/textmode` | Textmode iframe message protocol + type guards |
-| `./runner/strudel` | Strudel iframe message protocol + type guards |
 
 **Build order matters**: contracts must build before client, server, or runner (`npm run build` handles this).
 
@@ -355,7 +335,6 @@ Environment is validated with Zod in `packages/server/src/config/env.ts`. Reads 
 | Variable | Description |
 |----------|-------------|
 | `VITE_RUNNER_URL` | Full URL to textmode runner HTML |
-| `VITE_STRUDEL_RUNNER_URL` | Full URL to strudel runner HTML |
 | `VITE_RUNNER_PARENT_ORIGINS` | Allowed parent origins for runner iframe |
 | `VITE_MEDIA_PROXY_URL` | Media proxy endpoint URL |
 | `VITE_API_BASE_URL` | Override API base URL |
@@ -376,9 +355,9 @@ See `.env.example` for a complete template with descriptions.
 
 ### When modifying engine behavior:
 1. Check all files in the engine folder: `*Engine.ts`, `*Controller.ts`, and the `editor/` and `runtime/` subdirectories
-2. If changing a sandbox protocol, update the contract in `packages/contracts/src/runner/` (either `textmode.ts` or `strudel.ts`)
+2. If changing a sandbox protocol, update the contract in `packages/contracts/src/runner/textmode.ts`
 3. Update the corresponding runner implementation in `packages/runner/src/`
-4. If adding new message types, update the type guards (`isRunnerMessage`, `isParentMessage`, or the Strudel equivalents)
+4. If adding new message types, update the relevant type guards
 5. Run protocol contract tests: `npm run test -w @synth.textmode.art/client`
 
 ### When changing the Prisma schema:
@@ -419,7 +398,6 @@ See `.env.example` for a complete template with descriptions.
 - `@` resolves to `packages/client/src/` (client and runner)
 - `@synth.textmode.art/contracts` for shared contracts
 - `@synth.textmode.art/contracts/runner/textmode` for textmode protocol
-- `@synth.textmode.art/contracts/runner/strudel` for strudel protocol
 
 ### TypeScript:
 - Strict mode
@@ -450,7 +428,7 @@ PostgreSQL with Prisma 7 (`@prisma/adapter-pg`). Single model:
 model SketchRequest {
   id, slug, status (PENDING/APPROVED/DENIED),
   title, description?, authorName?, license?,
-  socialLinks? (JSON), textmodeCode, strudelCode?,
+  socialLinks? (JSON), textmodeCode,
   publishConsentAccepted, publishConsentAcceptedAt?,
   publishConsentPolicyVersion?, ogImageUrl?,
   createdAt, updatedAt,
@@ -467,7 +445,7 @@ npm run test -w @synth.textmode.art/client   # Client tests (jsdom)
 npm run test -w @synth.textmode.art/runner   # Runner tests (node)
 ```
 
-Client tests cover protocol contracts and host runtime lifecycle. Runner tests cover origin validation, runner lifecycle, and Strudel integration (broadcast timers, haps, runtime adapter).
+Client tests cover protocol contracts. Runner tests cover origin validation and runner lifecycle.
 
 ## Validation
 
