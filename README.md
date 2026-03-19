@@ -10,7 +10,7 @@
 > [!IMPORTANT]
 > **Work in progress**: This project is currently in active development. Features and APIs are subject to change.
 
-`synth.textmode.art` is a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution, share links, and moderation tools.
+`synth.textmode.art` is a live coding environment for procedural text generation and ASCII synthesis. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution, share links, and moderation tools.
 
 ## Features
 

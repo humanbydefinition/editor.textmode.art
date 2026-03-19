@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**synth.textmode.art**: Live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns. Built around [`textmode.js`](https://github.com/humanbydefinition/textmode.js) in a browser-based creative coding editor with real-time execution, share links, and admin moderation.
+**synth.textmode.art**: Live coding environment for procedural text generation and ASCII synthesis. Built around [`textmode.js`](https://github.com/humanbydefinition/textmode.js) in a browser-based creative coding editor with real-time execution, share links, and admin moderation.
 
 ## Workflow Rules
 
