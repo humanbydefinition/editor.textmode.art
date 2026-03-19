@@ -26,11 +26,9 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 	const isOpen = Boolean(share.payload && !share.consented && share.promptOpen);
 	const [checked, setChecked] = useState(false);
 
-	const includesStrudel = Boolean(share.payload?.engines.strudel);
 	const includesTextmode = Boolean(share.payload?.engines.textmode);
 	const engines = [
 		includesTextmode ? 'textmode.js' : null,
-		includesStrudel ? 'strudel' : null,
 	].filter(Boolean) as string[];
 
 	useEffect(() => {

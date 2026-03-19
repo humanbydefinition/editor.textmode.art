@@ -157,12 +157,10 @@ t.layers.base.synth(
  * Welcome to Tutorial #4!
  *
  * In this tutorial, we'll explore audio reactivity.
- * This is where the magic happens! You can make your visuals dance to the music
- * coming from the Strudel editor (right panel).
+ * This is where the magic happens when audio analysis data is available to the runtime.
  *
- * To enable this, your Strudel pattern MUST utilize the \`.analyze()\` method.
- * Example of a Strudel pattern:
- * \`$: s("bd sd").analyze('main')\`
+ * If your setup provides analyzed audio input, the \`audio\` global lets you drive
+ * visuals from the incoming signal.
  *
  * The \`audio\` global gives you access to the sound analysis:
  *
@@ -182,7 +180,7 @@ t.layers.base.synth(
  * 3. We use \`modulate\` with \`voronoi\` to create organic distortion, driven by \`audio.mid()\`.
  * 4. Colors are shifted by \`audio.high()\`.
  *
- * Try changing the music in Strudel and watch the visuals react!
+ * Try changing the incoming audio source and watch the visuals react!
  */
 
 // 1. Create a base geometric oscillation

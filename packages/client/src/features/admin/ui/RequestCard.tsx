@@ -178,12 +178,6 @@ export function RequestCard({
                                     <Badge variant="outline" className="border-2 border-border bg-background text-muted-foreground">
                                         textmode {request.textmodeCode.length.toLocaleString()} chars
                                     </Badge>
-                                    <Badge variant="outline" className="border-2 border-border bg-background text-muted-foreground">
-                                        strudel{' '}
-                                        {request.strudelCode
-                                            ? `${request.strudelCode.length.toLocaleString()} chars`
-                                            : 'not provided'}
-                                    </Badge>
                                 </div>
                             </div>
 

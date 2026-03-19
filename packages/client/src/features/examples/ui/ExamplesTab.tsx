@@ -28,9 +28,9 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     }
 
     return (
-        <Tabs defaultValue={engines[0]?.id} className="h-full flex flex-col">
+        <Tabs defaultValue="textmode" className="h-full flex flex-col">
             <div className="px-6 py-3 border-b border-white/5 bg-zinc-900/30 shrink-0">
-                <TabsList className="bg-transparent p-0 h-auto gap-2 grid grid-cols-2 w-full">
+                <TabsList className="bg-transparent p-0 h-auto gap-2 grid grid-cols-1 w-full">
                     {engines.map((engine) => {
                         return (
                             <TabsTrigger

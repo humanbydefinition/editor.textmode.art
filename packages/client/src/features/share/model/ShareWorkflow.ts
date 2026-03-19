@@ -130,7 +130,6 @@ export class ShareWorkflow {
 			license: sketch.license,
 			socialLinks: sketch.socialLinks,
 			textmodeCode: sketch.textmodeCode,
-			strudelCode: sketch.strudelCode,
 			ogImageUrl: sketch.ogImageUrl,
 			createdAt: sketch.createdAt,
 		};
@@ -142,7 +141,6 @@ export class ShareWorkflow {
 			createdAt: Date.now(),
 			engines: {
 				textmode: sketch.textmodeCode,
-				...(sketch.strudelCode ? { strudel: sketch.strudelCode } : {}),
 			},
 		};
 	}

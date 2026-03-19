@@ -1,5 +1,5 @@
 export const defaultTextmodeSketch = `// Live coding with textmode.js
-// Ctrl+Enter = run · Ctrl+Shift+R = hard reset
+// Ctrl+Enter = run - Ctrl+Shift+R = hard reset
 // Docs: https://code.textmode.art/
 
 t.fontSize(16);
@@ -12,11 +12,10 @@ t.layers.base.synth( // define a synth for the textmode.js base layer
 );
 
 // custom layer for the label, rendered on top of the base layer
-const labelLayer = t.layers.add({ fontSize: 64, blendMode: "difference" }); 
+const labelLayer = t.layers.add({ fontSize: 64, blendMode: "difference" });
 const label = "synth.textmode.art";
 
-
-const drawText = (s, x, y) => { 
+const drawText = (s, x, y) => {
   t.charColor("#fff");
   t.cellColor(0, 0, 0, 0);
   for (let i = 0; i < s.length; i++) {
@@ -35,7 +34,7 @@ t.draw(() => { // base layer draw loop (could also be used for drawing on top of
 });
 
 labelLayer.draw(() => {
-  t.clear(); 
+  t.clear();
   drawText(label, -label.length / 2, 0); // draw the label
 
   const time = t.frameCount / 60;
@@ -48,31 +47,3 @@ labelLayer.draw(() => {
 
 // Return a cleanup function (optional):
 // return () => { console.log('cleanup!'); };`;
-
-export const defaultStrudelSketch = `// Live coding with strudel
-// Ctrl+Enter = run · Ctrl+. = toggle play/pause
-// Docs: https://strudel.cc
-
-// Load a custom sample from a URL
-// This maps the name "conga" to a specific audio file
-// await samples({
-//   conga: 'https://glfmn.io/samples/menegass-conga-7.wav'
-// });
-
-// Drum pattern
-$: s("bd sd:1 bd bd, hh*8")
-  .gain(0.8)
-  .lpf(2000)
-  .analyze('main');
-
-// Melodic pattern
-$: note("c3 eb3 g3 bb3")
-  .s("sawtooth")
-  .lpf(800)
-  .attack(0.01)
-  .decay(0.2)
-  .sustain(0.3)
-  .release(0.5)
-  .gain(0.5)
-  .slow(2)
-  .analyze('main');`;

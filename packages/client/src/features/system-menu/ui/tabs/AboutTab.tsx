@@ -1,19 +1,6 @@
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Github, ExternalLink } from 'lucide-react';
 
-const CodebergIcon = ({ className }: { className?: string }) => (
-    <svg
-        role="img"
-        viewBox="0 0 24 24"
-        className={className}
-        fill="currentColor"
-        xmlns="http://www.w3.org/2000/svg"
-    >
-        <title>Codeberg</title>
-        <path d="M11.955.49A12 12 0 0 0 0 12.49a12 12 0 0 0 1.832 6.373L11.838 5.766a.18.18 0 0 1 .324 0l10.006 13.097A12 12 0 0 0 11.955.49zm-.437 6.138L4.69 15.658a.22.22 0 0 0 .01.278l4.755 5.86a.22.22 0 0 0 .367-.042l2.341-4.851a.22.22 0 0 1 .403.016l1.791 4.56a.22.22 0 0 0 .385.048l2.766-4.665a.22.22 0 0 0-.02-.275l-5.322-6.425a.22.22 0 0 0-.35 0z" />
-    </svg>
-);
-
 export function AboutTab() {
     const resources = [
         {
@@ -33,12 +20,6 @@ export function AboutTab() {
             description: "filter add-on library",
             url: "https://github.com/humanbydefinition/textmode.filters.js",
             license: "MIT"
-        },
-        {
-            name: "@strudel/web",
-            description: "live coding algorithmic patterns",
-            url: "https://codeberg.org/uzu/strudel",
-            license: "AGPLv3"
         }
     ];
 
@@ -130,11 +111,7 @@ export function AboutTab() {
                             >
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                        {resource.url.includes("codeberg") ? (
-                                            <CodebergIcon className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
-                                        ) : (
-                                            <Github className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
-                                        )}
+                                        <Github className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                                         <span className="text-sm font-medium text-zinc-300 group-hover:text-white">{resource.name}</span>
                                     </div>
                                     <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400" />

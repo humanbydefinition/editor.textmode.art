@@ -61,7 +61,6 @@ function normalizeMastodonUrl(value: string): string {
 
 export interface PublishRequestData {
 	textmodeCode: string;
-	strudelCode?: string | null;
 }
 
 export interface PublishRequestDialogProps {
@@ -262,7 +261,6 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 			license: license || null,
 			socialLinks: socialLinks.length > 0 ? socialLinks : null,
 			textmodeCode: data.textmodeCode,
-			strudelCode: data.strudelCode ?? null,
 			publishConsent: {
 				accepted: true,
 				policyVersion: submissionQueue.publishConsentPolicyVersion,
