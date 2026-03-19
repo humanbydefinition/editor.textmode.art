@@ -1,5 +1,4 @@
 import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
-import type { AudioData } from '@/platform/audio/AudioService';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
@@ -16,7 +15,6 @@ export class TextmodeEngine implements IEngine {
 	readonly capabilities: EngineLifecycleCapabilities = {
 		bootStrategy: 'eager',
 		supportsReconnect: true,
-		consumesAudioInput: true,
 		customStateOnInit: {
 			runnerUnavailable: false,
 			runnerReconnecting: false,
@@ -82,13 +80,6 @@ export class TextmodeEngine implements IEngine {
 
 	setCode(code: string, options?: { silent?: boolean }): void {
 		this.editor?.setValue(code, options);
-	}
-
-	/**
-	 * Send audio data to the runtime for audio-reactive visuals.
-	 */
-	sendAudioData(data: AudioData): void {
-		this.runtime?.sendAudioData(data);
 	}
 
 	reconnectRuntime(): void {

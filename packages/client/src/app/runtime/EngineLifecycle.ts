@@ -4,7 +4,6 @@ import type { IController } from '@/core/BaseController';
 import type { EngineContext, EngineId, IEngine } from '@/core/engine.types';
 import { registry } from '@/engines/registry';
 import { PaneCoordinator } from '@/features/editor-layout';
-import { audioService, type AudioData } from '@/platform/audio/AudioService';
 import { EditorManager } from '@/platform/input/EditorManager';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { IStorageService } from '@/platform/storage/StorageService';
@@ -21,10 +20,6 @@ interface EngineLifecycleDependencies {
 
 interface ReconnectableEngine extends IEngine {
 	reconnectRuntime: () => void;
-}
-
-interface AudioInputEngine extends IEngine {
-	sendAudioData: (data: AudioData) => void;
 }
 
 interface RuntimeForceRunEngine extends IEngine {
@@ -45,7 +40,6 @@ interface HushableEngine extends IEngine {
  */
 export class EngineLifecycle {
 	private readonly deps: EngineLifecycleDependencies;
-	private audioUnsubscribe: (() => void) | null = null;
 
 	constructor(deps: EngineLifecycleDependencies) {
 		this.deps = deps;
@@ -178,8 +172,6 @@ export class EngineLifecycle {
 	}
 
 	dispose(): void {
-		this.stopAudioReactivity();
-
 		for (const engine of this.getRegisteredEngines()) {
 			this.deps.editorManager.unregisterEditor(engine.id);
 
@@ -213,10 +205,6 @@ export class EngineLifecycle {
 		}
 
 		this.applyEditorSettings();
-
-		if (engine.capabilities.producesAudioSource) {
-			this.startAudioReactivity();
-		}
 	}
 
 	private createEngineContext(engine: IEngine, editorContainer: HTMLElement): EngineContext {
@@ -325,52 +313,6 @@ export class EngineLifecycle {
 		}
 		return null;
 	}
-
-	private getAudioInputEngines(): AudioInputEngine[] {
-		return this.getRegisteredEngines().filter((engine): engine is AudioInputEngine => (
-			Boolean(engine.capabilities.consumesAudioInput) &&
-			hasAudioInput(engine)
-		));
-	}
-
-	private hasAudioPipeline(): boolean {
-		const hasProducer = this.getRegisteredEngines().some((engine) => (
-			Boolean(engine.capabilities.producesAudioSource) && engine.isInitialized()
-		));
-		return hasProducer && this.getAudioInputEngines().length > 0;
-	}
-
-	private broadcastAudioData(data: AudioData): void {
-		for (const engine of this.getAudioInputEngines()) {
-			engine.sendAudioData(data);
-		}
-	}
-
-	private startAudioReactivity(): void {
-		if (this.audioUnsubscribe || !this.hasAudioPipeline()) return;
-
-		this.audioUnsubscribe = audioService.subscribe((data) => {
-			this.broadcastAudioData(data);
-		});
-		audioService.start();
-	}
-
-	private stopAudioReactivity(): void {
-		if (this.audioUnsubscribe) {
-			this.audioUnsubscribe();
-			this.audioUnsubscribe = null;
-		}
-
-		audioService.stop();
-		audioService.setSource(null);
-
-		const snapshot = audioService.getData();
-		this.broadcastAudioData({
-			fft: new Array(snapshot.fft.length).fill(0),
-			waveform: new Array(snapshot.waveform.length).fill(128),
-			timestamp: performance.now(),
-		});
-	}
 }
 
 function hasTransportPause(controller: IController | null): controller is TransportPauseController {
@@ -379,10 +321,6 @@ function hasTransportPause(controller: IController | null): controller is Transp
 
 function hasReconnectRuntime(engine: IEngine): engine is ReconnectableEngine {
 	return typeof (engine as ReconnectableEngine).reconnectRuntime === 'function';
-}
-
-function hasAudioInput(engine: IEngine): engine is AudioInputEngine {
-	return typeof (engine as AudioInputEngine).sendAudioData === 'function';
 }
 
 function hasRuntimeForceRun(engine: IEngine): engine is RuntimeForceRunEngine {

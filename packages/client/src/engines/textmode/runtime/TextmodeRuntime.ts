@@ -1,9 +1,8 @@
 
-import type { ParentToRunnerMessage, AudioDataMessage, InitMessage } from '@synth.textmode.art/contracts/runner/textmode';
+import type { ParentToRunnerMessage, InitMessage } from '@synth.textmode.art/contracts/runner/textmode';
 import { isRunnerMessage, PROTOCOL_VERSION } from '@synth.textmode.art/contracts/runner/textmode';
 import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/core/app.types';
-import type { AudioData } from '@/platform/audio/AudioService';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
 
@@ -127,21 +126,6 @@ export class TextmodeRuntime implements IHostRuntime {
 			this.iframe.removeEventListener('error', this.handleIframeError);
 			this.iframe.remove();
 		}
-	}
-
-	/**
-	 * Send audio data to iframe for audio-reactive visuals
-	 */
-	sendAudioData(data: AudioData): void {
-		if (!this._isReady) return;
-
-		const msg: AudioDataMessage = {
-			type: 'AUDIO_DATA',
-			fft: data.fft,
-			waveform: data.waveform,
-			timestamp: data.timestamp,
-		};
-		this.sendMessage(msg);
 	}
 
 	/**

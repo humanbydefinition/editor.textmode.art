@@ -1,7 +1,6 @@
 import type { ExecutionResult, ValidationResult } from './textmode.types';
 import { SafeProxyFactory } from './SafeProxyFactory';
 import { ErrorReporter } from '@/engines/textmode/ErrorReporter';
-import type { AudioReceiver } from '@/engines/textmode/AudioReceiver';
 import {
     src,
     osc,
@@ -41,8 +40,6 @@ export interface ExecutionContextOptions {
     getTextmode: () => Textmodifier | null;
     /** Error reporter instance */
     errorReporter: ErrorReporter;
-    /** Audio receiver for audio-reactive sketches */
-    audioReceiver: AudioReceiver;
 }
 
 /**
@@ -93,27 +90,9 @@ export class ExecutionContext {
         const t = this.options.getTextmode();
         const safeT = t ? this.proxyFactory.createTextmodeProxy(t) : null;
 
-        // Create audio global for audio-reactive sketches
-        const audioReceiver = this.options.audioReceiver;
-        const audio = {
-            /** Get raw FFT frequency data (0-255 per bin) */
-            fft: () => audioReceiver.getFft(),
-            /** Get raw time-domain waveform data (0-255, 128 = silence) */
-            waveform: () => audioReceiver.getWaveform(),
-            /** Get bass frequency level (0-1) */
-            bass: () => audioReceiver.getBass(),
-            /** Get mid frequency level (0-1) */
-            mid: () => audioReceiver.getMid(),
-            /** Get high frequency level (0-1) */
-            high: () => audioReceiver.getHigh(),
-            /** Get overall volume level (0-1) */
-            volume: () => audioReceiver.getVolume(),
-        };
-
         // Prepare globals
         const globals: Record<string, unknown> = {
             t: safeT,
-            audio,
             ...SYNTH_GLOBALS,
         };
 

@@ -3,11 +3,9 @@ import { TextmodeManager } from '@/engines/textmode/TextmodeManager';
 import { ExecutionContext } from '@/engines/textmode/ExecutionContext';
 import { ErrorReporter } from '@/engines/textmode/ErrorReporter';
 import { FrameScheduler } from '@/engines/textmode/FrameScheduler';
-import { AudioReceiver } from '@/engines/textmode/AudioReceiver';
 import type {
 	ParentToRunnerMessage,
 	RunnerToParentMessage,
-	AudioDataMessage,
 	WindowToRunnerMessage,
 } from '@synth.textmode.art/contracts/runner/textmode';
 import { isInitMessage, isParentMessage } from '@synth.textmode.art/contracts/runner/textmode';
@@ -20,7 +18,6 @@ import { HandshakeHandler } from '@/core/transport/HandshakeHandler';
 export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	private readonly errorReporter: ErrorReporter;
 	private readonly scheduler: FrameScheduler;
-	private readonly audioReceiver: AudioReceiver;
 	private readonly handshakeHandler: HandshakeHandler;
 	private lastWorkingCode: string | null = null;
 	private hasStarted = false;
@@ -41,7 +38,6 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	constructor(allowedParentOrigins: Set<string>) {
 		super(allowedParentOrigins);
 		this.errorReporter = new ErrorReporter((msg) => this.sendMessage(msg));
-		this.audioReceiver = new AudioReceiver();
 		this.scheduler = new FrameScheduler({
 			isRendering: () => this.isRendering(),
 			onExecute: (code, isSoftReset) => this.executeInternal(code, isSoftReset),
@@ -51,7 +47,6 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 		this.context = new ExecutionContext({
 			getTextmode: () => this.textmode.getInstance(),
 			errorReporter: this.errorReporter,
-			audioReceiver: this.audioReceiver,
 		});
 
 		this.handshakeHandler = new HandshakeHandler({
@@ -92,9 +87,6 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 				break;
 			case 'DISPOSE':
 				this.dispose();
-				break;
-			case 'AUDIO_DATA':
-				this.audioReceiver.update(msg as AudioDataMessage);
 				break;
 		}
 	};

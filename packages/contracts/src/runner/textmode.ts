@@ -70,21 +70,7 @@ export interface DisposeMessage {
 	type: 'DISPOSE';
 }
 
-/**
- * Audio data message for audio-reactive visuals.
- * Sent from parent window to iframe at 60fps with FFT and waveform data.
- */
-export interface AudioDataMessage {
-	type: 'AUDIO_DATA';
-	/** Frequency domain data (0-255 per bin) */
-	fft: number[];
-	/** Time domain waveform data (0-255) */
-	waveform: number[];
-	/** Timestamp for synchronization */
-	timestamp: number;
-}
-
-export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage | DisposeMessage | AudioDataMessage;
+export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage | DisposeMessage;
 
 export type WindowToRunnerMessage = InitMessage;
 
@@ -113,7 +99,7 @@ export function isRunnerMessage(msg: unknown): msg is RunnerToParentMessage {
 export function isParentMessage(msg: unknown): msg is ParentToRunnerMessage {
 	if (typeof msg !== 'object' || msg === null) return false;
 	const m = msg as { type?: string };
-	return m.type === 'RUN_CODE' || m.type === 'SOFT_RESET' || m.type === 'DISPOSE' || m.type === 'AUDIO_DATA';
+	return m.type === 'RUN_CODE' || m.type === 'SOFT_RESET' || m.type === 'DISPOSE';
 }
 
 /**

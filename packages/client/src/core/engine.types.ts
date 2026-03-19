@@ -16,10 +16,6 @@ export interface EngineLifecycleCapabilities {
     supportsTransportControl?: boolean;
     /** Engine runtime supports reconnecting its execution environment. */
     supportsReconnect?: boolean;
-    /** Engine can consume audio reactivity input data. */
-    consumesAudioInput?: boolean;
-    /** Engine can produce audio reactivity source data. */
-    producesAudioSource?: boolean;
     /** Custom engine state defaults to apply during initialization. */
     customStateOnInit?: Record<string, unknown>;
     /** Custom engine state defaults to apply when disabling/disposal occurs. */
