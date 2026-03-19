@@ -13,13 +13,12 @@ import {
 	TooltipTrigger,
 } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
-import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
 import type { SharePayload } from '@/features/share/types';
 
 import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';
-import { Check, Link2, Sparkles, Code2, Info } from 'lucide-react';
+import { Check, Link2, Sparkles, Info } from 'lucide-react';
 
 export interface ShareExportData {
 	createdAt: number;
@@ -60,7 +59,6 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 		return {
 			textmodeUrl,
 			textmodeFits,
-			textmodeLength: data.textmodeCode.length,
 		};
 	}, [data]);
 
@@ -107,7 +105,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-auto sm:max-h-[85vh] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col">
+			<DialogContent className="sm:max-w-[450px] h-[90vh] sm:h-auto sm:max-h-[85vh] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col">
 				<DialogHeader className="px-6 py-4 border-b border-white/5 text-left shrink-0">
 					<DialogTitle className="text-base font-bold tracking-tight text-white">
 						share sketch
@@ -119,43 +117,16 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 
 				<ScrollArea className="flex-1 min-h-0">
 					<div className="px-6 pb-5 space-y-6">
-						{/* Capacity Info */}
-						<div className="flex flex-wrap items-center justify-between mb-4 gap-3 p-3 rounded-lg border border-white/5 bg-white/[0.02]">
-							<div className="flex flex-wrap items-center gap-2">
-								<Badge variant="outline" className="border-zinc-800 bg-zinc-900/40 text-zinc-400 h-6 px-2 text-[10px] uppercase tracking-wider">
-									<Code2 className="w-3 h-3 mr-1 text-zinc-500" />
-									textmode: {formatCount(computed.textmodeLength)}
-								</Badge>
-							</div>
-							<div className="text-[10px] font-mono text-zinc-600">
-								limit: {formatCount(MAX_SHARE_URL_LENGTH)}
-							</div>
-						</div>
-
-						{/* Export Options */}
-						<div className="mb-4">
+						{/* Share Link */}
+						<div>
 							<div className="flex flex-col rounded-lg border border-white/10 bg-zinc-900/40 p-4 transition-all hover:border-white/20">
-								<div className="flex items-center justify-between mb-4">
-									<div className="flex items-center gap-2">
-										<Code2 className="w-4 h-4 text-zinc-400" />
-										<span className="text-sm font-semibold text-white">textmode</span>
-									</div>
-									{computed.textmodeFits ? (
-										<Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] h-5 px-1.5">
-											fits
-										</Badge>
-									) : (
-										<Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-[10px] h-5 px-1.5">
-											too large
-										</Badge>
-									)}
-								</div>
-
-								<div className="mt-auto space-y-3">
+								<div className="space-y-3">
 									<div className="space-y-1.5">
 										<div className="flex justify-between text-[10px] font-mono text-zinc-500">
 											<span>link size</span>
-											<span>{formatCount(computed.textmodeUrl.length)}</span>
+											<span className={computed.textmodeFits ? 'text-zinc-500' : 'text-red-400'}>
+												{formatCount(computed.textmodeUrl.length)} / {formatCount(MAX_SHARE_URL_LENGTH)}
+											</span>
 										</div>
 										<div className="h-1 rounded-full bg-zinc-800/50 overflow-hidden">
 											<div

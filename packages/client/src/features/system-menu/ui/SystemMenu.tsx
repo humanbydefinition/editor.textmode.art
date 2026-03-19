@@ -62,7 +62,7 @@ export function SystemMenu({
                         onClick={onMakeRandomChange}
                         onMouseDown={(e) => e.preventDefault()}
                         className={cn(
-                            'fixed top-2 right-[6.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',
@@ -88,7 +88,7 @@ export function SystemMenu({
                         onClick={handleRandomize}
                         disabled={randomizeLoading}
                         className={cn(
-                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-[2.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',

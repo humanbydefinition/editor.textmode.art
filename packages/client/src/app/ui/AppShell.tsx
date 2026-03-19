@@ -173,7 +173,7 @@ export function AppShell() {
                             <SlugInfoAlert
                                 autoOpenEnabled={!welcomeOpen}
                                 onShare={handleShare}
-                                className="fixed top-2 right-[8.5rem] z-50 pointer-events-auto"
+                                className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"
                             />
 
                             <SystemMenu

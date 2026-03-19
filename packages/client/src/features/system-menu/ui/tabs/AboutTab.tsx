@@ -30,7 +30,7 @@ export function AboutTab() {
                     <div className="p-5 text-left space-y-2">
                         <h2 className="text-xl font-bold text-white">synth.textmode.art</h2>
                         <p className="text-sm text-zinc-400 max-w-[90%]">
-                            a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns.
+                            a live coding environment for procedural text generation and ASCII synthesis.
                         </p>
                     </div>
                     <div className="grid grid-cols-3 divide-x divide-white/5 border-t border-white/5 bg-zinc-900/40">

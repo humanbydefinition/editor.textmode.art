@@ -104,7 +104,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         </div>
                     </div>
                     <DialogDescription className="text-sm text-zinc-400">
-                        a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns.
+                        a live coding environment for procedural text generation and ASCII synthesis.
                     </DialogDescription>
                 </DialogHeader>
 
