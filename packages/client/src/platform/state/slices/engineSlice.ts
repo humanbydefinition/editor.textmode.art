@@ -9,7 +9,7 @@ export interface EngineState {
     /** Pending working code (for confirmation delay) */
     pendingWorkingCode: string | null;
 
-    /** Custom state specific to the engine (e.g., StrudelState) */
+    /** Custom state specific to the engine */
     customState: Record<string, unknown>;
 
     /** Whether the runtime/engine is fully initialized */

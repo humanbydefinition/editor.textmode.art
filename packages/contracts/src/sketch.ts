@@ -29,7 +29,6 @@ export const approvedSketchSchema = z.object({
   license: z.string().nullable(),
   socialLinks: z.array(socialLinkSchema).nullable(),
   textmodeCode: z.string(),
-  strudelCode: z.string().nullable(),
   ogImageUrl: z.string().nullable(),
   createdAt: z.string(),
 });
@@ -43,7 +42,6 @@ const publicSketchAccessBaseSchema = z.object({
   authorName: z.string().nullable(),
   license: z.string().nullable(),
   textmodeCode: z.string(),
-  strudelCode: z.string().nullable(),
   createdAt: z.string(),
 });
 
@@ -90,7 +88,6 @@ export const sketchRequestHashPayloadSchema = z.object({
   license: z.string().max(120).nullable(),
   socialLinks: z.array(socialLinkSchema).max(6).nullable(),
   textmodeCode: z.string().min(1).max(300_000),
-  strudelCode: z.string().max(300_000).nullable(),
   publishConsent: publishConsentSchema,
 });
 export type SketchRequestHashPayload = z.infer<typeof sketchRequestHashPayloadSchema>;
@@ -103,7 +100,6 @@ export const createSketchRequestSchema = z.object({
   license: z.string().max(120).optional().nullable(),
   socialLinks: z.array(socialLinkSchema).max(6).optional().nullable(),
   textmodeCode: z.string().min(1).max(300_000),
-  strudelCode: z.string().max(300_000).optional().nullable(),
   publishConsent: publishConsentSchema,
   turnstileToken: z.string().min(1).max(4096),
   antiSpam: antiSpamProofSchema,
@@ -121,7 +117,6 @@ export function toSketchRequestHashPayload(
     license: payload.license ?? null,
     socialLinks: payload.socialLinks ?? null,
     textmodeCode: payload.textmodeCode,
-    strudelCode: payload.strudelCode ?? null,
     publishConsent: payload.publishConsent,
   };
 }

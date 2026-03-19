@@ -29,7 +29,6 @@ export const adminSketchRequestSchema = z.object({
   license: z.string().nullable(),
   socialLinks: z.array(socialLinkSchema).nullable(),
   textmodeCode: z.string(),
-  strudelCode: z.string().nullable(),
   ogImageUrl: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),

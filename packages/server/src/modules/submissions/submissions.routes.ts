@@ -11,10 +11,10 @@ import { verifyTurnstileToken } from '../../security/turnstile.guard.js';
 import { toSketchRequestResult } from '../sketches/sketches.mapper.js';
 import {
   getPendingCount,
-  normalizeAndValidateSlug,
-  isSlugTaken,
   createSketchRequest,
 } from './submissions.service.js';
+
+import { isSlugTaken, normalizeAndValidateSlug } from '../../shared/slug.js';
 
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 

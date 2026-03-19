@@ -106,10 +106,6 @@ export class ShareSessionManager {
 	private focusPrimarySharedEditor(payload: SharePayload): void {
 		if (payload.engines.textmode !== undefined) {
 			this.deps.focusEditor('textmode');
-			return;
-		}
-		if (payload.engines.strudel !== undefined) {
-			this.deps.focusEditor('strudel');
 		}
 	}
 

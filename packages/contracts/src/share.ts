@@ -5,7 +5,6 @@ export const sharePayloadV1Schema = z.object({
   createdAt: z.number(),
   engines: z.object({
     textmode: z.string().optional(),
-    strudel: z.string().optional(),
   }),
 });
 export type SharePayloadV1 = z.infer<typeof sharePayloadV1Schema>;

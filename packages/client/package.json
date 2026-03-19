@@ -56,7 +56,7 @@
         "jsdom": "^28.0.0",
         "tailwindcss": "^4.1.10",
         "textmode.filters.js": "^1.1.1",
-        "textmode.js": "0.10.0",
+        "textmode.js": "0.11.0-beta.3",
         "textmode.synth.js": "1.5.1",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.46.4",

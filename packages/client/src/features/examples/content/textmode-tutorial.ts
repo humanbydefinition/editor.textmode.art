@@ -146,79 +146,10 @@ t.layers.base.synth(
     {
         id: 'tutorial-4',
         name: 'tutorial #4',
-        description: 'audio reactivity',
-        category: 'tutorial',
-        code: `/**
- * @title synth.textmode.art - tutorial #4
- * @author humanbydefinition - https://github.com/humanbydefinition
- */
-
-/**
- * Welcome to Tutorial #4!
- *
- * In this tutorial, we'll explore audio reactivity.
- * This is where the magic happens! You can make your visuals dance to the music
- * coming from the Strudel editor (right panel).
- *
- * To enable this, your Strudel pattern MUST utilize the \`.analyze()\` method.
- * Example of a Strudel pattern:
- * \`$: s("bd sd").analyze('main')\`
- *
- * The \`audio\` global gives you access to the sound analysis:
- *
- * Frequency bands (values between 0 and 1):
- * - \`audio.bass()\`: Low frequencies (kicks, basslines).
- * - \`audio.mid()\`: Mid frequencies (vocals, synths).
- * - \`audio.high()\`: High frequencies (hi-hats, sparkly sounds).
- * - \`audio.volume()\`: Total loudness / amplitude.
- *
- * Raw analysis data (Uint8Array):
- * - \`audio.fft()\`: Raw frequency domain data (spectrum).
- * - \`audio.waveform()\`: Raw time domain data (oscilloscope).
- *
- * In this sketch:
- * 1. We start with a fast \`osc\` pattern.
- * 2. We \`kaleid\` (kaleidoscope) it, using \`audio.bass()\` to change the number of segments dynamically!
- * 3. We use \`modulate\` with \`voronoi\` to create organic distortion, driven by \`audio.mid()\`.
- * 4. Colors are shifted by \`audio.high()\`.
- *
- * Try changing the music in Strudel and watch the visuals react!
- */
-
-// 1. Create a base geometric oscillation
-const geometry = osc(20, 0.05, 0.8)
-  .kaleid(() => 3 + audio.bass() * 5)  // Bass controls symmetry
-  .rotate(0.5, 0.2);
-
-// 2. Add organic distortion / liquid movement
-// Mid frequencies make it "wobble" with more intensity
-const fluid = geometry
-  .modulate(
-     voronoi(10, 0.2, 0.5), 
-     () => 0.2 + audio.mid() * 0.5
-  )
-  .scale(() => 1 - audio.volume() * 0.2); // Pump effect
-
-// 3. Dynamic Coloring
-const colors = gradient(1)
-  .hue(() => audio.high())         // Highs shift color
-  .saturate(2)
-  .brightness(() => 0.5 + audio.bass()); // Bass flashes brightness
-
-t.layers.base.synth(
-  char(fluid)        
-    .charColor(colors)
-    .cellColor(fluid.clone().invert().mult(gradient(), 0.2))
-    .charMap("@#%*+=-:. ")
-);`,
-    },
-    {
-        id: 'tutorial-5',
-        name: 'tutorial #5',
         description: 'layering system & composition',
         category: 'tutorial',
         code: `/**
- * @title synth.textmode.art - tutorial #5
+ * @title synth.textmode.art - tutorial #4
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 

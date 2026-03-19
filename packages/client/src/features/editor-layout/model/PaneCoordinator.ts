@@ -15,10 +15,7 @@ export class PaneCoordinator {
 	sync(settings: AppSettings, store: PaneStoreAdapter): void {
 		this.paneConfigs = this.buildPaneConfigs(settings);
 
-		const panels: PaneStorePanel[] = [
-			{ id: 'textmode', label: 'textmode.js' },
-			...(settings.strudelEnabled ? [{ id: 'strudel', label: 'strudel' }] : []),
-		];
+		const panels: PaneStorePanel[] = [{ id: 'textmode', label: 'textmode.js' }];
 
 		store.setPanels(panels);
 
@@ -67,12 +64,7 @@ export class PaneCoordinator {
 	}
 
 	private buildPaneConfigs(settings: AppSettings): PaneConfig[] {
-		const panes: PaneConfig[] = [{ id: 'textmode', engineId: 'textmode' }];
-
-		if (settings.strudelEnabled) {
-			panes.push({ id: 'strudel', engineId: 'strudel' });
-		}
-
-		return panes;
+		void settings;
+		return [{ id: 'textmode', engineId: 'textmode' }];
 	}
 }

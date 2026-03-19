@@ -2,8 +2,6 @@ import { prisma } from '../../database/client.js';
 import { publicSketchSelect } from '../../database/selects.js';
 import { normalizeSlug, validateSlug, ACTIVE_SKETCH_STATUSES } from '../../shared/slug.js';
 
-export { isSlugTaken } from '../../shared/slug.js';
-
 export async function findApprovedSketchBySlug(rawSlug: string) {
   const normalizedSlug = normalizeSlug(rawSlug);
   const slugValidation = validateSlug(normalizedSlug);

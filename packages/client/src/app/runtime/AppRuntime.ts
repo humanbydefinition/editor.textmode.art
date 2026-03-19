@@ -8,8 +8,7 @@ import { AppShell } from '@/app/ui/AppShell';
 import { EditorManager } from '@/platform/input/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
-import { defaultTextmodeSketch, defaultStrudelSketch } from '@/features/examples/content/default-sketches';
-import { StrudelEngine } from '@/engines/strudel/StrudelEngine';
+import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
 import { registry } from '@/engines/registry';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
@@ -17,13 +16,9 @@ import { storageService, type IStorageService } from '@/platform/storage/Storage
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { createPaneStoreAdapter, type PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
-import type { AppSettings, StrudelTransportState } from '@/core/app.types';
+import type { AppSettings } from '@/core/app.types';
 import type { EngineId } from '@/core/engine.types';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
-import {
-	emitSlugInfoPopoverDismiss,
-	emitStrudelUnlockPopoverAllow,
-} from '@/platform/events/popoverEvents';
 
 /**
  * Main application composition root.
@@ -56,16 +51,13 @@ export class AppRuntime {
 
 		// Register default code
 		this.storage.registerDefaultCode('textmode', defaultTextmodeSketch);
-		this.storage.registerDefaultCode('strudel', defaultStrudelSketch);
 
 		// Register engines
 		registry.register(new TextmodeEngine());
-		registry.register(new StrudelEngine());
 
 		// Initialize Lifecycle first (it needs callbacks that refer to uiActions, which is fine as they are lazy)
 		this.engineLifecycle = new EngineLifecycle({
 			paneCoordinator: this.paneCoordinator,
-			paneStore: this.paneStore,
 			editorManager: this.editorManager,
 			storage: this.storage,
 			store: this.storeAdapter,
@@ -103,7 +95,6 @@ export class AppRuntime {
 			render: () => this.render(),
 			clearShareLockIfPresent: () => this.shareSession.clearShareLockIfPresent(),
 			applyApprovedSketch: (sketch) => this.engineLifecycle.applyApprovedSketch(sketch),
-			applyApprovedSketchToStrudel: (sketch) => this.engineLifecycle.applyApprovedSketchToStrudel(sketch),
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
@@ -136,19 +127,9 @@ export class AppRuntime {
 		await this.engineLifecycle.initEagerEngines();
 		this.render();
 
-		if (loadedSettings.strudelEnabled) {
-			await this.engineLifecycle.enableStrudel();
-		}
-
 		this.engineLifecycle.applyEditorSettings();
 		this.shareSession.applyInitialShareIfPresent();
-		if (loadedSettings.strudelEnabled) {
-			this.shareWorkflow.syncApprovedSketchToStrudelIfPresent();
-		}
 		this.shareWorkflow.applyPendingApprovedSketchIfPresent();
-		if (loadedSettings.strudelEnabled && this.shouldSyncTransportNow(loadedSettings.strudelTransport)) {
-			this.engineLifecycle.setStrudelTransport(loadedSettings.strudelTransport);
-		}
 		this.shareSession.attachInteractionGuards();
 		this.shortcuts = this.createShortcutsManager();
 		this.shortcuts.init();
@@ -191,7 +172,6 @@ export class AppRuntime {
 					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
-				toggleStrudelAudio: () => this.toggleStrudelTransport(),
 				runCodeForEngine: (engineId: string) => this.uiActions.runCodeForEngine(engineId),
 			},
 		});
@@ -200,15 +180,9 @@ export class AppRuntime {
 	private registerStoreSubscriptions(): void {
 		const settingsUnsubscribe = useAppStore.subscribe(
 			(state) => state.settings,
-			(settings, previous) => {
+			(settings) => {
 				this.storage.saveSettings(settings);
 				this.engineLifecycle.applyEditorSettings();
-				if (!previous || settings.strudelEnabled !== previous.strudelEnabled) {
-					void this.setStrudelEnabled(settings.strudelEnabled);
-				}
-				if (!previous || settings.strudelTransport !== previous.strudelTransport) {
-					this.engineLifecycle.setStrudelTransport(settings.strudelTransport);
-				}
 			}
 		);
 
@@ -225,60 +199,13 @@ export class AppRuntime {
 		this.storeUnsubscribers.push(settingsUnsubscribe, uiVisibilityUnsubscribe);
 	}
 
-	private async setStrudelEnabled(enabled: boolean): Promise<void> {
-		const didEnable = await this.engineLifecycle.setStrudelEnabled(enabled);
-		if (didEnable) {
-			this.shareSession.applyInitialShareIfPresent();
-			this.shareWorkflow.syncApprovedSketchToStrudelIfPresent();
-			if (this.shouldSyncTransportNow(this.settings.strudelTransport)) {
-				this.engineLifecycle.setStrudelTransport(this.settings.strudelTransport);
-			}
-		}
-	}
-
-	private toggleStrudelTransport(): void {
-		const nextTransport: StrudelTransportState =
-			this.settings.strudelTransport === 'playing' ? 'paused' : 'playing';
-		if (nextTransport === 'playing') {
-			emitSlugInfoPopoverDismiss();
-			emitStrudelUnlockPopoverAllow();
-		}
-		this.setStrudelTransport(nextTransport);
-	}
-
-	private setStrudelTransport(nextTransport: StrudelTransportState): void {
-		if (!this.settings.strudelEnabled && nextTransport === 'playing') return;
-		if (this.settings.strudelTransport === nextTransport) {
-			if (nextTransport === 'paused') {
-				this.engineLifecycle.setStrudelTransport(nextTransport);
-			}
-			return;
-		}
-		this.storeAdapter.settings.setSettings({
-			...this.settings,
-			strudelTransport: nextTransport,
-		});
-	}
-
-	private shouldSyncTransportNow(transport: StrudelTransportState): boolean {
-		if (transport === 'paused') return true;
-		// Use adapter where possible, or state snapshot
-		const consented = this.storeAdapter.share.getConsented();
-		const payload = this.storeAdapter.share.getPayload();
-		const approvedSketch = this.storeAdapter.share.getApprovedSketch();
-
-		if (payload && !consented) return false;
-		if (approvedSketch) return false;
-		return true;
-	}
-
 	private makeRandomChange(): void {
 		const isMobile = this.storeAdapter.ui.getIsMobile();
 		const activePanel = this.storeAdapter.ui.getActivePanel();
 		const focusedEditorId = this.editorManager.getFocusedEditorId();
 		const candidateTargets = isMobile
-			? [activePanel, focusedEditorId, 'textmode', 'strudel']
-			: [focusedEditorId, activePanel, 'textmode', 'strudel'];
+			? [activePanel, focusedEditorId, 'textmode']
+			: [focusedEditorId, activePanel, 'textmode'];
 
 		const targetId = candidateTargets.find(
 			(id): id is string => Boolean(id) && Boolean(this.engineLifecycle.getEngine(id as EngineId))
@@ -308,7 +235,6 @@ export class AppRuntime {
 			actions: {
 				share: () => { /* handled by AppShell local state */ },
 				randomize: () => this.shareWorkflow.randomize(),
-				toggleStrudelTransport: () => this.toggleStrudelTransport(),
 				makeRandomChange: () => this.makeRandomChange(),
 				resetRunners: () => this.uiActions.resetRunners(),
 				clearStorage: () => this.uiActions.clearStorage(),
@@ -340,8 +266,6 @@ export class AppRuntime {
 				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
 			},
 			state: {
-				strudelEnabled: s.strudelEnabled,
-				strudelTransport: s.strudelTransport,
 				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
 				editorBackdrop: s.editorBackdrop,
 			},

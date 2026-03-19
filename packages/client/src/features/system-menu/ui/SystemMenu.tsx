@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Menu, Shuffle, X, Share, Dices, Pause, Play, Heart } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -20,22 +20,11 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
-import type { StrudelTransportState } from '@/core/app.types';
-import {
-    emitStrudelUnlockPopoverDismiss,
-    emitStrudelUnlockPopoverSuppress,
-} from '@/platform/events/popoverEvents';
 
 export interface SystemMenuProps {
     onShare: () => void;
     onRandomize: () => Promise<boolean>;
-    onToggleStrudelTransport: () => void;
     onMakeRandomChange?: () => void;
-    strudelEnabled: boolean;
-    strudelRunnerReady: boolean;
-    strudelRunnerUnavailable: boolean;
-    strudelRunnerReconnecting: boolean;
-    strudelTransport: StrudelTransportState;
     randomizeLoading: boolean;
     onResetRunners: () => void;
     onClearStorage: () => void;
@@ -45,13 +34,7 @@ export interface SystemMenuProps {
 export function SystemMenu({
     onShare,
     onRandomize,
-    onToggleStrudelTransport,
     onMakeRandomChange,
-    strudelEnabled,
-    strudelRunnerReady,
-    strudelRunnerUnavailable,
-    strudelRunnerReconnecting,
-    strudelTransport,
     randomizeLoading,
     onResetRunners,
     onClearStorage,
@@ -63,8 +46,6 @@ export function SystemMenu({
     const [open, setOpen] = useState(false);
 
     const handleRandomize = async () => {
-        emitStrudelUnlockPopoverDismiss();
-        emitStrudelUnlockPopoverSuppress();
         const success = await onRandomize();
         if (!success) {
             toast.error('failed to load random sketch', {
@@ -73,63 +54,15 @@ export function SystemMenu({
         }
     };
 
-    const isStrudelRunnerAvailable =
-        strudelRunnerReady && !strudelRunnerUnavailable && !strudelRunnerReconnecting;
-
-    const strudelTooltipText = !strudelEnabled
-        ? 'enable strudel in settings first'
-        : strudelRunnerUnavailable
-            ? 'audio runner is offline'
-            : strudelRunnerReconnecting
-                ? 'audio runner is reconnecting...'
-                : !strudelRunnerReady
-                    ? 'audio runner is starting...'
-                    : strudelTransport === 'playing'
-                        ? 'pause strudel audio'
-                        : 'play strudel audio';
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        onClick={onToggleStrudelTransport}
-                        disabled={!strudelEnabled || !isStrudelRunnerAvailable}
-                        onMouseDown={(e) => e.preventDefault()}
-                        className={cn(
-                            'fixed top-2 right-10 z-50 pointer-events-auto',
-                            'flex items-center justify-center',
-                            'w-6 h-6 rounded-full',
-                            strudelTransport === 'playing'
-                                ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
-                                : 'bg-zinc-900/40 border-white/5 text-zinc-400',
-                            'backdrop-blur-md border',
-                            'transition-all duration-300',
-                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                            'focus:outline-none focus:ring-2 focus:ring-white/10',
-                            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
-                        )}
-                        aria-label={strudelTransport === 'playing' ? 'Pause Strudel audio' : 'Play Strudel audio'}
-                    >
-                        {strudelTransport === 'playing' ? (
-                            <Pause className="w-[14px] h-[14px]" />
-                        ) : (
-                            <Play className="w-[14px] h-[14px]" />
-                        )}
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{strudelTooltipText}</p>
-                </TooltipContent>
-            </Tooltip>
-
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
                         onClick={onMakeRandomChange}
                         onMouseDown={(e) => e.preventDefault()}
                         className={cn(
-                            'fixed top-2 right-[6.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',
@@ -155,7 +88,7 @@ export function SystemMenu({
                         onClick={handleRandomize}
                         disabled={randomizeLoading}
                         className={cn(
-                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
+                            'fixed top-2 right-[2.5rem] z-50 pointer-events-auto',
                             'flex items-center justify-center',
                             'w-6 h-6 rounded-full',
                             'bg-zinc-900/40 backdrop-blur-md',
@@ -316,13 +249,6 @@ export function SystemMenu({
                                 <span>run code</span>
                                 <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">Ctrl+Enter</span>
                             </div>
-
-
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>toggle audio</span>
-                                <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">Ctrl+.</span>
-                            </div>
-
 
                             <div className="flex items-center gap-2 text-xs text-zinc-500">
                                 <span>reset sketch</span>

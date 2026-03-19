@@ -1,11 +1,6 @@
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Separator } from "@/shared/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/lib/cn";
 import { Play } from 'lucide-react';
-import { useAppStore } from '@/platform/state/appStore';
-import { selectStrudelEnabled } from '@/platform/state/selectors';
 import type { Example } from '@/features/examples/types';
 import { getExampleEngineCatalog } from '../model/exampleCatalog';
 
@@ -15,16 +10,15 @@ export interface ExamplesTabProps {
 }
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
-    const strudelEnabled = useAppStore(selectStrudelEnabled);
-
     const engines = getExampleEngineCatalog();
+    const engine = engines[0];
 
-    const handleSelect = (example: Example, engineId: string) => {
-        onLoadExample(example.code, engineId);
+    const handleSelect = (example: Example) => {
+        onLoadExample(example.code, engine.id);
         onClose();
     };
 
-    if (engines.length === 0) {
+    if (!engine) {
         return (
             <div className="p-6 text-center text-zinc-500 italic">
                 No examples available.
@@ -33,62 +27,17 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     }
 
     return (
-        <Tabs defaultValue={engines[0]?.id} className="h-full flex flex-col">
-            <div className="px-6 py-3 border-b border-white/5 bg-zinc-900/30 shrink-0">
-                <TabsList className="bg-transparent p-0 h-auto gap-2 grid grid-cols-2 w-full">
-                    {engines.map((engine) => {
-                        const isDisabled = engine.id === 'strudel' && !strudelEnabled;
-                        const trigger = (
-                            <TabsTrigger
-                                key={engine.id}
-                                value={engine.id}
-                                disabled={isDisabled}
-                                className={cn(
-                                    "bg-zinc-900/50 text-zinc-400 data-[state=active]:text-emerald-400 data-[state=active]:bg-emerald-500/10 data-[state=active]:shadow-none border border-white/5 data-[state=active]:border-emerald-500/20 px-3 py-1.5 h-auto text-xs font-medium uppercase tracking-wider rounded-md transition-all w-full",
-                                    isDisabled && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                {engine.displayName}
-                            </TabsTrigger>
-                        );
-
-                        if (isDisabled) {
-                            return (
-                                <Tooltip key={engine.id}>
-                                    <TooltipTrigger asChild>
-                                        <div className="w-full">{trigger}</div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" align="start">
-                                        enable strudel in settings first
-                                    </TooltipContent>
-                                </Tooltip>
-                            );
-                        }
-
-                        return trigger;
-                    })}
-                </TabsList>
-            </div>
-
-            {engines.map((engine) => (
-                <TabsContent key={engine.id} value={engine.id} className="flex-1 min-h-0 mt-0">
-                    <EngineExampleList
-                        engineLabel={engine.displayName}
-                        examplesByCategory={engine.examples}
-                        onSelect={(ex) => handleSelect(ex, engine.id)}
-                    />
-                </TabsContent>
-            ))}
-        </Tabs>
+        <EngineExampleList
+            examplesByCategory={engine.examples}
+            onSelect={handleSelect}
+        />
     );
 }
 
 function EngineExampleList({
-    engineLabel,
     examplesByCategory,
     onSelect,
 }: {
-    engineLabel: string;
     examplesByCategory: Record<string, Example[]>;
     onSelect: (ex: Example) => void;
 }) {
@@ -101,7 +50,7 @@ function EngineExampleList({
         <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
                 <p className="text-sm text-zinc-400">
-                    select an example to load into {engineLabel}. current code will be replaced.
+                    select an example to load. your current code will be replaced.
                 </p>
 
                 {categories.map((category, index) => (

@@ -20,7 +20,6 @@ interface AdminSketchRecord {
   license: string | null;
   socialLinks: unknown;
   textmodeCode: string;
-  strudelCode: string | null;
   ogImageUrl: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -43,7 +42,6 @@ export function toAdminSketchRequest(sketch: AdminSketchRecord): AdminSketchRequ
     license: sketch.license,
     socialLinks: toSocialLinks(sketch.socialLinks),
     textmodeCode: sketch.textmodeCode,
-    strudelCode: sketch.strudelCode,
     ogImageUrl: sketch.ogImageUrl,
     createdAt: toIsoDate(sketch.createdAt),
     updatedAt: toIsoDate(sketch.updatedAt),
