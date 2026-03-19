@@ -71,30 +71,13 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 				</DialogHeader>
 
 				<div className="px-6 pb-5 space-y-4">
-					<div className="text-xs text-zinc-400 space-y-2">
-						<p>included engines:</p>
-						<div className="flex flex-wrap gap-2">
-							{engines.length ? (
-								engines.map((engine) => (
-									<Badge key={engine} variant="outline" className="border-zinc-700 text-zinc-300">
-										{engine}
-									</Badge>
-								))
-							) : (
-								<Badge variant="outline" className="border-zinc-700 text-zinc-300">
-									unknown
-								</Badge>
-							)}
-						</div>
-					</div>
-
-						<div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-							<ul className="list-disc list-outside pl-5 space-y-1 text-xs text-amber-200/90 mb-3">
+					<div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+						<ul className="list-disc list-outside pl-5 space-y-1 text-xs text-amber-200/90 mb-3">
 							<li>may execute expensive loops, audio, and external requests</li>
 							<li>may contain illegal, offensive, or unsafe content</li>
 							<li>no warranty for safety, legality, or fitness of unapproved sketches</li>
 						</ul>
-							<label className="flex items-center gap-3 text-xs text-amber-200/80">
+						<label className="flex items-center gap-3 text-xs text-amber-200/80">
 							<input
 								type="checkbox"
 								checked={checked}
@@ -104,8 +87,8 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 							<span>
 								i understand i am executing third-party code at my own responsibility
 							</span>
-							</label>
-						</div>
+						</label>
+					</div>
 
 					<div className="flex flex-wrap gap-3">
 						<Button
