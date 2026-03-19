@@ -28,7 +28,7 @@ interface LibraryConfig {
 }
 
 interface TypeGenerationConfig {
-    id: string; // 'textmode' | 'strudel' etc.
+    id: string; // 'textmode' | 'engine' etc.
     libraries: LibraryConfig[];
     output: string;
     includeGlobals?: boolean;
