@@ -133,7 +133,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
         };
 
         const bootstrap = async () => {
-            const textmodeModule = await import('https://esm.sh/textmode.js@0.10.0');
+            const textmodeModule = await import('https://esm.sh/textmode.js@0.11.0-beta.3');
             const synthModule = await import('https://esm.sh/textmode.synth.js@1.5.1');
             const filtersModule = await import('https://esm.sh/textmode.filters.js@1.1.1');
 
