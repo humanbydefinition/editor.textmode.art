@@ -10,8 +10,9 @@ import {
   findApprovedSketchBySlug,
   findActiveSketchBySlug,
   findRandomApprovedSketch,
-  isSlugTaken,
 } from './sketches.service.js';
+
+import { isSlugTaken } from '../../shared/slug.js';
 
 const sketchesRoutes: FastifyPluginAsync = async (app) => {
   app.get('/api/sketch-requests/slug-available', async (request, reply) => {

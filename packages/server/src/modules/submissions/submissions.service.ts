@@ -4,8 +4,6 @@ import { submissionResultSelect } from '../../database/selects.js';
 import { isUniqueConstraintViolation } from '../../shared/errors.js';
 import { DiscordService } from '../discord/discord.service.js';
 
-export { isSlugTaken, normalizeAndValidateSlug } from '../../shared/slug.js';
-
 export async function getPendingCount(): Promise<number> {
   return prisma.sketchRequest.count({ where: { status: 'PENDING' } });
 }

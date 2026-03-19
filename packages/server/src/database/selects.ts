@@ -1,10 +1,5 @@
 /**
  * Named Prisma `select` objects.
- *
- * Defence-in-depth: queries that serve public endpoints should never fetch
- * more columns than the response mapper actually needs. Centralising the
- * select objects here makes it easy to audit what leaves the database and
- * ensures a new column in the Prisma schema doesn't leak by default.
  */
 
 /** Columns needed by the public sketch-read API endpoints. */
