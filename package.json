@@ -21,6 +21,15 @@
     "format:check": "prettier --check \"**/*.{ts,js}\"",
     "extract-types": "npm run extract-types -w @synth.textmode.art/client"
   },
+  "overrides": {
+    "textmode.js": "0.11.0-beta.3",
+    "textmode.synth.js": {
+      "textmode.js": "0.11.0-beta.3"
+    },
+    "textmode.filters.js": {
+      "textmode.js": "0.11.0-beta.3"
+    }
+  },
   "devDependencies": {
     "prettier": "^3.7.4"
   }
