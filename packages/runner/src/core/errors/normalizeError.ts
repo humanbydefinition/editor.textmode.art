@@ -2,7 +2,7 @@ import type { CodeError } from '@/core/types';
 
 /**
  * Normalizes various error types into a standard CodeError object.
- * Combines pattern matching from both Textmode and Strudel error reporting.
+ * Extracts line/column from stack traces when available.
  */
 export function normalizeError(error: unknown): CodeError {
 	let message = '';
@@ -14,23 +14,11 @@ export function normalizeError(error: unknown): CodeError {
 		message = error.message;
 		stack = error.stack;
 
-		// Strategy 1: Extract from message (Strudel style: "line 5", "column 10")
-		const lineMatch = message.match(/line (\d+)/i);
-		const columnMatch = message.match(/column (\d+)/i);
-
-		if (lineMatch?.[1]) {
-			line = parseInt(lineMatch[1], 10);
-		}
-		if (columnMatch?.[1]) {
-			column = parseInt(columnMatch[1], 10);
-		}
-
-		// Strategy 2: Extract from stack trace (Textmode style: "<anonymous>:5:10")
-		// Only if line/column not already found in message
-		if (stack && (line === undefined || column === undefined)) {
+		// Extract line/column from stack trace ("<anonymous>:5:10")
+		if (stack) {
 			const stackMatch = stack.match(/<anonymous>:(\d+):(\d+)/);
 			if (stackMatch?.[1] && stackMatch[2]) {
-				// Subtract 1 for the "use strict" line added during Textmode execution
+				// Subtract 1 for the "use strict" line added during execution
 				line = parseInt(stackMatch[1], 10) - 1;
 				column = parseInt(stackMatch[2], 10);
 			}
