@@ -24,3 +24,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+.agents/
+.gemini/
+packages/server/storage/
+packages/server/src/generated/

@@ -1,0 +1,31 @@
+{
+    "name": "@synth.textmode.art/runner",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite --host --port 5181",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint .",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@synth.textmode.art/contracts": "file:../contracts",
+        "textmode.js": "0.11.0-beta.3",
+        "textmode.synth.js": "1.5.1",
+        "textmode.filters.js": "^1.1.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.1",
+        "@types/node": "^24.10.1",
+        "eslint": "^9.39.1",
+        "eslint-plugin-import": "^2.32.0",
+        "globals": "^16.5.0",
+        "typescript": "~5.9.3",
+        "typescript-eslint": "^8.46.4",
+        "vite": "^7.2.4",
+        "vitest": "^4.0.18"
+    }
+}

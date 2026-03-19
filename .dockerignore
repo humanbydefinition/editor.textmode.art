@@ -1,0 +1,31 @@
+# Dependencies (installed fresh inside containers)
+node_modules
+
+# Build artifacts (built fresh inside containers)
+dist
+
+# Version control
+.git
+.gitignore
+
+# Environment files (secrets injected via Docker env)
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Documentation (not needed in images)
+docs/
+
+# Persistent storage (mounted as volume)
+packages/server/storage
+
+# Runner build artifacts (runner has its own Dockerfile)
+packages/runner/dist
+packages/runner/node_modules

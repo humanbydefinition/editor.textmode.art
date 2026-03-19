@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SketchStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model SketchRequest {
+  id           String       @id @default(uuid())
+  slug         String
+  status       SketchStatus @default(PENDING)
+  title        String
+  description  String?
+  authorName   String?
+  license      String?
+  socialLinks  Json?
+  textmodeCode String
+  publishConsentAccepted      Boolean   @default(false)
+  publishConsentAcceptedAt    DateTime?
+  publishConsentPolicyVersion String?
+  ogImageUrl   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  reviewedAt   DateTime?
+  reviewedBy   String?
+  denialReason String?
+}
