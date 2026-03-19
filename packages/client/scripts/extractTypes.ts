@@ -403,16 +403,16 @@ function stripExamples(content: string): string {
 function filterDisallowedPrefixedMembers(content: string): ContentFilterResult {
     const patterns = [
         // function declarations
-        /^[ \t]*(?:export\s+)?(?:declare\s+)?function\s+[\$_][A-Za-z0-9_$]*\s*(?:<[^>{;]*>\s*)?\(/gm,
+        /^[ \t]*(?:export\s+)?(?:declare\s+)?function\s+[$_][A-Za-z0-9_$]*\s*(?:<[^>{;]*>\s*)?\(/gm,
         // method signatures
-        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare|async)\s+)*[\$_][A-Za-z0-9_$]*\??\s*(?:<[^>{;]*>\s*)?\(/gm,
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare|async)\s+)*[$_][A-Za-z0-9_$]*\??\s*(?:<[^>{;]*>\s*)?\(/gm,
         // callable property signatures
-        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*:\s*(?:<[^>{;]*>\s*)?\(/gm
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[$_][A-Za-z0-9_$]*\??\s*:\s*(?:<[^>{;]*>\s*)?\(/gm
         ,
         // typed field/property declarations (covers class variables and similar members)
-        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*!?\s*:/gm,
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[$_][A-Za-z0-9_$]*\??\s*!?\s*:/gm,
         // initialized field/property declarations
-        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[\$_][A-Za-z0-9_$]*\??\s*!?\s*=/gm
+        /^[ \t]*(?:(?:public|private|protected|static|abstract|readonly|declare)\s+)*[$_][A-Za-z0-9_$]*\??\s*!?\s*=/gm
     ];
 
     const ranges: Range[] = [];
