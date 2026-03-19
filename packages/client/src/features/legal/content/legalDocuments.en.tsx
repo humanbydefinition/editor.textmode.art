@@ -21,11 +21,11 @@ export function ImprintLegalContent({ className }: LegalContentProps) {
 				<p className="break-words">
 					Christopher Dietrich
 					<br />
-					Herler Strasse 70/72
+					Mauerstraße 36
 					<br />
-					51067 Cologne
+					40476 Düsseldorf
 					<br />
-					Germany
+					Deutschland
 				</p>
 			</div>
 
@@ -60,11 +60,11 @@ export function ImprintLegalContent({ className }: LegalContentProps) {
 				<p className="break-words">
 					Christopher Dietrich
 					<br />
-					Herler Strasse 70/72
+					Mauerstraße 36
 					<br />
-					51067 Cologne
+					40476 Düsseldorf
 					<br />
-					Germany
+					Deutschland
 				</p>
 			</div>
 
@@ -242,11 +242,11 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 				<p className="break-words">
 					Christopher Dietrich
 					<br />
-					Herler Strasse 70/72
+					Mauerstraße 36
 					<br />
-					51067 Cologne
+					40476 Düsseldorf
 					<br />
-					Germany
+					Deutschland
 					<br />
 					Email:{' '}
 					<a href="mailto:hello@textmode.art" className="text-emerald-400 hover:text-emerald-300 transition-colors">
