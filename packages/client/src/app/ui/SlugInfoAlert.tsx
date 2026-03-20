@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectShareState, selectSketchSummary } from '@/platform/state/selectors';
+import { selectShareConsented, selectSketchSummary } from '@/platform/state/selectors';
 import { SketchMetaCard } from '@/features/sketch-meta';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
@@ -18,9 +18,9 @@ const SLUG_INFO_POPOVER_DISMISS_EVENT = 'synth:slug-info-popover-dismiss';
 
 export function SlugInfoAlert({ className, autoOpenEnabled = true, onShare }: SlugInfoAlertProps) {
 	const sketch = useAppStore(selectSketchSummary);
-	const share = useAppStore(selectShareState);
+	const shareConsented = useAppStore(selectShareConsented);
 	const isPendingSketch = sketch?.status === 'PENDING';
-	const pendingUnlocked = !isPendingSketch || share.consented;
+	const pendingUnlocked = !isPendingSketch || shareConsented;
 	const sketchSlug = sketch?.slug ?? null;
 	const hasGallerySketch = Boolean(sketch && pendingUnlocked);
 	const buttonLabel = hasGallerySketch ? 'Gallery sketch info' : 'Share sketch';

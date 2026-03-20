@@ -7,7 +7,9 @@ import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {
 	selectError,
-	selectShareState,
+	selectShareConsented,
+	selectSharePayload,
+	selectSharePromptOpen,
 	selectTextmodeRunnerReconnecting,
 	selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
@@ -42,10 +44,12 @@ export function AppShell() {
 	const error = useAppStore(selectError);
 	const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
 	const clearError = useAppStore((state) => state.clearError);
-	const share = useAppStore(selectShareState);
+	const sharePayload = useAppStore(selectSharePayload);
+	const shareConsented = useAppStore(selectShareConsented);
+	const sharePromptOpen = useAppStore(selectSharePromptOpen);
 	const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
 	const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
-	const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
+	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
 
 	useEffect(() => {
 		const toastId = 'textmode-error';

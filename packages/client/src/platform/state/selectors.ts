@@ -1,7 +1,9 @@
 import type { AppState } from '@/platform/state/appStore';
 
 export const selectSettings = (state: AppState) => state.settings;
-export const selectShareState = (state: AppState) => state.share;
+export const selectSharePayload = (state: AppState) => state.share.payload;
+export const selectShareConsented = (state: AppState) => state.share.consented;
+export const selectSharePromptOpen = (state: AppState) => state.share.promptOpen;
 export const selectError = (state: AppState) => state.error;
 export const selectIsMobile = (state: AppState) => state.isMobile;
 export const selectActivePaneId = (state: AppState) => state.activePaneId;
