@@ -3,8 +3,6 @@ import { useRef, useEffect } from 'react';
 export interface EditorPaneProps {
     /** Unique pane identifier */
     paneId: string;
-    /** Engine ID this pane hosts */
-    engineId: string;
     /** Callback when container is ready */
     onContainerReady?: (paneId: string, container: HTMLElement) => void;
     /** Callback when container is removed */
@@ -20,7 +18,6 @@ export interface EditorPaneProps {
  */
 export function EditorPane({
     paneId,
-    engineId,
     onContainerReady,
     onContainerRemoved,
     hasBackdrop = false,
@@ -42,8 +39,7 @@ export function EditorPane({
     return (
         <div
             ref={containerRef}
-            id={`engine-panel-${paneId}`}
-            data-engine-id={engineId}
+            id={`editor-panel-${paneId}`}
             className={`layout-pane panel-editor ${hasBackdrop ? 'editor-backdrop' : ''} ${className}`}
             style={{
                 position: 'relative',

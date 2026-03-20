@@ -46,7 +46,6 @@ export function EditorLayout({
                 >
                     <EditorPane
                         paneId={primaryPane.id}
-                        engineId={primaryPane.engineId}
                         hasBackdrop={editorBackdrop}
                         onContainerReady={handleContainerReady}
                     />

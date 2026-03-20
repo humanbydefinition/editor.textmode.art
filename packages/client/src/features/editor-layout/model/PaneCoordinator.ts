@@ -65,6 +65,6 @@ export class PaneCoordinator {
 
 	private buildPaneConfigs(settings: AppSettings): PaneConfig[] {
 		void settings;
-		return [{ id: 'textmode', engineId: 'textmode' }];
+		return [{ id: 'textmode' }];
 	}
 }

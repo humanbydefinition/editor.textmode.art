@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CodeError, StatusState } from '@/core/app.types';
 import type { AppState } from '../appStore';
 
-export interface EngineSlice {
+export interface RuntimeSlice {
     error: CodeError | null;
     status: StatusState;
 
@@ -30,11 +30,11 @@ export interface EngineSlice {
     setRunnerReady: (value: boolean) => void;
 }
 
-export const createEngineSlice: StateCreator<
+export const createRuntimeSlice: StateCreator<
     AppState,
     [['zustand/devtools', never], ['zustand/subscribeWithSelector', never]],
     [],
-    EngineSlice
+    RuntimeSlice
 > = (set) => ({
     error: null,
     status: 'ready',
