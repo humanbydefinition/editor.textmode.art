@@ -1,6 +1,7 @@
 import type { PaneConfig } from '@/features/editor-layout';
 import type { AppSettings } from '@/core/app.types';
-import type { PaneStateAdapter, PaneTab } from '@/platform/state/adapters/paneStateAdapter';
+import type { Pane } from '@/platform/state/slices/uiSlice';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 
 /**
  * Owns pane composition and pane readiness coordination.
@@ -11,16 +12,16 @@ export class PaneCoordinator {
 	private paneContainers = new Map<string, HTMLElement>();
 	private paneReadyResolvers = new Map<string, (container: HTMLElement) => void>();
 
-	sync(settings: AppSettings, store: PaneStateAdapter): void {
+	sync(settings: AppSettings, store: AppStoreAdapter): void {
 		this.paneConfigs = this.buildPaneConfigs(settings);
 
-		const panes: PaneTab[] = [{ id: 'textmode', label: 'textmode.js' }];
+		const panes: Pane[] = [{ id: 'textmode', label: 'textmode.js' }];
 
-		store.setPanes(panes);
+		store.ui.setPanes(panes);
 
-		const activePaneId = store.getActivePaneId();
+		const activePaneId = store.ui.getActivePaneId();
 		if (!panes.find((pane) => pane.id === activePaneId)) {
-			store.setActivePaneId(panes[0]?.id ?? '');
+			store.ui.setActivePaneId(panes[0]?.id ?? '');
 		}
 	}
 

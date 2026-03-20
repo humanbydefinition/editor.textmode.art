@@ -13,7 +13,6 @@ import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import { createPaneStateAdapter, type PaneStateAdapter } from '@/platform/state/adapters/paneStateAdapter';
 import type { AppSettings } from '@/core/app.types';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
@@ -27,7 +26,6 @@ export class AppRuntime {
 	private readonly storage: IEditorStorage;
 	private readonly editorRegistry: EditorRegistry;
 	private readonly paneCoordinator: PaneCoordinator;
-	private readonly paneState: PaneStateAdapter;
 	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly textmodeEngine: TextmodeEngine;
@@ -45,7 +43,6 @@ export class AppRuntime {
 		this.storage = editorStorage;
 		this.editorRegistry = new EditorRegistry();
 		this.paneCoordinator = new PaneCoordinator();
-		this.paneState = createPaneStateAdapter();
 		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
@@ -103,7 +100,7 @@ export class AppRuntime {
 		this.storeAdapter.settings.setSettings(loadedSettings);
 		await this.shareWorkflow.hydrateFromLocation(window.location);
 
-		this.paneCoordinator.sync(loadedSettings, this.paneState);
+		this.paneCoordinator.sync(loadedSettings, this.storeAdapter);
 		this.storeInitCleanup = initAppStore();
 
 		const appContainer = document.getElementById('app-container');
@@ -177,6 +174,7 @@ export class AppRuntime {
 			editorContainer,
 			visualContainer: document.body,
 			getSettings: this.storeAdapter.settings.getSettings,
+			store: this.storeAdapter,
 			callbacks: {
 				onRenderOverlay: () => this.render(),
 				onSaveCode: (code: string) => this.storage.saveCode(code),

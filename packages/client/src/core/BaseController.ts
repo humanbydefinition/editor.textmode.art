@@ -1,8 +1,7 @@
-import type { CodeError, StatusState } from '@/core/app.types';
+import type { CodeError } from '@/core/app.types';
 import type { IEditor } from './BaseEditor';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import type { SketchSummary } from '@/features/sketch-meta';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -36,37 +35,6 @@ export interface BaseControllerCallbacks {
 }
 
 /**
- * Store adapter contract used by base controllers.
- * Implemented in platform/state/adapters/controllerStoreAdapter.ts.
- */
-export interface ControllerStoreAdapter {
-	// Error / status
-	setError: (error: CodeError | null) => void;
-	clearError: () => void;
-	setStatus: (status: StatusState) => void;
-
-	// Engine state
-	getLastWorkingCode: () => string | null;
-	setLastWorkingCode: (code: string | null) => void;
-	getPendingWorkingCode: () => string | null;
-	setPendingWorkingCode: (code: string) => void;
-	cancelPendingWorkingCode: () => void;
-	setIsInitialized: (initialized: boolean) => void;
-
-	// Share
-	getShareState: () => { payload: SharePayload | null; consented: boolean; promptOpen: boolean };
-	setSharePromptOpen: (open: boolean) => void;
-
-	// Approved sketch
-	getApprovedSketch: () => ApprovedSketch | null;
-	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-	getSketchSummary: () => SketchSummary | null;
-	setSketchSummary: (info: SketchSummary | null) => void;
-	getOriginalApprovedSketch: () => ApprovedSketch | null;
-	getOriginalSketchSummary: () => SketchSummary | null;
-}
-
-/**
  * Base dependencies shared by all controllers.
  * Generic over editor and runtime types.
  */
@@ -80,7 +48,7 @@ export interface BaseControllerDependencies<TEditor extends IEditor, TRuntime ex
 	/** Get current auto-execute delay in ms */
 	getAutoExecuteDelay: () => number;
 	/** Store adapter for state access */
-	store: ControllerStoreAdapter;
+	store: AppStoreAdapter;
 }
 
 /**
@@ -129,7 +97,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.clearError();
+		this.deps.store.engine.clearError();
 		editor?.clearMarkers();
 
 		this.forceExecute(code);
@@ -148,7 +116,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const editor = this.deps.getEditor();
 		editor?.setValue(lastWorkingCode);
 		this.callbacks.onSaveCode(lastWorkingCode);
-		this.deps.store.clearError();
+		this.deps.store.engine.clearError();
 		editor?.clearMarkers();
 
 		this.revertExecute(lastWorkingCode);
@@ -170,7 +138,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			source: 'textmode',
 		};
 
-		this.deps.store.setError(errorInfo);
+		this.deps.store.engine.setError(errorInfo);
 
 		this.callbacks.onRenderOverlay();
 	}
@@ -205,7 +173,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	 * Get last working code for this controller.
 	 */
 	protected getLastWorkingCode(): string | null {
-		return this.deps.store.getLastWorkingCode();
+		return this.deps.store.engine.getLastWorkingCode();
 	}
 
 	/**
@@ -218,14 +186,14 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			window.clearTimeout(this.confirmationTimer);
 		}
 
-		this.deps.store.setPendingWorkingCode(code);
+		this.deps.store.engine.setPendingWorkingCode(code);
 
 		this.confirmationTimer = window.setTimeout(() => {
 			this.confirmationTimer = null;
-			const pending = this.deps.store.getPendingWorkingCode();
+			const pending = this.deps.store.engine.getPendingWorkingCode();
 			if (pending) {
-				this.deps.store.setLastWorkingCode(pending);
-				this.deps.store.cancelPendingWorkingCode();
+				this.deps.store.engine.setLastWorkingCode(pending);
+				this.deps.store.engine.cancelPendingWorkingCode();
 			}
 		}, CONFIRMATION_DELAY_MS);
 	}
@@ -239,7 +207,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			window.clearTimeout(this.confirmationTimer);
 			this.confirmationTimer = null;
 		}
-		this.deps.store.cancelPendingWorkingCode();
+		this.deps.store.engine.cancelPendingWorkingCode();
 	}
 
 	/**
@@ -252,10 +220,12 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	}
 
 	protected isExecutionLocked(): boolean {
-		const share = this.deps.store.getShareState();
-		if (share.payload && !share.consented) {
-			if (!share.promptOpen) {
-				this.deps.store.setSharePromptOpen(true);
+		const payload = this.deps.store.share.getPayload();
+		const consented = this.deps.store.share.getConsented();
+		const promptOpen = this.deps.store.share.getPromptOpen();
+		if (payload && !consented) {
+			if (!promptOpen) {
+				this.deps.store.share.setPromptOpen(true);
 			}
 			return true;
 		}
@@ -263,36 +233,36 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	}
 
 	private clearApprovedSketchIfCustomized(code: string): void {
-		const approvedSketch = this.deps.store.getApprovedSketch();
+		const approvedSketch = this.deps.store.share.getApprovedSketch();
 		if (approvedSketch) {
 			if (code !== approvedSketch.textmodeCode) {
-				this.deps.store.setApprovedSketch(null);
-				this.deps.store.setSketchSummary(null);
+				this.deps.store.share.setApprovedSketch(null);
+				this.deps.store.share.setSketchSummary(null);
 			}
 			return;
 		}
 
 		// Check if reverted code matches the original gallery sketch
-		const originalSketch = this.deps.store.getOriginalApprovedSketch();
+		const originalSketch = this.deps.store.share.getOriginalApprovedSketch();
 		if (originalSketch) {
 			if (code === originalSketch.textmodeCode) {
-				const originalSketchSummary = this.deps.store.getOriginalSketchSummary();
-				this.deps.store.setApprovedSketch(originalSketch);
+				const originalSketchSummary = this.deps.store.share.getOriginalSketchSummary();
+				this.deps.store.share.setApprovedSketch(originalSketch);
 				if (originalSketchSummary) {
-					this.deps.store.setSketchSummary(originalSketchSummary);
+					this.deps.store.share.setSketchSummary(originalSketchSummary);
 				}
 			}
 			return;
 		}
 
-		const sketchSummary = this.deps.store.getSketchSummary();
+		const sketchSummary = this.deps.store.share.getSketchSummary();
 		if (!sketchSummary || sketchSummary.status !== 'PENDING') return;
 
-		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.getShareState().payload);
+		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.share.getPayload());
 		if (sharedCodeForEngine === null) return;
 
 		if (code !== sharedCodeForEngine) {
-			this.deps.store.setSketchSummary(null);
+			this.deps.store.share.setSketchSummary(null);
 		}
 	}
 

@@ -1,12 +1,14 @@
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '@/core/app.types';
-import { BaseController, type BaseControllerCallbacks, type BaseControllerDependencies, type IController } from '@/core/BaseController';
+import {
+	BaseController,
+	type BaseControllerCallbacks,
+	type BaseControllerDependencies,
+	type IController,
+} from '@/core/BaseController';
 
-/**
- * Textmode-specific dependencies.
- */
-export interface TextmodeControllerDependencies extends BaseControllerDependencies<TextmodeEditor, TextmodeRuntime> { } /* eslint-disable-line @typescript-eslint/no-empty-object-type */
+export type TextmodeControllerDependencies = BaseControllerDependencies<TextmodeEditor, TextmodeRuntime>;
 
 /**
  * Textmode controller interface.
@@ -44,8 +46,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.clearError();
-		this.deps.store.setStatus('ready');
+		this.deps.store.engine.clearError();
+		this.deps.store.engine.setStatus('ready');
 		editor?.clearMarkers();
 		this.deps.getRuntime()?.softReset(code);
 		this.callbacks.onRenderOverlay();
@@ -56,8 +58,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 * Sets status and auto-runs initial code.
 	 */
 	handleRuntimeReady(): void {
-		this.deps.store.setStatus('ready');
-		this.deps.store.setIsInitialized(true);
+		this.deps.store.engine.setStatus('ready');
+		this.deps.store.engine.setIsInitialized(true);
 		this.callbacks.onRenderOverlay();
 
 		// Auto-run initial code
@@ -80,8 +82,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		// Start pending working code confirmation (uses BaseController default)
 		this.setPendingWorkingCode(code);
 
-		this.deps.store.setStatus('running');
-		this.deps.store.clearError();
+		this.deps.store.engine.setStatus('running');
+		this.deps.store.engine.clearError();
 		editor?.clearMarkers();
 		this.callbacks.onRenderOverlay();
 	}
@@ -91,7 +93,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 * Delegates to base handleError with status update.
 	 */
 	handleRunError(error: CodeError): void {
-		this.deps.store.setStatus('error');
+		this.deps.store.engine.setStatus('error');
 		this.handleError(error);
 	}
 
@@ -101,8 +103,8 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 */
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-		this.deps.store.setStatus('error');
-		this.deps.store.setError({
+		this.deps.store.engine.setStatus('error');
+		this.deps.store.engine.setError({
 			...error,
 			message: this.formatErrorMessage(error.message),
 			source: 'textmode',

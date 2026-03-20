@@ -1,10 +1,10 @@
 import type { AppSettings } from '@/core/app.types';
 import type { BaseControllerCallbacks } from '@/core/BaseController';
 import type { BaseEditor } from '@/core/BaseEditor';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
-import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
 
 /**
  * Context provided to the engine during initialization.
@@ -13,6 +13,7 @@ export interface TextmodeEngineContext {
 	editorContainer: HTMLElement;
 	visualContainer?: HTMLElement;
 	getSettings: () => AppSettings;
+	store: AppStoreAdapter;
 	callbacks: BaseControllerCallbacks;
 	getInitialCode: () => string;
 	toggleUI: () => void;
@@ -128,7 +129,7 @@ export class TextmodeEngine {
 			getRuntime: () => this.runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
-			store: createControllerStoreAdapter(),
+			store: context.store,
 		};
 
 		return new TextmodeController(callbacks, deps);
