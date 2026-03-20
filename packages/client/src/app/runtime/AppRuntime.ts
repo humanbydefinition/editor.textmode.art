@@ -336,7 +336,7 @@ export class AppRuntime {
 
 	private makeRandomChange(): void {
 		const code = this.textmodeEngine.getCode();
-		const newCode = CodeRandomizer.replaceRandomNumber(code);
+		const newCode = CodeRandomizer.makeRandomChange(code);
 
 		if (code !== newCode) {
 			// Avoid triggering auto-execute debounce + manual forceRun in the same click.
