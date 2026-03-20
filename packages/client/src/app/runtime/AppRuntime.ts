@@ -4,11 +4,11 @@ import { PaneCoordinator } from '@/features/editor-layout';
 import { ShareWorkflow, ShareSessionManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/app/ui/AppShell';
-import { EditorRegistry } from '@/platform/input/EditorRegistry';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/engines/textmode/TextmodeEngine';
+import type { TextmodeEditor } from '@/engines/textmode/editor/TextmodeEditor';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 
@@ -24,7 +24,6 @@ import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeCon
  */
 export class AppRuntime {
 	private readonly storage: IEditorStorage;
-	private readonly editorRegistry: EditorRegistry;
 	private readonly paneCoordinator: PaneCoordinator;
 	private readonly storeAdapter: AppStoreAdapter;
 
@@ -33,6 +32,7 @@ export class AppRuntime {
 	private readonly shareWorkflow: ShareWorkflow;
 	private readonly uiActions: UIActions;
 
+	private textmodeEditor: TextmodeEditor | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private storeInitCleanup: (() => void) | null = null;
@@ -41,7 +41,6 @@ export class AppRuntime {
 
 	constructor() {
 		this.storage = editorStorage;
-		this.editorRegistry = new EditorRegistry();
 		this.paneCoordinator = new PaneCoordinator();
 		this.storeAdapter = createAppStoreAdapter();
 
@@ -70,9 +69,9 @@ export class AppRuntime {
 			setSharePayload: this.storeAdapter.share.setPayload,
 			setShareConsented: this.storeAdapter.share.setConsented,
 			setSharePromptOpen: this.storeAdapter.share.setPromptOpen,
-			setEditorsReadOnly: (readOnly) => this.editorRegistry.setReadOnly(readOnly),
+			setEditorsReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
-			focusEditor: () => this.editorRegistry.focusEditor('textmode'),
+			focusEditor: () => this.focusEditor(),
 			restoreLocalSketches: () => this.restoreLocalSketches(),
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: () => this.runEngine(),
@@ -140,7 +139,7 @@ export class AppRuntime {
 			this.storeInitCleanup = null;
 		}
 
-		this.editorRegistry.unregisterEditor('textmode');
+		this.textmodeEditor = null;
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
@@ -161,10 +160,7 @@ export class AppRuntime {
 		const container = await this.paneCoordinator.waitForPane('textmode');
 		await this.textmodeEngine.init(this.createEngineContext(container));
 
-		const editor = this.textmodeEngine.getEditor();
-		if (editor) {
-			this.editorRegistry.registerEditor('textmode', editor);
-		}
+		this.textmodeEditor = this.textmodeEngine.getEditor();
 
 		this.applyEditorSettings();
 	}
@@ -196,7 +192,17 @@ export class AppRuntime {
 	}
 
 	private applyEditorSettings(): void {
-		this.editorRegistry.applySettings(this.storeAdapter.settings.getSettings());
+		const editor = this.textmodeEditor;
+		if (!editor) return;
+
+		const settings = this.storeAdapter.settings.getSettings();
+		editor.updateOptions({
+			fontSize: settings.fontSize,
+			lineNumbers: settings.lineNumbers ? 'on' : 'off',
+			lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
+			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
+		});
+		editor.updateEnvironment({ backdrop: settings.editorBackdrop });
 	}
 
 	private runEngine(): void {
@@ -228,6 +234,14 @@ export class AppRuntime {
 
 	private runRestoredSketches(): void {
 		this.textmodeEngine.getController()?.handleForceRun();
+	}
+
+	private setEditorReadOnly(readOnly: boolean): void {
+		this.textmodeEditor?.updateOptions({ readOnly });
+	}
+
+	private focusEditor(): void {
+		this.textmodeEditor?.focus();
 	}
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
@@ -306,7 +320,7 @@ export class AppRuntime {
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			const isMobile = this.storeAdapter.ui.getIsMobile();
 			if (!isMobile) {
-				this.editorRegistry.focusEditor('textmode');
+				this.focusEditor();
 			}
 		}
 	}

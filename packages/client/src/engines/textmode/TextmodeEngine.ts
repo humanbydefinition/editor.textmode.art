@@ -1,6 +1,5 @@
 import type { AppSettings } from '@/core/app.types';
 import type { BaseControllerCallbacks } from '@/core/BaseController';
-import type { BaseEditor } from '@/core/BaseEditor';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
@@ -62,7 +61,7 @@ export class TextmodeEngine {
 		this.initializing = false;
 	}
 
-	getEditor(): BaseEditor | null {
+	getEditor(): TextmodeEditor | null {
 		return this.editor;
 	}
 
