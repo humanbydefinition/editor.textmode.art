@@ -1,28 +1,34 @@
 import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
 import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
-import { ShareService } from './ShareService';
-import type { SharePayload } from '../types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
+import type { SharePayload } from '../types';
+import { ShareService } from './ShareService';
 
-export interface ShareWorkflowDependencies {
+export interface ShareManagerDependencies {
 	store: AppStoreAdapter;
 	render: () => void;
-	clearShareLockIfPresent: () => void;
+	setEditorReadOnly: (readOnly: boolean) => void;
+	applyPayload: (payload: SharePayload) => void;
+	focusEditor: () => void;
+	restoreLocalSketches: () => void;
+	runRestoredSketches: () => void;
+	runSharedSketch: () => void;
 	applyApprovedSketch: (sketch: ApprovedSketch) => void;
 	getServerInjectedSlug: () => string | undefined;
 	replaceUrl: (url: string) => void;
 }
 
 /**
- * Owns share hydration and approved-sketch workflows.
- * Keeps AppRuntime orchestration free of feature-level branching.
+ * Owns share hydration, consent/lock flow, and approved-sketch workflows.
+ * Keeps share-specific orchestration out of AppRuntime.
  */
-export class ShareWorkflow {
-	private readonly deps: ShareWorkflowDependencies;
+export class ShareManager {
+	private readonly deps: ShareManagerDependencies;
 	private pendingApprovedSketch: ApprovedSketch | null = null;
 	private randomizeLoading = false;
+	private guardsAttached = false;
 
-	constructor(deps: ShareWorkflowDependencies) {
+	constructor(deps: ShareManagerDependencies) {
 		this.deps = deps;
 	}
 
@@ -63,11 +69,63 @@ export class ShareWorkflow {
 		store.share.setPayload(this.toSharePayload(sketchData));
 	}
 
+	applyInitialShareIfPresent(): void {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload || this.deps.store.share.getConsented()) return;
+
+		this.deps.applyPayload(payload);
+		this.deps.setEditorReadOnly(true);
+	}
+
 	applyPendingApprovedSketchIfPresent(): void {
 		if (!this.pendingApprovedSketch) return;
 		const sketch = this.pendingApprovedSketch;
 		this.pendingApprovedSketch = null;
 		this.applyApprovedSketch(sketch);
+	}
+
+	unlockAndRun(): void {
+		const payload = this.unlockInternal();
+		if (!payload) return;
+		this.deps.runSharedSketch();
+	}
+
+	unlockOnly(): void {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload) return;
+		this.deps.store.share.setPromptOpen(false);
+		this.deps.setEditorReadOnly(true);
+		this.deps.applyPayload(payload);
+	}
+
+	discard(): void {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload) return;
+
+		this.deps.store.share.setPayload(null);
+		this.deps.setEditorReadOnly(false);
+		this.deps.restoreLocalSketches();
+		this.deps.runRestoredSketches();
+	}
+
+	openPrompt(): void {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload || this.deps.store.share.getConsented()) return;
+		this.deps.store.share.setPromptOpen(true);
+	}
+
+	attachInteractionGuards(): void {
+		if (this.guardsAttached) return;
+		document.addEventListener('mousedown', this.handleShareInteraction, true);
+		document.addEventListener('keydown', this.handleShareKeydown, true);
+		this.guardsAttached = true;
+	}
+
+	dispose(): void {
+		if (!this.guardsAttached) return;
+		document.removeEventListener('mousedown', this.handleShareInteraction, true);
+		document.removeEventListener('keydown', this.handleShareKeydown, true);
+		this.guardsAttached = false;
 	}
 
 	async randomize(): Promise<boolean> {
@@ -90,6 +148,46 @@ export class ShareWorkflow {
 		}
 	}
 
+	private unlockInternal(): SharePayload | null {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload) return null;
+
+		this.deps.store.share.setConsented(true);
+		this.deps.setEditorReadOnly(false);
+		this.deps.applyPayload(payload);
+		this.deps.focusEditor();
+		return payload;
+	}
+
+	private clearShareLockIfPresent(): void {
+		const payload = this.deps.store.share.getPayload();
+		if (!payload) return;
+		this.deps.store.share.setPayload(null);
+		this.deps.setEditorReadOnly(false);
+	}
+
+	private shouldPromptForInteraction(target: HTMLElement | null): boolean {
+		if (!target) return false;
+
+		const payload = this.deps.store.share.getPayload();
+		if (!payload || this.deps.store.share.getConsented() || this.deps.store.share.getPromptOpen()) return false;
+		return Boolean(target.closest('.monaco-editor'));
+	}
+
+	private handleShareInteraction = (event: MouseEvent): void => {
+		const target = event.target as HTMLElement | null;
+		if (this.shouldPromptForInteraction(target)) {
+			this.deps.store.share.setPromptOpen(true);
+		}
+	};
+
+	private handleShareKeydown = (event: KeyboardEvent): void => {
+		const target = event.target as HTMLElement | null;
+		if (this.shouldPromptForInteraction(target)) {
+			this.deps.store.share.setPromptOpen(true);
+		}
+	};
+
 	private getDetectedSlug(location: Location): string | undefined {
 		const slugFromServer = this.deps.getServerInjectedSlug();
 		if (slugFromServer) return slugFromServer;
@@ -99,7 +197,7 @@ export class ShareWorkflow {
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
 		const store = this.deps.store;
-		this.deps.clearShareLockIfPresent();
+		this.clearShareLockIfPresent();
 
 		store.share.setApprovedSketch(sketch);
 		store.share.setSketchSummary({

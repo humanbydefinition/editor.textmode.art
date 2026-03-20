@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { PaneCoordinator } from '@/features/editor-layout';
-import { ShareWorkflow, ShareSessionManager } from '@/features/share';
+import { ShareManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/app/ui/AppShell';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
@@ -28,8 +28,7 @@ export class AppRuntime {
 	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly textmodeEngine: TextmodeEngine;
-	private readonly shareSession: ShareSessionManager;
-	private readonly shareWorkflow: ShareWorkflow;
+	private readonly shareManager: ShareManager;
 	private readonly uiActions: UIActions;
 
 	private textmodeEditor: TextmodeEditor | null = null;
@@ -60,27 +59,15 @@ export class AppRuntime {
 			resetAll: () => this.resetAll(),
 		});
 
-		this.shareSession = new ShareSessionManager({
-			getShareState: () => ({
-				payload: this.storeAdapter.share.getPayload(),
-				consented: this.storeAdapter.share.getConsented(),
-				promptOpen: this.storeAdapter.share.getPromptOpen(),
-			}),
-			setSharePayload: this.storeAdapter.share.setPayload,
-			setShareConsented: this.storeAdapter.share.setConsented,
-			setSharePromptOpen: this.storeAdapter.share.setPromptOpen,
-			setEditorsReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
+		this.shareManager = new ShareManager({
+			store: this.storeAdapter,
+			render: () => this.render(),
+			setEditorReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
 			restoreLocalSketches: () => this.restoreLocalSketches(),
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: () => this.runEngine(),
-		});
-
-		this.shareWorkflow = new ShareWorkflow({
-			store: this.storeAdapter,
-			render: () => this.render(),
-			clearShareLockIfPresent: () => this.shareSession.clearShareLockIfPresent(),
 			applyApprovedSketch: (sketch) => this.applyApprovedSketch(sketch),
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
@@ -97,7 +84,7 @@ export class AppRuntime {
 
 		const loadedSettings = this.storage.loadSettings();
 		this.storeAdapter.settings.setSettings(loadedSettings);
-		await this.shareWorkflow.hydrateFromLocation(window.location);
+		await this.shareManager.hydrateFromLocation(window.location);
 
 		this.paneCoordinator.sync(loadedSettings, this.storeAdapter);
 		this.storeInitCleanup = initAppStore();
@@ -115,9 +102,9 @@ export class AppRuntime {
 		this.render();
 
 		this.applyEditorSettings();
-		this.shareSession.applyInitialShareIfPresent();
-		this.shareWorkflow.applyPendingApprovedSketchIfPresent();
-		this.shareSession.attachInteractionGuards();
+		this.shareManager.applyInitialShareIfPresent();
+		this.shareManager.applyPendingApprovedSketchIfPresent();
+		this.shareManager.attachInteractionGuards();
 		this.shortcuts = this.createShortcutsManager();
 		this.shortcuts.init();
 
@@ -127,7 +114,7 @@ export class AppRuntime {
 	dispose(): void {
 		this.shortcuts?.dispose();
 		this.shortcuts = null;
-		this.shareSession.dispose();
+		this.shareManager.dispose();
 
 		for (const unsubscribe of this.storeUnsubscribers) {
 			unsubscribe();
@@ -329,7 +316,7 @@ export class AppRuntime {
 		const s = this.settings;
 		return {
 			actions: {
-				randomize: () => this.shareWorkflow.randomize(),
+				randomize: () => this.shareManager.randomize(),
 				makeRandomChange: () => this.makeRandomChange(),
 				resetRunners: () => this.uiActions.resetRunners(),
 				clearStorage: () => this.uiActions.clearStorage(),
@@ -344,10 +331,10 @@ export class AppRuntime {
 						this.storeAdapter.engine.setRunnerReconnecting(false);
 					}, 10000);
 				},
-				unlockAndRun: () => this.shareSession.unlockAndRun(),
-				unlockOnly: () => this.shareSession.unlockOnly(),
-				discardShare: () => this.shareSession.discard(),
-				openSharePrompt: () => this.shareSession.openPrompt(),
+				unlockAndRun: () => this.shareManager.unlockAndRun(),
+				unlockOnly: () => this.shareManager.unlockOnly(),
+				discardShare: () => this.shareManager.discard(),
+				openSharePrompt: () => this.shareManager.openPrompt(),
 				copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
 				getShareExportData: () => this.uiActions.getShareExportData(),
 			},
@@ -357,7 +344,7 @@ export class AppRuntime {
 					this.paneCoordinator.onPaneReady(paneId, container),
 			},
 			state: {
-				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
+				randomizeLoading: this.shareManager.getRandomizeLoading(),
 				editorBackdrop: s.editorBackdrop,
 			},
 		};
