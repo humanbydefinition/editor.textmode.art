@@ -28,6 +28,8 @@ export class AppRuntime {
 	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareManager: ShareManager;
 	private readonly uiActions: UIActions;
+	private readonly cachedActions: AppRuntimeContextValue['actions'];
+	private readonly cachedLayout: AppRuntimeContextValue['layout'];
 
 	private textmodeEditor: TextmodeEditor | null = null;
 	private textmodeContainer: HTMLElement | null = null;
@@ -70,6 +72,34 @@ export class AppRuntime {
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
+
+		this.cachedActions = {
+			randomize: () => this.shareManager.randomize(),
+			makeRandomChange: () => this.makeRandomChange(),
+			resetRunners: () => this.uiActions.resetRunners(),
+			clearStorage: () => this.uiActions.clearStorage(),
+			loadExample: (code: string) => this.uiActions.loadExample(code),
+			revertToLastWorking: () => {
+				this.textmodeEngine.getController()?.handleRevertToLastWorking();
+			},
+			reconnectTextmodeRunner: () => {
+				this.storeAdapter.engine.setRunnerReconnecting(true);
+				this.textmodeEngine.reconnectRuntime();
+				setTimeout(() => {
+					this.storeAdapter.engine.setRunnerReconnecting(false);
+				}, 10000);
+			},
+			unlockAndRun: () => this.shareManager.unlockAndRun(),
+			unlockOnly: () => this.shareManager.unlockOnly(),
+			discardShare: () => this.shareManager.discard(),
+			openSharePrompt: () => this.shareManager.openPrompt(),
+			copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
+			getShareExportData: () => this.uiActions.getShareExportData(),
+		};
+
+		this.cachedLayout = {
+			onTextmodeReady: (container: HTMLElement) => this.handleTextmodePaneReady(container),
+		};
 	}
 
 	private get settings(): AppSettings {
@@ -336,32 +366,8 @@ export class AppRuntime {
 	private getContextValue(): AppRuntimeContextValue {
 		const s = this.settings;
 		return {
-			actions: {
-				randomize: () => this.shareManager.randomize(),
-				makeRandomChange: () => this.makeRandomChange(),
-				resetRunners: () => this.uiActions.resetRunners(),
-				clearStorage: () => this.uiActions.clearStorage(),
-				loadExample: (code: string) => this.uiActions.loadExample(code),
-				revertToLastWorking: () => {
-					this.textmodeEngine.getController()?.handleRevertToLastWorking();
-				},
-				reconnectTextmodeRunner: () => {
-					this.storeAdapter.engine.setRunnerReconnecting(true);
-					this.textmodeEngine.reconnectRuntime();
-					setTimeout(() => {
-						this.storeAdapter.engine.setRunnerReconnecting(false);
-					}, 10000);
-				},
-				unlockAndRun: () => this.shareManager.unlockAndRun(),
-				unlockOnly: () => this.shareManager.unlockOnly(),
-				discardShare: () => this.shareManager.discard(),
-				openSharePrompt: () => this.shareManager.openPrompt(),
-				copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
-				getShareExportData: () => this.uiActions.getShareExportData(),
-			},
-			layout: {
-				onTextmodeReady: (container: HTMLElement) => this.handleTextmodePaneReady(container),
-			},
+			actions: this.cachedActions,
+			layout: this.cachedLayout,
 			state: {
 				randomizeLoading: this.shareManager.getRandomizeLoading(),
 				editorBackdrop: s.editorBackdrop,
