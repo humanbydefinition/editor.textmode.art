@@ -24,14 +24,8 @@
       "@/*": [
         "./src/*"
       ],
-      "@/core/*": [
-        "./src/core/*"
-      ],
       "@/platform/*": [
         "./src/platform/*"
-      ],
-      "@/engines/*": [
-        "./src/engines/*"
       ],
       "@/features/*": [
         "./src/features/*"
