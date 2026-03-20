@@ -12,7 +12,7 @@ function isSharePayload(value: unknown): value is SharePayload {
 	const payload = value as SharePayload;
 	if (payload.v !== 1) return false;
 	if (typeof payload.createdAt !== 'number') return false;
-	if (!payload.engines || typeof payload.engines !== 'object') return false;
+	if (typeof payload.code !== 'string') return false;
 	return true;
 }
 

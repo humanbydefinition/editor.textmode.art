@@ -216,10 +216,8 @@ export class AppRuntime {
 	}
 
 	private applySharePayload(payload: SharePayload): void {
-		const code = payload.engines.textmode;
-		if (typeof code !== 'string') return;
 		if (!this.textmodeEngine.isInitialized()) return;
-		this.textmodeEngine.setCode(code, { silent: true });
+		this.textmodeEngine.setCode(payload.code, { silent: true });
 	}
 
 	private restoreLocalSketches(): void {

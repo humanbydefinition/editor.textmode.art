@@ -49,9 +49,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 		const basePayload: SharePayload = {
 			v: 1,
 			createdAt: data.createdAt,
-			engines: {
-				textmode: data.textmodeCode,
-			},
+			code: data.textmodeCode,
 		};
 		const textmodeUrl = ShareService.buildShareUrl(basePayload, window.location);
 		const textmodeFits = textmodeUrl.length <= MAX_SHARE_URL_LENGTH;

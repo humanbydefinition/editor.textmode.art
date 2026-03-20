@@ -139,9 +139,7 @@ export class ShareWorkflow {
 		return {
 			v: 1,
 			createdAt: Date.now(),
-			engines: {
-				textmode: sketch.textmodeCode,
-			},
+			code: sketch.textmodeCode,
 		};
 	}
 
