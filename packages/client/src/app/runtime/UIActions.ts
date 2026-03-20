@@ -1,9 +1,9 @@
 import type { ShareExportData } from '@/features/share';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { IStorageService } from '@/platform/storage/StorageService';
+import type { IEditorStorage } from '@/platform/storage/EditorStorage';
 
 interface UIActionsDependencies {
-	storage: IStorageService;
+	storage: IEditorStorage;
 	getCode: () => string;
 	store: AppStoreAdapter;
 	render: () => void;
@@ -58,7 +58,7 @@ export class UIActions {
 		if (!loaded) return;
 
 		if (this.deps.store.ui.getIsMobile()) {
-			this.deps.store.ui.setActivePanel('textmode');
+			this.deps.store.ui.setActivePaneId('textmode');
 			this.deps.render();
 		}
 	}

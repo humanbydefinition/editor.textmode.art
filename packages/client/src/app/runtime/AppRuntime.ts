@@ -4,16 +4,16 @@ import { PaneCoordinator } from '@/features/editor-layout';
 import { ShareWorkflow, ShareSessionManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/app/ui/AppShell';
-import { EditorManager } from '@/platform/input/EditorManager';
+import { EditorRegistry } from '@/platform/input/EditorRegistry';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/engines/textmode/TextmodeEngine';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
-import { storageService, type IStorageService } from '@/platform/storage/StorageService';
+import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import { createPaneStoreAdapter, type PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
+import { createPaneStateAdapter, type PaneStateAdapter } from '@/platform/state/adapters/paneStateAdapter';
 import type { AppSettings } from '@/core/app.types';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
@@ -24,10 +24,10 @@ import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeCon
  * Orchestrates the textmode engine, share workflow, and UI.
  */
 export class AppRuntime {
-	private readonly storage: IStorageService;
-	private readonly editorManager: EditorManager;
+	private readonly storage: IEditorStorage;
+	private readonly editorRegistry: EditorRegistry;
 	private readonly paneCoordinator: PaneCoordinator;
-	private readonly paneStore: PaneStoreAdapter;
+	private readonly paneState: PaneStateAdapter;
 	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly textmodeEngine: TextmodeEngine;
@@ -42,10 +42,10 @@ export class AppRuntime {
 	private initialized = false;
 
 	constructor() {
-		this.storage = storageService;
-		this.editorManager = new EditorManager();
+		this.storage = editorStorage;
+		this.editorRegistry = new EditorRegistry();
 		this.paneCoordinator = new PaneCoordinator();
-		this.paneStore = createPaneStoreAdapter();
+		this.paneState = createPaneStateAdapter();
 		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
@@ -73,9 +73,9 @@ export class AppRuntime {
 			setSharePayload: this.storeAdapter.share.setPayload,
 			setShareConsented: this.storeAdapter.share.setConsented,
 			setSharePromptOpen: this.storeAdapter.share.setPromptOpen,
-			setEditorsReadOnly: (readOnly) => this.editorManager.setReadOnly(readOnly),
+			setEditorsReadOnly: (readOnly) => this.editorRegistry.setReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
-			focusEditor: () => this.editorManager.focusEditor('textmode'),
+			focusEditor: () => this.editorRegistry.focusEditor('textmode'),
 			restoreLocalSketches: () => this.restoreLocalSketches(),
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: () => this.runEngine(),
@@ -103,7 +103,7 @@ export class AppRuntime {
 		this.storeAdapter.settings.setSettings(loadedSettings);
 		await this.shareWorkflow.hydrateFromLocation(window.location);
 
-		this.paneCoordinator.sync(loadedSettings, this.paneStore);
+		this.paneCoordinator.sync(loadedSettings, this.paneState);
 		this.storeInitCleanup = initAppStore();
 
 		const appContainer = document.getElementById('app-container');
@@ -143,7 +143,7 @@ export class AppRuntime {
 			this.storeInitCleanup = null;
 		}
 
-		this.editorManager.unregisterEditor('textmode');
+		this.editorRegistry.unregisterEditor('textmode');
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
@@ -166,7 +166,7 @@ export class AppRuntime {
 
 		const editor = this.textmodeEngine.getEditor();
 		if (editor) {
-			this.editorManager.registerEditor('textmode', editor);
+			this.editorRegistry.registerEditor('textmode', editor);
 		}
 
 		this.applyEditorSettings();
@@ -198,7 +198,7 @@ export class AppRuntime {
 	}
 
 	private applyEditorSettings(): void {
-		this.editorManager.applySettings(this.storeAdapter.settings.getSettings());
+		this.editorRegistry.applySettings(this.storeAdapter.settings.getSettings());
 	}
 
 	private runEngine(): void {
@@ -306,7 +306,7 @@ export class AppRuntime {
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			const isMobile = this.storeAdapter.ui.getIsMobile();
 			if (!isMobile) {
-				this.editorManager.focusEditor('textmode');
+				this.editorRegistry.focusEditor('textmode');
 			}
 		}
 	}

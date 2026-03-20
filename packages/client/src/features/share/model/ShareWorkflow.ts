@@ -34,25 +34,25 @@ export class ShareWorkflow {
 		const store = this.deps.store;
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
-			store.share.setSlugSketchInfo(null);
+			store.share.setSketchSummary(null);
 			store.share.setPayload(payload);
 			return;
 		}
 
 		const detectedSlug = this.getDetectedSlug(location);
 		if (!detectedSlug) {
-			store.share.setSlugSketchInfo(null);
+			store.share.setSketchSummary(null);
 			return;
 		}
 
 		const sketchData = await fetchSketchBySlugAccess(detectedSlug);
 		if (!sketchData) {
-			store.share.setSlugSketchInfo(null);
+			store.share.setSketchSummary(null);
 			this.deps.replaceUrl('/');
 			return;
 		}
 
-		store.share.setSlugSketchInfo(this.toSlugSketchInfo(sketchData));
+		store.share.setSketchSummary(this.toSketchSummary(sketchData));
 
 		if (sketchData.status === 'APPROVED') {
 			this.pendingApprovedSketch = this.toApprovedSketch(sketchData);
@@ -102,7 +102,7 @@ export class ShareWorkflow {
 		this.deps.clearShareLockIfPresent();
 
 		store.share.setApprovedSketch(sketch);
-		store.share.setSlugSketchInfo({
+		store.share.setSketchSummary({
 			status: 'APPROVED',
 			slug: sketch.slug,
 			title: sketch.title,
@@ -115,7 +115,7 @@ export class ShareWorkflow {
 		this.deps.applyApprovedSketch(sketch);
 
 		if (store.ui.getIsMobile()) {
-			store.ui.setActivePanel('textmode');
+			store.ui.setActivePaneId('textmode');
 			this.deps.render();
 		}
 	}
@@ -143,7 +143,7 @@ export class ShareWorkflow {
 		};
 	}
 
-	private toSlugSketchInfo(sketch: PublicSketchAccess) {
+	private toSketchSummary(sketch: PublicSketchAccess) {
 		if (sketch.status === 'APPROVED') {
 			return {
 				status: 'APPROVED' as const,

@@ -92,7 +92,7 @@ body.legal-mode #app-container {
         flex-direction: column;
     }
 
-    /* Make panels full screen on mobile */
+    /* Make panes full screen on mobile */
     .app-layout-container.tab-layout .layout-pane {
         position: absolute;
         top: 0;

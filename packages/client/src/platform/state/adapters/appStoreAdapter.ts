@@ -2,7 +2,7 @@ import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/core/app.types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
+import type { SketchSummary } from '@/features/sketch-meta';
 
 /**
  * Adapter for accessing settings state.
@@ -45,7 +45,7 @@ export interface ShareAdapter {
     clearOriginalApprovedSketch: () => void;
     getApprovedSketch: () => ApprovedSketch | null;
     setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-    setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+    setSketchSummary: (info: SketchSummary | null) => void;
 }
 
 /**
@@ -53,8 +53,8 @@ export interface ShareAdapter {
  */
 export interface UIAdapter {
     getIsMobile: () => boolean;
-    getActivePanel: () => string;
-    setActivePanel: (panel: string) => void;
+    getActivePaneId: () => string;
+    setActivePaneId: (paneId: string) => void;
 }
 
 /**
@@ -105,12 +105,12 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
             clearOriginalApprovedSketch: () => getState().clearOriginalApprovedSketch(),
             getApprovedSketch: () => getState().approvedSketch,
             setApprovedSketch: (sketch) => getState().setApprovedSketch(sketch),
-            setSlugSketchInfo: (info) => getState().setSlugSketchInfo(info),
+            setSketchSummary: (info) => getState().setSketchSummary(info),
         },
         ui: {
             getIsMobile: () => getState().isMobile,
-            getActivePanel: () => getState().activePanel,
-            setActivePanel: (panel) => getState().setActivePanel(panel),
+            getActivePaneId: () => getState().activePaneId,
+            setActivePaneId: (paneId) => getState().setActivePaneId(paneId),
         },
     };
 };

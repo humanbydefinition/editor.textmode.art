@@ -2,19 +2,19 @@ import type { StateCreator } from 'zustand';
 import { MOBILE_BREAKPOINT } from '@/core/app.types';
 import type { AppState } from '../appStore';
 
-export interface Panel {
+export interface Pane {
     id: string;
     label: string;
 }
 
 export interface UISlice {
     isMobile: boolean;
-    activePanel: string;
-    panels: Panel[];
+    activePaneId: string;
+    panes: Pane[];
 
     setIsMobile: (isMobile: boolean) => void;
-    setActivePanel: (panel: string) => void;
-    setPanels: (panels: Panel[]) => void;
+    setActivePaneId: (paneId: string) => void;
+    setPanes: (panes: Pane[]) => void;
 }
 
 export const createUISlice: StateCreator<
@@ -24,12 +24,12 @@ export const createUISlice: StateCreator<
     UISlice
 > = (set) => ({
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
-    activePanel: '',
-    panels: [],
+    activePaneId: '',
+    panes: [],
 
     setIsMobile: (isMobile) => set({ isMobile }),
-    setActivePanel: (activePanel) => set({ activePanel }),
-    setPanels: (panels) => set({ panels }),
+    setActivePaneId: (activePaneId) => set({ activePaneId }),
+    setPanes: (panes) => set({ panes }),
 });
 
 /**

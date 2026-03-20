@@ -1,37 +1,21 @@
 import type { IEditor } from '@/core/BaseEditor';
 import type { AppSettings } from '@/core/app.types';
 
-/**
- * Manages all active editor instances.
- * Handles applying global settings to all editors.
- */
-export class EditorManager {
-	private editors: Map<string, IEditor> = new Map();
+export class EditorRegistry {
+	private editors = new Map<string, IEditor>();
 
-	/**
-	 * Register a new editor.
-	 */
 	registerEditor(id: string, editor: IEditor): void {
 		this.editors.set(id, editor);
 	}
 
-	/**
-	 * Unregister an editor.
-	 */
 	unregisterEditor(id: string): void {
 		this.editors.delete(id);
 	}
 
-	/**
-	 * Get an editor by ID.
-	 */
 	getEditor(id: string): IEditor | undefined {
 		return this.editors.get(id);
 	}
 
-	/**
-	 * Apply settings to all registered editors.
-	 */
 	applySettings(settings: AppSettings): void {
 		const editorOptions = {
 			fontSize: settings.fontSize,
@@ -60,9 +44,6 @@ export class EditorManager {
 		this.editors.get(id)?.focus();
 	}
 
-	/**
-	 * Get the ID of the editor that currently has focus.
-	 */
 	getFocusedEditorId(): string | null {
 		for (const [id, editor] of this.editors) {
 			if (editor.editor.hasTextFocus()) {
