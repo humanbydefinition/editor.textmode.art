@@ -6,8 +6,8 @@ import { AppShell } from '@/app/ui/AppShell';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
-import { TextmodeEngine, type TextmodeEngineContext } from '@/engines/textmode/TextmodeEngine';
-import type { TextmodeEditor } from '@/engines/textmode/editor/TextmodeEditor';
+import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
+import type { TextmodeEditor } from '@/textmode/editor/TextmodeEditor';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 
