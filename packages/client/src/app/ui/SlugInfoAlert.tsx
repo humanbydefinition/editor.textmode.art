@@ -6,6 +6,7 @@ import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
+import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { SLUG_INFO_POPOVER_DISMISS_EVENT } from '@/platform/events/popoverEvents';
 
 interface SlugInfoAlertProps {
@@ -66,18 +67,12 @@ export function SlugInfoAlert({
 		return (
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<button
-						type="button"
-						className={cn(
-							'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
-							'border border-white/5',
-							'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-							'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
-							className
-						)}
-						aria-label={buttonLabel}
-						onClick={() => onShare?.()}
-					>
+						<button
+							type="button"
+							className={cn(floatingIconButtonVariants(), className)}
+							aria-label={buttonLabel}
+							onClick={() => onShare?.()}
+						>
 						<Share2 className="h-[14px] w-[14px]" />
 					</button>
 				</TooltipTrigger>
@@ -93,18 +88,12 @@ export function SlugInfoAlert({
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<PopoverTrigger asChild>
-						<button
-							type="button"
-							className={cn(
-								'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
-								'border border-white/5',
-								'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-								'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
-								className
-							)}
-							aria-label={buttonLabel}
-							aria-expanded={open}
-						>
+							<button
+								type="button"
+								className={cn(floatingIconButtonVariants(), className)}
+								aria-label={buttonLabel}
+								aria-expanded={open}
+							>
 							<Info className="h-[14px] w-[14px]" />
 						</button>
 					</PopoverTrigger>

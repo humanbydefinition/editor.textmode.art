@@ -9,9 +9,3 @@ export const selectPanels = (state: AppState) => state.panels;
 export const selectSlugSketchInfo = (state: AppState) => state.slugSketchInfo;
 export const selectTextmodeRunnerUnavailable = (state: AppState): boolean => state.runnerUnavailable;
 export const selectTextmodeRunnerReconnecting = (state: AppState): boolean => state.runnerReconnecting;
-export const selectTextmodeRunnerReady = (state: AppState): boolean => state.runnerReady;
-
-export const selectHasLastWorkingForError = (state: AppState): boolean => {
-	if (!state.error) return false;
-	return state.lastWorkingCode !== null && state.lastWorkingCode !== undefined;
-};

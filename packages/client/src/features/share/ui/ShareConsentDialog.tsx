@@ -10,6 +10,7 @@ import {
 } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { buildLegalHref } from '@/shared/config/appMeta';
 import { useAppStore } from '@/platform/state/appStore';
 import { selectShareState } from '@/platform/state/selectors';
 import { X } from 'lucide-react';
@@ -117,11 +118,11 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 
 					<p className="text-[11px] text-zinc-500 leading-relaxed">
 						by unlocking, you agree to the{' '}
-						<a
-							href="/tos?lang=en"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+							<a
+								href={buildLegalHref('terms')}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
 						>
 							terms &amp; acceptable use
 						</a>

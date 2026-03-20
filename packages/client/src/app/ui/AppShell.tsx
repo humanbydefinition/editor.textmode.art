@@ -16,6 +16,7 @@ import { PublishRequestDialog, SubmissionsPausedDialog } from '@/features/publis
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
 import { SlugInfoAlert } from './SlugInfoAlert';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
@@ -137,15 +138,9 @@ export function AppShell() {
                             <button
                                 onClick={actions.openSharePrompt}
                                 className={cn(
+                                    floatingIconButtonVariants({ tone: 'warning' }),
                                     'fixed bottom-2 right-2 z-50 pointer-events-auto',
-                                    'flex items-center justify-center',
-                                    'w-6 h-6 rounded-full',
-                                    'bg-amber-500/15 backdrop-blur-md',
-                                    'border border-amber-500/30',
-                                    'text-amber-200',
-                                    'transition-all duration-200',
-                                    'hover:scale-105 hover:bg-amber-500/25',
-                                    'focus:outline-none focus:ring-2 focus:ring-amber-400/30'
+                                    'duration-200'
                                 )}
                                 aria-label="Sketch locked (click to unlock)"
                             >

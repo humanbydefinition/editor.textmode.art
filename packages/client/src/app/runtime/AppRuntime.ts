@@ -315,7 +315,6 @@ export class AppRuntime {
 		const s = this.settings;
 		return {
 			actions: {
-				share: () => { /* handled by AppShell local state */ },
 				randomize: () => this.shareWorkflow.randomize(),
 				makeRandomChange: () => this.makeRandomChange(),
 				resetRunners: () => this.uiActions.resetRunners(),

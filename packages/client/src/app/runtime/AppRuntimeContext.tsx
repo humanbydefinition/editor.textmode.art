@@ -7,8 +7,6 @@ import type { ShareExportData } from '@/features/share';
  */
 export interface AppRuntimeContextValue {
     actions: {
-        // Core
-        share: () => void;
         randomize: () => Promise<boolean>;
         makeRandomChange: () => void;
         resetRunners: () => void;

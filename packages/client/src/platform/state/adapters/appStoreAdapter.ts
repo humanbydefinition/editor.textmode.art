@@ -10,7 +10,6 @@ import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
 export interface SettingsAdapter {
     getSettings: () => AppSettings;
     setSettings: (settings: AppSettings) => void;
-    getUiVisible: () => boolean;
 }
 
 /**
@@ -79,7 +78,6 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
         settings: {
             getSettings: () => getState().settings,
             setSettings: (settings) => getState().setSettings(settings),
-            getUiVisible: () => getState().settings.uiVisible,
         },
         engine: {
             getStatus: () => getState().status,

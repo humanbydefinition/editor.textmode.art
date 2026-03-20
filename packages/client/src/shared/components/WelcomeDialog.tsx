@@ -9,6 +9,7 @@ import {
     DialogClose,
 } from '@/shared/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/ui/tooltip";
+import { APP_META, buildLegalHref } from '@/shared/config/appMeta';
 
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -55,7 +56,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                     <div className="flex items-center justify-between">
                         <div className="flex items-start gap-1">
                             <DialogTitle className="text-l font-bold tracking-tight text-white flex items-center gap-2">
-                                synth.textmode.art
+                                {APP_META.name}
                             </DialogTitle>
                         </div>
                         <div className="flex items-center gap-1">
@@ -63,7 +64,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <a
-                                        href="https://github.com/humanbydefinition/synth.textmode.art"
+                                        href={APP_META.urls.repo}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
@@ -79,7 +80,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <a
-                                        href="https://discord.gg/sjrw8QXNks"
+                                        href={APP_META.urls.discord}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
@@ -104,7 +105,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         </div>
                     </div>
                     <DialogDescription className="text-sm text-zinc-400">
-                        a live coding environment for procedural text generation and ASCII synthesis.
+                        {APP_META.description}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -148,7 +149,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                     <div className="flex w-full items-center justify-between gap-3 text-left">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             <a
-                                href="/imprint?lang=en"
+                                href={buildLegalHref('imprint')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
@@ -156,7 +157,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 imprint
                             </a>
                             <a
-                                href="/tos?lang=en"
+                                href={buildLegalHref('terms')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
@@ -164,7 +165,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 terms
                             </a>
                             <a
-                                href="/privacy?lang=en"
+                                href={buildLegalHref('privacy')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
@@ -172,7 +173,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                                 privacy
                             </a>
                             <a
-                                href="/contact?lang=en"
+                                href={buildLegalHref('contact')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
@@ -181,12 +182,12 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                             </a>
                         </div>
                         <a
-                            href="https://github.com/humanbydefinition/synth.textmode.art/blob/main/LICENSE"
+                            href={APP_META.urls.license}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-auto whitespace-nowrap text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
                         >
-                            licensed under GNU AGPLv3
+                            licensed under {APP_META.licenseLabel}
                         </a>
                     </div>
                 </div>
