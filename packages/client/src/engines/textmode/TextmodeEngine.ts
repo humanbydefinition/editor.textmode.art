@@ -1,9 +1,12 @@
 import type { AppSettings } from '@/core/app.types';
-import type { BaseControllerCallbacks } from '@/core/BaseController';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
-import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
+import {
+	TextmodeController,
+	type TextmodeControllerCallbacks,
+	type TextmodeControllerDependencies,
+} from './TextmodeController';
 
 /**
  * Context provided to the engine during initialization.
@@ -13,7 +16,7 @@ export interface TextmodeEngineContext {
 	visualContainer?: HTMLElement;
 	getSettings: () => AppSettings;
 	store: AppStoreAdapter;
-	callbacks: BaseControllerCallbacks;
+	callbacks: TextmodeControllerCallbacks;
 	getInitialCode: () => string;
 	toggleUI: () => void;
 	changeFontSize: (delta: number) => void;
@@ -118,7 +121,7 @@ export class TextmodeEngine {
 	}
 
 	private createController(context: TextmodeEngineContext): TextmodeController {
-		const callbacks: BaseControllerCallbacks = {
+		const callbacks: TextmodeControllerCallbacks = {
 			onRenderOverlay: context.callbacks.onRenderOverlay,
 			onSaveCode: context.callbacks.onSaveCode,
 		};

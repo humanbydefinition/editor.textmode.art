@@ -1,45 +1,81 @@
-import { TextmodeRuntime } from './runtime/TextmodeRuntime';
-import type { TextmodeEditor } from './editor/TextmodeEditor';
 import type { CodeError } from '@/core/app.types';
-import {
-	BaseController,
-	type BaseControllerCallbacks,
-	type BaseControllerDependencies,
-	type IController,
-} from '@/core/BaseController';
+import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
+import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { TextmodeEditor } from './editor/TextmodeEditor';
+import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 
-export type TextmodeControllerDependencies = BaseControllerDependencies<TextmodeEditor, TextmodeRuntime>;
+const CONFIRMATION_DELAY_MS = 100;
 
-/**
- * Textmode controller interface.
- */
-export interface ITextmodeController extends IController {
-	handleSoftReset(): void;
-	handleRunOk(): void;
-	handleRunError(error: CodeError): void;
-	handleSynthError(error: CodeError): void;
+export interface TextmodeControllerCallbacks {
+	onRenderOverlay: () => void;
+	onSaveCode: (code: string) => void;
+}
+
+export interface TextmodeControllerDependencies {
+	getEditor: () => TextmodeEditor | null;
+	getRuntime: () => TextmodeRuntime | null;
+	getAutoExecute: () => boolean;
+	getAutoExecuteDelay: () => number;
+	store: AppStoreAdapter;
 }
 
 /**
- * Handles textmode-specific code execution and runtime events.
+ * Handles textmode code execution, runtime events, debouncing, revert flow,
+ * and approved-sketch tracking.
  */
-export class TextmodeController extends BaseController<TextmodeEditor, TextmodeRuntime> implements ITextmodeController {
-	constructor(callbacks: BaseControllerCallbacks, deps: TextmodeControllerDependencies) {
-		super(callbacks, deps);
+export class TextmodeController {
+	private readonly callbacks: TextmodeControllerCallbacks;
+	private readonly deps: TextmodeControllerDependencies;
+	private debounceTimer: number | null = null;
+	private confirmationTimer: number | null = null;
+
+	constructor(callbacks: TextmodeControllerCallbacks, deps: TextmodeControllerDependencies) {
+		this.callbacks = callbacks;
+		this.deps = deps;
 	}
 
-	/**
-	 * Force execute code immediately.
-	 * This is the only truly required override.
-	 */
-	protected forceExecute(code: string): void {
+	handleCodeChange(code: string): void {
+		if (this.isExecutionLocked()) return;
+		this.clearApprovedSketchIfCustomized(code);
+		this.callbacks.onSaveCode(code);
+		this.clearDebounce();
+
+		if (!this.deps.getAutoExecute()) return;
+
+		this.debounceTimer = window.setTimeout(() => {
+			this.deps.getRuntime()?.forceRun(code);
+			this.debounceTimer = null;
+		}, this.deps.getAutoExecuteDelay());
+	}
+
+	handleForceRun(): void {
+		if (this.isExecutionLocked()) return;
+		const editor = this.deps.getEditor();
+		const code = editor?.getValue() ?? '';
+
+		this.callbacks.onSaveCode(code);
+		this.deps.store.engine.clearError();
+		editor?.clearMarkers();
+
 		this.deps.getRuntime()?.forceRun(code);
+		this.callbacks.onRenderOverlay();
 	}
 
-	/**
-	 * Handle soft reset (Ctrl+Shift+R).
-	 * Resets frame count and re-runs code.
-	 */
+	handleRevertToLastWorking(): void {
+		if (this.isExecutionLocked()) return;
+		const lastWorkingCode = this.deps.store.engine.getLastWorkingCode();
+		if (!lastWorkingCode) return;
+
+		const editor = this.deps.getEditor();
+		editor?.setValue(lastWorkingCode);
+		this.callbacks.onSaveCode(lastWorkingCode);
+		this.deps.store.engine.clearError();
+		editor?.clearMarkers();
+
+		this.deps.getRuntime()?.forceRun(lastWorkingCode);
+		this.callbacks.onRenderOverlay();
+	}
+
 	handleSoftReset(): void {
 		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
@@ -53,16 +89,11 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		this.callbacks.onRenderOverlay();
 	}
 
-	/**
-	 * Handle runtime ready signal.
-	 * Sets status and auto-runs initial code.
-	 */
 	handleRuntimeReady(): void {
 		this.deps.store.engine.setStatus('ready');
 		this.deps.store.engine.setIsInitialized(true);
 		this.callbacks.onRenderOverlay();
 
-		// Auto-run initial code
 		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
@@ -71,15 +102,10 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		}
 	}
 
-	/**
-	 * Handle successful code execution.
-	 * Confirms working code and updates status.
-	 */
 	handleRunOk(): void {
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
 
-		// Start pending working code confirmation (uses BaseController default)
 		this.setPendingWorkingCode(code);
 
 		this.deps.store.engine.setStatus('running');
@@ -88,19 +114,11 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		this.callbacks.onRenderOverlay();
 	}
 
-	/**
-	 * Handle code execution error.
-	 * Delegates to base handleError with status update.
-	 */
 	handleRunError(error: CodeError): void {
 		this.deps.store.engine.setStatus('error');
 		this.handleError(error);
 	}
 
-	/**
-	 * Handle synth dynamic parameter error.
-	 * These errors don't affect code execution status.
-	 */
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
 		this.deps.store.engine.setStatus('error');
@@ -110,5 +128,104 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 			source: 'textmode',
 		});
 		this.callbacks.onRenderOverlay();
+	}
+
+	private handleError(error: CodeError): void {
+		this.cancelPendingWorkingCode();
+
+		this.deps.store.engine.setError({
+			message: this.formatErrorMessage(error.message),
+			stack: error.stack,
+			line: error.line,
+			column: error.column,
+			source: 'textmode',
+		});
+
+		this.callbacks.onRenderOverlay();
+	}
+
+	private clearDebounce(): void {
+		if (this.debounceTimer === null) return;
+		window.clearTimeout(this.debounceTimer);
+		this.debounceTimer = null;
+	}
+
+	private setPendingWorkingCode(code: string): void {
+		if (this.confirmationTimer !== null) {
+			window.clearTimeout(this.confirmationTimer);
+		}
+
+		this.deps.store.engine.setPendingWorkingCode(code);
+
+		this.confirmationTimer = window.setTimeout(() => {
+			this.confirmationTimer = null;
+			const pending = this.deps.store.engine.getPendingWorkingCode();
+			if (!pending) return;
+			this.deps.store.engine.setLastWorkingCode(pending);
+			this.deps.store.engine.cancelPendingWorkingCode();
+		}, CONFIRMATION_DELAY_MS);
+	}
+
+	private cancelPendingWorkingCode(): void {
+		if (this.confirmationTimer !== null) {
+			window.clearTimeout(this.confirmationTimer);
+			this.confirmationTimer = null;
+		}
+		this.deps.store.engine.cancelPendingWorkingCode();
+	}
+
+	private formatErrorMessage(message: string): string {
+		return message;
+	}
+
+	private isExecutionLocked(): boolean {
+		const payload = this.deps.store.share.getPayload();
+		const consented = this.deps.store.share.getConsented();
+		const promptOpen = this.deps.store.share.getPromptOpen();
+		if (payload && !consented) {
+			if (!promptOpen) {
+				this.deps.store.share.setPromptOpen(true);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private clearApprovedSketchIfCustomized(code: string): void {
+		const approvedSketch = this.deps.store.share.getApprovedSketch();
+		if (approvedSketch) {
+			if (code !== approvedSketch.textmodeCode) {
+				this.deps.store.share.setApprovedSketch(null);
+				this.deps.store.share.setSketchSummary(null);
+			}
+			return;
+		}
+
+		const originalSketch = this.deps.store.share.getOriginalApprovedSketch();
+		if (originalSketch) {
+			if (code === originalSketch.textmodeCode) {
+				const originalSketchSummary = this.deps.store.share.getOriginalSketchSummary();
+				this.deps.store.share.setApprovedSketch(originalSketch);
+				if (originalSketchSummary) {
+					this.deps.store.share.setSketchSummary(originalSketchSummary);
+				}
+			}
+			return;
+		}
+
+		const sketchSummary = this.deps.store.share.getSketchSummary();
+		if (!sketchSummary || sketchSummary.status !== 'PENDING') return;
+
+		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.share.getPayload());
+		if (sharedCodeForEngine === null) return;
+
+		if (code !== sharedCodeForEngine) {
+			this.deps.store.share.setSketchSummary(null);
+		}
+	}
+
+	private getSharePayloadCode(payload: SharePayload | null): string | null {
+		if (!payload) return null;
+		return payload.engines.textmode ?? null;
 	}
 }
