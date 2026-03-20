@@ -2,7 +2,6 @@ import type { PaneConfig } from '@/features/editor-layout';
 import type { AppSettings } from '@/core/app.types';
 import type { PaneStateAdapter, PaneTab } from '@/platform/state/adapters/paneStateAdapter';
 
-
 /**
  * Owns pane composition and pane readiness coordination.
  * Keeps layout concerns out of the main App orchestrator.
@@ -40,10 +39,6 @@ export class PaneCoordinator {
 			resolver(container);
 			this.paneReadyResolvers.delete(paneId);
 		}
-	}
-
-	removePane(paneId: string): void {
-		this.paneContainers.delete(paneId);
 	}
 
 	waitForPane(paneId: string): Promise<HTMLElement> {

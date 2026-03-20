@@ -7,7 +7,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
-import { SLUG_INFO_POPOVER_DISMISS_EVENT } from '@/platform/events/popoverEvents';
 
 interface SlugInfoAlertProps {
 	className?: string;
@@ -15,11 +14,9 @@ interface SlugInfoAlertProps {
 	onShare?: () => void;
 }
 
-export function SlugInfoAlert({
-	className,
-	autoOpenEnabled = true,
-	onShare,
-}: SlugInfoAlertProps) {
+const SLUG_INFO_POPOVER_DISMISS_EVENT = 'synth:slug-info-popover-dismiss';
+
+export function SlugInfoAlert({ className, autoOpenEnabled = true, onShare }: SlugInfoAlertProps) {
 	const sketch = useAppStore(selectSketchSummary);
 	const share = useAppStore(selectShareState);
 	const isPendingSketch = sketch?.status === 'PENDING';
@@ -67,12 +64,12 @@ export function SlugInfoAlert({
 		return (
 			<Tooltip>
 				<TooltipTrigger asChild>
-						<button
-							type="button"
-							className={cn(floatingIconButtonVariants(), className)}
-							aria-label={buttonLabel}
-							onClick={() => onShare?.()}
-						>
+					<button
+						type="button"
+						className={cn(floatingIconButtonVariants(), className)}
+						aria-label={buttonLabel}
+						onClick={() => onShare?.()}
+					>
 						<Share2 className="h-[14px] w-[14px]" />
 					</button>
 				</TooltipTrigger>
@@ -88,12 +85,12 @@ export function SlugInfoAlert({
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<PopoverTrigger asChild>
-							<button
-								type="button"
-								className={cn(floatingIconButtonVariants(), className)}
-								aria-label={buttonLabel}
-								aria-expanded={open}
-							>
+						<button
+							type="button"
+							className={cn(floatingIconButtonVariants(), className)}
+							aria-label={buttonLabel}
+							aria-expanded={open}
+						>
 							<Info className="h-[14px] w-[14px]" />
 						</button>
 					</PopoverTrigger>

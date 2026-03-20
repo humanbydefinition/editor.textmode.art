@@ -47,9 +47,6 @@ export interface BaseEditorOptions {
 	// Common callbacks
 	onChange?: (value: string) => void;
 	onRun?: () => void;
-	onToggleUI?: () => void;
-	onIncreaseFontSize?: () => void;
-	onDecreaseFontSize?: () => void;
 }
 
 /**

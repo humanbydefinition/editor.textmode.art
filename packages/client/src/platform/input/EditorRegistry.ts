@@ -43,13 +43,4 @@ export class EditorRegistry {
 	focusEditor(id: string): void {
 		this.editors.get(id)?.focus();
 	}
-
-	getFocusedEditorId(): string | null {
-		for (const [id, editor] of this.editors) {
-			if (editor.editor.hasTextFocus()) {
-				return id;
-			}
-		}
-		return null;
-	}
 }

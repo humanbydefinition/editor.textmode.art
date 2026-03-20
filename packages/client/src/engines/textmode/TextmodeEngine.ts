@@ -98,13 +98,6 @@ export class TextmodeEngine {
 			onChange: (value) => this.controller?.handleCodeChange(value),
 			onRun: () => this.controller?.handleForceRun(),
 			onSoftReset: () => this.controller?.handleSoftReset(),
-			onToggleUI: () => context.toggleUI(),
-			onIncreaseFontSize: () => {
-				context.changeFontSize(1);
-			},
-			onDecreaseFontSize: () => {
-				context.changeFontSize(-1);
-			},
 		};
 		return new TextmodeEditor(options);
 	}
@@ -148,7 +141,5 @@ function getRunnerUrl(): string {
 		return explicit.trim();
 	}
 	// Use window.location.hostname to support access from other devices on the network
-	return import.meta.env.DEV
-		? `http://${window.location.hostname}:5181/`
-		: '/runner/';
+	return import.meta.env.DEV ? `http://${window.location.hostname}:5181/` : '/runner/';
 }
