@@ -1,4 +1,4 @@
-import { BaseRunner } from '@/core/runner/BaseRunner';
+import { MessagePortTransport } from '@/core/transport/MessagePortTransport';
 import { TextmodeManager } from '@/engines/textmode/TextmodeManager';
 import { ExecutionContext } from '@/engines/textmode/ExecutionContext';
 import { ErrorReporter } from '@/engines/textmode/ErrorReporter';
@@ -14,8 +14,12 @@ import { HandshakeHandler } from '@/core/transport/HandshakeHandler';
 
 /**
  * Concrete engine implementation for Textmode sketches.
+ * Manages MessagePort communication, global error handling,
+ * and the full textmode.js execution lifecycle inside the sandbox iframe.
  */
-export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
+export class TextmodeEngine {
+	private readonly transport = new MessagePortTransport<RunnerToParentMessage>();
+	private readonly allowedParentOrigins: Set<string>;
 	private readonly errorReporter: ErrorReporter;
 	private readonly scheduler: FrameScheduler;
 	private readonly handshakeHandler: HandshakeHandler;
@@ -25,19 +29,21 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 	private context: ExecutionContext;
 	private synthErrorReported = false;
 	private isExecuting = false;
+	private errorHandler: ((event: ErrorEvent) => void) | null = null;
+	private rejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
 	private readonly handleUserInteraction = (): void => {
-		this.sendMessage({ type: 'USER_INTERACTION' });
+		this.transport.send({ type: 'USER_INTERACTION' });
 	};
 	private readonly handleKeyDown = (event: KeyboardEvent): void => {
 		if (event.ctrlKey && event.shiftKey && (event.key === 'H' || event.key === 'h')) {
 			event.preventDefault();
-			this.sendMessage({ type: 'TOGGLE_UI' });
+			this.transport.send({ type: 'TOGGLE_UI' });
 		}
 	};
 
 	constructor(allowedParentOrigins: Set<string>) {
-		super(allowedParentOrigins);
-		this.errorReporter = new ErrorReporter((msg) => this.sendMessage(msg));
+		this.allowedParentOrigins = allowedParentOrigins;
+		this.errorReporter = new ErrorReporter((msg) => this.transport.send(msg));
 		this.scheduler = new FrameScheduler({
 			isRendering: () => this.isRendering(),
 			onExecute: (code, isSoftReset) => this.executeInternal(code, isSoftReset),
@@ -53,11 +59,11 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 			isAllowedOrigin: (origin) => this.isAllowedOrigin(origin),
 			isInitMessage: (data) => isInitMessage(data),
 			onPortExtracted: (port) => {
-				this.attachPort(port, this.handlePortMessage as (event: MessageEvent) => void);
+				this.transport.attach(port, this.handlePortMessage as (event: MessageEvent) => void);
 			},
 			onReady: () => {
 				window.removeEventListener('message', this.handleInitMessage);
-				this.sendMessage({ type: 'READY' });
+				this.transport.send({ type: 'READY' });
 			},
 		});
 	}
@@ -68,6 +74,36 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 		this.setupGlobalErrorHandlers((error) => this.errorReporter.report(error as Error | string | Event));
 		this.init();
 		window.addEventListener('message', this.handleInitMessage);
+	}
+
+	private isAllowedOrigin(origin: string): boolean {
+		if (this.allowedParentOrigins.has('*')) return true;
+		return this.allowedParentOrigins.has(origin);
+	}
+
+	private setupGlobalErrorHandlers(reportError: (error: unknown) => void): void {
+		this.teardownGlobalErrorHandlers();
+
+		this.errorHandler = (event: ErrorEvent) => {
+			reportError(event.error ?? event.message);
+		};
+		this.rejectionHandler = (event: PromiseRejectionEvent) => {
+			reportError(event.reason);
+		};
+
+		window.addEventListener('error', this.errorHandler);
+		window.addEventListener('unhandledrejection', this.rejectionHandler);
+	}
+
+	private teardownGlobalErrorHandlers(): void {
+		if (this.errorHandler) {
+			window.removeEventListener('error', this.errorHandler);
+			this.errorHandler = null;
+		}
+		if (this.rejectionHandler) {
+			window.removeEventListener('unhandledrejection', this.rejectionHandler);
+			this.rejectionHandler = null;
+		}
 	}
 
 	private handleInitMessage = (event: MessageEvent<WindowToRunnerMessage>): void => {
@@ -111,7 +147,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 		this.textmode.setupSynthErrorHandler((error) => {
 			if (!this.synthErrorReported) {
 				this.synthErrorReported = true;
-				this.sendMessage({
+				this.transport.send({
 					type: 'SYNTH_ERROR',
 					message: error.message,
 				});
@@ -133,7 +169,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 		window.removeEventListener('keydown', this.handleKeyDown);
 
 		this.teardownGlobalErrorHandlers();
-		this.detachPort();
+		this.transport.detach();
 	}
 
     /**
@@ -171,7 +207,7 @@ export class TextmodeEngine extends BaseRunner<RunnerToParentMessage> {
 			if (result.success) {
 				// Success!
 				this.lastWorkingCode = code;
-				this.sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
+				this.transport.send({ type: 'RUN_OK', timestamp: Date.now() });
 			} else if (result.error) {
 				// Runtime error
 				this.errorReporter.report(new Error(result.error.message));

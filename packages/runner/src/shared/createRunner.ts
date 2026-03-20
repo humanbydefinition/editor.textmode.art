@@ -1,16 +1,12 @@
 import { startInIframe } from '@/core/bootstrap/startInIframe';
 import { parseAllowedParentOrigins } from '@/core/security/allowedParentOrigins';
 
-export interface BaseRunnerInterface {
-	start(): void;
-}
-
-export type RunnerConstructor = new (allowedParentOrigins: Set<string>) => BaseRunnerInterface;
+type RunnerFactory = (allowedParentOrigins: Set<string>) => { start(): void };
 
 /**
- * Common boilerplate for initializing and starting a runner in an iframe.
+ * Initialize and start a runner inside the sandbox iframe.
  */
-export function createRunner(RunnerClass: RunnerConstructor, debugWarningMessage: string) {
+export function createRunner(factory: RunnerFactory, debugWarningMessage: string) {
 	const startRunner = () => {
 		const allowedParentOriginsArray = parseAllowedParentOrigins(
 			import.meta.env.VITE_RUNNER_PARENT_ORIGINS,
@@ -18,7 +14,7 @@ export function createRunner(RunnerClass: RunnerConstructor, debugWarningMessage
 		);
 		const allowedParentOrigins = new Set(allowedParentOriginsArray);
 
-		const runner = new RunnerClass(allowedParentOrigins);
+		const runner = factory(allowedParentOrigins);
 
 		startInIframe({
 			start: () => runner.start(),
