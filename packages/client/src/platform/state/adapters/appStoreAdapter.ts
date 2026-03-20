@@ -3,7 +3,6 @@ import type { AppSettings, StatusState, CodeError } from '@/core/app.types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { SketchSummary } from '@/features/sketch-meta';
-import type { Pane } from '../slices/uiSlice';
 
 /**
  * Adapter for accessing settings state.
@@ -57,9 +56,6 @@ export interface ShareAdapter {
  */
 export interface UIAdapter {
 	getIsMobile: () => boolean;
-	getActivePaneId: () => string;
-	setActivePaneId: (paneId: string) => void;
-	setPanes: (panes: Pane[]) => void;
 }
 
 /**
@@ -117,9 +113,6 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
 		},
 		ui: {
 			getIsMobile: () => getState().isMobile,
-			getActivePaneId: () => getState().activePaneId,
-			setActivePaneId: (paneId) => getState().setActivePaneId(paneId),
-			setPanes: (panes) => getState().setPanes(panes),
 		},
 	};
 };

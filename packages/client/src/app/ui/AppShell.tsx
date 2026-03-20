@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EditorLayout, MobileNav } from '@/features/editor-layout';
+import { EditorLayout } from '@/features/editor-layout';
 import { WelcomeDialog } from '@/features/onboarding';
 import { SystemMenu } from '@/features/system-menu';
 import { Toaster } from '@/shared/ui/sonner';
@@ -86,12 +86,8 @@ export function AppShell() {
 
 	return (
 		<>
-			{/* Layout layer - editor panes with mobile nav */}
-			<EditorLayout
-				panes={layout.panes}
-				editorBackdrop={runtimeState.editorBackdrop}
-				onPaneReady={layout.onPaneReady}
-			/>
+			{/* Layout layer - single editor pane */}
+			<EditorLayout editorBackdrop={runtimeState.editorBackdrop} onTextmodeReady={layout.onTextmodeReady} />
 
 			{/* UI shell layer - elevated above editors */}
 			<div id="shell-container" className="fixed inset-0 z-[100] pointer-events-none">
@@ -100,8 +96,6 @@ export function AppShell() {
 					isReconnecting={textmodeRunnerReconnecting}
 					onReconnect={actions.reconnectTextmodeRunner}
 				/>
-
-				<MobileNav />
 
 				<WelcomeDialog onOpenChange={setWelcomeOpen} />
 

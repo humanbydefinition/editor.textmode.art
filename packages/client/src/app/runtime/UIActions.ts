@@ -6,7 +6,6 @@ interface UIActionsDependencies {
 	storage: IEditorStorage;
 	getCode: () => string;
 	store: AppStoreAdapter;
-	render: () => void;
 	loadExample: (code: string) => boolean;
 	reconnectAllRunners: () => void;
 	resetAll: () => void;
@@ -54,13 +53,7 @@ export class UIActions {
 	}
 
 	loadExample(code: string): void {
-		const loaded = this.deps.loadExample(code);
-		if (!loaded) return;
-
-		if (this.deps.store.ui.getIsMobile()) {
-			this.deps.store.ui.setActivePaneId('textmode');
-			this.deps.render();
-		}
+		this.deps.loadExample(code);
 	}
 
 	toggleUIVisibility(): void {

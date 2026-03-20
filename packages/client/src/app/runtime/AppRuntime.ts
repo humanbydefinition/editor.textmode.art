@@ -1,6 +1,5 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { PaneCoordinator } from '@/features/editor-layout';
 import { ShareManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/app/ui/AppShell';
@@ -24,7 +23,6 @@ import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeCon
  */
 export class AppRuntime {
 	private readonly storage: IEditorStorage;
-	private readonly paneCoordinator: PaneCoordinator;
 	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly textmodeEngine: TextmodeEngine;
@@ -32,6 +30,8 @@ export class AppRuntime {
 	private readonly uiActions: UIActions;
 
 	private textmodeEditor: TextmodeEditor | null = null;
+	private textmodeContainer: HTMLElement | null = null;
+	private engineBootstrapPromise: Promise<void> | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private storeInitCleanup: (() => void) | null = null;
@@ -40,7 +40,6 @@ export class AppRuntime {
 
 	constructor() {
 		this.storage = editorStorage;
-		this.paneCoordinator = new PaneCoordinator();
 		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
@@ -53,7 +52,6 @@ export class AppRuntime {
 			storage: this.storage,
 			getCode: () => this.textmodeEngine.getCode(),
 			store: this.storeAdapter,
-			render: () => this.render(),
 			loadExample: (code) => this.loadExample(code),
 			reconnectAllRunners: () => this.reconnectAllRunners(),
 			resetAll: () => this.resetAll(),
@@ -85,8 +83,6 @@ export class AppRuntime {
 		const loadedSettings = this.storage.loadSettings();
 		this.storeAdapter.settings.setSettings(loadedSettings);
 		await this.shareManager.hydrateFromLocation(window.location);
-
-		this.paneCoordinator.sync(loadedSettings, this.storeAdapter);
 		this.storeInitCleanup = initAppStore();
 
 		const appContainer = document.getElementById('app-container');
@@ -97,18 +93,9 @@ export class AppRuntime {
 		this.root = createRoot(appContainer);
 
 		this.render();
-		await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
-		await this.initEngine();
-		this.render();
+		this.maybeInitializeEngine();
 
-		this.applyEditorSettings();
-		this.shareManager.applyInitialShareIfPresent();
-		this.shareManager.applyPendingApprovedSketchIfPresent();
-		this.shareManager.attachInteractionGuards();
-		this.shortcuts = this.createShortcutsManager();
-		this.shortcuts.init();
-
-		this.registerStoreSubscriptions();
+		return this.engineBootstrapPromise ?? Promise.resolve();
 	}
 
 	dispose(): void {
@@ -127,6 +114,8 @@ export class AppRuntime {
 		}
 
 		this.textmodeEditor = null;
+		this.textmodeContainer = null;
+		this.engineBootstrapPromise = null;
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
@@ -135,7 +124,6 @@ export class AppRuntime {
 		this.storeAdapter.engine.setRunnerReconnecting(false);
 		this.storeAdapter.engine.setRunnerReady(false);
 
-		this.paneCoordinator.clearPendingResolvers();
 		this.root?.unmount();
 		this.root = null;
 		this.initialized = false;
@@ -143,13 +131,41 @@ export class AppRuntime {
 
 	// ----- Engine lifecycle (inlined from EngineLifecycle) -----
 
-	private async initEngine(): Promise<void> {
-		const container = await this.paneCoordinator.waitForPane('textmode');
+	private maybeInitializeEngine(): void {
+		if (
+			!this.initialized ||
+			this.engineBootstrapPromise ||
+			this.textmodeEngine.isInitialized() ||
+			!this.textmodeContainer
+		) {
+			return;
+		}
+
+		this.engineBootstrapPromise = this.bootstrapEngine(this.textmodeContainer).finally(() => {
+			this.engineBootstrapPromise = null;
+		});
+	}
+
+	private async bootstrapEngine(container: HTMLElement): Promise<void> {
 		await this.textmodeEngine.init(this.createEngineContext(container));
+		if (!this.initialized) return;
 
 		this.textmodeEditor = this.textmodeEngine.getEditor();
-
 		this.applyEditorSettings();
+		this.shareManager.applyInitialShareIfPresent();
+		this.shareManager.applyPendingApprovedSketchIfPresent();
+		this.shareManager.attachInteractionGuards();
+
+		if (!this.shortcuts) {
+			this.shortcuts = this.createShortcutsManager();
+			this.shortcuts.init();
+		}
+
+		if (this.storeUnsubscribers.length === 0) {
+			this.registerStoreSubscriptions();
+		}
+
+		this.render();
 	}
 
 	private createEngineContext(editorContainer: HTMLElement): TextmodeEngineContext {
@@ -229,6 +245,11 @@ export class AppRuntime {
 
 	private focusEditor(): void {
 		this.textmodeEditor?.focus();
+	}
+
+	private handleTextmodePaneReady(container: HTMLElement): void {
+		this.textmodeContainer = container;
+		this.maybeInitializeEngine();
 	}
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
@@ -339,9 +360,7 @@ export class AppRuntime {
 				getShareExportData: () => this.uiActions.getShareExportData(),
 			},
 			layout: {
-				panes: this.paneCoordinator.getPaneConfigs(),
-				onPaneReady: (paneId: string, container: HTMLElement) =>
-					this.paneCoordinator.onPaneReady(paneId, container),
+				onTextmodeReady: (container: HTMLElement) => this.handleTextmodePaneReady(container),
 			},
 			state: {
 				randomizeLoading: this.shareManager.getRandomizeLoading(),

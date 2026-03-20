@@ -211,11 +211,6 @@ export class ShareManager {
 		});
 		store.engine.setError(null);
 		this.deps.applyApprovedSketch(sketch);
-
-		if (store.ui.getIsMobile()) {
-			store.ui.setActivePaneId('textmode');
-			this.deps.render();
-		}
 	}
 
 	private toApprovedSketch(sketch: Extract<PublicSketchAccess, { status: 'APPROVED' }>): ApprovedSketch {
