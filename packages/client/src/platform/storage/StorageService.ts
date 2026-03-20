@@ -1,32 +1,25 @@
 
 import { DEFAULT_SETTINGS, type AppSettings } from '@/core/app.types';
+
 // Storage keys
 const SETTINGS_STORAGE_KEY = 'app_settings';
-
-/**
- * Get storage key for an engine's code.
- */
-function getEngineCodeKey(engineId: string): string {
-	return `${engineId}_code`;
-}
+// Keep 'textmode_code' key for backward compatibility with existing user data
+const CODE_STORAGE_KEY = 'textmode_code';
 
 /**
  * Storage service interface.
  */
 export interface IStorageService {
-	/** Register default code for an engine */
-	registerDefaultCode(engineId: string, code: string): void;
+	/** Set default code (used on first visit before user has saved anything) */
+	setDefaultCode(code: string): void;
 
-	/** Load engine code from localStorage or default */
-	loadEngineCode(engineId: string): string;
+	/** Load code from localStorage or default */
+	loadCode(): string;
 
-	/** Save engine code to localStorage */
-	saveEngineCode(engineId: string, code: string): void;
+	/** Save code to localStorage */
+	saveCode(code: string): void;
 
-	/** Clear engine code from localStorage */
-	clearEngineCode(engineId: string): void;
-
-	/** Clear all stored code (reset to defaults) */
+	/** Clear code from localStorage */
 	clearCode(): void;
 
 	/** Load settings from localStorage with defaults */
@@ -40,49 +33,38 @@ export interface IStorageService {
  * Storage service using localStorage.
  */
 export class StorageService implements IStorageService {
-	private readonly defaultCodeMap = new Map<string, string>();
+	private defaultCode: string = '';
 
 	/**
-	 * Register default code for an engine.
+	 * Set default code (used on first visit before user has saved anything).
 	 */
-	registerDefaultCode(engineId: string, code: string): void {
-		this.defaultCodeMap.set(engineId, code);
+	setDefaultCode(code: string): void {
+		this.defaultCode = code;
 	}
 
 	/**
-	 * Load engine code.
+	 * Load code.
 	 * Priority: localStorage > default sketch
 	 */
-	loadEngineCode(engineId: string): string {
-		// Check localStorage
-		const storedCode = localStorage.getItem(getEngineCodeKey(engineId));
+	loadCode(): string {
+		const storedCode = localStorage.getItem(CODE_STORAGE_KEY);
 		if (storedCode) return storedCode;
 
-		return this.defaultCodeMap.get(engineId) ?? '// No default code found for this engine';
+		return this.defaultCode || '// No default code found';
 	}
 
 	/**
-	 * Save engine code to localStorage.
+	 * Save code to localStorage.
 	 */
-	saveEngineCode(engineId: string, code: string): void {
-		localStorage.setItem(getEngineCodeKey(engineId), code);
+	saveCode(code: string): void {
+		localStorage.setItem(CODE_STORAGE_KEY, code);
 	}
 
 	/**
-	 * Clear engine code from localStorage.
-	 */
-	clearEngineCode(engineId: string): void {
-		localStorage.removeItem(getEngineCodeKey(engineId));
-	}
-
-	/**
-	 * Clear all known engine code from localStorage.
+	 * Clear code from localStorage.
 	 */
 	clearCode(): void {
-		// Clear based on registered defaults
-		for (const engineId of this.defaultCodeMap.keys()) {
-			this.clearEngineCode(engineId);
-		}
+		localStorage.removeItem(CODE_STORAGE_KEY);
 	}
 
 	/**

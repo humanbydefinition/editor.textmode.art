@@ -4,7 +4,6 @@ import type { ShareExportData } from '@/features/share';
 
 /**
  * Context value provided by AppRuntime to the React tree.
- * Replaces the massive props list formerly passed to AppShell.
  */
 export interface AppRuntimeContextValue {
     actions: {
@@ -14,9 +13,8 @@ export interface AppRuntimeContextValue {
         makeRandomChange: () => void;
         resetRunners: () => void;
         clearStorage: () => void;
-        loadExample: (code: string, engineId: string) => void;
+        loadExample: (code: string) => void;
         revertToLastWorking: () => void;
-        revertToLastWorkingForEngine: (engineId: string) => void;
         reconnectTextmodeRunner: () => void;
 
         // Share / Export

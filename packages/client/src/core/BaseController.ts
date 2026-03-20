@@ -36,32 +36,22 @@ export interface BaseControllerCallbacks {
 }
 
 /**
- * Minimal engine state contract needed by controllers.
- */
-export interface ControllerEngineState {
-	lastWorkingCode: string | null;
-	pendingWorkingCode: string | null;
-	customState: Record<string, unknown>;
-}
-
-/**
  * Store adapter contract used by base controllers.
  * Implemented in platform/state/adapters/controllerStoreAdapter.ts.
  */
 export interface ControllerStoreAdapter {
 	// Error / status
 	setError: (error: CodeError | null) => void;
-	setEngineError: (engineId: string, error: CodeError | null) => void;
-	clearEngineError: (engineId: string) => void;
+	clearError: () => void;
 	setStatus: (status: StatusState) => void;
 
 	// Engine state
-	getEngineState: (engineId: string) => ControllerEngineState | undefined;
-	setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
-	setEnginePendingWorkingCode: (engineId: string, code: string) => void;
-	cancelEnginePendingWorkingCode: (engineId: string) => void;
-	setEngineInitialized: (engineId: string, initialized: boolean) => void;
-	setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
+	getLastWorkingCode: () => string | null;
+	setLastWorkingCode: (code: string | null) => void;
+	getPendingWorkingCode: () => string | null;
+	setPendingWorkingCode: (code: string) => void;
+	cancelPendingWorkingCode: () => void;
+	setIsInitialized: (initialized: boolean) => void;
 
 	// Share
 	getShareState: () => { payload: SharePayload | null; consented: boolean; promptOpen: boolean };
@@ -75,8 +65,6 @@ export interface ControllerStoreAdapter {
 	getOriginalApprovedSketch: () => ApprovedSketch | null;
 	getOriginalSlugSketchInfo: () => SlugSketchInfo | null;
 }
-
-
 
 /**
  * Base dependencies shared by all controllers.
@@ -107,20 +95,6 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 	protected readonly deps: BaseControllerDependencies<TEditor, TRuntime>;
 	protected debounceTimer: number | null = null;
 	private confirmationTimer: number | null = null;
-
-	/**
-	 * Unique identifier for this controller's engine.
-	 * Used for generic state management in AppState.
-	 */
-	protected abstract readonly engineId: string;
-
-	/**
-	 * Source identifier for errors.
-	 * Defaults to engineId but can be overridden for display purposes.
-	 */
-	protected get errorSource(): string {
-		return this.engineId;
-	}
 
 	constructor(callbacks: BaseControllerCallbacks, deps: BaseControllerDependencies<TEditor, TRuntime>) {
 		this.callbacks = callbacks;
@@ -155,7 +129,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.clearEngineError(this.engineId);
+		this.deps.store.clearError();
 		editor?.clearMarkers();
 
 		this.forceExecute(code);
@@ -174,7 +148,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const editor = this.deps.getEditor();
 		editor?.setValue(lastWorkingCode);
 		this.callbacks.onSaveCode(lastWorkingCode);
-		this.deps.store.clearEngineError(this.engineId);
+		this.deps.store.clearError();
 		editor?.clearMarkers();
 
 		this.revertExecute(lastWorkingCode);
@@ -193,10 +167,10 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			stack: error.stack,
 			line: error.line,
 			column: error.column,
-			source: this.errorSource,
+			source: 'textmode',
 		};
 
-		this.deps.store.setEngineError(this.engineId, errorInfo);
+		this.deps.store.setError(errorInfo);
 
 		this.callbacks.onRenderOverlay();
 	}
@@ -229,10 +203,9 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	/**
 	 * Get last working code for this controller.
-	 * Default implementation uses generic engine state.
 	 */
 	protected getLastWorkingCode(): string | null {
-		return this.deps.store.getEngineState(this.engineId)?.lastWorkingCode ?? null;
+		return this.deps.store.getLastWorkingCode();
 	}
 
 	/**
@@ -245,14 +218,14 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			window.clearTimeout(this.confirmationTimer);
 		}
 
-		this.deps.store.setEnginePendingWorkingCode(this.engineId, code);
+		this.deps.store.setPendingWorkingCode(code);
 
 		this.confirmationTimer = window.setTimeout(() => {
 			this.confirmationTimer = null;
-			const pending = this.deps.store.getEngineState(this.engineId)?.pendingWorkingCode;
+			const pending = this.deps.store.getPendingWorkingCode();
 			if (pending) {
-				this.deps.store.setEngineLastWorkingCode(this.engineId, pending);
-				this.deps.store.cancelEnginePendingWorkingCode(this.engineId);
+				this.deps.store.setLastWorkingCode(pending);
+				this.deps.store.cancelPendingWorkingCode();
 			}
 		}, CONFIRMATION_DELAY_MS);
 	}
@@ -266,7 +239,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 			window.clearTimeout(this.confirmationTimer);
 			this.confirmationTimer = null;
 		}
-		this.deps.store.cancelEnginePendingWorkingCode(this.engineId);
+		this.deps.store.cancelPendingWorkingCode();
 	}
 
 	/**
@@ -315,7 +288,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const slugSketchInfo = this.deps.store.getSlugSketchInfo();
 		if (!slugSketchInfo || slugSketchInfo.status !== 'PENDING') return;
 
-		const sharedCodeForEngine = this.getSharePayloadCodeForEngine(this.deps.store.getShareState().payload);
+		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.getShareState().payload);
 		if (sharedCodeForEngine === null) return;
 
 		if (code !== sharedCodeForEngine) {
@@ -323,7 +296,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		}
 	}
 
-	private getSharePayloadCodeForEngine(payload: SharePayload | null): string | null {
+	private getSharePayloadCode(payload: SharePayload | null): string | null {
 		if (!payload?.engines) return null;
 		return payload.engines.textmode ?? '';
 	}

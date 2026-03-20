@@ -21,18 +21,16 @@ export interface EngineAdapter {
     setStatus: (status: StatusState) => void;
     getError: () => CodeError | null;
     setError: (error: CodeError | null) => void;
-    getEngineError: (engineId: string) => CodeError | null;
-    getEngineErrors: () => Record<string, CodeError | null>;
-    setEngineError: (engineId: string, error: CodeError | null) => void;
-    clearEngineError: (engineId: string) => void;
-    getLastWorkingCode: (engineId: string) => string | null;
-    setLastWorkingCode: (engineId: string, code: string | null) => void;
-    getPendingWorkingCode: (engineId: string) => string | null;
-    setPendingWorkingCode: (engineId: string, code: string) => void;
-    cancelPendingWorkingCode: (engineId: string) => void;
-    setCustomState: <T>(engineId: string, key: string, value: T) => void;
-    setInitialized: (engineId: string, isInitialized: boolean) => void;
-    initEngineState: (engineId: string) => void;
+    clearError: () => void;
+    getLastWorkingCode: () => string | null;
+    setLastWorkingCode: (code: string | null) => void;
+    getPendingWorkingCode: () => string | null;
+    setPendingWorkingCode: (code: string) => void;
+    cancelPendingWorkingCode: () => void;
+    setIsInitialized: (isInitialized: boolean) => void;
+    setRunnerUnavailable: (value: boolean) => void;
+    setRunnerReconnecting: (value: boolean) => void;
+    setRunnerReady: (value: boolean) => void;
 }
 
 /**
@@ -88,18 +86,16 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
             setStatus: (status) => getState().setStatus(status),
             getError: () => getState().error,
             setError: (error) => getState().setError(error),
-            getEngineError: (engineId) => getState().engineErrors[engineId] ?? null,
-            getEngineErrors: () => getState().engineErrors,
-            setEngineError: (engineId, error) => getState().setEngineError(engineId, error),
-            clearEngineError: (engineId) => getState().clearEngineError(engineId),
-            getLastWorkingCode: (engineId) => getState().engineStates[engineId]?.lastWorkingCode ?? null,
-            setLastWorkingCode: (engineId, code) => getState().setEngineLastWorkingCode(engineId, code),
-            getPendingWorkingCode: (engineId) => getState().engineStates[engineId]?.pendingWorkingCode ?? null,
-            setPendingWorkingCode: (engineId, code) => getState().setEnginePendingWorkingCode(engineId, code),
-            cancelPendingWorkingCode: (engineId) => getState().cancelEnginePendingWorkingCode(engineId),
-            setCustomState: (engineId, key, value) => getState().setEngineCustomState(engineId, key, value),
-            setInitialized: (engineId, isInitialized) => getState().setEngineInitialized(engineId, isInitialized),
-            initEngineState: (engineId) => getState().initEngineState(engineId),
+            clearError: () => getState().clearError(),
+            getLastWorkingCode: () => getState().lastWorkingCode,
+            setLastWorkingCode: (code) => getState().setLastWorkingCode(code),
+            getPendingWorkingCode: () => getState().pendingWorkingCode,
+            setPendingWorkingCode: (code) => getState().setPendingWorkingCode(code),
+            cancelPendingWorkingCode: () => getState().cancelPendingWorkingCode(),
+            setIsInitialized: (isInitialized) => getState().setIsInitialized(isInitialized),
+            setRunnerUnavailable: (value) => getState().setRunnerUnavailable(value),
+            setRunnerReconnecting: (value) => getState().setRunnerReconnecting(value),
+            setRunnerReady: (value) => getState().setRunnerReady(value),
         },
         share: {
             getPayload: () => getState().share.payload,

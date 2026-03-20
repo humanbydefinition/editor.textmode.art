@@ -13,17 +13,16 @@ export function createControllerStoreAdapter(): ControllerStoreAdapter {
     return {
         // Error / status
         setError: (error) => useAppStore.getState().setError(error),
-        setEngineError: (engineId, error) => useAppStore.getState().setEngineError(engineId, error),
-        clearEngineError: (engineId) => useAppStore.getState().clearEngineError(engineId),
+        clearError: () => useAppStore.getState().clearError(),
         setStatus: (status) => useAppStore.getState().setStatus(status),
 
         // Engine state
-        getEngineState: (engineId) => useAppStore.getState().engineStates[engineId],
-        setEngineLastWorkingCode: (engineId, code) => useAppStore.getState().setEngineLastWorkingCode(engineId, code),
-        setEnginePendingWorkingCode: (engineId, code) => useAppStore.getState().setEnginePendingWorkingCode(engineId, code),
-        cancelEnginePendingWorkingCode: (engineId) => useAppStore.getState().cancelEnginePendingWorkingCode(engineId),
-        setEngineInitialized: (engineId, initialized) => useAppStore.getState().setEngineInitialized(engineId, initialized),
-        setEngineCustomState: (engineId, key, value) => useAppStore.getState().setEngineCustomState(engineId, key, value),
+        getLastWorkingCode: () => useAppStore.getState().lastWorkingCode,
+        setLastWorkingCode: (code) => useAppStore.getState().setLastWorkingCode(code),
+        getPendingWorkingCode: () => useAppStore.getState().pendingWorkingCode,
+        setPendingWorkingCode: (code) => useAppStore.getState().setPendingWorkingCode(code),
+        cancelPendingWorkingCode: () => useAppStore.getState().cancelPendingWorkingCode(),
+        setIsInitialized: (initialized) => useAppStore.getState().setIsInitialized(initialized),
 
         // Share
         getShareState: () => useAppStore.getState().share,

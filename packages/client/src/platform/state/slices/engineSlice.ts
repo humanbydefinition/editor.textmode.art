@@ -2,45 +2,32 @@ import type { StateCreator } from 'zustand';
 import type { CodeError, StatusState } from '@/core/app.types';
 import type { AppState } from '../appStore';
 
-export interface EngineState {
-    /** Last known working code for this engine */
-    lastWorkingCode: string | null;
-
-    /** Pending working code (for confirmation delay) */
-    pendingWorkingCode: string | null;
-
-    /** Custom state specific to the engine */
-    customState: Record<string, unknown>;
-
-    /** Whether the runtime/engine is fully initialized */
-    isInitialized: boolean;
-}
-
 export interface EngineSlice {
     error: CodeError | null;
-    engineErrors: Record<string, CodeError | null>;
     status: StatusState;
-    engineStates: Record<string, EngineState>;
+
+    /** Last known working code */
+    lastWorkingCode: string | null;
+    /** Pending working code (for confirmation delay) */
+    pendingWorkingCode: string | null;
+    /** Whether the engine is fully initialized */
+    isInitialized: boolean;
+
+    /** Runner connection state */
+    runnerUnavailable: boolean;
+    runnerReconnecting: boolean;
+    runnerReady: boolean;
 
     setError: (error: CodeError | null) => void;
-    setEngineError: (engineId: string, error: CodeError | null) => void;
-    clearEngineError: (engineId: string) => void;
+    clearError: () => void;
     setStatus: (status: StatusState) => void;
-    initEngineState: (engineId: string) => void;
-    setEngineLastWorkingCode: (engineId: string, code: string | null) => void;
-    setEnginePendingWorkingCode: (engineId: string, code: string) => void;
-    cancelEnginePendingWorkingCode: (engineId: string) => void;
-    setEngineCustomState: <T>(engineId: string, key: string, value: T) => void;
-    setEngineInitialized: (engineId: string, isInitialized: boolean) => void;
-}
-
-function createEngineState(): EngineState {
-    return {
-        lastWorkingCode: null,
-        pendingWorkingCode: null,
-        customState: {},
-        isInitialized: false,
-    };
+    setLastWorkingCode: (code: string | null) => void;
+    setPendingWorkingCode: (code: string) => void;
+    cancelPendingWorkingCode: () => void;
+    setIsInitialized: (isInitialized: boolean) => void;
+    setRunnerUnavailable: (value: boolean) => void;
+    setRunnerReconnecting: (value: boolean) => void;
+    setRunnerReady: (value: boolean) => void;
 }
 
 export const createEngineSlice: StateCreator<
@@ -50,110 +37,22 @@ export const createEngineSlice: StateCreator<
     EngineSlice
 > = (set) => ({
     error: null,
-    engineErrors: {},
     status: 'ready',
-    engineStates: {},
+    lastWorkingCode: null,
+    pendingWorkingCode: null,
+    isInitialized: false,
+    runnerUnavailable: false,
+    runnerReconnecting: false,
+    runnerReady: false,
 
-    setError: (error) => {
-        set((state) => {
-            if (!error) {
-                return { error: null, engineErrors: {} };
-            }
-
-            if (!error.source) {
-                return { error };
-            }
-
-            return {
-                error,
-                engineErrors: {
-                    ...state.engineErrors,
-                    [error.source]: error,
-                },
-            };
-        });
-    },
-    setEngineError: (engineId, error) => {
-        set((state) => {
-            const normalizedError = error ? { ...error, source: error.source ?? engineId } : null;
-            const nextEngineErrors = {
-                ...state.engineErrors,
-                [engineId]: normalizedError,
-            };
-
-            const nextGlobalError = normalizedError ?? getFirstEngineError(nextEngineErrors);
-            return {
-                error: nextGlobalError,
-                engineErrors: nextEngineErrors,
-            };
-        });
-    },
-    clearEngineError: (engineId) => {
-        set((state) => {
-            const nextEngineErrors = {
-                ...state.engineErrors,
-                [engineId]: null,
-            };
-            return {
-                error: getFirstEngineError(nextEngineErrors),
-                engineErrors: nextEngineErrors,
-            };
-        });
-    },
+    setError: (error) => set({ error: error ? { ...error, source: error.source ?? 'textmode' } : null }),
+    clearError: () => set({ error: null }),
     setStatus: (status) => set({ status }),
-
-    initEngineState: (engineId) => {
-        set((state) => {
-            if (state.engineStates[engineId]) return state;
-            return { engineStates: { ...state.engineStates, [engineId]: createEngineState() } };
-        });
-    },
-
-    setEngineLastWorkingCode: (engineId, code) => {
-        set((state) => {
-            const pState = state.engineStates[engineId] || createEngineState();
-            return { engineStates: { ...state.engineStates, [engineId]: { ...pState, lastWorkingCode: code } } };
-        });
-    },
-
-    setEnginePendingWorkingCode: (engineId, code) => {
-        set((state) => {
-            const pState = state.engineStates[engineId] || createEngineState();
-            return { engineStates: { ...state.engineStates, [engineId]: { ...pState, pendingWorkingCode: code } } };
-        });
-    },
-
-    cancelEnginePendingWorkingCode: (engineId) => {
-        set((state) => {
-            const pState = state.engineStates[engineId];
-            if (!pState) return state;
-            return { engineStates: { ...state.engineStates, [engineId]: { ...pState, pendingWorkingCode: null } } };
-        });
-    },
-
-    setEngineCustomState: (engineId, key, value) => {
-        set((state) => {
-            const pState = state.engineStates[engineId] || createEngineState();
-            return {
-                engineStates: {
-                    ...state.engineStates,
-                    [engineId]: { ...pState, customState: { ...pState.customState, [key]: value } },
-                },
-            };
-        });
-    },
-
-    setEngineInitialized: (engineId, isInitialized) => {
-        set((state) => {
-            const pState = state.engineStates[engineId] || createEngineState();
-            return { engineStates: { ...state.engineStates, [engineId]: { ...pState, isInitialized } } };
-        });
-    },
+    setLastWorkingCode: (code) => set({ lastWorkingCode: code }),
+    setPendingWorkingCode: (code) => set({ pendingWorkingCode: code }),
+    cancelPendingWorkingCode: () => set({ pendingWorkingCode: null }),
+    setIsInitialized: (isInitialized) => set({ isInitialized }),
+    setRunnerUnavailable: (value) => set({ runnerUnavailable: value }),
+    setRunnerReconnecting: (value) => set({ runnerReconnecting: value }),
+    setRunnerReady: (value) => set({ runnerReady: value }),
 });
-
-function getFirstEngineError(errors: Record<string, CodeError | null>): CodeError | null {
-    for (const error of Object.values(errors)) {
-        if (error) return error;
-    }
-    return null;
-}

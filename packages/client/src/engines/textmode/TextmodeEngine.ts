@@ -1,34 +1,37 @@
-import type { EngineContext, EngineLifecycleCapabilities, IEngine } from '@/core/engine.types';
+import type { AppSettings } from '@/core/app.types';
+import type { BaseControllerCallbacks } from '@/core/BaseController';
+import type { BaseEditor } from '@/core/BaseEditor';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import { TextmodeController, type TextmodeControllerDependencies } from './TextmodeController';
-import type { BaseControllerCallbacks } from '@/core/BaseController';
 import { createControllerStoreAdapter } from '@/platform/state/adapters/controllerStoreAdapter';
+
+/**
+ * Context provided to the engine during initialization.
+ */
+export interface TextmodeEngineContext {
+	editorContainer: HTMLElement;
+	visualContainer?: HTMLElement;
+	getSettings: () => AppSettings;
+	callbacks: BaseControllerCallbacks;
+	getInitialCode: () => string;
+	toggleUI: () => void;
+	changeFontSize: (delta: number) => void;
+	onRunnerConnected?: () => void;
+	onRunnerDisconnected?: () => void;
+}
 
 /**
  * Textmode engine for visual live coding with textmode.js.
  */
-export class TextmodeEngine implements IEngine {
-	readonly id = 'textmode';
-	readonly displayName = 'textmode.js';
-	readonly description = 'Visual live coding with ASCII/text-based graphics';
-	readonly capabilities: EngineLifecycleCapabilities = {
-		bootStrategy: 'eager',
-		supportsReconnect: true,
-		customStateOnInit: {
-			runnerUnavailable: false,
-			runnerReconnecting: false,
-			runnerReady: false,
-		},
-	};
-
+export class TextmodeEngine {
 	private editor: TextmodeEditor | null = null;
 	private runtime: TextmodeRuntime | null = null;
 	private controller: TextmodeController | null = null;
 	private initialized = false;
 	private initializing = false;
 
-	async init(context: EngineContext): Promise<void> {
+	async init(context: TextmodeEngineContext): Promise<void> {
 		if (this.initialized || this.initializing) return;
 		this.initializing = true;
 
@@ -58,7 +61,7 @@ export class TextmodeEngine implements IEngine {
 		this.initializing = false;
 	}
 
-	getEditor(): TextmodeEditor | null {
+	getEditor(): BaseEditor | null {
 		return this.editor;
 	}
 
@@ -85,7 +88,8 @@ export class TextmodeEngine implements IEngine {
 	reconnectRuntime(): void {
 		this.runtime?.reconnect();
 	}
-	private createEditor(context: EngineContext, initialCode: string): TextmodeEditor {
+
+	private createEditor(context: TextmodeEngineContext, initialCode: string): TextmodeEditor {
 		const options: TextmodeEditorOptions = {
 			container: context.editorContainer,
 			initialValue: initialCode,
@@ -105,7 +109,7 @@ export class TextmodeEngine implements IEngine {
 		return new TextmodeEditor(options);
 	}
 
-	private createRuntime(context: EngineContext): TextmodeRuntime {
+	private createRuntime(context: TextmodeEngineContext): TextmodeRuntime {
 		this.runtime = new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
@@ -120,7 +124,7 @@ export class TextmodeEngine implements IEngine {
 		return this.runtime;
 	}
 
-	private createController(context: EngineContext): TextmodeController {
+	private createController(context: TextmodeEngineContext): TextmodeController {
 		const callbacks: BaseControllerCallbacks = {
 			onRenderOverlay: context.callbacks.onRenderOverlay,
 			onSaveCode: context.callbacks.onSaveCode,

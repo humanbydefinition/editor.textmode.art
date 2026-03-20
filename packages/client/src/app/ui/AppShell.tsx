@@ -6,7 +6,7 @@ import { WelcomeDialog } from '@/shared/components/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {
-    selectEngineErrors,
+    selectError,
     selectShareState,
     selectTextmodeRunnerReconnecting,
     selectTextmodeRunnerUnavailable,
@@ -38,43 +38,40 @@ export function AppShell() {
     const { actions, state: runtimeState, layout } = useAppRuntime();
 
     // Store State
-    const engineErrors = useAppStore(selectEngineErrors);
-    const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.engineStates.textmode?.lastWorkingCode));
-    const clearEngineError = useAppStore((state) => state.clearEngineError);
+    const error = useAppStore(selectError);
+    const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
+    const clearError = useAppStore((state) => state.clearError);
     const share = useAppStore(selectShareState);
     const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
     const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
     const showShareLock = Boolean(share.payload && !share.consented && !share.promptOpen);
 
     useEffect(() => {
-        for (const engineId of ERROR_TOAST_ENGINE_IDS) {
-            const error = engineErrors[engineId];
-            const toastId = getEngineErrorToastId(engineId);
-            if (!error) {
-                toast.dismiss(toastId);
-                continue;
-            }
-
-            toast.error(getEngineErrorTitle(engineId), {
-                id: toastId,
-                toasterId: ENGINE_ERROR_TOASTER_ID,
-                description: getEngineErrorDescription(error),
-                duration: Number.POSITIVE_INFINITY,
-                closeButton: true,
-                action: hasLastWorkingForEngine(engineId, textmodeHasLastWorking)
-                    ? {
-                        label: 'revert',
-                        onClick: () => {
-                            actions.revertToLastWorkingForEngine(engineId);
-                        },
-                    }
-                    : undefined,
-                onDismiss: () => {
-                    clearEngineError(engineId);
-                },
-            });
+        const toastId = 'textmode-error';
+        if (!error) {
+            toast.dismiss(toastId);
+            return;
         }
-    }, [engineErrors, textmodeHasLastWorking, clearEngineError]);
+
+        toast.error('textmode pane error', {
+            id: toastId,
+            toasterId: ENGINE_ERROR_TOASTER_ID,
+            description: getErrorDescription(error),
+            duration: Number.POSITIVE_INFINITY,
+            closeButton: true,
+            action: textmodeHasLastWorking
+                ? {
+                    label: 'revert',
+                    onClick: () => {
+                        actions.revertToLastWorking();
+                    },
+                }
+                : undefined,
+            onDismiss: () => {
+                clearError();
+            },
+        });
+    }, [error, textmodeHasLastWorking, clearError]);
 
     const handleShare = () => {
         const data = actions.getShareExportData();
@@ -205,18 +202,9 @@ export function AppShell() {
     );
 }
 
-const ERROR_TOAST_ENGINE_IDS = ['textmode'] as const;
 const ENGINE_ERROR_TOASTER_ID = 'engine-errors';
 
-function getEngineErrorToastId(engineId: string): string {
-    return `engine-error-${engineId}`;
-}
-
-function getEngineErrorTitle(engineId: string): string {
-    return `${engineId} pane error`;
-}
-
-function getEngineErrorDescription(error: { message: string; line?: number; column?: number }): string {
+function getErrorDescription(error: { message: string; line?: number; column?: number }): string {
     const location = error.line !== undefined
         ? `line ${error.line}${error.column !== undefined ? `:${error.column}` : ''}`
         : null;
@@ -226,9 +214,4 @@ function getEngineErrorDescription(error: { message: string; line?: number; colu
 
 function hasLastWorkingCode(code: string | null | undefined): boolean {
     return code !== null && code !== undefined;
-}
-
-function hasLastWorkingForEngine(engineId: string, textmodeHasLastWorking: boolean): boolean {
-    if (engineId === 'textmode') return textmodeHasLastWorking;
-    return false;
 }

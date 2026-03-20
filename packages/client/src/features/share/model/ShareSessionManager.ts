@@ -1,4 +1,3 @@
-import type { EngineId } from '@/core/engine.types';
 import type { SharePayload } from '../types';
 
 
@@ -15,10 +14,10 @@ export interface ShareSessionDependencies {
 	setSharePromptOpen: (open: boolean) => void;
 	setEditorsReadOnly: (readOnly: boolean) => void;
 	applyPayload: (payload: SharePayload) => void;
-	focusEditor: (engineId: EngineId) => void;
+	focusEditor: () => void;
 	restoreLocalSketches: () => void;
 	runRestoredSketches: () => void;
-	runSharedSketch: (payload: SharePayload) => void;
+	runSharedSketch: () => void;
 }
 
 /**
@@ -44,7 +43,7 @@ export class ShareSessionManager {
 	unlockAndRun(): void {
 		const payload = this.unlockInternal();
 		if (!payload) return;
-		this.deps.runSharedSketch(payload);
+		this.deps.runSharedSketch();
 	}
 
 	unlockOnly(): void {
@@ -103,10 +102,8 @@ export class ShareSessionManager {
 		return share.payload;
 	}
 
-	private focusPrimarySharedEditor(payload: SharePayload): void {
-		if (payload.engines.textmode !== undefined) {
-			this.deps.focusEditor('textmode');
-		}
+	private focusPrimarySharedEditor(_payload: SharePayload): void {
+		this.deps.focusEditor();
 	}
 
 	private shouldPromptForInteraction(target: HTMLElement | null): boolean {

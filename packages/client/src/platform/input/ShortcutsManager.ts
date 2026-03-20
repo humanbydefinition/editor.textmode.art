@@ -10,8 +10,8 @@ export interface ShortcutActions {
 	toggleEditorBackdrop: () => void;
 	/** Toggle UI visibility */
 	toggleUIVisibility: () => void;
-	/** Run code in the active editor */
-	runCodeForEngine: (engineId: string) => void;
+	/** Run code */
+	runCode: () => void;
 }
 
 /**
@@ -90,17 +90,13 @@ export class ShortcutsManager implements IShortcutsManager {
 			this.actions.toggleUIVisibility();
 		}
 
-		// Run active editor: Ctrl/Cmd + Enter
+		// Run code: Ctrl/Cmd + Enter (from Monaco editor)
 		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
 			const target = e.target as HTMLElement | null;
 			if (target?.closest('.monaco-editor')) {
 				e.preventDefault();
 				e.stopPropagation();
-				const engineHost = target.closest('[data-engine-id]');
-				const engineId = engineHost?.getAttribute('data-engine-id');
-				if (engineId) {
-					this.actions.runCodeForEngine(engineId);
-				}
+				this.actions.runCode();
 			}
 		}
 	}

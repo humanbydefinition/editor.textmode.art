@@ -22,9 +22,6 @@ export interface ITextmodeController extends IController {
  * Handles textmode-specific code execution and runtime events.
  */
 export class TextmodeController extends BaseController<TextmodeEditor, TextmodeRuntime> implements ITextmodeController {
-	// Engine ID for generic state management
-	protected readonly engineId = 'textmode';
-
 	constructor(callbacks: BaseControllerCallbacks, deps: TextmodeControllerDependencies) {
 		super(callbacks, deps);
 	}
@@ -47,7 +44,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		const code = editor?.getValue() ?? '';
 
 		this.callbacks.onSaveCode(code);
-		this.deps.store.clearEngineError(this.engineId);
+		this.deps.store.clearError();
 		this.deps.store.setStatus('ready');
 		editor?.clearMarkers();
 		this.deps.getRuntime()?.softReset(code);
@@ -60,7 +57,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	 */
 	handleRuntimeReady(): void {
 		this.deps.store.setStatus('ready');
-		this.deps.store.setEngineInitialized(this.engineId, true);
+		this.deps.store.setIsInitialized(true);
 		this.callbacks.onRenderOverlay();
 
 		// Auto-run initial code
@@ -84,7 +81,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 		this.setPendingWorkingCode(code);
 
 		this.deps.store.setStatus('running');
-		this.deps.store.clearEngineError(this.engineId);
+		this.deps.store.clearError();
 		editor?.clearMarkers();
 		this.callbacks.onRenderOverlay();
 	}
@@ -105,7 +102,7 @@ export class TextmodeController extends BaseController<TextmodeEditor, TextmodeR
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
 		this.deps.store.setStatus('error');
-		this.deps.store.setEngineError(this.engineId, {
+		this.deps.store.setError({
 			...error,
 			message: this.formatErrorMessage(error.message),
 			source: 'textmode',

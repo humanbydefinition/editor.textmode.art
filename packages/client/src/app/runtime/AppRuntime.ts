@@ -1,7 +1,6 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { PaneCoordinator } from '@/features/editor-layout';
-import { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
 import { ShareWorkflow, ShareSessionManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
 import { AppShell } from '@/app/ui/AppShell';
@@ -9,20 +8,20 @@ import { EditorManager } from '@/platform/input/EditorManager';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
-import { TextmodeEngine } from '@/engines/textmode/TextmodeEngine';
-import { registry } from '@/engines/registry';
+import { TextmodeEngine, type TextmodeEngineContext } from '@/engines/textmode/TextmodeEngine';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { storageService, type IStorageService } from '@/platform/storage/StorageService';
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { createPaneStoreAdapter, type PaneStoreAdapter } from '@/platform/state/adapters/paneStoreAdapter';
 import type { AppSettings } from '@/core/app.types';
-import type { EngineId } from '@/core/engine.types';
+import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
 
 /**
  * Main application composition root.
- * Orchestrates runtime modules while keeping view and feature concerns delegated.
+ * Orchestrates the textmode engine, share workflow, and UI.
  */
 export class AppRuntime {
 	private readonly storage: IStorageService;
@@ -31,7 +30,7 @@ export class AppRuntime {
 	private readonly paneStore: PaneStoreAdapter;
 	private readonly storeAdapter: AppStoreAdapter;
 
-	private readonly engineLifecycle: EngineLifecycle;
+	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareSession: ShareSessionManager;
 	private readonly shareWorkflow: ShareWorkflow;
 	private readonly uiActions: UIActions;
@@ -50,27 +49,19 @@ export class AppRuntime {
 		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
-		this.storage.registerDefaultCode('textmode', defaultTextmodeSketch);
+		this.storage.setDefaultCode(defaultTextmodeSketch);
 
-		// Register engines
-		registry.register(new TextmodeEngine());
-
-		// Initialize Lifecycle first (it needs callbacks that refer to uiActions, which is fine as they are lazy)
-		this.engineLifecycle = new EngineLifecycle({
-			paneCoordinator: this.paneCoordinator,
-			editorManager: this.editorManager,
-			storage: this.storage,
-			store: this.storeAdapter,
-			render: () => this.render(),
-			toggleUI: () => this.uiActions.toggleUIVisibility(),
-			changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
-		});
+		// Create engine directly
+		this.textmodeEngine = new TextmodeEngine();
 
 		this.uiActions = new UIActions({
 			storage: this.storage,
-			engineLifecycle: this.engineLifecycle,
+			getCode: () => this.textmodeEngine.getCode(),
 			store: this.storeAdapter,
 			render: () => this.render(),
+			loadExample: (code) => this.loadExample(code),
+			reconnectAllRunners: () => this.reconnectAllRunners(),
+			resetAll: () => this.resetAll(),
 		});
 
 		this.shareSession = new ShareSessionManager({
@@ -83,18 +74,18 @@ export class AppRuntime {
 			setShareConsented: this.storeAdapter.share.setConsented,
 			setSharePromptOpen: this.storeAdapter.share.setPromptOpen,
 			setEditorsReadOnly: (readOnly) => this.editorManager.setReadOnly(readOnly),
-			applyPayload: (payload) => this.engineLifecycle.applySharePayload(payload),
-			focusEditor: (engineId) => this.editorManager.focusEditor(engineId),
-			restoreLocalSketches: () => this.engineLifecycle.restoreLocalSketches(),
-			runRestoredSketches: () => this.engineLifecycle.runRestoredSketches(),
-			runSharedSketch: (payload) => this.engineLifecycle.runSharedSketch(payload),
+			applyPayload: (payload) => this.applySharePayload(payload),
+			focusEditor: () => this.editorManager.focusEditor('textmode'),
+			restoreLocalSketches: () => this.restoreLocalSketches(),
+			runRestoredSketches: () => this.runRestoredSketches(),
+			runSharedSketch: () => this.runEngine(),
 		});
 
 		this.shareWorkflow = new ShareWorkflow({
 			store: this.storeAdapter,
 			render: () => this.render(),
 			clearShareLockIfPresent: () => this.shareSession.clearShareLockIfPresent(),
-			applyApprovedSketch: (sketch) => this.engineLifecycle.applyApprovedSketch(sketch),
+			applyApprovedSketch: (sketch) => this.applyApprovedSketch(sketch),
 			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
@@ -124,10 +115,10 @@ export class AppRuntime {
 
 		this.render();
 		await this.paneCoordinator.waitForPanes(this.paneCoordinator.getPaneIds());
-		await this.engineLifecycle.initEagerEngines();
+		await this.initEngine();
 		this.render();
 
-		this.engineLifecycle.applyEditorSettings();
+		this.applyEditorSettings();
 		this.shareSession.applyInitialShareIfPresent();
 		this.shareWorkflow.applyPendingApprovedSketchIfPresent();
 		this.shareSession.attachInteractionGuards();
@@ -152,12 +143,120 @@ export class AppRuntime {
 			this.storeInitCleanup = null;
 		}
 
-		this.engineLifecycle.dispose();
+		this.editorManager.unregisterEditor('textmode');
+		if (this.textmodeEngine.isInitialized()) {
+			this.textmodeEngine.dispose();
+		}
+		this.storeAdapter.engine.setIsInitialized(false);
+		this.storeAdapter.engine.setRunnerUnavailable(false);
+		this.storeAdapter.engine.setRunnerReconnecting(false);
+		this.storeAdapter.engine.setRunnerReady(false);
+
 		this.paneCoordinator.clearPendingResolvers();
 		this.root?.unmount();
 		this.root = null;
 		this.initialized = false;
 	}
+
+	// ----- Engine lifecycle (inlined from EngineLifecycle) -----
+
+	private async initEngine(): Promise<void> {
+		const container = await this.paneCoordinator.waitForPane('textmode');
+		await this.textmodeEngine.init(this.createEngineContext(container));
+
+		const editor = this.textmodeEngine.getEditor();
+		if (editor) {
+			this.editorManager.registerEditor('textmode', editor);
+		}
+
+		this.applyEditorSettings();
+	}
+
+	private createEngineContext(editorContainer: HTMLElement): TextmodeEngineContext {
+		return {
+			editorContainer,
+			visualContainer: document.body,
+			getSettings: this.storeAdapter.settings.getSettings,
+			callbacks: {
+				onRenderOverlay: () => this.render(),
+				onSaveCode: (code: string) => this.storage.saveCode(code),
+			},
+			getInitialCode: () => this.storage.loadCode(),
+			toggleUI: () => this.uiActions.toggleUIVisibility(),
+			changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
+			onRunnerConnected: () => {
+				this.storeAdapter.engine.setRunnerUnavailable(false);
+				this.storeAdapter.engine.setRunnerReconnecting(false);
+				this.storeAdapter.engine.setRunnerReady(true);
+			},
+			onRunnerDisconnected: () => {
+				this.storeAdapter.engine.setRunnerUnavailable(true);
+				this.storeAdapter.engine.setRunnerReconnecting(false);
+				this.storeAdapter.engine.setRunnerReady(false);
+			},
+		};
+	}
+
+	private applyEditorSettings(): void {
+		this.editorManager.applySettings(this.storeAdapter.settings.getSettings());
+	}
+
+	private runEngine(): void {
+		this.textmodeEngine.getController()?.handleForceRun();
+	}
+
+	private loadExample(code: string): boolean {
+		if (!this.textmodeEngine.isInitialized()) return false;
+
+		this.textmodeEngine.setCode(code);
+		this.storage.saveCode(code);
+		this.textmodeEngine.getController()?.handleForceRun();
+
+		return true;
+	}
+
+	private applySharePayload(payload: SharePayload): void {
+		const code = payload.engines.textmode;
+		if (typeof code !== 'string') return;
+		if (!this.textmodeEngine.isInitialized()) return;
+		this.textmodeEngine.setCode(code, { silent: true });
+	}
+
+	private restoreLocalSketches(): void {
+		if (!this.textmodeEngine.isInitialized()) return;
+		const code = this.storage.loadCode();
+		this.textmodeEngine.setCode(code, { silent: true });
+	}
+
+	private runRestoredSketches(): void {
+		this.textmodeEngine.getController()?.handleForceRun();
+	}
+
+	private applyApprovedSketch(sketch: ApprovedSketch): void {
+		const code = sketch.textmodeCode;
+		if (!this.textmodeEngine.isInitialized()) return;
+
+		this.textmodeEngine.setCode(code, { silent: true });
+		this.textmodeEngine.getRuntime()?.forceRun(code);
+	}
+
+	private reconnectAllRunners(): void {
+		if (!this.textmodeEngine.isInitialized()) return;
+		this.textmodeEngine.reconnectRuntime();
+		this.textmodeEngine.getController()?.handleForceRun();
+	}
+
+	private resetAll(): void {
+		this.storeAdapter.share.clearOriginalApprovedSketch();
+		this.storeAdapter.engine.setLastWorkingCode(null);
+		this.storage.clearCode();
+
+		if (!this.textmodeEngine.isInitialized()) return;
+		const defaultCode = this.storage.loadCode();
+		this.textmodeEngine.setCode(defaultCode);
+	}
+
+	// ----- End engine lifecycle -----
 
 	private createShortcutsManager(): IShortcutsManager {
 		return new ShortcutsManager({
@@ -172,7 +271,7 @@ export class AppRuntime {
 					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
-				runCodeForEngine: (engineId: string) => this.uiActions.runCodeForEngine(engineId),
+				runCode: () => this.runEngine(),
 			},
 		});
 	}
@@ -182,7 +281,7 @@ export class AppRuntime {
 			(state) => state.settings,
 			(settings) => {
 				this.storage.saveSettings(settings);
-				this.engineLifecycle.applyEditorSettings();
+				this.applyEditorSettings();
 			}
 		);
 
@@ -200,31 +299,16 @@ export class AppRuntime {
 	}
 
 	private makeRandomChange(): void {
-		const isMobile = this.storeAdapter.ui.getIsMobile();
-		const activePanel = this.storeAdapter.ui.getActivePanel();
-		const focusedEditorId = this.editorManager.getFocusedEditorId();
-		const candidateTargets = isMobile
-			? [activePanel, focusedEditorId, 'textmode']
-			: [focusedEditorId, activePanel, 'textmode'];
+		const code = this.textmodeEngine.getCode();
+		const newCode = CodeRandomizer.replaceRandomNumber(code);
 
-		const targetId = candidateTargets.find(
-			(id): id is string => Boolean(id) && Boolean(this.engineLifecycle.getEngine(id as EngineId))
-		);
-		if (!targetId) return;
-
-		const engine = this.engineLifecycle.getEngine(targetId as EngineId);
-		if (engine) {
-			const code = engine.getCode();
-			const newCode = CodeRandomizer.replaceRandomNumber(code);
-
-			if (code !== newCode) {
-				engine.setCode(newCode);
-				engine.getController()?.handleForceRun();
-				// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
-				if (!isMobile) {
-					// Restore focus to editor to allow seamless desktop workflow.
-					this.editorManager.focusEditor(targetId);
-				}
+		if (code !== newCode) {
+			this.textmodeEngine.setCode(newCode);
+			this.textmodeEngine.getController()?.handleForceRun();
+			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
+			const isMobile = this.storeAdapter.ui.getIsMobile();
+			if (!isMobile) {
+				this.editorManager.focusEditor('textmode');
 			}
 		}
 	}
@@ -238,20 +322,15 @@ export class AppRuntime {
 				makeRandomChange: () => this.makeRandomChange(),
 				resetRunners: () => this.uiActions.resetRunners(),
 				clearStorage: () => this.uiActions.clearStorage(),
-				loadExample: (code: string, engineId: string) => this.uiActions.loadExample(code, engineId),
+				loadExample: (code: string) => this.uiActions.loadExample(code),
 				revertToLastWorking: () => {
-					const errorSource = this.storeAdapter.engine.getError()?.source;
-					if (!errorSource) return;
-					this.engineLifecycle.getEngine(errorSource as EngineId)?.getController()?.handleRevertToLastWorking();
-				},
-				revertToLastWorkingForEngine: (engineId: string) => {
-					this.engineLifecycle.getEngine(engineId as EngineId)?.getController()?.handleRevertToLastWorking();
+					this.textmodeEngine.getController()?.handleRevertToLastWorking();
 				},
 				reconnectTextmodeRunner: () => {
-					this.storeAdapter.engine.setCustomState('textmode', 'runnerReconnecting', true);
-					this.engineLifecycle.reconnectTextmodeRunner();
+					this.storeAdapter.engine.setRunnerReconnecting(true);
+					this.textmodeEngine.reconnectRuntime();
 					setTimeout(() => {
-						this.storeAdapter.engine.setCustomState('textmode', 'runnerReconnecting', false);
+						this.storeAdapter.engine.setRunnerReconnecting(false);
 					}, 10000);
 				},
 				unlockAndRun: () => this.shareSession.unlockAndRun(),
