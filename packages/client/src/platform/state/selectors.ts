@@ -9,3 +9,5 @@ export const selectIsMobile = (state: AppState) => state.isMobile;
 export const selectSketchSummary = (state: AppState) => state.sketchSummary;
 export const selectTextmodeRunnerUnavailable = (state: AppState): boolean => state.runnerUnavailable;
 export const selectTextmodeRunnerReconnecting = (state: AppState): boolean => state.runnerReconnecting;
+export const selectRandomizeLoading = (state: AppState): boolean => state.randomizeLoading;
+export const selectEditorBackdrop = (state: AppState): boolean => state.settings.editorBackdrop;

@@ -6,7 +6,6 @@ import { ShareService } from './ShareService';
 
 export interface ShareManagerDependencies {
 	store: AppStoreAdapter;
-	render: () => void;
 	setEditorReadOnly: (readOnly: boolean) => void;
 	applyPayload: (payload: SharePayload) => void;
 	focusEditor: () => void;
@@ -25,15 +24,10 @@ export interface ShareManagerDependencies {
 export class ShareManager {
 	private readonly deps: ShareManagerDependencies;
 	private pendingApprovedSketch: ApprovedSketch | null = null;
-	private randomizeLoading = false;
 	private guardsAttached = false;
 
 	constructor(deps: ShareManagerDependencies) {
 		this.deps = deps;
-	}
-
-	getRandomizeLoading(): boolean {
-		return this.randomizeLoading;
 	}
 
 	async hydrateFromLocation(location: Location): Promise<void> {
@@ -129,10 +123,9 @@ export class ShareManager {
 	}
 
 	async randomize(): Promise<boolean> {
-		if (this.randomizeLoading) return false;
+		if (this.deps.store.engine.getRandomizeLoading()) return false;
 
-		this.randomizeLoading = true;
-		this.deps.render();
+		this.deps.store.engine.setRandomizeLoading(true);
 
 		try {
 			const currentSlug = this.deps.store.share.getApprovedSketch()?.slug;
@@ -143,8 +136,7 @@ export class ShareManager {
 		} catch {
 			return false;
 		} finally {
-			this.randomizeLoading = false;
-			this.deps.render();
+			this.deps.store.engine.setRandomizeLoading(false);
 		}
 	}
 

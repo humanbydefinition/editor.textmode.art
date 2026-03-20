@@ -122,7 +122,6 @@ export class TextmodeEngine {
 
 	private createController(context: TextmodeEngineContext): TextmodeController {
 		const callbacks: TextmodeControllerCallbacks = {
-			onRenderOverlay: context.callbacks.onRenderOverlay,
 			onSaveCode: context.callbacks.onSaveCode,
 		};
 

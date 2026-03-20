@@ -18,6 +18,8 @@ export interface RuntimeSlice {
     runnerReconnecting: boolean;
     runnerReady: boolean;
 
+    randomizeLoading: boolean;
+
     setError: (error: CodeError | null) => void;
     clearError: () => void;
     setStatus: (status: StatusState) => void;
@@ -28,6 +30,7 @@ export interface RuntimeSlice {
     setRunnerUnavailable: (value: boolean) => void;
     setRunnerReconnecting: (value: boolean) => void;
     setRunnerReady: (value: boolean) => void;
+    setRandomizeLoading: (value: boolean) => void;
 }
 
 export const createRuntimeSlice: StateCreator<
@@ -44,6 +47,7 @@ export const createRuntimeSlice: StateCreator<
     runnerUnavailable: false,
     runnerReconnecting: false,
     runnerReady: false,
+    randomizeLoading: false,
 
     setError: (error) => set({ error: error ? { ...error, source: error.source ?? 'textmode' } : null }),
     clearError: () => set({ error: null }),
@@ -55,4 +59,5 @@ export const createRuntimeSlice: StateCreator<
     setRunnerUnavailable: (value) => set({ runnerUnavailable: value }),
     setRunnerReconnecting: (value) => set({ runnerReconnecting: value }),
     setRunnerReady: (value) => set({ runnerReady: value }),
+    setRandomizeLoading: (value) => set({ randomizeLoading: value }),
 });

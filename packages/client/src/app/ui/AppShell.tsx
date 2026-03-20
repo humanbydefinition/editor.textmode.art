@@ -6,7 +6,9 @@ import { Toaster } from '@/shared/ui/sonner';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {
+	selectEditorBackdrop,
 	selectError,
+	selectRandomizeLoading,
 	selectShareConsented,
 	selectSharePayload,
 	selectSharePromptOpen,
@@ -38,9 +40,11 @@ export function AppShell() {
 	const [shareExportData, setShareExportData] = useState<ShareExportData | null>(null);
 
 	// Runtime Context
-	const { actions, state: runtimeState, layout } = useAppRuntime();
+	const { actions, layout } = useAppRuntime();
 
 	// Store State
+	const editorBackdrop = useAppStore(selectEditorBackdrop);
+	const randomizeLoading = useAppStore(selectRandomizeLoading);
 	const error = useAppStore(selectError);
 	const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
 	const clearError = useAppStore((state) => state.clearError);
@@ -87,7 +91,7 @@ export function AppShell() {
 	return (
 		<>
 			{/* Layout layer - single editor pane */}
-			<EditorLayout editorBackdrop={runtimeState.editorBackdrop} onTextmodeReady={layout.onTextmodeReady} />
+			<EditorLayout editorBackdrop={editorBackdrop} onTextmodeReady={layout.onTextmodeReady} />
 
 			{/* UI shell layer - elevated above editors */}
 			<div id="shell-container" className="fixed inset-0 z-[100] pointer-events-none">
@@ -164,7 +168,7 @@ export function AppShell() {
 								onShare={handleShare}
 								onRandomize={actions.randomize}
 								onMakeRandomChange={actions.makeRandomChange}
-								randomizeLoading={runtimeState.randomizeLoading}
+								randomizeLoading={randomizeLoading}
 								onResetRunners={actions.resetRunners}
 								onClearStorage={actions.clearStorage}
 								renderExamplesTab={(onClose) => (

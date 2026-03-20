@@ -7,7 +7,6 @@ import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 const CONFIRMATION_DELAY_MS = 100;
 
 export interface TextmodeControllerCallbacks {
-	onRenderOverlay: () => void;
 	onSaveCode: (code: string) => void;
 }
 
@@ -50,6 +49,7 @@ export class TextmodeController {
 
 	handleForceRun(): void {
 		if (this.isExecutionLocked()) return;
+		this.clearDebounce();
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
 
@@ -58,7 +58,6 @@ export class TextmodeController {
 		editor?.clearMarkers();
 
 		this.deps.getRuntime()?.forceRun(code);
-		this.callbacks.onRenderOverlay();
 	}
 
 	handleRevertToLastWorking(): void {
@@ -73,7 +72,6 @@ export class TextmodeController {
 		editor?.clearMarkers();
 
 		this.deps.getRuntime()?.forceRun(lastWorkingCode);
-		this.callbacks.onRenderOverlay();
 	}
 
 	handleSoftReset(): void {
@@ -86,13 +84,11 @@ export class TextmodeController {
 		this.deps.store.engine.setStatus('ready');
 		editor?.clearMarkers();
 		this.deps.getRuntime()?.softReset(code);
-		this.callbacks.onRenderOverlay();
 	}
 
 	handleRuntimeReady(): void {
 		this.deps.store.engine.setStatus('ready');
 		this.deps.store.engine.setIsInitialized(true);
-		this.callbacks.onRenderOverlay();
 
 		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
@@ -111,7 +107,6 @@ export class TextmodeController {
 		this.deps.store.engine.setStatus('running');
 		this.deps.store.engine.clearError();
 		editor?.clearMarkers();
-		this.callbacks.onRenderOverlay();
 	}
 
 	handleRunError(error: CodeError): void {
@@ -127,7 +122,6 @@ export class TextmodeController {
 			message: this.formatErrorMessage(error.message),
 			source: 'textmode',
 		});
-		this.callbacks.onRenderOverlay();
 	}
 
 	private handleError(error: CodeError): void {
@@ -140,8 +134,6 @@ export class TextmodeController {
 			column: error.column,
 			source: 'textmode',
 		});
-
-		this.callbacks.onRenderOverlay();
 	}
 
 	private clearDebounce(): void {

@@ -1,8 +1,5 @@
-import { createElement } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { ShareManager } from '@/features/share';
 import { UIActions } from '@/app/runtime/UIActions';
-import { AppShell } from '@/app/ui/AppShell';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
@@ -15,11 +12,12 @@ import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/ad
 import type { AppSettings } from '@/types';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';
+import type { AppRuntimeContextValue } from './AppRuntimeContext';
 
 /**
  * Main application composition root.
  * Orchestrates the textmode engine, share workflow, and UI.
+ * Instantiated from within a React component (EditorApp).
  */
 export class AppRuntime {
 	private readonly storage: IEditorStorage;
@@ -28,8 +26,11 @@ export class AppRuntime {
 	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareManager: ShareManager;
 	private readonly uiActions: UIActions;
-	private readonly cachedActions: AppRuntimeContextValue['actions'];
-	private readonly cachedLayout: AppRuntimeContextValue['layout'];
+
+	/** Stable action references for React context (never change after construction). */
+	readonly actions: AppRuntimeContextValue['actions'];
+	/** Stable layout callbacks for React context. */
+	readonly layout: AppRuntimeContextValue['layout'];
 
 	private textmodeEditor: TextmodeEditor | null = null;
 	private textmodeContainer: HTMLElement | null = null;
@@ -37,7 +38,6 @@ export class AppRuntime {
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private storeInitCleanup: (() => void) | null = null;
-	private root: Root | null = null;
 	private initialized = false;
 
 	constructor() {
@@ -61,7 +61,6 @@ export class AppRuntime {
 
 		this.shareManager = new ShareManager({
 			store: this.storeAdapter,
-			render: () => this.render(),
 			setEditorReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
@@ -73,7 +72,7 @@ export class AppRuntime {
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
-		this.cachedActions = {
+		this.actions = {
 			randomize: () => this.shareManager.randomize(),
 			makeRandomChange: () => this.makeRandomChange(),
 			resetRunners: () => this.uiActions.resetRunners(),
@@ -97,7 +96,7 @@ export class AppRuntime {
 			getShareExportData: () => this.uiActions.getShareExportData(),
 		};
 
-		this.cachedLayout = {
+		this.layout = {
 			onTextmodeReady: (container: HTMLElement) => this.handleTextmodePaneReady(container),
 		};
 	}
@@ -115,14 +114,6 @@ export class AppRuntime {
 		await this.shareManager.hydrateFromLocation(window.location);
 		this.storeInitCleanup = initAppStore();
 
-		const appContainer = document.getElementById('app-container');
-		if (!appContainer) {
-			console.error('App container #app-container not found');
-			return;
-		}
-		this.root = createRoot(appContainer);
-
-		this.render();
 		this.maybeInitializeEngine();
 
 		return this.engineBootstrapPromise ?? Promise.resolve();
@@ -154,8 +145,6 @@ export class AppRuntime {
 		this.storeAdapter.engine.setRunnerReconnecting(false);
 		this.storeAdapter.engine.setRunnerReady(false);
 
-		this.root?.unmount();
-		this.root = null;
 		this.initialized = false;
 	}
 
@@ -194,8 +183,6 @@ export class AppRuntime {
 		if (this.storeUnsubscribers.length === 0) {
 			this.registerStoreSubscriptions();
 		}
-
-		this.render();
 	}
 
 	private createEngineContext(editorContainer: HTMLElement): TextmodeEngineContext {
@@ -205,7 +192,6 @@ export class AppRuntime {
 			getSettings: this.storeAdapter.settings.getSettings,
 			store: this.storeAdapter,
 			callbacks: {
-				onRenderOverlay: () => this.render(),
 				onSaveCode: (code: string) => this.storage.saveCode(code),
 			},
 			getInitialCode: () => this.storage.loadCode(),
@@ -353,7 +339,8 @@ export class AppRuntime {
 		const newCode = CodeRandomizer.replaceRandomNumber(code);
 
 		if (code !== newCode) {
-			this.textmodeEngine.setCode(newCode);
+			// Avoid triggering auto-execute debounce + manual forceRun in the same click.
+			this.textmodeEngine.setCode(newCode, { silent: true });
 			this.textmodeEngine.getController()?.handleForceRun();
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			const isMobile = this.storeAdapter.ui.getIsMobile();
@@ -361,25 +348,5 @@ export class AppRuntime {
 				this.focusEditor();
 			}
 		}
-	}
-
-	private getContextValue(): AppRuntimeContextValue {
-		const s = this.settings;
-		return {
-			actions: this.cachedActions,
-			layout: this.cachedLayout,
-			state: {
-				randomizeLoading: this.shareManager.getRandomizeLoading(),
-				editorBackdrop: s.editorBackdrop,
-			},
-		};
-	}
-
-	private render(): void {
-		if (!this.root) return;
-
-		this.root.render(
-			createElement(AppRuntimeProvider, { value: this.getContextValue() }, createElement(AppShell, {}))
-		);
 	}
 }

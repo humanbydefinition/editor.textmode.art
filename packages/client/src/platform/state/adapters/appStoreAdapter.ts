@@ -30,6 +30,8 @@ export interface EngineAdapter {
 	setRunnerUnavailable: (value: boolean) => void;
 	setRunnerReconnecting: (value: boolean) => void;
 	setRunnerReady: (value: boolean) => void;
+	getRandomizeLoading: () => boolean;
+	setRandomizeLoading: (value: boolean) => void;
 }
 
 /**
@@ -95,6 +97,8 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
 			setRunnerUnavailable: (value) => getState().setRunnerUnavailable(value),
 			setRunnerReconnecting: (value) => getState().setRunnerReconnecting(value),
 			setRunnerReady: (value) => getState().setRunnerReady(value),
+			getRandomizeLoading: () => getState().randomizeLoading,
+			setRandomizeLoading: (value) => getState().setRandomizeLoading(value),
 		},
 		share: {
 			getPayload: () => getState().share.payload,
