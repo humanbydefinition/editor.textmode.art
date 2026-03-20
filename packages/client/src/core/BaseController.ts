@@ -298,7 +298,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 
 	private getSharePayloadCode(payload: SharePayload | null): string | null {
 		if (!payload) return null;
-		return payload.code;
+		return payload.engines.textmode ?? null;
 	}
 
 	/**

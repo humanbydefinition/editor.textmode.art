@@ -1,6 +1,5 @@
 import type { SharePayload } from '../types';
 
-
 interface ShareState {
 	payload: SharePayload | null;
 	consented: boolean;
@@ -98,11 +97,11 @@ export class ShareSessionManager {
 		this.deps.setShareConsented(true);
 		this.deps.setEditorsReadOnly(false);
 		this.deps.applyPayload(share.payload);
-		this.focusPrimarySharedEditor(share.payload);
+		this.focusPrimarySharedEditor();
 		return share.payload;
 	}
 
-	private focusPrimarySharedEditor(_payload: SharePayload): void {
+	private focusPrimarySharedEditor(): void {
 		this.deps.focusEditor();
 	}
 

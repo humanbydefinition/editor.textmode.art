@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from '@/shared/ui/dialog';
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@/shared/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
@@ -38,7 +27,14 @@ function formatCount(value: number): string {
 	return new Intl.NumberFormat('en-US').format(value);
 }
 
-export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPublishRequested, onSubmissionsPaused }: ShareExportDialogProps) {
+export function ShareExportDialog({
+	open,
+	data,
+	onOpenChange,
+	onCopyLink,
+	onPublishRequested,
+	onSubmissionsPaused,
+}: ShareExportDialogProps) {
 	const [copied, setCopied] = useState(false);
 	const [isCheckingQueue, setIsCheckingQueue] = useState(false);
 
@@ -49,7 +45,9 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 		const basePayload: SharePayload = {
 			v: 1,
 			createdAt: data.createdAt,
-			code: data.textmodeCode,
+			engines: {
+				textmode: data.textmodeCode,
+			},
 		};
 		const textmodeUrl = ShareService.buildShareUrl(basePayload, window.location);
 		const textmodeFits = textmodeUrl.length <= MAX_SHARE_URL_LENGTH;
@@ -105,9 +103,7 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-[450px] h-[90vh] sm:h-auto sm:max-h-[85vh] bg-zinc-950/98 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col">
 				<DialogHeader className="px-6 py-4 border-b border-white/5 text-left shrink-0">
-					<DialogTitle className="text-base font-bold tracking-tight text-white">
-						share sketch
-					</DialogTitle>
+					<DialogTitle className="text-base font-bold tracking-tight text-white">share sketch</DialogTitle>
 					<DialogDescription className="text-xs text-zinc-400">
 						links contain your code in the URL. copy a link to share your work.
 					</DialogDescription>
@@ -123,12 +119,17 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 										<div className="flex justify-between text-[10px] font-mono text-zinc-500">
 											<span>link size</span>
 											<span className={computed.textmodeFits ? 'text-zinc-500' : 'text-red-400'}>
-												{formatCount(computed.textmodeUrl.length)} / {formatCount(MAX_SHARE_URL_LENGTH)}
+												{formatCount(computed.textmodeUrl.length)} /{' '}
+												{formatCount(MAX_SHARE_URL_LENGTH)}
 											</span>
 										</div>
 										<div className="h-1 rounded-full bg-zinc-800/50 overflow-hidden">
 											<div
-												className={computed.textmodeFits ? 'h-full bg-emerald-500/60' : 'h-full bg-red-500/60'}
+												className={
+													computed.textmodeFits
+														? 'h-full bg-emerald-500/60'
+														: 'h-full bg-red-500/60'
+												}
 												style={{ width: `${textmodeRatio * 100}%` }}
 											/>
 										</div>
@@ -172,13 +173,17 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 										<p className="text-sm font-semibold text-white">publish to gallery</p>
 									</div>
 									<p className="text-[11px] text-zinc-500 leading-relaxed max-w-[400px]">
-										approved sketches get a short URL like <span className="text-zinc-300 font-mono">/s/slug</span> and appear in the community gallery.
+										approved sketches get a short URL like{' '}
+										<span className="text-zinc-300 font-mono">/s/slug</span> and appear in the
+										community gallery.
 									</p>
 								</div>
 								<TooltipProvider>
 									<Tooltip delayDuration={0}>
 										<TooltipTrigger asChild>
-											<span tabIndex={0} className="inline-flex"> {/* Wrapper for disabled button tooltip trigger */}
+											<span tabIndex={0} className="inline-flex">
+												{' '}
+												{/* Wrapper for disabled button tooltip trigger */}
 												<Button
 													className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0 min-w-[120px]"
 													onClick={handlePublishClick}
@@ -207,8 +212,6 @@ export function ShareExportDialog({ open, data, onOpenChange, onCopyLink, onPubl
 					</div>
 				</ScrollArea>
 			</DialogContent>
-
-
 		</Dialog>
 	);
 }

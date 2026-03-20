@@ -7,13 +7,43 @@ const MAX_DECODED_CHARS = 300_000;
 
 export const MAX_SHARE_URL_LENGTH = 4096;
 
+type LegacySharePayload = {
+	v: 1;
+	createdAt: number;
+	code: string;
+};
+
 function isSharePayload(value: unknown): value is SharePayload {
 	if (!value || typeof value !== 'object') return false;
 	const payload = value as SharePayload;
 	if (payload.v !== 1) return false;
 	if (typeof payload.createdAt !== 'number') return false;
+	if (!payload.engines || typeof payload.engines !== 'object') return false;
+	if (payload.engines.textmode !== undefined && typeof payload.engines.textmode !== 'string') return false;
+	return true;
+}
+
+function isLegacySharePayload(value: unknown): value is LegacySharePayload {
+	if (!value || typeof value !== 'object') return false;
+	const payload = value as LegacySharePayload;
+	if (payload.v !== 1) return false;
+	if (typeof payload.createdAt !== 'number') return false;
 	if (typeof payload.code !== 'string') return false;
 	return true;
+}
+
+function normalizeSharePayload(value: SharePayload | LegacySharePayload): SharePayload {
+	if ('engines' in value) {
+		return value;
+	}
+
+	return {
+		v: value.v,
+		createdAt: value.createdAt,
+		engines: {
+			textmode: value.code,
+		},
+	};
 }
 
 export class ShareService {
@@ -36,8 +66,10 @@ export class ShareService {
 			if (!decoded) return null;
 			if (decoded.length > MAX_DECODED_CHARS) return null;
 			const parsed = JSON.parse(decoded) as unknown;
-			if (!isSharePayload(parsed)) return null;
-			return parsed;
+			if (isSharePayload(parsed) || isLegacySharePayload(parsed)) {
+				return normalizeSharePayload(parsed);
+			}
+			return null;
 		} catch {
 			return null;
 		}

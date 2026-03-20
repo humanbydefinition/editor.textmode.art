@@ -217,7 +217,9 @@ export class AppRuntime {
 
 	private applySharePayload(payload: SharePayload): void {
 		if (!this.textmodeEngine.isInitialized()) return;
-		this.textmodeEngine.setCode(payload.code, { silent: true });
+		const code = payload.engines.textmode;
+		if (typeof code !== 'string') return;
+		this.textmodeEngine.setCode(code, { silent: true });
 	}
 
 	private restoreLocalSketches(): void {
@@ -339,7 +341,8 @@ export class AppRuntime {
 			},
 			layout: {
 				panes: this.paneCoordinator.getPaneConfigs(),
-				onPaneReady: (paneId: string, container: HTMLElement) => this.paneCoordinator.onPaneReady(paneId, container),
+				onPaneReady: (paneId: string, container: HTMLElement) =>
+					this.paneCoordinator.onPaneReady(paneId, container),
 			},
 			state: {
 				randomizeLoading: this.shareWorkflow.getRandomizeLoading(),
@@ -352,11 +355,7 @@ export class AppRuntime {
 		if (!this.root) return;
 
 		this.root.render(
-			createElement(
-				AppRuntimeProvider,
-				{ value: this.getContextValue() },
-				createElement(AppShell, {})
-			)
+			createElement(AppRuntimeProvider, { value: this.getContextValue() }, createElement(AppShell, {}))
 		);
 	}
 }
