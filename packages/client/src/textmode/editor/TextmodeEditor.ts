@@ -24,8 +24,6 @@ export interface TextmodeEditorOptions {
 	onChange?: (value: string) => void;
 	onRun?: () => void;
 	onSoftReset?: () => void;
-	onToggleTextBackground?: () => void;
-	onToggleAutoExecute?: () => void;
 }
 
 /**
