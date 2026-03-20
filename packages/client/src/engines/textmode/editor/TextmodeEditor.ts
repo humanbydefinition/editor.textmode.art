@@ -1,5 +1,4 @@
 import * as monaco from 'monaco-editor';
-import { BaseEditor, type BaseEditorOptions } from '@/core/BaseEditor';
 import { typeDefinitions } from '../config/generatedTypes';
 
 // Import Monaco workers
@@ -16,7 +15,14 @@ self.MonacoEnvironment = {
 	},
 };
 
-export interface TextmodeEditorOptions extends BaseEditorOptions {
+export interface TextmodeEditorOptions {
+	container: HTMLElement;
+	initialValue: string;
+	fontSize?: number;
+	lineNumbers?: boolean;
+	readOnly?: boolean;
+	onChange?: (value: string) => void;
+	onRun?: () => void;
 	onSoftReset?: () => void;
 	onToggleTextBackground?: () => void;
 	onToggleAutoExecute?: () => void;
@@ -25,26 +31,144 @@ export interface TextmodeEditorOptions extends BaseEditorOptions {
 /**
  * TextmodeEditor - Monaco-based editor for textmode.js live coding.
  */
-export class TextmodeEditor extends BaseEditor {
-	protected override options: TextmodeEditorOptions;
+export class TextmodeEditor {
+	readonly editor: monaco.editor.IStandaloneCodeEditor;
+	private readonly model: monaco.editor.ITextModel;
+	private readonly options: TextmodeEditorOptions;
+	private disposables: monaco.IDisposable[] = [];
+	private suppressChange = false;
 
 	constructor(options: TextmodeEditorOptions) {
-		super(options);
 		this.options = options;
+		this.model = monaco.editor.createModel(options.initialValue, 'javascript');
+		this.editor = monaco.editor.create(options.container, {
+			model: this.model,
+			theme: 'vs-dark',
+			...this.getEditorOptions(),
+			readOnly: options.readOnly,
+		});
+
+		this.setupSubscriptions();
+		this.registerCommonKeybindings();
 		this.configureTypeScript();
 		this.registerTextmodeKeybindings();
 	}
 
-	protected getLanguageId(): string {
-		return 'javascript';
+	getValue(): string {
+		return this.model.getValue();
 	}
 
-	protected getMarkerOwner(): string {
-		return 'textmode';
+	setValue(value: string, options?: { silent?: boolean }): void {
+		if (options?.silent) {
+			this.suppressChange = true;
+		}
+		this.model.setValue(value);
+	}
+
+	layout(): void {
+		this.editor.layout();
+	}
+
+	focus(): void {
+		this.editor.focus();
+	}
+
+	updateOptions(options: monaco.editor.IEditorOptions): void {
+		this.editor.updateOptions(options);
+	}
+
+	updateEnvironment(env: { backdrop: boolean }): void {
+		if (env.backdrop) {
+			this.options.container.classList.add('editor-backdrop');
+		} else {
+			this.options.container.classList.remove('editor-backdrop');
+		}
+	}
+
+	setMarkers(markers: monaco.editor.IMarkerData[]): void {
+		monaco.editor.setModelMarkers(this.model, 'textmode', markers);
+	}
+
+	clearMarkers(): void {
+		monaco.editor.setModelMarkers(this.model, 'textmode', []);
+	}
+
+	dispose(): void {
+		this.disposables.forEach((d) => d.dispose());
+		this.disposables = [];
+		this.model.dispose();
+		this.editor.dispose();
+	}
+
+	private getEditorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
+		const showLineNumbers = this.options.lineNumbers ?? false;
+
+		return {
+			minimap: { enabled: false },
+			lineNumbers: showLineNumbers ? 'on' : 'off',
+			glyphMargin: false,
+			folding: false,
+			lineDecorationsWidth: showLineNumbers ? 16 : 0,
+			lineNumbersMinChars: showLineNumbers ? 2 : 0,
+			overviewRulerLanes: 0,
+			overviewRulerBorder: false,
+			hideCursorInOverviewRuler: true,
+			renderLineHighlight: 'none',
+			scrollbar: {
+				vertical: 'hidden',
+				horizontal: 'hidden',
+				useShadows: false,
+			},
+			stickyScroll: { enabled: false },
+			guides: {
+				indentation: false,
+				bracketPairs: false,
+				highlightActiveIndentation: false,
+				bracketPairsHorizontal: false,
+			},
+			renderWhitespace: 'none',
+			renderControlCharacters: false,
+			renderLineHighlightOnlyWhenFocus: true,
+			matchBrackets: 'never',
+			occurrencesHighlight: 'off',
+			selectionHighlight: false,
+			links: true,
+			colorDecorators: false,
+			automaticLayout: true,
+			fontSize: this.options.fontSize ?? 14,
+			fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+			fontLigatures: true,
+			tabSize: 2,
+			insertSpaces: true,
+			wordWrap: 'on',
+			padding: { top: 60, bottom: 80 },
+			quickSuggestions: true,
+			suggestOnTriggerCharacters: true,
+			acceptSuggestionOnCommitCharacter: true,
+			cursorBlinking: 'smooth',
+			cursorSmoothCaretAnimation: 'on',
+			cursorWidth: 2,
+		};
+	}
+
+	private setupSubscriptions(): void {
+		const changeDisposable = this.model.onDidChangeContent(() => {
+			if (this.suppressChange) {
+				this.suppressChange = false;
+				return;
+			}
+			this.options.onChange?.(this.model.getValue());
+		});
+		this.disposables.push(changeDisposable);
+	}
+
+	private registerCommonKeybindings(): void {
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+			this.options.onRun?.();
+		});
 	}
 
 	private registerTextmodeKeybindings(): void {
-		// Ctrl/Cmd + Shift + R: Soft reset
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR, () => {
 			this.options.onSoftReset?.();
 		});
