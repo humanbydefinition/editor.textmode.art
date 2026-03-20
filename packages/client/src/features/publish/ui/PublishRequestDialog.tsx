@@ -6,7 +6,7 @@ import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Checkbox } from '@/shared/ui/checkbox';
-import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
+import { SketchMetaCard } from '@/features/sketch-meta';
 import { buildLegalHref } from '@/shared/config/appMeta';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
 import { TurnstileWidget } from './TurnstileWidget';
@@ -551,7 +551,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											how this card appears once approved:
 										</p>
 										<div className="w-full max-w-[360px] min-w-0">
-											<SlugInfoCard sketch={previewSketch} />
+											<SketchMetaCard sketch={previewSketch} />
 										</div>
 									</div>
 								</div>

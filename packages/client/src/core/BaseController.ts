@@ -2,7 +2,7 @@ import type { CodeError, StatusState } from '@/core/app.types';
 import type { IEditor } from './BaseEditor';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
-import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
+import type { SketchSummary } from '@/features/sketch-meta';
 
 /** Delay before pending code is confirmed as 'last working' */
 const CONFIRMATION_DELAY_MS = 100;
@@ -60,10 +60,10 @@ export interface ControllerStoreAdapter {
 	// Approved sketch
 	getApprovedSketch: () => ApprovedSketch | null;
 	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-	getSlugSketchInfo: () => SlugSketchInfo | null;
-	setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+	getSketchSummary: () => SketchSummary | null;
+	setSketchSummary: (info: SketchSummary | null) => void;
 	getOriginalApprovedSketch: () => ApprovedSketch | null;
-	getOriginalSlugSketchInfo: () => SlugSketchInfo | null;
+	getOriginalSketchSummary: () => SketchSummary | null;
 }
 
 /**
@@ -267,7 +267,7 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		if (approvedSketch) {
 			if (code !== approvedSketch.textmodeCode) {
 				this.deps.store.setApprovedSketch(null);
-				this.deps.store.setSlugSketchInfo(null);
+				this.deps.store.setSketchSummary(null);
 			}
 			return;
 		}
@@ -276,23 +276,23 @@ export abstract class BaseController<TEditor extends IEditor, TRuntime extends I
 		const originalSketch = this.deps.store.getOriginalApprovedSketch();
 		if (originalSketch) {
 			if (code === originalSketch.textmodeCode) {
-				const originalSlugInfo = this.deps.store.getOriginalSlugSketchInfo();
+				const originalSketchSummary = this.deps.store.getOriginalSketchSummary();
 				this.deps.store.setApprovedSketch(originalSketch);
-				if (originalSlugInfo) {
-					this.deps.store.setSlugSketchInfo(originalSlugInfo);
+				if (originalSketchSummary) {
+					this.deps.store.setSketchSummary(originalSketchSummary);
 				}
 			}
 			return;
 		}
 
-		const slugSketchInfo = this.deps.store.getSlugSketchInfo();
-		if (!slugSketchInfo || slugSketchInfo.status !== 'PENDING') return;
+		const sketchSummary = this.deps.store.getSketchSummary();
+		if (!sketchSummary || sketchSummary.status !== 'PENDING') return;
 
 		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.getShareState().payload);
 		if (sharedCodeForEngine === null) return;
 
 		if (code !== sharedCodeForEngine) {
-			this.deps.store.setSlugSketchInfo(null);
+			this.deps.store.setSketchSummary(null);
 		}
 	}
 

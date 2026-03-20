@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { EditorLayout, MobileNav } from '@/features/editor-layout';
+import { WelcomeDialog } from '@/features/onboarding/ui/WelcomeDialog';
 import { SystemMenu } from '@/features/system-menu';
 import { Toaster } from '@/shared/ui/sonner';
-import { WelcomeDialog } from '@/shared/components/WelcomeDialog';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {

@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { AppState } from '../appStore';
-import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
+import type { SketchSummary } from '@/features/sketch-meta';
 
 export interface ShareSlice {
     share: {
@@ -11,20 +11,20 @@ export interface ShareSlice {
         promptOpen: boolean;
     };
     approvedSketch: ApprovedSketch | null;
-    slugSketchInfo: SlugSketchInfo | null;
+    sketchSummary: SketchSummary | null;
 
     /**
      * Shadow copy of the approved sketch. Preserved when the user edits code
      * so that reverting to the original code can restore the active reference.
      */
     originalApprovedSketch: ApprovedSketch | null;
-    originalSlugSketchInfo: SlugSketchInfo | null;
+    originalSketchSummary: SketchSummary | null;
 
     setSharePayload: (payload: SharePayload | null) => void;
     setShareConsented: (consented: boolean) => void;
     setSharePromptOpen: (open: boolean) => void;
     setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-    setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+    setSketchSummary: (info: SketchSummary | null) => void;
     clearOriginalApprovedSketch: () => void;
 }
 
@@ -40,9 +40,9 @@ export const createShareSlice: StateCreator<
         promptOpen: false,
     },
     approvedSketch: null,
-    slugSketchInfo: null,
+    sketchSummary: null,
     originalApprovedSketch: null,
-    originalSlugSketchInfo: null,
+    originalSketchSummary: null,
 
     setSharePayload: (payload) => set({
         share: {
@@ -75,19 +75,19 @@ export const createShareSlice: StateCreator<
         // When clearing, only clear the active reference; keep the original
         return { approvedSketch: null };
     }),
-    setSlugSketchInfo: (info) => set(() => {
+    setSketchSummary: (info) => set(() => {
         if (info) {
             return {
-                slugSketchInfo: info,
-                originalSlugSketchInfo: info,
+                sketchSummary: info,
+                originalSketchSummary: info,
             };
         }
-        return { slugSketchInfo: null };
+        return { sketchSummary: null };
     }),
     clearOriginalApprovedSketch: () => set({
         originalApprovedSketch: null,
-        originalSlugSketchInfo: null,
+        originalSketchSummary: null,
         approvedSketch: null,
-        slugSketchInfo: null,
+        sketchSummary: null,
     }),
 });

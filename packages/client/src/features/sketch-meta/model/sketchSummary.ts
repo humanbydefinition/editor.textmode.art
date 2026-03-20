@@ -1,9 +1,9 @@
 import type { SocialLink } from '@synth.textmode.art/contracts/sketch';
 
-export type SlugSketchStatus = 'PENDING' | 'APPROVED';
+export type SketchSummaryStatus = 'PENDING' | 'APPROVED';
 
-export interface SlugSketchInfo {
-	status: SlugSketchStatus;
+export interface SketchSummary {
+	status: SketchSummaryStatus;
 	slug: string;
 	title: string;
 	description: string | null;
@@ -12,4 +12,4 @@ export interface SlugSketchInfo {
 	socialLinks: SocialLink[] | null;
 }
 
-export type SlugInfoCardSketch = Omit<SlugSketchInfo, 'status'> & { status?: SlugSketchStatus };
+export type SketchMetaCardData = Omit<SketchSummary, 'status'> & { status?: SketchSummaryStatus };

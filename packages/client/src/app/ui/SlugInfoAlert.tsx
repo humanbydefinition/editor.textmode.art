@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectShareState, selectSlugSketchInfo } from '@/platform/state/selectors';
-import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
+import { selectShareState, selectSketchSummary } from '@/platform/state/selectors';
+import { SketchMetaCard } from '@/features/sketch-meta';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
@@ -20,7 +20,7 @@ export function SlugInfoAlert({
 	autoOpenEnabled = true,
 	onShare,
 }: SlugInfoAlertProps) {
-	const sketch = useAppStore(selectSlugSketchInfo);
+	const sketch = useAppStore(selectSketchSummary);
 	const share = useAppStore(selectShareState);
 	const isPendingSketch = sketch?.status === 'PENDING';
 	const pendingUnlocked = !isPendingSketch || share.consented;
@@ -111,7 +111,7 @@ export function SlugInfoAlert({
 					collisionPadding={8}
 					className="w-[min(calc(100vw-1rem),360px)] border-white/10 bg-zinc-950/95 p-0 shadow-xl shadow-black/50"
 				>
-					<SlugInfoCard
+					<SketchMetaCard
 						sketch={sketch}
 						showDismiss
 						onDismiss={() => setOpen(false)}
