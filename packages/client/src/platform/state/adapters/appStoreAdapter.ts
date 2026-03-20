@@ -1,5 +1,5 @@
 import { useAppStore } from '../appStore';
-import type { AppSettings, StatusState, CodeError } from '@/core/app.types';
+import type { AppSettings, StatusState, CodeError } from '@/types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { SketchSummary } from '@/features/sketch-meta';

@@ -1,4 +1,4 @@
-import type { AppSettings } from '@/core/app.types';
+import type { AppSettings } from '@/types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';

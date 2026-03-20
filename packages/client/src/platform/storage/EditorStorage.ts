@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, type AppSettings } from '@/core/app.types';
+import { DEFAULT_SETTINGS, type AppSettings } from '@/types';
 
 const SETTINGS_STORAGE_KEY = 'app_settings';
 const CODE_STORAGE_KEY = 'textmode_code';

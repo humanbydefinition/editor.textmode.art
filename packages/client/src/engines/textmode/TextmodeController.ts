@@ -1,4 +1,4 @@
-import type { CodeError } from '@/core/app.types';
+import type { CodeError } from '@/types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { TextmodeEditor } from './editor/TextmodeEditor';

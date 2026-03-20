@@ -12,7 +12,7 @@ import { initAppStore, useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { AppSettings } from '@/core/app.types';
+import type { AppSettings } from '@/types';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import { type AppRuntimeContextValue, AppRuntimeProvider } from './AppRuntimeContext';

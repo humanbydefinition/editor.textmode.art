@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { MOBILE_BREAKPOINT } from '@/core/app.types';
+import { MOBILE_BREAKPOINT } from '@/types';
 import type { AppState } from '../appStore';
 
 export interface UISlice {
