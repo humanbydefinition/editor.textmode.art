@@ -246,23 +246,6 @@ declare global {
   // Main Textmode Instance
   const t: Textmodifier;
 
-  // Audio Analysis
-  interface AudioAnalysis {
-    /** Get raw FFT frequency data (0-255 per bin) */
-    fft(): Uint8Array;
-    /** Get raw time-domain waveform data (0-255, 128 = silence) */
-    waveform(): Uint8Array;
-    /** Get bass frequency level (0-1) */
-    bass(): number;
-    /** Get mid frequency level (0-1) */
-    mid(): number;
-    /** Get high frequency level (0-1) */
-    high(): number;
-    /** Get overall volume level (0-1) */
-    volume(): number;
-  }
-  const audio: AudioAnalysis;
-
   // Cleanup
   function onDispose(fn: () => void): void;
   
