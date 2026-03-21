@@ -1,113 +1,45 @@
 /* ===== LAYOUT & PANELS ===== */
 
 #app-container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10;
-    pointer-events: none;
+	display: flex;
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 10;
+	pointer-events: none;
 }
 
 /* Admin mode: enable normal pointer events and scrolling */
 body.admin-mode #app-container {
-    pointer-events: auto;
-    overflow: auto;
+	pointer-events: auto;
+	overflow: auto;
 }
 
 /* Legal mode: enable interactions but keep viewport non-scrolling */
 body.legal-mode #app-container {
-    pointer-events: auto;
-    overflow: hidden;
+	pointer-events: auto;
+	overflow: hidden;
 }
 
 .layout-pane {
-    flex: 1;
-    position: relative;
-    min-width: 0;
-    z-index: 10;
-    pointer-events: auto;
+	flex: 1;
+	position: relative;
+	min-width: 0;
+	z-index: 10;
+	pointer-events: auto;
 }
 
 /* Ensure hovered/active pane sits on top of others so tooltips don't get covered */
 .layout-pane:hover,
 .layout-pane:focus-within {
-    z-index: 50 !important;
-}
-
-/* ===== SPLIT RESIZER ===== */
-#split-resizer {
-    position: relative;
-    width: 8px;
-    cursor: col-resize;
-    z-index: 20;
-    flex-shrink: 0;
-    pointer-events: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#split-resizer::before {
-    content: '';
-    position: absolute;
-    background: rgba(255, 255, 255, 0);
-    transition: background 0.15s ease, width 0.15s ease, height 0.15s ease;
-}
-
-#split-resizer.resizer-vertical::before {
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1px;
-    height: 100%;
-}
-
-#split-resizer.resizer-vertical:hover::before,
-#split-resizer.resizer-vertical.dragging::before {
-    background: rgba(255, 255, 255, 0.2);
-    width: 2px;
-}
-
-#split-resizer.resizer-vertical.dragging::before {
-    background: rgba(255, 255, 255, 0.35);
-}
-
-/* Hide resizer on mobile */
-@media (max-width: 768px) {
-    #split-resizer {
-        display: none;
-    }
+	z-index: 50 !important;
 }
 
 /* Mobile: Tab layout for editors */
 @media (max-width: 768px) {
-    .app-layout-container {
-        flex-direction: column;
-    }
-
-    .app-layout-container.tab-layout {
-        flex-direction: column;
-    }
-
-    /* Make panels full screen on mobile */
-    .app-layout-container.tab-layout .layout-pane {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-left: none;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-        padding-top: 0;
-        /* No top padding needed */
-    }
-
-    .app-layout-container.tab-layout .layout-pane.hidden {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-    }
+	.app-layout-container {
+		flex-direction: column;
+	}
 }

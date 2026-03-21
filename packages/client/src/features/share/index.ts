@@ -1,4 +1,3 @@
-export { ShareSessionManager } from './model/ShareSessionManager';
-export { ShareWorkflow, type ShareWorkflowDependencies } from './model/ShareWorkflow';
+export { ShareManager, type ShareManagerDependencies } from './model/ShareManager';
 export { ShareConsentDialog } from './ui/ShareConsentDialog';
 export { ShareExportDialog, type ShareExportData, type ShareExportDialogProps } from './ui/ShareExportDialog';

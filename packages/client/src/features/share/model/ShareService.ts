@@ -13,6 +13,7 @@ function isSharePayload(value: unknown): value is SharePayload {
 	if (payload.v !== 1) return false;
 	if (typeof payload.createdAt !== 'number') return false;
 	if (!payload.engines || typeof payload.engines !== 'object') return false;
+	if (payload.engines.textmode !== undefined && typeof payload.engines.textmode !== 'string') return false;
 	return true;
 }
 
@@ -36,8 +37,7 @@ export class ShareService {
 			if (!decoded) return null;
 			if (decoded.length > MAX_DECODED_CHARS) return null;
 			const parsed = JSON.parse(decoded) as unknown;
-			if (!isSharePayload(parsed)) return null;
-			return parsed;
+			return isSharePayload(parsed) ? parsed : null;
 		} catch {
 			return null;
 		}

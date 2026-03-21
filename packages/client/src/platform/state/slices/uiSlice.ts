@@ -1,51 +1,38 @@
 import type { StateCreator } from 'zustand';
-import { MOBILE_BREAKPOINT } from '@/core/app.types';
+import { MOBILE_BREAKPOINT } from '@/types';
 import type { AppState } from '../appStore';
 
-export interface Panel {
-    id: string;
-    label: string;
-}
-
 export interface UISlice {
-    isMobile: boolean;
-    activePanel: string;
-    panels: Panel[];
+	isMobile: boolean;
 
-    setIsMobile: (isMobile: boolean) => void;
-    setActivePanel: (panel: string) => void;
-    setPanels: (panels: Panel[]) => void;
+	setIsMobile: (isMobile: boolean) => void;
 }
 
 export const createUISlice: StateCreator<
-    AppState,
-    [['zustand/devtools', never], ['zustand/subscribeWithSelector', never]],
-    [],
-    UISlice
+	AppState,
+	[['zustand/devtools', never], ['zustand/subscribeWithSelector', never]],
+	[],
+	UISlice
 > = (set) => ({
-    isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
-    activePanel: '',
-    panels: [],
+	isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
 
-    setIsMobile: (isMobile) => set({ isMobile }),
-    setActivePanel: (activePanel) => set({ activePanel }),
-    setPanels: (panels) => set({ panels }),
+	setIsMobile: (isMobile) => set({ isMobile }),
 });
 
 /**
  * Initialize UI slice with window resize listener.
  */
 export function initUISlice(getState: () => AppState): () => void {
-    const handleResize = () => {
-        const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-        const currentIsMobile = getState().isMobile;
-        if (isMobile !== currentIsMobile) {
-            getState().setIsMobile(isMobile);
-        }
-    };
+	const handleResize = () => {
+		const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		const currentIsMobile = getState().isMobile;
+		if (isMobile !== currentIsMobile) {
+			getState().setIsMobile(isMobile);
+		}
+	};
 
-    window.addEventListener('resize', handleResize);
-    handleResize();
+	window.addEventListener('resize', handleResize);
+	handleResize();
 
-    return () => window.removeEventListener('resize', handleResize);
+	return () => window.removeEventListener('resize', handleResize);
 }

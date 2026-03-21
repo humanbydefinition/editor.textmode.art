@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectShareState, selectSlugSketchInfo } from '@/platform/state/selectors';
-import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
+import { selectShareConsented, selectSketchSummary } from '@/platform/state/selectors';
+import { SketchMetaCard } from '@/features/sketch-meta';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
-import { SLUG_INFO_POPOVER_DISMISS_EVENT } from '@/platform/events/popoverEvents';
+import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 
 interface SlugInfoAlertProps {
 	className?: string;
@@ -14,15 +14,13 @@ interface SlugInfoAlertProps {
 	onShare?: () => void;
 }
 
-export function SlugInfoAlert({
-	className,
-	autoOpenEnabled = true,
-	onShare,
-}: SlugInfoAlertProps) {
-	const sketch = useAppStore(selectSlugSketchInfo);
-	const share = useAppStore(selectShareState);
+const SLUG_INFO_POPOVER_DISMISS_EVENT = 'synth:slug-info-popover-dismiss';
+
+export function SlugInfoAlert({ className, autoOpenEnabled = true, onShare }: SlugInfoAlertProps) {
+	const sketch = useAppStore(selectSketchSummary);
+	const shareConsented = useAppStore(selectShareConsented);
 	const isPendingSketch = sketch?.status === 'PENDING';
-	const pendingUnlocked = !isPendingSketch || share.consented;
+	const pendingUnlocked = !isPendingSketch || shareConsented;
 	const sketchSlug = sketch?.slug ?? null;
 	const hasGallerySketch = Boolean(sketch && pendingUnlocked);
 	const buttonLabel = hasGallerySketch ? 'Gallery sketch info' : 'Share sketch';
@@ -68,13 +66,7 @@ export function SlugInfoAlert({
 				<TooltipTrigger asChild>
 					<button
 						type="button"
-						className={cn(
-							'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
-							'border border-white/5',
-							'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-							'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
-							className
-						)}
+						className={cn(floatingIconButtonVariants(), className)}
 						aria-label={buttonLabel}
 						onClick={() => onShare?.()}
 					>
@@ -95,13 +87,7 @@ export function SlugInfoAlert({
 					<PopoverTrigger asChild>
 						<button
 							type="button"
-							className={cn(
-								'flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900/40 text-zinc-400 backdrop-blur-md transition-all duration-300',
-								'border border-white/5',
-								'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-								'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
-								className
-							)}
+							className={cn(floatingIconButtonVariants(), className)}
 							aria-label={buttonLabel}
 							aria-expanded={open}
 						>
@@ -122,7 +108,7 @@ export function SlugInfoAlert({
 					collisionPadding={8}
 					className="w-[min(calc(100vw-1rem),360px)] border-white/10 bg-zinc-950/95 p-0 shadow-xl shadow-black/50"
 				>
-					<SlugInfoCard
+					<SketchMetaCard
 						sketch={sketch}
 						showDismiss
 						onDismiss={() => setOpen(false)}

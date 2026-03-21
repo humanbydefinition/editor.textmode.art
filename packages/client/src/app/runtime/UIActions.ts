@@ -1,14 +1,14 @@
 import type { ShareExportData } from '@/features/share';
-import type { EngineLifecycle } from '@/app/runtime/EngineLifecycle';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { EngineId } from '@/core/engine.types';
-import type { IStorageService } from '@/platform/storage/StorageService';
+import type { IEditorStorage } from '@/platform/storage/EditorStorage';
 
 interface UIActionsDependencies {
-	storage: IStorageService;
-	engineLifecycle: EngineLifecycle;
+	storage: IEditorStorage;
+	getCode: () => string;
 	store: AppStoreAdapter;
-	render: () => void;
+	loadExample: (code: string) => boolean;
+	reconnectAllRunners: () => void;
+	resetAll: () => void;
 }
 
 /**
@@ -24,7 +24,7 @@ export class UIActions {
 	getShareExportData(): ShareExportData {
 		return {
 			createdAt: Date.now(),
-			textmodeCode: this.deps.engineLifecycle.getCode('textmode'),
+			textmodeCode: this.deps.getCode(),
 		};
 	}
 
@@ -40,27 +40,20 @@ export class UIActions {
 
 	clearStorage(): void {
 		this.deps.storage.clearCode();
-		this.deps.engineLifecycle.resetAll();
+		this.deps.resetAll();
 		this.resetRunners();
 	}
 
 	resetRunners(): void {
-		this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', true);
-		this.deps.engineLifecycle.reconnectAllRunners();
+		this.deps.store.engine.setRunnerReconnecting(true);
+		this.deps.reconnectAllRunners();
 		setTimeout(() => {
-			this.deps.store.engine.setCustomState('textmode', 'runnerReconnecting', false);
+			this.deps.store.engine.setRunnerReconnecting(false);
 		}, 10000);
 	}
 
-	loadExample(code: string, engineId: string): void {
-		const typedEngineId = engineId as EngineId;
-		const loaded = this.deps.engineLifecycle.loadExample(typedEngineId, code);
-		if (!loaded) return;
-
-		if (this.deps.store.ui.getIsMobile()) {
-			this.deps.store.ui.setActivePanel(typedEngineId);
-			this.deps.render();
-		}
+	loadExample(code: string): void {
+		this.deps.loadExample(code);
 	}
 
 	toggleUIVisibility(): void {
@@ -73,10 +66,6 @@ export class UIActions {
 		const newSize = Math.min(32, Math.max(10, settings.fontSize + delta));
 		if (newSize === settings.fontSize) return;
 		this.deps.store.settings.setSettings({ ...settings, fontSize: newSize });
-	}
-
-	runCodeForEngine(engineId: string): void {
-		this.deps.engineLifecycle.runEngine(engineId as EngineId);
 	}
 
 	private fallbackCopy(value: string): void {

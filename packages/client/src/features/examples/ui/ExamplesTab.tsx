@@ -5,7 +5,7 @@ import type { Example } from '@/features/examples/types';
 import { getExampleEngineCatalog } from '../model/exampleCatalog';
 
 export interface ExamplesTabProps {
-    onLoadExample: (code: string, engineId: string) => void;
+    onLoadExample: (code: string) => void;
     onClose: () => void;
 }
 
@@ -14,7 +14,7 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     const engine = engines[0];
 
     const handleSelect = (example: Example) => {
-        onLoadExample(example.code, engine.id);
+        onLoadExample(example.code);
         onClose();
     };
 

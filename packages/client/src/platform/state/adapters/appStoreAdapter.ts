@@ -1,63 +1,63 @@
 import { useAppStore } from '../appStore';
-import type { AppSettings, StatusState, CodeError } from '@/core/app.types';
+import type { AppSettings, StatusState, CodeError } from '@/types';
 import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { SlugSketchInfo } from '@/shared/types/slugSketchInfo';
+import type { SketchSummary } from '@/features/sketch-meta';
 
 /**
  * Adapter for accessing settings state.
  */
 export interface SettingsAdapter {
-    getSettings: () => AppSettings;
-    setSettings: (settings: AppSettings) => void;
-    getUiVisible: () => boolean;
+	getSettings: () => AppSettings;
+	setSettings: (settings: AppSettings) => void;
 }
 
 /**
  * Adapter for accessing engine state.
  */
 export interface EngineAdapter {
-    getStatus: () => StatusState;
-    setStatus: (status: StatusState) => void;
-    getError: () => CodeError | null;
-    setError: (error: CodeError | null) => void;
-    getEngineError: (engineId: string) => CodeError | null;
-    getEngineErrors: () => Record<string, CodeError | null>;
-    setEngineError: (engineId: string, error: CodeError | null) => void;
-    clearEngineError: (engineId: string) => void;
-    getLastWorkingCode: (engineId: string) => string | null;
-    setLastWorkingCode: (engineId: string, code: string | null) => void;
-    getPendingWorkingCode: (engineId: string) => string | null;
-    setPendingWorkingCode: (engineId: string, code: string) => void;
-    cancelPendingWorkingCode: (engineId: string) => void;
-    setCustomState: <T>(engineId: string, key: string, value: T) => void;
-    setInitialized: (engineId: string, isInitialized: boolean) => void;
-    initEngineState: (engineId: string) => void;
+	getStatus: () => StatusState;
+	setStatus: (status: StatusState) => void;
+	getError: () => CodeError | null;
+	setError: (error: CodeError | null) => void;
+	clearError: () => void;
+	getLastWorkingCode: () => string | null;
+	setLastWorkingCode: (code: string | null) => void;
+	getPendingWorkingCode: () => string | null;
+	setPendingWorkingCode: (code: string) => void;
+	cancelPendingWorkingCode: () => void;
+	setIsInitialized: (isInitialized: boolean) => void;
+	setRunnerUnavailable: (value: boolean) => void;
+	setRunnerReconnecting: (value: boolean) => void;
+	setRunnerReady: (value: boolean) => void;
+	getRandomizeLoading: () => boolean;
+	setRandomizeLoading: (value: boolean) => void;
 }
 
 /**
  * Adapter for accessing share state.
  */
 export interface ShareAdapter {
-    getPayload: () => SharePayload | null;
-    setPayload: (payload: SharePayload | null) => void;
-    getConsented: () => boolean;
-    setConsented: (consented: boolean) => void;
-    getPromptOpen: () => boolean;
-    setPromptOpen: (open: boolean) => void;
-    clearOriginalApprovedSketch: () => void;
-    getApprovedSketch: () => ApprovedSketch | null;
-    setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-    setSlugSketchInfo: (info: SlugSketchInfo | null) => void;
+	getPayload: () => SharePayload | null;
+	setPayload: (payload: SharePayload | null) => void;
+	getConsented: () => boolean;
+	setConsented: (consented: boolean) => void;
+	getPromptOpen: () => boolean;
+	setPromptOpen: (open: boolean) => void;
+	clearOriginalApprovedSketch: () => void;
+	getApprovedSketch: () => ApprovedSketch | null;
+	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
+	getSketchSummary: () => SketchSummary | null;
+	setSketchSummary: (info: SketchSummary | null) => void;
+	getOriginalApprovedSketch: () => ApprovedSketch | null;
+	getOriginalSketchSummary: () => SketchSummary | null;
 }
 
 /**
  * Adapter for accessing UI state.
  */
 export interface UIAdapter {
-    getIsMobile: () => boolean;
-    getActivePanel: () => string;
-    setActivePanel: (panel: string) => void;
+	getIsMobile: () => boolean;
 }
 
 /**
@@ -65,58 +65,58 @@ export interface UIAdapter {
  * Provides access to Zustand store state for non-React classes.
  */
 export interface AppStoreAdapter {
-    settings: SettingsAdapter;
-    engine: EngineAdapter;
-    share: ShareAdapter;
-    ui: UIAdapter;
+	settings: SettingsAdapter;
+	engine: EngineAdapter;
+	share: ShareAdapter;
+	ui: UIAdapter;
 }
 
 /**
  * Create a unified store adapter.
  */
 export const createAppStoreAdapter = (): AppStoreAdapter => {
-    const getState = () => useAppStore.getState();
+	const getState = () => useAppStore.getState();
 
-    return {
-        settings: {
-            getSettings: () => getState().settings,
-            setSettings: (settings) => getState().setSettings(settings),
-            getUiVisible: () => getState().settings.uiVisible,
-        },
-        engine: {
-            getStatus: () => getState().status,
-            setStatus: (status) => getState().setStatus(status),
-            getError: () => getState().error,
-            setError: (error) => getState().setError(error),
-            getEngineError: (engineId) => getState().engineErrors[engineId] ?? null,
-            getEngineErrors: () => getState().engineErrors,
-            setEngineError: (engineId, error) => getState().setEngineError(engineId, error),
-            clearEngineError: (engineId) => getState().clearEngineError(engineId),
-            getLastWorkingCode: (engineId) => getState().engineStates[engineId]?.lastWorkingCode ?? null,
-            setLastWorkingCode: (engineId, code) => getState().setEngineLastWorkingCode(engineId, code),
-            getPendingWorkingCode: (engineId) => getState().engineStates[engineId]?.pendingWorkingCode ?? null,
-            setPendingWorkingCode: (engineId, code) => getState().setEnginePendingWorkingCode(engineId, code),
-            cancelPendingWorkingCode: (engineId) => getState().cancelEnginePendingWorkingCode(engineId),
-            setCustomState: (engineId, key, value) => getState().setEngineCustomState(engineId, key, value),
-            setInitialized: (engineId, isInitialized) => getState().setEngineInitialized(engineId, isInitialized),
-            initEngineState: (engineId) => getState().initEngineState(engineId),
-        },
-        share: {
-            getPayload: () => getState().share.payload,
-            setPayload: (payload) => getState().setSharePayload(payload),
-            getConsented: () => getState().share.consented,
-            setConsented: (consented) => getState().setShareConsented(consented),
-            getPromptOpen: () => getState().share.promptOpen,
-            setPromptOpen: (open) => getState().setSharePromptOpen(open),
-            clearOriginalApprovedSketch: () => getState().clearOriginalApprovedSketch(),
-            getApprovedSketch: () => getState().approvedSketch,
-            setApprovedSketch: (sketch) => getState().setApprovedSketch(sketch),
-            setSlugSketchInfo: (info) => getState().setSlugSketchInfo(info),
-        },
-        ui: {
-            getIsMobile: () => getState().isMobile,
-            getActivePanel: () => getState().activePanel,
-            setActivePanel: (panel) => getState().setActivePanel(panel),
-        },
-    };
+	return {
+		settings: {
+			getSettings: () => getState().settings,
+			setSettings: (settings) => getState().setSettings(settings),
+		},
+		engine: {
+			getStatus: () => getState().status,
+			setStatus: (status) => getState().setStatus(status),
+			getError: () => getState().error,
+			setError: (error) => getState().setError(error),
+			clearError: () => getState().clearError(),
+			getLastWorkingCode: () => getState().lastWorkingCode,
+			setLastWorkingCode: (code) => getState().setLastWorkingCode(code),
+			getPendingWorkingCode: () => getState().pendingWorkingCode,
+			setPendingWorkingCode: (code) => getState().setPendingWorkingCode(code),
+			cancelPendingWorkingCode: () => getState().cancelPendingWorkingCode(),
+			setIsInitialized: (isInitialized) => getState().setIsInitialized(isInitialized),
+			setRunnerUnavailable: (value) => getState().setRunnerUnavailable(value),
+			setRunnerReconnecting: (value) => getState().setRunnerReconnecting(value),
+			setRunnerReady: (value) => getState().setRunnerReady(value),
+			getRandomizeLoading: () => getState().randomizeLoading,
+			setRandomizeLoading: (value) => getState().setRandomizeLoading(value),
+		},
+		share: {
+			getPayload: () => getState().share.payload,
+			setPayload: (payload) => getState().setSharePayload(payload),
+			getConsented: () => getState().share.consented,
+			setConsented: (consented) => getState().setShareConsented(consented),
+			getPromptOpen: () => getState().share.promptOpen,
+			setPromptOpen: (open) => getState().setSharePromptOpen(open),
+			clearOriginalApprovedSketch: () => getState().clearOriginalApprovedSketch(),
+			getApprovedSketch: () => getState().approvedSketch,
+			setApprovedSketch: (sketch) => getState().setApprovedSketch(sketch),
+			getSketchSummary: () => getState().sketchSummary,
+			setSketchSummary: (info) => getState().setSketchSummary(info),
+			getOriginalApprovedSketch: () => getState().originalApprovedSketch,
+			getOriginalSketchSummary: () => getState().originalSketchSummary,
+		},
+		ui: {
+			getIsMobile: () => getState().isMobile,
+		},
+	};
 };

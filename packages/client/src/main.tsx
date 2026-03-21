@@ -1,4 +1,13 @@
 import './styles/index.css';
-import { startClientApp } from '@/app/bootstrap/startClientApp';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from '@/app/App';
 
-startClientApp();
+const container = document.getElementById('app-container');
+if (container) {
+	createRoot(container).render(
+		<StrictMode>
+			<App />
+		</StrictMode>
+	);
+}

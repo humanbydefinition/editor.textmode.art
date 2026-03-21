@@ -6,7 +6,8 @@ import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Checkbox } from '@/shared/ui/checkbox';
-import { SlugInfoCard } from '@/shared/components/SlugInfoCard';
+import { SketchMetaCard } from '@/features/sketch-meta';
+import { buildLegalHref } from '@/shared/config/appMeta';
 import { PublishRequestSuccessDialog } from './PublishRequestSuccessDialog';
 import { TurnstileWidget } from './TurnstileWidget';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
@@ -550,7 +551,7 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											how this card appears once approved:
 										</p>
 										<div className="w-full max-w-[360px] min-w-0">
-											<SlugInfoCard sketch={previewSketch} />
+											<SketchMetaCard sketch={previewSketch} />
 										</div>
 									</div>
 								</div>
@@ -586,20 +587,20 @@ export function PublishRequestDialog({ open, data, onOpenChange }: PublishReques
 											</p>
 											<p className="text-[11px] text-zinc-500 leading-relaxed">
 												By confirming publication consent and publishing, you agree to the{' '}
-												<a
-													href="/tos?lang=en"
-													target="_blank"
-													rel="noopener noreferrer"
-													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+													<a
+														href={buildLegalHref('terms')}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
 												>
 													Terms &amp; Acceptable Use
 												</a>{' '}
 												and acknowledge the{' '}
-												<a
-													href="/privacy?lang=en"
-													target="_blank"
-													rel="noopener noreferrer"
-													className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
+													<a
+														href={buildLegalHref('privacy')}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-zinc-400 hover:text-zinc-200 transition-colors underline underline-offset-2"
 												>
 													Privacy Policy
 												</a>

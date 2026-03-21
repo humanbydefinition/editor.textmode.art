@@ -12,7 +12,8 @@ import {
 } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from '@/shared/lib/cn';
+import { APP_META } from '@/shared/config/appMeta';
+import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { LegalTab } from './tabs/LegalTab';
@@ -61,17 +62,7 @@ export function SystemMenu({
                     <button
                         onClick={onMakeRandomChange}
                         onMouseDown={(e) => e.preventDefault()}
-                        className={cn(
-                            'fixed top-2 right-[4.5rem] z-50 pointer-events-auto',
-                            'flex items-center justify-center',
-                            'w-6 h-6 rounded-full',
-                            'bg-zinc-900/40 backdrop-blur-md',
-                            'border border-white/5',
-                            'text-zinc-400',
-                            'transition-all duration-300',
-                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                            'focus:outline-none focus:ring-2 focus:ring-white/10'
-                        )}
+                        className={`${floatingIconButtonVariants()} fixed top-2 right-[4.5rem] z-50 pointer-events-auto`}
                         aria-label="Make random change"
                     >
                         <Dices className="w-[14px] h-[14px]" />
@@ -87,18 +78,7 @@ export function SystemMenu({
                     <button
                         onClick={handleRandomize}
                         disabled={randomizeLoading}
-                        className={cn(
-                            'fixed top-2 right-[2.5rem] z-50 pointer-events-auto',
-                            'flex items-center justify-center',
-                            'w-6 h-6 rounded-full',
-                            'bg-zinc-900/40 backdrop-blur-md',
-                            'border border-white/5',
-                            'text-zinc-400',
-                            'transition-all duration-300',
-                            'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                            'focus:outline-none focus:ring-2 focus:ring-white/10',
-                            'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100'
-                        )}
+                        className={`${floatingIconButtonVariants()} fixed top-2 right-[2.5rem] z-50 pointer-events-auto`}
                         aria-label="Load random sketch"
                     >
                         {randomizeLoading ? (
@@ -117,17 +97,7 @@ export function SystemMenu({
                 <TooltipTrigger asChild>
                     <DialogTrigger asChild>
                         <button
-                            className={cn(
-                                'fixed top-2 right-2 z-50 pointer-events-auto',
-                                'flex items-center justify-center',
-                                'w-6 h-6 rounded-full',
-                                'bg-zinc-900/40 backdrop-blur-md',
-                                'border border-white/5',
-                                'text-zinc-400',
-                                'transition-all duration-300',
-                                'hover:scale-105 hover:bg-zinc-800/60 hover:text-white',
-                                'focus:outline-none focus:ring-2 focus:ring-white/10'
-                            )}
+                            className={`${floatingIconButtonVariants()} fixed top-2 right-2 z-50 pointer-events-auto`}
                             aria-label="System Menu"
                         >
                             <Menu className="w-[14px] h-[14px]" />
@@ -155,14 +125,14 @@ export function SystemMenu({
                     <div className="flex items-center justify-between">
                         <div className="flex items-start gap-1">
                             <DialogTitle className="text-l font-bold tracking-tight text-white flex items-center gap-2">
-                                synth.textmode.art
+                                {APP_META.name}
                             </DialogTitle>
                         </div>
                         <div className="flex items-center gap-1">
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <a
-                                        href="https://code.textmode.art/docs/support"
+                                        href={APP_META.urls.support}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-pink-400 hover:bg-pink-500/10 transition-all"
