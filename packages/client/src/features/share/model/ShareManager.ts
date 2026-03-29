@@ -13,7 +13,6 @@ export interface ShareManagerDependencies {
 	runRestoredSketches: () => void;
 	runSharedSketch: () => void;
 	applyApprovedSketch: (sketch: ApprovedSketch) => void;
-	getServerInjectedSlug: () => string | undefined;
 	replaceUrl: (url: string) => void;
 }
 
@@ -31,6 +30,8 @@ export class ShareManager {
 	}
 
 	async hydrateFromLocation(location: Location): Promise<void> {
+		this.resetHydratedState();
+
 		const store = this.deps.store;
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
@@ -61,6 +62,20 @@ export class ShareManager {
 
 		store.share.setApprovedSketch(null);
 		store.share.setPayload(this.toSharePayload(sketchData));
+	}
+
+	getInitialCodeOverride(): string | null {
+		const payload = this.deps.store.share.getPayload();
+		if (payload?.engines.textmode) {
+			return payload.engines.textmode;
+		}
+
+		if (this.pendingApprovedSketch) {
+			return this.pendingApprovedSketch.textmodeCode;
+		}
+
+		const approvedSketch = this.deps.store.share.getApprovedSketch();
+		return approvedSketch?.textmodeCode ?? null;
 	}
 
 	applyInitialShareIfPresent(): void {
@@ -181,10 +196,14 @@ export class ShareManager {
 	};
 
 	private getDetectedSlug(location: Location): string | undefined {
-		const slugFromServer = this.deps.getServerInjectedSlug();
-		if (slugFromServer) return slugFromServer;
-
 		return location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
+	}
+
+	private resetHydratedState(): void {
+		this.pendingApprovedSketch = null;
+		this.deps.store.share.setPayload(null);
+		this.deps.store.share.clearOriginalApprovedSketch();
+		this.deps.setEditorReadOnly(false);
 	}
 
 	private applyApprovedSketch(sketch: ApprovedSketch): void {
