@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Switch, Route } from 'wouter';
+import { Switch, Route, useLocation } from 'wouter';
 import { TooltipProvider } from '@/shared/ui/tooltip';
 
 const EditorApp = lazy(() =>
@@ -21,6 +21,8 @@ const LegalContactPage = lazy(() =>
  * Each section is lazy-loaded so admin/legal code doesn't bloat the editor bundle.
  */
 export function App() {
+	const [location] = useLocation();
+
 	return (
 		<TooltipProvider>
 			<Suspense>
@@ -76,7 +78,7 @@ export function App() {
 
 					{/* Default: editor (handles /, /s/:slug, and any unmatched path) */}
 					<Route>
-						<EditorApp />
+						<EditorApp key={location} />
 					</Route>
 				</Switch>
 			</Suspense>

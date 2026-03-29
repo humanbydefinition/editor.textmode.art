@@ -35,10 +35,13 @@ export class AppRuntime {
 	private textmodeEditor: TextmodeEditor | null = null;
 	private textmodeContainer: HTMLElement | null = null;
 	private engineBootstrapPromise: Promise<void> | null = null;
+	private initPromise: Promise<void> | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private storeInitCleanup: (() => void) | null = null;
 	private initialized = false;
+	private hydrationComplete = false;
+	private lifecycleId = 0;
 
 	constructor() {
 		this.storage = editorStorage;
@@ -68,7 +71,6 @@ export class AppRuntime {
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: () => this.runEngine(),
 			applyApprovedSketch: (sketch) => this.applyApprovedSketch(sketch),
-			getServerInjectedSlug: () => (window as unknown as { __SKETCH_SLUG__?: string }).__SKETCH_SLUG__,
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
@@ -106,20 +108,16 @@ export class AppRuntime {
 	}
 
 	async init(): Promise<void> {
-		if (this.initialized) return;
-		this.initialized = true;
+		if (this.initPromise) {
+			return this.initPromise;
+		}
 
-		const loadedSettings = this.storage.loadSettings();
-		this.storeAdapter.settings.setSettings(loadedSettings);
-		await this.shareManager.hydrateFromLocation(window.location);
-		this.storeInitCleanup = initAppStore();
-
-		this.maybeInitializeEngine();
-
-		return this.engineBootstrapPromise ?? Promise.resolve();
+		this.initPromise = this.initializeApp();
+		return this.initPromise;
 	}
 
 	dispose(): void {
+		this.lifecycleId += 1;
 		this.shortcuts?.dispose();
 		this.shortcuts = null;
 		this.shareManager.dispose();
@@ -137,6 +135,7 @@ export class AppRuntime {
 		this.textmodeEditor = null;
 		this.textmodeContainer = null;
 		this.engineBootstrapPromise = null;
+		this.initPromise = null;
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
@@ -146,6 +145,7 @@ export class AppRuntime {
 		this.storeAdapter.engine.setRunnerReady(false);
 
 		this.initialized = false;
+		this.hydrationComplete = false;
 	}
 
 	// ----- Engine lifecycle (inlined from EngineLifecycle) -----
@@ -153,6 +153,7 @@ export class AppRuntime {
 	private maybeInitializeEngine(): void {
 		if (
 			!this.initialized ||
+			!this.hydrationComplete ||
 			this.engineBootstrapPromise ||
 			this.textmodeEngine.isInitialized() ||
 			!this.textmodeContainer
@@ -194,7 +195,7 @@ export class AppRuntime {
 			callbacks: {
 				onSaveCode: (code: string) => this.storage.saveCode(code),
 			},
-			getInitialCode: () => this.storage.loadCode(),
+			getInitialCode: () => this.getInitialCode(),
 			toggleUI: () => this.uiActions.toggleUIVisibility(),
 			changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
 			onRunnerConnected: () => {
@@ -226,6 +227,34 @@ export class AppRuntime {
 
 	private runEngine(): void {
 		this.textmodeEngine.getController()?.handleForceRun();
+	}
+
+	private async initializeApp(): Promise<void> {
+		if (this.initialized) {
+			return this.engineBootstrapPromise ?? Promise.resolve();
+		}
+
+		const lifecycleId = this.lifecycleId;
+		const loadedSettings = this.storage.loadSettings();
+		this.storeAdapter.settings.setSettings(loadedSettings);
+		await this.shareManager.hydrateFromLocation(window.location);
+		if (lifecycleId !== this.lifecycleId) {
+			return;
+		}
+
+		if (!this.storeInitCleanup) {
+			this.storeInitCleanup = initAppStore();
+		}
+
+		this.initialized = true;
+		this.hydrationComplete = true;
+		this.maybeInitializeEngine();
+
+		return this.engineBootstrapPromise ?? Promise.resolve();
+	}
+
+	private getInitialCode(): string {
+		return this.shareManager.getInitialCodeOverride() ?? this.storage.loadCode();
 	}
 
 	private loadExample(code: string): boolean {
