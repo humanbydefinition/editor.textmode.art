@@ -21,6 +21,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
     <script type="module">
         const SCREENSHOT_WIDTH = 1536;
         const SCREENSHOT_HEIGHT = 816;
+        const CAPTURE_AT_FRAME = /* CAPTURE_FRAME_INJECTION */;
         const toErrorMessage = (error) => error instanceof Error ? error.message : String(error);
         const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
         const markReady = async () => {
@@ -103,6 +104,11 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
                         __screenshot_watermark_drawText(__screenshot_watermark_text, gx, gy);
                     });
 
+                    // Jump to the target frame so time-dependent sketch code sees the correct value.
+                    if (CAPTURE_AT_FRAME > 1) {
+                        t.frameCount = CAPTURE_AT_FRAME - 1;
+                    }
+
                     setupCompleted = true;
                 } catch (error) {
                     markError(error);
@@ -118,7 +124,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
                     }
 
                     // frameCount advances only once loading is finished and user frames are rendering.
-                    if (setupCompleted && t.frameCount >= 2) {
+                    if (setupCompleted && t.frameCount >= CAPTURE_AT_FRAME) {
                         resolve(undefined);
                         return;
                     }

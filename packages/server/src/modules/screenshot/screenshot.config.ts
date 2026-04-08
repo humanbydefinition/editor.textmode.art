@@ -17,12 +17,7 @@ export function getScreenshotCaptureBaseUrl(): string {
 }
 
 export function toPublicScreenshotUrl(fileName: string): string {
-  const publicBaseUrl = env.PUBLIC_BASE_URL?.replace(/\/$/, '');
-  const relativePath = `/storage/${fileName}`;
-  if (!publicBaseUrl) {
-    return relativePath;
-  }
-  return `${publicBaseUrl}${relativePath}`;
+  return `/storage/${fileName}`;
 }
 
 export function getScreenshotPreviewToken(): string | undefined {

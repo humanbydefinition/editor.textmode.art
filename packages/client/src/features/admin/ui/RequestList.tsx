@@ -14,7 +14,7 @@ type RequestListProps = {
     onDenyDraftChange: (requestId: string, value: string) => void;
     onApprove: (request: SketchRequest) => void;
     onDeny: (request: SketchRequest) => void;
-    onRegeneratePreview: (request: SketchRequest) => void;
+    onRegeneratePreview: (request: SketchRequest, captureAtFrame?: number) => void;
     onCopyLink: (slug: string) => Promise<boolean>;
 };
 
@@ -93,7 +93,7 @@ export function RequestList({
                     onDenyDraftChange={(v) => onDenyDraftChange(request.id, v)}
                     onApprove={() => onApprove(request)}
                     onDeny={() => onDeny(request)}
-                    onRegeneratePreview={() => onRegeneratePreview(request)}
+                    onRegeneratePreview={(captureAtFrame) => onRegeneratePreview(request, captureAtFrame)}
                     onCopyLink={() => onCopyLink(request.slug)}
                 />
             ))}

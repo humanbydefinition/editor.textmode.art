@@ -13,6 +13,11 @@ export const adminUpdateSchema = z.object({
 });
 export type AdminUpdateRequestPayload = z.infer<typeof adminUpdateSchema>;
 
+export const adminRegeneratePreviewSchema = z.object({
+  captureAtFrame: z.coerce.number().int().min(1).max(1000).optional(),
+});
+export type AdminRegeneratePreviewPayload = z.infer<typeof adminRegeneratePreviewSchema>;
+
 export const adminSessionResponseSchema = z.object({
   authenticated: z.literal(true),
   serverTime: z.string(),
