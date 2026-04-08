@@ -3,6 +3,7 @@ import {
   adminQueryStatusSchema,
   type AdminSessionResponse,
   adminUpdateSchema,
+  adminRegeneratePreviewSchema,
   type AdminSketchListResponse,
   type AdminUpdateRequestPayload,
 } from '@synth.textmode.art/contracts/admin';
@@ -15,11 +16,12 @@ import {
   setOgImageUrl,
 } from './admin.service.js';
 import { screenshotService } from '../screenshot/screenshot.service.js';
+import type { CaptureOptions } from '../screenshot/screenshot.service.js';
 import { DiscordService } from '../discord/discord.service.js';
 
 const adminRoutes: FastifyPluginAsync = async (app) => {
-  const enqueueScreenshotCapture = (sketch: { id: string; slug: string }) => {
-    void screenshotService.capture(sketch.slug)
+  const enqueueScreenshotCapture = (sketch: { id: string; slug: string }, options?: CaptureOptions) => {
+    void screenshotService.capture(sketch.slug, options)
       .then(async (ogImageUrl) => {
         await setOgImageUrl(sketch.id, ogImageUrl);
         app.log.info({ slug: sketch.slug, ogImageUrl }, 'Generated OG image');
@@ -125,6 +127,9 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   app.post('/api/admin/sketch-requests/:id/regenerate-preview', { preHandler: requireAdmin }, async (request, reply) => {
     const id = (request.params as { id: string }).id;
 
+    const parsed = adminRegeneratePreviewSchema.safeParse(request.body ?? {});
+    const captureAtFrame = parsed.success ? parsed.data.captureAtFrame : undefined;
+
     const sketch = await findSketchRequestById(id);
 
     if (!sketch) {
@@ -137,7 +142,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    enqueueScreenshotCapture({ id: sketch.id, slug: sketch.slug });
+    enqueueScreenshotCapture({ id: sketch.id, slug: sketch.slug }, { captureAtFrame });
     reply.status(202).send({ message: 'Preview regeneration queued' });
   });
 };

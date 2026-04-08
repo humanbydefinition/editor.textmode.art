@@ -12,6 +12,12 @@ import {
 
 const SCREENSHOT_WIDTH = 1536;
 const SCREENSHOT_HEIGHT = 816;
+const DEFAULT_CAPTURE_FRAME = 2;
+const MAX_CAPTURE_FRAME = 1000;
+
+export type CaptureOptions = {
+  captureAtFrame?: number;
+};
 
 export class ScreenshotService {
   private readonly storageDir: string;
@@ -37,12 +43,13 @@ export class ScreenshotService {
     return slug;
   }
 
-  async capture(rawSlug: string): Promise<string> {
+  async capture(rawSlug: string, options?: CaptureOptions): Promise<string> {
     if (!this.previewToken) {
       throw new Error('SCREENSHOT_PREVIEW_TOKEN is required for screenshot capture.');
     }
 
     const slug = this.normalizeAndValidate(rawSlug);
+    const captureAtFrame = Math.max(1, Math.min(options?.captureAtFrame ?? DEFAULT_CAPTURE_FRAME, MAX_CAPTURE_FRAME));
     await this.ensureStorageDir();
 
     const browser = await this.launchBrowser();
@@ -55,7 +62,9 @@ export class ScreenshotService {
       await page.setExtraHTTPHeaders({
         'x-screenshot-preview-token': this.previewToken,
       });
-      const url = new URL(getScreenshotPreviewPath(slug), `${this.baseUrl}/`).toString();
+      const previewUrl = new URL(getScreenshotPreviewPath(slug), `${this.baseUrl}/`);
+      previewUrl.searchParams.set('frame', String(captureAtFrame));
+      const url = previewUrl.toString();
 
       const response = await page.goto(url, {
         waitUntil: 'domcontentloaded',

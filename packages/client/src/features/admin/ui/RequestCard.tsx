@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Input } from '@/shared/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -40,7 +41,7 @@ type RequestCardProps = {
     onDenyDraftChange: (value: string) => void;
     onApprove: () => void;
     onDeny: () => void;
-    onRegeneratePreview: () => void;
+    onRegeneratePreview: (captureAtFrame?: number) => void;
     onCopyLink: () => Promise<boolean>;
 };
 
@@ -79,6 +80,7 @@ export function RequestCard({
     const [denyConfirmOpen, setDenyConfirmOpen] = useState(false);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+    const [frameInput, setFrameInput] = useState('');
     const hasDenialReason = denyDraft.trim().length > 0;
     const hasConsentEvidence =
         request.publishConsentAccepted === true &&
@@ -273,14 +275,26 @@ export function RequestCard({
                                     )}
 
                                     {request.status === 'APPROVED' && (
-                                        <div className="absolute right-2 top-2">
+                                        <div className="absolute right-2 top-2 flex items-center gap-1.5">
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                max={1000}
+                                                placeholder="Frame"
+                                                value={frameInput}
+                                                onChange={(e) => setFrameInput(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="h-8 w-20 border border-border/50 bg-background/80 text-xs shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60"
+                                                title="Frame number to capture (1–1000, default: 2)"
+                                            />
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
                                                 className="h-8 border border-border/50 bg-background/80 shadow-sm backdrop-blur-sm transition-all hover:bg-background"
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent lightbox from opening
-                                                    onRegeneratePreview();
+                                                    e.stopPropagation();
+                                                    const parsed = parseInt(frameInput, 10);
+                                                    onRegeneratePreview(Number.isFinite(parsed) && parsed >= 1 ? parsed : undefined);
                                                 }}
                                                 disabled={regenerating || loading}
                                             >

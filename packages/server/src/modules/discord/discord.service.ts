@@ -194,7 +194,10 @@ export class DiscordService {
                 .setFooter({ text: 'synth.textmode.art' });
 
             if (sketch.ogImageUrl) {
-                embed.setImage(sketch.ogImageUrl);
+                const imageUrl = /^https?:\/\//i.test(sketch.ogImageUrl)
+                    ? sketch.ogImageUrl
+                    : `${publicUrl}${sketch.ogImageUrl}`;
+                embed.setImage(imageUrl);
             }
 
             await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });

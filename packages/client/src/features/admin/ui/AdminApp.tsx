@@ -294,7 +294,7 @@ export function AdminApp() {
         }
     };
 
-    const handleRegeneratePreview = async (request: SketchRequest) => {
+    const handleRegeneratePreview = async (request: SketchRequest, captureAtFrame?: number) => {
         if (!isAuthenticated || !activeToken.trim()) {
             toast.error('Your admin session is not active.');
             return;
@@ -307,7 +307,9 @@ export function AdminApp() {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${activeToken}`,
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify(captureAtFrame != null ? { captureAtFrame } : {}),
             });
 
             if (!response.ok) {
@@ -453,7 +455,7 @@ export function AdminApp() {
                             onDenyDraftChange={(id, value) => setDenyDrafts((prev) => ({ ...prev, [id]: value }))}
                             onApprove={(request) => void updateRequestStatus(request, 'APPROVED')}
                             onDeny={(request) => void updateRequestStatus(request, 'DENIED')}
-                            onRegeneratePreview={handleRegeneratePreview}
+                            onRegeneratePreview={(request, captureAtFrame) => handleRegeneratePreview(request, captureAtFrame)}
                             onCopyLink={(slug) => copyLink(slug)}
                         />
                     </div>

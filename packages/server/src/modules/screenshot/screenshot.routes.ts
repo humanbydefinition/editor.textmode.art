@@ -54,8 +54,13 @@ const previewRoutes: FastifyPluginAsync = async (app) => {
       return;
     }
 
+    const rawFrame = (request.query as Record<string, string>).frame;
+    const captureAtFrame = rawFrame ? Math.max(1, Math.min(Math.floor(Number(rawFrame)) || 2, 1000)) : 2;
+
     const safeCode = sketch.textmodeCode.replace(/<\/script>/gi, '<\\/script>');
-    const html = PREVIEW_TEMPLATE.replace('/* SKETCH_CODE_INJECTION */', safeCode);
+    const html = PREVIEW_TEMPLATE
+      .replace('/* SKETCH_CODE_INJECTION */', safeCode)
+      .replace('/* CAPTURE_FRAME_INJECTION */', String(captureAtFrame));
 
     reply.header(
       'Content-Security-Policy',
