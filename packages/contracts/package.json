@@ -17,10 +17,6 @@
     "./share": {
       "types": "./dist/share.d.ts",
       "default": "./dist/share.js"
-    },
-    "./runner/textmode": {
-      "types": "./dist/runner/textmode.d.ts",
-      "default": "./dist/runner/textmode.js"
     }
   },
   "dependencies": {

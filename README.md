@@ -41,12 +41,12 @@ npm install
 # Start client dev server (Vite)
 npm run client:dev
 
-# Start runner dev server (Vite)
-npm run runner:dev
-
-# Build for production (contracts -> client -> runner)
+# Build for production (contracts -> client)
 npm run build
 ```
+
+The client loads the hosted sandbox runner from `https://runner.textmode.art/` by default.
+Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate deployments.
 
 ## License
 

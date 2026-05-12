@@ -1,6 +1,6 @@
 
-import type { ParentToRunnerMessage, InitMessage } from '@synth.textmode.art/contracts/runner/textmode';
-import { isRunnerMessage, PROTOCOL_VERSION } from '@synth.textmode.art/contracts/runner/textmode';
+import type { ParentToRunnerMessage, InitMessage } from './protocol';
+import { isRunnerMessage, PROTOCOL_VERSION } from './protocol';
 import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/types';
 
