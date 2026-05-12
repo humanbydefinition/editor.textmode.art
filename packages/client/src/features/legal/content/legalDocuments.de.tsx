@@ -45,8 +45,8 @@ export function ImprintLegalContentDe({ className }: LegalContentProps) {
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Kontaktformular in neuem Tab öffnen
+							>
+								Kontaktseite in neuem Tab oeffnen
 						</a>
 						.
 					</p>
@@ -113,8 +113,8 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Geltungsbereich</h4>
 				<p className="text-zinc-500 break-words">
-					Diese Bedingungen gelten für die Nutzung von synth.textmode.art und zugehörigen Funktionen, einschließlich
-					Sketch-Sharing, Galerie-Einreichung und Moderationsabläufen.
+					Diese Bedingungen gelten fuer die Nutzung von synth.textmode.art und zugehoerigen Funktionen, einschliesslich
+					lokalem Live-Coding, clientseitigem Sketch-Sharing und sandboxed Code-Ausfuehrung.
 				</p>
 			</div>
 
@@ -133,28 +133,16 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>rechtswidrige, verletzende oder missbräuchliche Inhalte hochzuladen oder zu verbreiten</li>
 					<li>unbefugte Zugriffe, missbräuchliches Scraping oder Sicherheitsumgehungen zu versuchen</li>
-					<li>den Dienstbetrieb zu stören (zum Beispiel durch automatisierten Spam oder DoS-Muster)</li>
-					<li>Identität, Rechteinhaberschaft oder Moderationshistorie falsch darzustellen</li>
+					<li>den Dienstbetrieb zu stoeren oder technische Schutzmassnahmen zu umgehen</li>
+					<li>Identitaet oder Rechteinhaberschaft falsch darzustellen</li>
 				</ul>
 			</div>
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Nutzerinhalte und Rechte</h4>
 				<p className="text-zinc-500 break-words">
-					Du bleibst für eingereichte Inhalte verantwortlich. Mit einer Galerie-Einreichung bestätigst du, dass du über
-					die erforderlichen Rechte zur Veröffentlichung von Code/Text/Medienverweisen verfügst und dass die
-					Veröffentlichung keine Rechte Dritter oder geltendes Recht verletzt.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Für Betrieb, Moderation und Veröffentlichung der Galerie räumst du uns ein nicht-ausschließliches,
-					weltweites und unentgeltliches Nutzungsrecht ein, deine Einreichung im Rahmen von synth.textmode.art und
-					zugehörigen Projektkanälen zu hosten, zu vervielfältigen, zu bearbeiten (zum Beispiel Vorschauen und
-					OG-Bilder) sowie öffentlich darzustellen und zugänglich zu machen. Zu den zugehörigen Projektkanälen gehören auch
-					unsere offiziellen Social-Media-Kanäle.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Wenn wir freigegebene Einreichungen in diesen Kanälen vorstellen, nennen wir den angegebenen Autorennamen und
-					fügen angegebene Social-Profile-Links hinzu, soweit dies technisch möglich ist.
+					Du bleibst fuer Code, Text und Medienverweise verantwortlich, die du erstellst oder teilst. Share-Links
+					kodieren deinen Sketch in der URL und werden nur verbreitet, wenn du sie kopierst oder versendest.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					Wenn Dritte wegen rechtswidriger Inhalte aus deiner Einreichung Ansprüche gegen uns geltend machen (zum Beispiel
@@ -164,21 +152,10 @@ export function TermsLegalContentDe({ className }: LegalContentProps) {
 			</div>
 
 			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Moderation und Durchsetzung</h4>
-				<p className="text-zinc-500 break-words">
-					Wir können Einreichungen prüfen, ablehnen, depublizieren oder entfernen, soweit dies für rechtliche
-					Compliance, Plattformintegrität, Missbrauchsprävention oder Community-Sicherheit erforderlich ist.
-					Queue-Limits und Anti-Spam-Kontrollen können Einreichungen blockieren oder verzögern, wenn Kapazitätsgrenzen
-					erreicht sind.
-				</p>
-			</div>
-
-			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Hinweis- und Abhilfeverfahren</h4>
 				<p className="text-zinc-500 break-words">
-					Als Hosting-Dienst unterliegen wir keiner allgemeinen Pflicht zur proaktiven Überwachung sämtlicher
-					Nutzereinreichungen. Erhalten wir hinreichend konkrete Hinweise auf möglicherweise rechtswidrige Inhalte,
-					prüfen wir diese und ergreifen unverzüglich die gesetzlich erforderlichen Maßnahmen.
+					Wenn du uns zu mutmasslich rechtswidrigen oder rechtsverletzenden Inhalten mit Projektbezug kontaktierst,
+					pruefen wir den Hinweis und ergreifen unverzueglich die gesetzlich erforderlichen Massnahmen.
 				</p>
 			</div>
 
@@ -291,37 +268,10 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 			</div>
 
 			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">
-					Veröffentlichungsanfragen und Galerie-Moderation
-				</h4>
+				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Kontakt</h4>
 				<p className="text-zinc-500 break-words">
-					Wenn du Inhalte für die Galerie einreichst, verarbeiten wir die von dir übermittelten Daten, einschließlich:
-				</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>Slug, Titel, Beschreibung, Code-Inhalte und optionale Lizenz</li>
-					<li>optionaler Autorname und optionale Social-Profile-Links</li>
-					<li>Moderationsmetadaten (Status, Prüfzeit, Prüfername, optionaler Ablehnungsgrund)</li>
-					<li>Nachweise zur Publikations-Einwilligung (Flag, Zeitpunkt, Richtlinienversion)</li>
-				</ul>
-				<p className="text-zinc-500 mt-2 break-words">
-					Die Einreichung setzt eine explizite Einwilligungsbestätigung im Publish-Dialog voraus.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Zweck: Verarbeitung und Moderation deiner Einreichung, Betrieb der öffentlichen Galerie und Missbrauchsprävention.
-					<br />
-					Rechtsgrundlage: Art. 6(1)(b) DSGVO (Verarbeitung deiner Einreichungsanfrage) und Art. 6(1)(f) DSGVO
-					(berechtigte Interessen am sicheren und verlässlichen Betrieb).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Wichtig: Freigegebene Einreichungen sind öffentlich sichtbar, einschließlich optionaler Autor-/Social-Angaben.
-				</p>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Kontaktformular</h4>
-				<p className="text-zinc-500 break-words">
-					Wenn du das integrierte Kontaktformular nutzt, verarbeiten wir die von dir angegebenen Daten (Name,
-					E-Mail-Adresse, Betreff und Nachricht), um deine Anfrage zu bearbeiten und zu beantworten.
+					Wenn du uns per E-Mail oder ueber verlinkte externe Kanaele kontaktierst, verarbeiten wir die von dir
+					angegebenen Daten zur Bearbeitung und Beantwortung deiner Anfrage.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					Zweck: Bearbeitung deiner Kontaktanfrage.
@@ -330,99 +280,9 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 					(berechtigte Interessen an effektiver Kommunikation).
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
-					Speicherung: Die Daten werden per E-Mail übermittelt und für die Dauer der Kommunikation sowie ggf.
-					nachgelagerter Dokumentationspflichten gespeichert.
+					Speicherung: Kommunikationsdaten werden fuer die Dauer der Kommunikation sowie ggf. nachgelagerter
+					Dokumentationspflichten gespeichert.
 				</p>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Anti-Spam und Missbrauchsprävention</h4>
-				<p className="text-zinc-500 break-words">
-					Wir nutzen mehrstufige Anti-Spam-Kontrollen für Galerie-Einreichungen: Cloudflare Turnstile-Verifikation,
-					Challenge + Proof-of-Work, Idempotenz-Schutz und globale Queue-Limits.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Cloudflare Turnstile kann technische Signale verarbeiten, die für Bot-Erkennung erforderlich sind (zum Beispiel
-					IP-Adresse, TLS-Fingerprint, User-Agent sowie Sitekey-/Origin-Kontext). In diesem Setup wird Turnstile nur für
-					Sicherheits- und Missbrauchsprävention bei Publish- und Kontaktanfragen genutzt.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Zweck: Schutz von Verfügbarkeit und Moderationskapazität.
-					<br />
-					Rechtsgrundlage: Art. 6(1)(f) DSGVO.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Für Speicher-/Zugriffsregeln nach deutschem Recht erfolgt die Verarbeitung als technisch erforderlich für den
-					vom Nutzer angeforderten sicheren Einreichungsprozess (Section 25(2) no. 2 TDDDG).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Empfänger/Auftragsverarbeiter: Cloudflare, Inc. (USA). Wir stützen uns auf Cloudflare-DPA und
-					Transfergarantien (einschließlich DPF/SCC, soweit anwendbar).
-				</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>
-						<a
-							href="https://www.cloudflare.com/turnstile-privacy-policy/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Turnstile Privacy Addendum
-						</a>
-					</li>
-					<li>
-						<a
-							href="https://www.cloudflare.com/cloudflare-customer-dpa/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Customer DPA
-						</a>
-					</li>
-					<li>
-						<a
-							href="https://www.cloudflare.com/gdpr/subprocessors/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Subprocessors
-						</a>
-					</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Discord-Benachrichtigungen</h4>
-				<p className="text-zinc-500 break-words">
-					Wenn du Inhalte für die Galerie einreichst oder eine Einreichung freigegeben wird, werden bestimmte Daten per
-					Bot-API an Discord übermittelt, um Moderationsteam und Community zu informieren.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Geteilte Daten: Autorname, Social-Links, Sketch-Titel, Beschreibung und öffentlicher Slug.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Zweck: Moderationsworkflow, Community-Benachrichtigungen und Plattform-Engagement.
-					<br />
-					Rechtsgrundlage: Art. 6(1)(f) DSGVO (berechtigte Interessen).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Empfänger: Discord, Inc. (USA). Discord nimmt am EU-U.S. Data Privacy Framework (DPF) teil, wodurch ein
-					Angemessenheitsbeschluss für Datentransfers in die USA besteht.
-				</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>
-						<a
-							href="https://discord.com/privacy"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Discord Privacy Policy
-						</a>
-					</li>
-				</ul>
 			</div>
 
 			<div>
@@ -470,12 +330,6 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 				</p>
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>technische Log-Daten: begrenzte Aufbewahrung für Sicherheit und Betrieb</li>
-					<li>Anti-Spam-Challenge-Status: automatische In-Memory-Ablaufsteuerung nach Challenge-TTL (Standard 180 Sekunden; maximal 900 Sekunden)</li>
-					<li>Anti-Spam-Idempotenzschlüssel: automatische In-Memory-Ablaufsteuerung (Standard 600 Sekunden; maximal 3600 Sekunden)</li>
-					<li>Turnstile-Token: für einmalige Verifikation verarbeitet und nicht in unserer Datenbank persistiert</li>
-
-					<li>Einreichungs- und Moderationsdaten: bis Moderationszweck endet oder Löschung angefordert wird</li>
-					<li>freigegebene Galerie-Einträge: bis Entfernung durch uns oder berechtigte Löschanfrage</li>
 					<li>Local-Storage-Daten: bis du sie im Browser löschst</li>
 				</ul>
 			</div>
@@ -590,7 +444,7 @@ export const LEGAL_DOCUMENTS_DE: Record<LegalDocumentId, LegalDocumentDefinition
 		title: 'Nutzungsbedingungen',
 		navLabel: 'Nutzung',
 		path: '/tos',
-		description: 'Nutzungsregeln, Moderation und Haftungsrahmen.',
+			description: 'Nutzungsregeln und Haftungsrahmen.',
 		Content: TermsLegalContentDe,
 	},
 	privacy: {

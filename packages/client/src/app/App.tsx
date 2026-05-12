@@ -5,9 +5,6 @@ import { TooltipProvider } from '@/shared/ui/tooltip';
 const EditorApp = lazy(() =>
 	import('@/app/EditorApp').then((m) => ({ default: m.EditorApp }))
 );
-const AdminApp = lazy(() =>
-	import('@/features/admin').then((m) => ({ default: m.AdminApp }))
-);
 const LegalDocumentPage = lazy(() =>
 	import('@/features/legal').then((m) => ({ default: m.LegalDocumentPage }))
 );
@@ -17,22 +14,16 @@ const LegalContactPage = lazy(() =>
 
 /**
  * Root application component.
- * Uses wouter for client-side routing between the editor, admin, and legal pages.
- * Each section is lazy-loaded so admin/legal code doesn't bloat the editor bundle.
+ * Uses wouter for client-side routing between the editor and legal pages.
+ * Legal code is lazy-loaded so it doesn't bloat the editor bundle.
  */
 export function App() {
 	const [location] = useLocation();
 
 	return (
 		<TooltipProvider>
-			<Suspense>
-				<Switch>
-					<Route path="/nest" nest>
-						<RouteMode className="admin-mode">
-							<AdminApp />
-						</RouteMode>
-					</Route>
-
+				<Suspense>
+					<Switch>
 					<Route path="/imprint">
 						<RouteMode className="legal-mode">
 							<LegalDocumentPage documentId="imprint" />
@@ -76,7 +67,7 @@ export function App() {
 						</RouteMode>
 					</Route>
 
-					{/* Default: editor (handles /, /s/:slug, and any unmatched path) */}
+					{/* Default: editor (handles / and any unmatched path) */}
 					<Route>
 						<EditorApp key={location} />
 					</Route>

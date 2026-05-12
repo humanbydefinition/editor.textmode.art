@@ -49,7 +49,7 @@ export function SystemMenu({
     const handleRandomize = async () => {
         const success = await onRandomize();
         if (!success) {
-            toast.error('failed to load random sketch', {
+            toast.error('failed to load random example', {
                 position: 'bottom-right',
             });
         }
@@ -89,7 +89,7 @@ export function SystemMenu({
                     </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random sketch'}</p>
+                    <p>{randomizeLoading ? 'loading random example...' : 'load random example'}</p>
                 </TooltipContent>
             </Tooltip>
 

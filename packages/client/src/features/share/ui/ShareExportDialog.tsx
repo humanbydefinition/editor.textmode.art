@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
 import type { SharePayload } from '@/features/share/types';
 
-import { fetchSketchSubmissionQueueStatus } from '@/platform/api/SketchApiService';
-import { Check, Link2, Sparkles, Info } from 'lucide-react';
+import { Check, Link2, Info } from 'lucide-react';
 
 export interface ShareExportData {
 	createdAt: number;
@@ -19,8 +17,6 @@ export interface ShareExportDialogProps {
 	data: ShareExportData | null;
 	onOpenChange: (open: boolean) => void;
 	onCopyLink: (url: string) => void;
-	onPublishRequested: () => void;
-	onSubmissionsPaused: () => void;
 }
 
 function formatCount(value: number): string {
@@ -32,13 +28,8 @@ export function ShareExportDialog({
 	data,
 	onOpenChange,
 	onCopyLink,
-	onPublishRequested,
-	onSubmissionsPaused,
 }: ShareExportDialogProps) {
 	const [copied, setCopied] = useState(false);
-	const [isCheckingQueue, setIsCheckingQueue] = useState(false);
-
-	const [backendAvailable, setBackendAvailable] = useState<boolean>(true);
 
 	const computed = useMemo(() => {
 		if (!data) return null;
@@ -63,35 +54,6 @@ export function ShareExportDialog({
 		const timer = window.setTimeout(() => setCopied(false), 1800);
 		return () => window.clearTimeout(timer);
 	}, [copied]);
-
-	useEffect(() => {
-		if (open) {
-			setBackendAvailable(true);
-			fetchSketchSubmissionQueueStatus().then((status) => {
-				setBackendAvailable(status !== null);
-			});
-		}
-	}, [open]);
-
-	const handlePublishClick = async () => {
-		setIsCheckingQueue(true);
-		try {
-			const status = await fetchSketchSubmissionQueueStatus();
-			if (status && status.full) {
-				onSubmissionsPaused();
-			} else if (status) {
-				onPublishRequested();
-			} else {
-				// Status is null, meaning backend issue
-				setBackendAvailable(false);
-			}
-		} catch (error) {
-			console.error('Failed to check queue status:', error);
-			setBackendAvailable(false);
-		} finally {
-			setIsCheckingQueue(false);
-		}
-	};
 
 	if (!data || !computed) {
 		return null;
@@ -164,51 +126,6 @@ export function ShareExportDialog({
 							</div>
 						)}
 
-						{/* Gallery Section */}
-						<div className="pt-0">
-							<div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-								<div className="flex-1 space-y-1">
-									<div className="flex items-center gap-2">
-										<Sparkles className="w-4 h-4 text-white" />
-										<p className="text-sm font-semibold text-white">publish to gallery</p>
-									</div>
-									<p className="text-[11px] text-zinc-500 leading-relaxed max-w-[400px]">
-										approved sketches get a short URL like{' '}
-										<span className="text-zinc-300 font-mono">/s/slug</span> and appear in the
-										community gallery.
-									</p>
-								</div>
-								<TooltipProvider>
-									<Tooltip delayDuration={0}>
-										<TooltipTrigger asChild>
-											<span tabIndex={0} className="inline-flex">
-												{' '}
-												{/* Wrapper for disabled button tooltip trigger */}
-												<Button
-													className="h-9 px-4 bg-white text-zinc-950 hover:bg-zinc-200 transition-all text-xs font-bold shrink-0 min-w-[120px]"
-													onClick={handlePublishClick}
-													disabled={isCheckingQueue || !backendAvailable}
-												>
-													{isCheckingQueue ? (
-														<span className="flex items-center gap-2">
-															<span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin" />
-															checking...
-														</span>
-													) : (
-														'publish sketch'
-													)}
-												</Button>
-											</span>
-										</TooltipTrigger>
-										{!backendAvailable && (
-											<TooltipContent side="top">
-												<p>backend is not responding</p>
-											</TooltipContent>
-										)}
-									</Tooltip>
-								</TooltipProvider>
-							</div>
-						</div>
 					</div>
 				</ScrollArea>
 			</DialogContent>

@@ -19,14 +19,14 @@ interface ContactDialogProps {
 
 const CONTACT_DIALOG_COPY: Record<LegalLocale, { cta: string; title: string; description: string }> = {
 	en: {
-		cta: 'send us a message',
+		cta: 'contact us',
 		title: 'contact us',
-		description: "have a question or feedback? send us a message and we'll get back to you as soon as possible.",
+		description: 'have a question or feedback? use one of the direct contact links below.',
 	},
 	de: {
-		cta: 'schreib uns eine nachricht',
+		cta: 'kontakt',
 		title: 'kontakt',
-		description: 'hast du eine frage oder feedback? sende uns eine nachricht und wir antworten schnellstmöglich.',
+		description: 'hast du eine frage oder feedback? nutze einen der direkten kontaktlinks unten.',
 	},
 };
 

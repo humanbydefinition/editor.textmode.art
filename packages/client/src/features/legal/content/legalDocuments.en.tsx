@@ -45,8 +45,8 @@ export function ImprintLegalContent({ className }: LegalContentProps) {
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Open contact form in a new tab
+							>
+								Open contact page in a new tab
 						</a>
 						.
 					</p>
@@ -113,8 +113,8 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Scope</h4>
 				<p className="text-zinc-500 break-words">
-					These terms apply to the use of synth.textmode.art and related features, including sketch sharing, gallery
-					submission, and moderation workflows.
+					These terms apply to the use of synth.textmode.art and related features, including local live coding,
+					client-side sketch sharing, and sandboxed code execution.
 				</p>
 			</div>
 
@@ -132,27 +132,16 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>upload or distribute unlawful, infringing, or abusive content</li>
 					<li>attempt unauthorized access, scraping abuse, or security bypasses</li>
-					<li>disrupt service operation (for example by automated spam or denial patterns)</li>
-					<li>misrepresent identity, rights ownership, or moderation history</li>
+					<li>disrupt service operation or bypass technical safeguards</li>
+					<li>misrepresent identity or rights ownership</li>
 				</ul>
 			</div>
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">User Content and Rights</h4>
 				<p className="text-zinc-500 break-words">
-					You remain responsible for the content you submit. By submitting to the gallery, you confirm that you have the
-					required rights to publish code/text/media references and that publication does not violate third-party rights
-					or applicable law.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					For operating, moderating, and publishing the gallery, you grant us a non-exclusive, worldwide, royalty-free
-					license to host, reproduce, adapt (for example previews and OG images), publicly display, and make your
-					submission available within synth.textmode.art and related project channels. Related project channels include
-					our official project social media accounts.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					When we feature approved submissions in these channels, we include the submitted author name and submitted
-					social profile links where technically feasible.
+					You remain responsible for code, text, and media references you create or share. Share links encode your sketch
+					in the URL and are distributed only when you choose to copy or send them.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					If third-party claims are asserted against us due to unlawful content you submitted (for example copyright or
@@ -161,20 +150,10 @@ export function TermsLegalContent({ className }: LegalContentProps) {
 			</div>
 
 			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Moderation and Enforcement</h4>
-				<p className="text-zinc-500 break-words">
-					We may review, deny, unpublish, or remove submissions where required for legal compliance, platform integrity,
-					abuse prevention, or community safety. Queue limits and anti-spam controls may block or delay submissions when
-					capacity is reached.
-				</p>
-			</div>
-
-			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Notice and Action</h4>
 				<p className="text-zinc-500 break-words">
-					As a hosting service, we are not subject to a general obligation to proactively monitor all user submissions.
-					When we receive sufficiently specific notices about allegedly illegal content, we review and act without undue
-					delay where required by applicable law.
+					If you contact us about allegedly illegal or infringing content connected to the project, we review the notice
+					and act without undue delay where required by applicable law.
 				</p>
 			</div>
 
@@ -286,36 +265,10 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 			</div>
 
 			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">
-					Publish Requests and Gallery Moderation
-				</h4>
-				<p className="text-zinc-500 break-words">If you submit content for the gallery, we process the data you send, including:</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>slug, title, description, code content, and optional license</li>
-					<li>optional author name and optional social profile links</li>
-					<li>moderation metadata (status, reviewed time, reviewer name, optional denial reason)</li>
-					<li>publish-consent evidence (accepted flag, acceptance timestamp, policy version)</li>
-				</ul>
-				<p className="text-zinc-500 mt-2 break-words">
-					Submission requires an explicit consent confirmation in the publish dialog before a request can be sent.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Purpose: processing and moderating your submission, operating the public gallery, and preventing abuse.
-					<br />
-					Legal basis: Art. 6(1)(b) GDPR (processing your submission request) and Art. 6(1)(f) GDPR (legitimate interests
-					in secure and reliable operations).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Important: Approved submissions are publicly visible by design, including any optional author/social information
-					you provided.
-				</p>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Contact Form</h4>
+				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Contact</h4>
 				<p className="text-zinc-500 break-words">
-					If you use the integrated contact form, we process the data you provide (name, email address, subject, and
-					message) to process and answer your request.
+					If you contact us by email or through linked external channels, we process the data you provide to handle and
+					answer your request.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					Purpose: handling your contact request.
@@ -324,99 +277,9 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 					interests in effective communication).
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
-					Storage: The data is sent to us by email and stored for the duration of the communication and any subsequent
-					documentation requirements.
+					Storage: Communication data is stored for the duration of the communication and any subsequent documentation
+					requirements.
 				</p>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Anti-Spam and Abuse Prevention</h4>
-				<p className="text-zinc-500 break-words">
-					We use layered anti-spam controls for gallery submissions: Cloudflare Turnstile verification, challenge +
-					proof-of-work, idempotency guards, and global queue limits.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Cloudflare Turnstile may process technical signals required for bot detection (for example IP address, TLS
-					fingerprint, user-agent, and sitekey/origin context). In this setup, Turnstile verification is used only for
-					security/abuse prevention in publish and contact requests.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Purpose: protect availability and moderation capacity.
-					<br />
-					Legal basis: Art. 6(1)(f) GDPR.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					For device storage/access rules under German law, processing is performed as technically necessary to provide a
-					user-requested secure submission flow (Section 25(2) no. 2 TDDDG).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Recipient/processor: Cloudflare, Inc. (USA). We rely on Cloudflare&apos;s DPA and transfer safeguards (including
-					DPF/SCC mechanisms where applicable).
-				</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>
-						<a
-							href="https://www.cloudflare.com/turnstile-privacy-policy/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Turnstile Privacy Addendum
-						</a>
-					</li>
-					<li>
-						<a
-							href="https://www.cloudflare.com/cloudflare-customer-dpa/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Customer DPA
-						</a>
-					</li>
-					<li>
-						<a
-							href="https://www.cloudflare.com/gdpr/subprocessors/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Cloudflare Subprocessors
-						</a>
-					</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Discord Notifications</h4>
-				<p className="text-zinc-500 break-words">
-					When you submit content to the gallery or when a submission is approved, certain data is transmitted to Discord
-					via a bot API to notify our moderation team and community.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Data shared: author name, social links, sketch title, description, and the public slug.
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Purpose: moderation workflow, community notifications, and platform engagement.
-					<br />
-					Legal basis: Art. 6(1)(f) GDPR (legitimate interests).
-				</p>
-				<p className="text-zinc-500 mt-2 break-words">
-					Recipient: Discord, Inc. (USA). Discord participates in the EU-U.S. Data Privacy Framework (DPF), providing an
-					adequacy decision for data transfers to the USA.
-				</p>
-				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>
-						<a
-							href="https://discord.com/privacy"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-						>
-							Discord Privacy Policy
-						</a>
-					</li>
-				</ul>
 			</div>
 
 			<div>
@@ -464,12 +327,6 @@ export function PrivacyLegalContent({ className }: LegalContentProps) {
 				</p>
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
 					<li>technical log data: limited retention for security and operations</li>
-					<li>anti-spam challenge state: automatic in-memory expiry after challenge TTL (default 180 seconds; max 900 seconds)</li>
-					<li>anti-spam idempotency keys: automatic in-memory expiry (default 600 seconds; max 3600 seconds)</li>
-					<li>turnstile verification tokens: processed for one-time verification and not persisted in our database</li>
-
-					<li>submission and moderation data: until moderation purpose ends or deletion is requested</li>
-					<li>approved gallery entries: until removed by us or by justified deletion request</li>
 					<li>local storage data: until you delete it in your browser</li>
 				</ul>
 			</div>
@@ -575,7 +432,7 @@ export const LEGAL_DOCUMENTS_EN: Record<LegalDocumentId, LegalDocumentDefinition
 		title: 'Imprint',
 		navLabel: 'Imprint',
 		path: '/imprint',
-		description: 'Provider information and legal publishing details.',
+		description: 'Provider information and legal details.',
 		Content: ImprintLegalContent,
 	},
 	terms: {
@@ -583,7 +440,7 @@ export const LEGAL_DOCUMENTS_EN: Record<LegalDocumentId, LegalDocumentDefinition
 		title: 'Terms & Acceptable Use',
 		navLabel: 'Terms',
 		path: '/tos',
-		description: 'Usage rules, moderation scope, and liability boundaries.',
+		description: 'Usage rules and liability boundaries.',
 		Content: TermsLegalContent,
 	},
 	privacy: {

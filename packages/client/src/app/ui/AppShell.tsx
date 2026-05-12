@@ -16,13 +16,11 @@ import {
 	selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
-import { PublishRequestDialog, SubmissionsPausedDialog } from '@/features/publish';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
-import { SlugInfoAlert } from './SlugInfoAlert';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 import { toast } from 'sonner';
 
@@ -32,8 +30,6 @@ import { toast } from 'sonner';
  */
 export function AppShell() {
 	const [welcomeOpen, setWelcomeOpen] = useState(true);
-	const [publishOpen, setPublishOpen] = useState(false);
-	const [submissionsPausedOpen, setSubmissionsPausedOpen] = useState(false);
 
 	// Local UI State for Share Export
 	const [shareExportOpen, setShareExportOpen] = useState(false);
@@ -116,17 +112,7 @@ export function AppShell() {
 					data={shareExportData}
 					onOpenChange={setShareExportOpen}
 					onCopyLink={actions.copyShareExportUrl}
-					onPublishRequested={() => setPublishOpen(true)}
-					onSubmissionsPaused={() => setSubmissionsPausedOpen(true)}
 				/>
-
-				<PublishRequestDialog
-					open={publishOpen}
-					data={shareExportData ? { textmodeCode: shareExportData.textmodeCode } : null}
-					onOpenChange={setPublishOpen}
-				/>
-
-				<SubmissionsPausedDialog open={submissionsPausedOpen} onOpenChange={setSubmissionsPausedOpen} />
 
 				{showShareLock && (
 					<Tooltip>
@@ -158,12 +144,6 @@ export function AppShell() {
 				>
 					{!showShareLock && (
 						<>
-							<SlugInfoAlert
-								autoOpenEnabled={!welcomeOpen}
-								onShare={handleShare}
-								className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"
-							/>
-
 							<SystemMenu
 								onShare={handleShare}
 								onRandomize={actions.randomize}

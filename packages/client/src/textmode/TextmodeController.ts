@@ -1,6 +1,5 @@
 import type { CodeError } from '@/types';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { SharePayload } from '@synth.textmode.art/contracts/share';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 
@@ -19,8 +18,7 @@ export interface TextmodeControllerDependencies {
 }
 
 /**
- * Handles textmode code execution, runtime events, debouncing, revert flow,
- * and approved-sketch tracking.
+ * Handles textmode code execution, runtime events, debouncing, and revert flow.
  */
 export class TextmodeController {
 	private readonly callbacks: TextmodeControllerCallbacks;
@@ -35,7 +33,6 @@ export class TextmodeController {
 
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
-		this.clearApprovedSketchIfCustomized(code);
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
 
@@ -183,41 +180,4 @@ export class TextmodeController {
 		return false;
 	}
 
-	private clearApprovedSketchIfCustomized(code: string): void {
-		const approvedSketch = this.deps.store.share.getApprovedSketch();
-		if (approvedSketch) {
-			if (code !== approvedSketch.textmodeCode) {
-				this.deps.store.share.setApprovedSketch(null);
-				this.deps.store.share.setSketchSummary(null);
-			}
-			return;
-		}
-
-		const originalSketch = this.deps.store.share.getOriginalApprovedSketch();
-		if (originalSketch) {
-			if (code === originalSketch.textmodeCode) {
-				const originalSketchSummary = this.deps.store.share.getOriginalSketchSummary();
-				this.deps.store.share.setApprovedSketch(originalSketch);
-				if (originalSketchSummary) {
-					this.deps.store.share.setSketchSummary(originalSketchSummary);
-				}
-			}
-			return;
-		}
-
-		const sketchSummary = this.deps.store.share.getSketchSummary();
-		if (!sketchSummary || sketchSummary.status !== 'PENDING') return;
-
-		const sharedCodeForEngine = this.getSharePayloadCode(this.deps.store.share.getPayload());
-		if (sharedCodeForEngine === null) return;
-
-		if (code !== sharedCodeForEngine) {
-			this.deps.store.share.setSketchSummary(null);
-		}
-	}
-
-	private getSharePayloadCode(payload: SharePayload | null): string | null {
-		if (!payload) return null;
-		return payload.engines.textmode ?? null;
-	}
 }

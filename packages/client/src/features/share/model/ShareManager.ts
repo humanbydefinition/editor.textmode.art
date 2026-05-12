@@ -1,5 +1,3 @@
-import type { ApprovedSketch, PublicSketchAccess } from '@synth.textmode.art/contracts/sketch';
-import { fetchRandomApprovedSketch, fetchSketchBySlugAccess } from '@/platform/api/SketchApiService';
 import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { SharePayload } from '../types';
 import { ShareService } from './ShareService';
@@ -12,70 +10,37 @@ export interface ShareManagerDependencies {
 	restoreLocalSketches: () => void;
 	runRestoredSketches: () => void;
 	runSharedSketch: () => void;
-	applyApprovedSketch: (sketch: ApprovedSketch) => void;
 	replaceUrl: (url: string) => void;
 }
 
 /**
- * Owns share hydration, consent/lock flow, and approved-sketch workflows.
- * Keeps share-specific orchestration out of AppRuntime.
+ * Owns client-only share hydration and untrusted-code consent flow.
  */
 export class ShareManager {
 	private readonly deps: ShareManagerDependencies;
-	private pendingApprovedSketch: ApprovedSketch | null = null;
 	private guardsAttached = false;
 
 	constructor(deps: ShareManagerDependencies) {
 		this.deps = deps;
 	}
 
-	async hydrateFromLocation(location: Location): Promise<void> {
+	hydrateFromLocation(location: Location): void {
 		this.resetHydratedState();
 
-		const store = this.deps.store;
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
-			store.share.setSketchSummary(null);
-			store.share.setPayload(payload);
+			this.deps.store.share.setPayload(payload);
 			return;
 		}
 
-		const detectedSlug = this.getDetectedSlug(location);
-		if (!detectedSlug) {
-			store.share.setSketchSummary(null);
-			return;
-		}
-
-		const sketchData = await fetchSketchBySlugAccess(detectedSlug);
-		if (!sketchData) {
-			store.share.setSketchSummary(null);
+		if (location.pathname !== '/') {
 			this.deps.replaceUrl('/');
-			return;
 		}
-
-		store.share.setSketchSummary(this.toSketchSummary(sketchData));
-
-		if (sketchData.status === 'APPROVED') {
-			this.pendingApprovedSketch = this.toApprovedSketch(sketchData);
-			return;
-		}
-
-		store.share.setApprovedSketch(null);
-		store.share.setPayload(this.toSharePayload(sketchData));
 	}
 
 	getInitialCodeOverride(): string | null {
 		const payload = this.deps.store.share.getPayload();
-		if (payload?.engines.textmode) {
-			return payload.engines.textmode;
-		}
-
-		if (this.pendingApprovedSketch) {
-			return this.pendingApprovedSketch.textmodeCode;
-		}
-
-		const approvedSketch = this.deps.store.share.getApprovedSketch();
-		return approvedSketch?.textmodeCode ?? null;
+		return payload?.engines.textmode ?? null;
 	}
 
 	applyInitialShareIfPresent(): void {
@@ -84,13 +49,6 @@ export class ShareManager {
 
 		this.deps.applyPayload(payload);
 		this.deps.setEditorReadOnly(true);
-	}
-
-	applyPendingApprovedSketchIfPresent(): void {
-		if (!this.pendingApprovedSketch) return;
-		const sketch = this.pendingApprovedSketch;
-		this.pendingApprovedSketch = null;
-		this.applyApprovedSketch(sketch);
 	}
 
 	unlockAndRun(): void {
@@ -137,24 +95,6 @@ export class ShareManager {
 		this.guardsAttached = false;
 	}
 
-	async randomize(): Promise<boolean> {
-		if (this.deps.store.engine.getRandomizeLoading()) return false;
-
-		this.deps.store.engine.setRandomizeLoading(true);
-
-		try {
-			const currentSlug = this.deps.store.share.getApprovedSketch()?.slug;
-			const sketch = await fetchRandomApprovedSketch(currentSlug);
-			if (!sketch) return false;
-			this.applyApprovedSketch(sketch);
-			return true;
-		} catch {
-			return false;
-		} finally {
-			this.deps.store.engine.setRandomizeLoading(false);
-		}
-	}
-
 	private unlockInternal(): SharePayload | null {
 		const payload = this.deps.store.share.getPayload();
 		if (!payload) return null;
@@ -164,13 +104,6 @@ export class ShareManager {
 		this.deps.applyPayload(payload);
 		this.deps.focusEditor();
 		return payload;
-	}
-
-	private clearShareLockIfPresent(): void {
-		const payload = this.deps.store.share.getPayload();
-		if (!payload) return;
-		this.deps.store.share.setPayload(null);
-		this.deps.setEditorReadOnly(false);
 	}
 
 	private shouldPromptForInteraction(target: HTMLElement | null): boolean {
@@ -195,81 +128,8 @@ export class ShareManager {
 		}
 	};
 
-	private getDetectedSlug(location: Location): string | undefined {
-		return location.pathname.match(/^\/s\/([a-z0-9-]+)$/i)?.[1];
-	}
-
 	private resetHydratedState(): void {
-		this.pendingApprovedSketch = null;
 		this.deps.store.share.setPayload(null);
-		this.deps.store.share.clearOriginalApprovedSketch();
 		this.deps.setEditorReadOnly(false);
-	}
-
-	private applyApprovedSketch(sketch: ApprovedSketch): void {
-		const store = this.deps.store;
-		this.clearShareLockIfPresent();
-
-		store.share.setApprovedSketch(sketch);
-		store.share.setSketchSummary({
-			status: 'APPROVED',
-			slug: sketch.slug,
-			title: sketch.title,
-			description: sketch.description,
-			authorName: sketch.authorName,
-			license: sketch.license,
-			socialLinks: sketch.socialLinks,
-		});
-		store.engine.setError(null);
-		this.deps.applyApprovedSketch(sketch);
-	}
-
-	private toApprovedSketch(sketch: Extract<PublicSketchAccess, { status: 'APPROVED' }>): ApprovedSketch {
-		return {
-			id: sketch.id,
-			slug: sketch.slug,
-			title: sketch.title,
-			description: sketch.description,
-			authorName: sketch.authorName,
-			license: sketch.license,
-			socialLinks: sketch.socialLinks,
-			textmodeCode: sketch.textmodeCode,
-			ogImageUrl: sketch.ogImageUrl,
-			createdAt: sketch.createdAt,
-		};
-	}
-
-	private toSharePayload(sketch: Extract<PublicSketchAccess, { status: 'PENDING' }>): SharePayload {
-		return {
-			v: 1,
-			createdAt: Date.now(),
-			engines: {
-				textmode: sketch.textmodeCode,
-			},
-		};
-	}
-
-	private toSketchSummary(sketch: PublicSketchAccess) {
-		if (sketch.status === 'APPROVED') {
-			return {
-				status: 'APPROVED' as const,
-				slug: sketch.slug,
-				title: sketch.title,
-				description: sketch.description,
-				authorName: sketch.authorName,
-				license: sketch.license,
-				socialLinks: sketch.socialLinks,
-			};
-		}
-
-		return {
-			status: 'PENDING' as const,
-			slug: sketch.slug,
-			title: sketch.title,
-			description: sketch.description,
-			authorName: sketch.authorName,
-			license: sketch.license,
-			socialLinks: null,
-		};
 	}
 }

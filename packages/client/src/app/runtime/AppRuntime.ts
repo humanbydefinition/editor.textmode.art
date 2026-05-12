@@ -3,6 +3,7 @@ import { UIActions } from '@/app/runtime/UIActions';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
+import { getExampleEngineCatalog } from '@/features/examples/model/exampleCatalog';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import type { TextmodeEditor } from '@/textmode/editor/TextmodeEditor';
 import { initAppStore, useAppStore } from '@/platform/state/appStore';
@@ -11,7 +12,6 @@ import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorSto
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { AppSettings } from '@/types';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { AppRuntimeContextValue } from './AppRuntimeContext';
 
 /**
@@ -70,12 +70,11 @@ export class AppRuntime {
 			restoreLocalSketches: () => this.restoreLocalSketches(),
 			runRestoredSketches: () => this.runRestoredSketches(),
 			runSharedSketch: () => this.runEngine(),
-			applyApprovedSketch: (sketch) => this.applyApprovedSketch(sketch),
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
 		this.actions = {
-			randomize: () => this.shareManager.randomize(),
+			randomize: () => this.loadRandomLocalExample(),
 			makeRandomChange: () => this.makeRandomChange(),
 			resetRunners: () => this.uiActions.resetRunners(),
 			clearStorage: () => this.uiActions.clearStorage(),
@@ -173,7 +172,6 @@ export class AppRuntime {
 		this.textmodeEditor = this.textmodeEngine.getEditor();
 		this.applyEditorSettings();
 		this.shareManager.applyInitialShareIfPresent();
-		this.shareManager.applyPendingApprovedSketchIfPresent();
 		this.shareManager.attachInteractionGuards();
 
 		if (!this.shortcuts) {
@@ -237,7 +235,7 @@ export class AppRuntime {
 		const lifecycleId = this.lifecycleId;
 		const loadedSettings = this.storage.loadSettings();
 		this.storeAdapter.settings.setSettings(loadedSettings);
-		await this.shareManager.hydrateFromLocation(window.location);
+		this.shareManager.hydrateFromLocation(window.location);
 		if (lifecycleId !== this.lifecycleId) {
 			return;
 		}
@@ -297,14 +295,6 @@ export class AppRuntime {
 		this.maybeInitializeEngine();
 	}
 
-	private applyApprovedSketch(sketch: ApprovedSketch): void {
-		const code = sketch.textmodeCode;
-		if (!this.textmodeEngine.isInitialized()) return;
-
-		this.textmodeEngine.setCode(code, { silent: true });
-		this.textmodeEngine.getRuntime()?.forceRun(code);
-	}
-
 	private reconnectAllRunners(): void {
 		if (!this.textmodeEngine.isInitialized()) return;
 		this.textmodeEngine.reconnectRuntime();
@@ -312,7 +302,6 @@ export class AppRuntime {
 	}
 
 	private resetAll(): void {
-		this.storeAdapter.share.clearOriginalApprovedSketch();
 		this.storeAdapter.engine.setLastWorkingCode(null);
 		this.storage.clearCode();
 
@@ -376,6 +365,25 @@ export class AppRuntime {
 			if (!isMobile) {
 				this.focusEditor();
 			}
+		}
+	}
+
+	private async loadRandomLocalExample(): Promise<boolean> {
+		if (this.storeAdapter.engine.getRandomizeLoading()) return false;
+		this.storeAdapter.engine.setRandomizeLoading(true);
+
+		try {
+			const examples = getExampleEngineCatalog().flatMap((engine) => Object.values(engine.examples).flat());
+			if (examples.length === 0) return false;
+
+			const currentCode = this.textmodeEngine.getCode();
+			const candidates = examples.length > 1 ? examples.filter((example) => example.code !== currentCode) : examples;
+			const selected = candidates[Math.floor(Math.random() * candidates.length)];
+			if (!selected) return false;
+
+			return this.loadExample(selected.code);
+		} finally {
+			this.storeAdapter.engine.setRandomizeLoading(false);
 		}
 	}
 }

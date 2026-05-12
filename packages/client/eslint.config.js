@@ -19,8 +19,6 @@ const architectureZones = [
   { target: './src/features', from: './src/app' },
   // No cross-feature imports (manual listing for now, strict mode)
   { target: './src/features/share', from: './src/features', except: ['./share'] },
-  { target: './src/features/publish', from: './src/features', except: ['./publish'] },
-  { target: './src/features/admin', from: './src/features', except: ['./admin'] },
   { target: './src/features/examples', from: './src/features', except: ['./examples'] },
   { target: './src/features/system-menu', from: './src/features', except: ['./system-menu'] },
   { target: './src/features/editor-layout', from: './src/features', except: ['./editor-layout'] },

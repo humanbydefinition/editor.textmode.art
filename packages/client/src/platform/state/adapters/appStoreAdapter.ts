@@ -1,8 +1,6 @@
 import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/types';
-import type { ApprovedSketch } from '@synth.textmode.art/contracts/sketch';
 import type { SharePayload } from '@synth.textmode.art/contracts/share';
-import type { SketchSummary } from '@/features/sketch-meta';
 
 /**
  * Adapter for accessing settings state.
@@ -44,13 +42,6 @@ export interface ShareAdapter {
 	setConsented: (consented: boolean) => void;
 	getPromptOpen: () => boolean;
 	setPromptOpen: (open: boolean) => void;
-	clearOriginalApprovedSketch: () => void;
-	getApprovedSketch: () => ApprovedSketch | null;
-	setApprovedSketch: (sketch: ApprovedSketch | null) => void;
-	getSketchSummary: () => SketchSummary | null;
-	setSketchSummary: (info: SketchSummary | null) => void;
-	getOriginalApprovedSketch: () => ApprovedSketch | null;
-	getOriginalSketchSummary: () => SketchSummary | null;
 }
 
 /**
@@ -107,13 +98,6 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
 			setConsented: (consented) => getState().setShareConsented(consented),
 			getPromptOpen: () => getState().share.promptOpen,
 			setPromptOpen: (open) => getState().setSharePromptOpen(open),
-			clearOriginalApprovedSketch: () => getState().clearOriginalApprovedSketch(),
-			getApprovedSketch: () => getState().approvedSketch,
-			setApprovedSketch: (sketch) => getState().setApprovedSketch(sketch),
-			getSketchSummary: () => getState().sketchSummary,
-			setSketchSummary: (info) => getState().setSketchSummary(info),
-			getOriginalApprovedSketch: () => getState().originalApprovedSketch,
-			getOriginalSketchSummary: () => getState().originalSketchSummary,
 		},
 		ui: {
 			getIsMobile: () => getState().isMobile,

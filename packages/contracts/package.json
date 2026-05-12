@@ -14,21 +14,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./admin": {
-      "types": "./dist/admin.d.ts",
-      "default": "./dist/admin.js"
-    },
     "./share": {
       "types": "./dist/share.d.ts",
       "default": "./dist/share.js"
-    },
-    "./sketch": {
-      "types": "./dist/sketch.d.ts",
-      "default": "./dist/sketch.js"
-    },
-    "./contact": {
-      "types": "./dist/contact.d.ts",
-      "default": "./dist/contact.js"
     },
     "./runner/textmode": {
       "types": "./dist/runner/textmode.d.ts",

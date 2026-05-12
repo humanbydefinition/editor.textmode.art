@@ -27,6 +27,7 @@ export const APP_META = {
 		profileUrl: 'https://github.com/humanbydefinition',
 		avatarUrl: 'https://github.com/humanbydefinition.png',
 	},
+	contactEmail: 'hello@textmode.art',
 	urls: {
 		support: 'https://code.textmode.art/docs/support',
 		repo: 'https://github.com/humanbydefinition/synth.textmode.art',

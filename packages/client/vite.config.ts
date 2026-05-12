@@ -18,18 +18,6 @@ export default defineConfig({
 		headers: {
 			'Access-Control-Allow-Origin': '*',
 		},
-		proxy: {
-			'/api': {
-				target: 'http://localhost:3000',
-				changeOrigin: true,
-				xfwd: true,
-			},
-			'/storage': {
-				target: 'http://localhost:3000',
-				changeOrigin: true,
-				xfwd: true,
-			},
-		},
 	},
 	build: {
 		rollupOptions: {
