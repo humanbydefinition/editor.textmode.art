@@ -55,6 +55,7 @@ export class TextmodeEngine {
 	dispose(): void {
 		if (!this.initialized) return;
 
+		this.controller?.dispose();
 		this.controller = null;
 		this.runtime?.dispose();
 		this.runtime = null;

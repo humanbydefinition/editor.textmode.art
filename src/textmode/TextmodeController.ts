@@ -31,6 +31,11 @@ export class TextmodeController {
 		this.deps = deps;
 	}
 
+	dispose(): void {
+		this.clearDebounce();
+		this.clearConfirmationTimer();
+	}
+
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
 		this.callbacks.onSaveCode(code);
@@ -140,9 +145,7 @@ export class TextmodeController {
 	}
 
 	private setPendingWorkingCode(code: string): void {
-		if (this.confirmationTimer !== null) {
-			window.clearTimeout(this.confirmationTimer);
-		}
+		this.clearConfirmationTimer();
 
 		this.deps.store.engine.setPendingWorkingCode(code);
 
@@ -156,11 +159,14 @@ export class TextmodeController {
 	}
 
 	private cancelPendingWorkingCode(): void {
-		if (this.confirmationTimer !== null) {
-			window.clearTimeout(this.confirmationTimer);
-			this.confirmationTimer = null;
-		}
+		this.clearConfirmationTimer();
 		this.deps.store.engine.cancelPendingWorkingCode();
+	}
+
+	private clearConfirmationTimer(): void {
+		if (this.confirmationTimer === null) return;
+		window.clearTimeout(this.confirmationTimer);
+		this.confirmationTimer = null;
 	}
 
 	private formatErrorMessage(message: string): string {
