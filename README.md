@@ -10,7 +10,7 @@
 > [!IMPORTANT]
 > **Work in progress**: This project is currently in active development. Features and APIs are subject to change.
 
-`synth.textmode.art` is a live coding environment for procedural text generation and ASCII synthesis. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution, share links, and moderation tools.
+`synth.textmode.art` is a browser-based live coding environment for procedural text generation and ASCII synthesis. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution and client-side share links.
 
 ## Features
 
@@ -38,52 +38,24 @@ To run the project locally:
 # Install dependencies
 npm install
 
-# Start client dev server (Vite)
-npm run client:dev
+# Start dev server (Vite)
+npm run dev
 
-# Start server dev (Fastify + Prisma migrate)
-npm run server:dev
-
-# Start runner dev server (Vite)
-npm run runner:dev
-
-# Build for production (contracts → client → server → runner)
+# Build for production
 npm run build
 ```
+
+The client loads the hosted sandbox runner from `https://runner.textmode.art/` by default.
+Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate deployments.
 
 ## License
 
 This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
-### Third party licenses & acknowledgements
+### Acknowledgements
 
-`synth.textmode.art` is built upon several incredible open-source projects. We are grateful for their work and explicit permissions to use their software:
+This project targets the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) sketch API.
 
-#### Shared Core
-- **[textmode.js](https://github.com/humanbydefinition/textmode.js)** - MIT License
-- **[textmode.synth.js](https://github.com/humanbydefinition/textmode.synth.js)** - AGPL-3.0 License
-- **[textmode.filters.js](https://github.com/humanbydefinition/textmode.filters.js)** - MIT License
-- **[zod](https://zod.dev/)** - MIT License
+AGPL-licensed dependency acknowledgement:
 
-#### Client
-- **[React](https://react.dev/)** - MIT License
-- **[Monaco Editor](https://microsoft.github.io/monaco-editor/)** - MIT License
-- **[Radix UI](https://www.radix-ui.com/)** / **[shadcn/ui](https://ui.shadcn.com/)** - MIT License
-- **[Tailwind CSS](https://tailwindcss.com/)** - MIT License
-- **[zustand](https://github.com/pmndrs/zustand)** - MIT License
-- **[Lucide React](https://lucide.dev/)** - ISC License
-- **[Sonner](https://sonner.emilkowal.ski/)** - MIT License
-- **[yet-another-react-lightbox](https://yet-another-react-lightbox.com/)** - MIT License
-- **[lz-string](https://github.com/pieroxy/lz-string)** - MIT License
-
-#### Server
-- **[Fastify](https://fastify.dev/)** - MIT License
-- **[Prisma](https://www.prisma.io/)** - Apache-2.0 License
-- **[Playwright](https://playwright.dev/)** - Apache-2.0 License
-- **[discord.js](https://discord.js.org/)** - Apache-2.0 License
-- **[Nodemailer](https://nodemailer.com/)** - MIT License
-
-#### Tooling
-- **[Vite](https://vite.dev/)** - MIT License
-- **[TypeScript](https://www.typescriptlang.org/)** - Apache-2.0 License
-- **[Prettier](https://prettier.io/)** - MIT License
+- **[textmode.synth.js](https://github.com/humanbydefinition/textmode.synth.js)** - AGPL-3.0
