@@ -7,7 +7,7 @@ interface UIActionsDependencies {
 	getCode: () => string;
 	store: AppStoreAdapter;
 	loadExample: (code: string) => boolean;
-	reconnectAllRunners: () => void;
+	reconnectRunners: () => void;
 	resetAll: () => void;
 }
 
@@ -45,11 +45,7 @@ export class UIActions {
 	}
 
 	resetRunners(): void {
-		this.deps.store.engine.setRunnerReconnecting(true);
-		this.deps.reconnectAllRunners();
-		setTimeout(() => {
-			this.deps.store.engine.setRunnerReconnecting(false);
-		}, 10000);
+		this.deps.reconnectRunners();
 	}
 
 	loadExample(code: string): void {

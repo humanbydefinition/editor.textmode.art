@@ -42,6 +42,7 @@ export class AppRuntime {
 	private initialized = false;
 	private hydrationComplete = false;
 	private lifecycleId = 0;
+	private runnerReconnectTimer: number | null = null;
 
 	constructor() {
 		this.storage = editorStorage;
@@ -58,7 +59,7 @@ export class AppRuntime {
 			getCode: () => this.textmodeEngine.getCode(),
 			store: this.storeAdapter,
 			loadExample: (code) => this.loadExample(code),
-			reconnectAllRunners: () => this.reconnectAllRunners(),
+			reconnectRunners: () => this.reconnectTextmodeRunner({ runCurrentCode: true }),
 			resetAll: () => this.resetAll(),
 		});
 
@@ -82,13 +83,7 @@ export class AppRuntime {
 			revertToLastWorking: () => {
 				this.textmodeEngine.getController()?.handleRevertToLastWorking();
 			},
-			reconnectTextmodeRunner: () => {
-				this.storeAdapter.engine.setRunnerReconnecting(true);
-				this.textmodeEngine.reconnectRuntime();
-				setTimeout(() => {
-					this.storeAdapter.engine.setRunnerReconnecting(false);
-				}, 10000);
-			},
+			reconnectTextmodeRunner: () => this.reconnectTextmodeRunner(),
 			unlockAndRun: () => this.shareManager.unlockAndRun(),
 			unlockOnly: () => this.shareManager.unlockOnly(),
 			discardShare: () => this.shareManager.discard(),
@@ -117,6 +112,7 @@ export class AppRuntime {
 
 	dispose(): void {
 		this.lifecycleId += 1;
+		this.clearRunnerReconnectTimer();
 		this.shortcuts?.dispose();
 		this.shortcuts = null;
 		this.shareManager.dispose();
@@ -295,10 +291,26 @@ export class AppRuntime {
 		this.maybeInitializeEngine();
 	}
 
-	private reconnectAllRunners(): void {
+	private reconnectTextmodeRunner(options?: { runCurrentCode?: boolean }): void {
 		if (!this.textmodeEngine.isInitialized()) return;
+
+		this.storeAdapter.engine.setRunnerReconnecting(true);
 		this.textmodeEngine.reconnectRuntime();
-		this.textmodeEngine.getController()?.handleForceRun();
+		if (options?.runCurrentCode) {
+			this.textmodeEngine.getController()?.handleForceRun();
+		}
+
+		this.clearRunnerReconnectTimer();
+		this.runnerReconnectTimer = window.setTimeout(() => {
+			this.runnerReconnectTimer = null;
+			this.storeAdapter.engine.setRunnerReconnecting(false);
+		}, 10000);
+	}
+
+	private clearRunnerReconnectTimer(): void {
+		if (this.runnerReconnectTimer === null) return;
+		window.clearTimeout(this.runnerReconnectTimer);
+		this.runnerReconnectTimer = null;
 	}
 
 	private resetAll(): void {
