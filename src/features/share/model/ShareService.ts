@@ -1,4 +1,4 @@
-import type { SharePayload } from './sharePayload';
+import { sharePayloadV1Schema, type SharePayload } from './sharePayload';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 
 const SHARE_HASH_KEY = 'share';
@@ -8,13 +8,7 @@ const MAX_DECODED_CHARS = 300_000;
 export const MAX_SHARE_URL_LENGTH = 4096;
 
 function isSharePayload(value: unknown): value is SharePayload {
-	if (!value || typeof value !== 'object') return false;
-	const payload = value as SharePayload;
-	if (payload.v !== 1) return false;
-	if (typeof payload.createdAt !== 'number') return false;
-	if (!payload.engines || typeof payload.engines !== 'object') return false;
-	if (payload.engines.textmode !== undefined && typeof payload.engines.textmode !== 'string') return false;
-	return true;
+	return sharePayloadV1Schema.safeParse(value).success;
 }
 
 export class ShareService {
