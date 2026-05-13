@@ -57,6 +57,8 @@ export class TextmodeEditor {
 	}
 
 	setValue(value: string, options?: { silent?: boolean }): void {
+		if (options?.silent && this.model.getValue() === value) return;
+
 		if (options?.silent) {
 			this.suppressChange = true;
 		}
