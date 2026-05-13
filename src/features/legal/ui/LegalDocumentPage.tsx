@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Separator } from '@/shared/ui/separator';
 import { cn } from '@/shared/lib/cn';
+import { APP_META } from '@/shared/config/appMeta';
 
 interface LegalDocumentPageProps {
 	documentId: LegalDocumentId;
@@ -78,7 +79,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 									size="sm"
 									className="min-w-[6rem] flex-shrink-0 snap-start bg-zinc-900/40 border border-white/10 text-zinc-300 hover:bg-zinc-800/60 hover:text-white sm:hidden"
 								>
-									<a href={buildLocalizedLegalHref('/contact')}>
+									<a href={`mailto:${APP_META.contactEmail}`}>
 										<MessageSquare className="w-4 h-4" />
 										{legalCopy.contactLabel}
 									</a>
@@ -89,7 +90,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 								size="sm"
 								className="hidden sm:inline-flex bg-zinc-900/40 border border-white/10 text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
 							>
-								<a href={buildLocalizedLegalHref('/contact')}>
+								<a href={`mailto:${APP_META.contactEmail}`}>
 									<MessageSquare className="w-4 h-4" />
 									{legalCopy.contactLabel}
 								</a>
@@ -121,7 +122,7 @@ export function LegalDocumentPage({ documentId }: LegalDocumentPageProps) {
 								<a href={buildLocalizedLegalHref('/privacy')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
 									{legalCopy.footer.privacy}
 								</a>
-								<a href={buildLocalizedLegalHref('/contact')} className="text-zinc-400 hover:text-zinc-200 transition-colors">
+								<a href={`mailto:${APP_META.contactEmail}`} className="text-zinc-400 hover:text-zinc-200 transition-colors">
 									{legalCopy.footer.contact}
 								</a>
 							</div>

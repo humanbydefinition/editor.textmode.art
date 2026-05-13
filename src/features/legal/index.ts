@@ -1,5 +1,4 @@
 export { LegalDocumentPage } from './ui/LegalDocumentPage';
-export { LegalContactPage } from './ui/LegalContactPage';
 export { LegalLanguageToggle } from './ui/LegalLanguageToggle';
 export { useLegalLanguage } from './hooks/useLegalLanguage';
 export { useLegalSeo } from './hooks/useLegalSeo';

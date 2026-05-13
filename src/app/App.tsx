@@ -8,9 +8,6 @@ const EditorApp = lazy(() =>
 const LegalDocumentPage = lazy(() =>
 	import('@/features/legal').then((m) => ({ default: m.LegalDocumentPage }))
 );
-const LegalContactPage = lazy(() =>
-	import('@/features/legal').then((m) => ({ default: m.LegalContactPage }))
-);
 
 /**
  * Root application component.
@@ -39,12 +36,6 @@ export function App() {
 							<LegalDocumentPage documentId="privacy" />
 						</RouteMode>
 					</Route>
-					<Route path="/contact">
-						<RouteMode className="legal-mode">
-							<LegalContactPage />
-						</RouteMode>
-					</Route>
-
 					{/* Locale-prefixed legal routes (/en/imprint, /de/tos, etc.) */}
 					<Route path="/:locale/imprint">
 						<RouteMode className="legal-mode">
@@ -61,12 +52,6 @@ export function App() {
 							<LegalDocumentPage documentId="privacy" />
 						</RouteMode>
 					</Route>
-					<Route path="/:locale/contact">
-						<RouteMode className="legal-mode">
-							<LegalContactPage />
-						</RouteMode>
-					</Route>
-
 					{/* Default: editor (handles / and any unmatched path) */}
 					<Route>
 						<EditorApp key={location} />

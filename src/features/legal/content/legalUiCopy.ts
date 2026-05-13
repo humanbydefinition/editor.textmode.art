@@ -18,8 +18,6 @@ export interface LegalUiCopy {
 	backToAppLabel: string;
 	backToAppAriaLabel: string;
 	contactLabel: string;
-	contactPageTitle: string;
-	contactPageDescription: string;
 	openInNewTabLabel: string;
 	legalPagesNavAriaLabel: string;
 	footer: LegalFooterCopy;
@@ -31,8 +29,6 @@ export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 		backToAppLabel: 'Back to App',
 		backToAppAriaLabel: 'Return to synth.textmode.art app',
 		contactLabel: 'Contact',
-		contactPageTitle: 'contact us',
-		contactPageDescription: 'have a question, legal request, or feedback? send a message and we\'ll respond as soon as possible.',
 		openInNewTabLabel: 'open in new tab',
 		legalPagesNavAriaLabel: 'Legal pages navigation',
 		footer: {
@@ -51,9 +47,6 @@ export const LEGAL_UI_COPY_BY_LOCALE: Record<LegalLocale, LegalUiCopy> = {
 		backToAppLabel: 'Zur App',
 		backToAppAriaLabel: 'Zurück zur synth.textmode.art App',
 		contactLabel: 'Kontakt',
-		contactPageTitle: 'kontakt',
-		contactPageDescription:
-			'hast du eine frage, eine rechtliche anfrage oder feedback? sende uns eine nachricht und wir antworten schnellstmöglich.',
 		openInNewTabLabel: 'in neuem tab öffnen',
 		legalPagesNavAriaLabel: 'Navigation der Rechtstexte',
 		footer: {

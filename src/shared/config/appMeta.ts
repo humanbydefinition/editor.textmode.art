@@ -1,6 +1,6 @@
 import packageJson from '../../../package.json';
 
-export type LegalRoute = 'imprint' | 'terms' | 'privacy' | 'contact';
+export type LegalRoute = 'imprint' | 'terms' | 'privacy';
 
 export interface AppResourceLink {
 	name: string;
@@ -13,7 +13,6 @@ const LEGAL_PATHS: Record<LegalRoute, string> = {
 	imprint: '/imprint',
 	terms: '/tos',
 	privacy: '/privacy',
-	contact: '/contact',
 };
 
 export const APP_META = {

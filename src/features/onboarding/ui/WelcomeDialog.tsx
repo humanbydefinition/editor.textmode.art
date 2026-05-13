@@ -144,7 +144,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
 							<a href={buildLegalHref('imprint')} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">imprint</a>
 							<a href={buildLegalHref('terms')} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">terms</a>
 							<a href={buildLegalHref('privacy')} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">privacy</a>
-							<a href={buildLegalHref('contact')} target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">contact</a>
+							<a href={`mailto:${APP_META.contactEmail}`} className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">contact</a>
 						</div>
 						<a
 							href={APP_META.urls.license}

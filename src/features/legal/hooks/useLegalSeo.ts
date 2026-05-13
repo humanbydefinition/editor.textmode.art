@@ -23,7 +23,7 @@ function upsertLink(rel: string, attributes: Record<string, string>): void {
 	}
 }
 
-export function useLegalSeo(locale: LegalLocale, legalPath: '/imprint' | '/tos' | '/privacy' | '/contact', title: string): void {
+export function useLegalSeo(locale: LegalLocale, legalPath: '/imprint' | '/tos' | '/privacy', title: string): void {
 	useEffect(() => {
 		if (typeof document === 'undefined' || typeof window === 'undefined') return;
 

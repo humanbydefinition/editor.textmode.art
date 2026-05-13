@@ -3,7 +3,7 @@ export const LEGAL_LOCALES = ['en', 'de'] as const;
 export type LegalLocale = (typeof LEGAL_LOCALES)[number];
 
 export const LEGAL_LANGUAGE_QUERY_PARAM = 'lang';
-export const LEGAL_ROUTE_PATHS = ['/imprint', '/tos', '/privacy', '/contact'] as const;
+export const LEGAL_ROUTE_PATHS = ['/imprint', '/tos', '/privacy'] as const;
 
 export const DEFAULT_LEGAL_LOCALE: LegalLocale = 'de';
 

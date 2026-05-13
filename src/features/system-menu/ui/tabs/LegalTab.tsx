@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ExternalLink } from 'lucide-react';
+import { ChevronDown, ExternalLink, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
@@ -7,7 +7,8 @@ import { getLegalDocuments, type LegalDocumentId } from '@/features/legal/conten
 import { getLegalSectionLabel, getLegalUiCopy } from '@/features/legal/content/legalUiCopy';
 import { useLegalLanguage } from '@/features/legal/hooks/useLegalLanguage';
 import { LegalLanguageToggle } from '@/features/legal/ui/LegalLanguageToggle';
-import { ContactDialog } from './ContactDialog';
+import { Button } from '@/shared/ui/button';
+import { APP_META } from '@/shared/config/appMeta';
 
 export function LegalTab() {
 	const { locale, setLocale, buildLocalizedLegalHref } = useLegalLanguage();
@@ -23,7 +24,15 @@ export function LegalTab() {
 		<div className="h-full flex flex-col px-6 pt-6 gap-3 overflow-hidden">
 			<div className="flex items-center gap-2 shrink-0">
 				<div className="flex-1 min-w-0">
-					<ContactDialog buttonClassName="h-[34px] py-0" locale={locale} />
+					<Button
+						asChild
+						className="h-[34px] w-full bg-zinc-900/40 border border-white/10 text-zinc-400 hover:bg-zinc-800/60 hover:text-white transition-all duration-300"
+					>
+						<a href={`mailto:${APP_META.contactEmail}`}>
+							<MessageSquare className="w-4 h-4" />
+							<span className="font-medium">{legalCopy.contactLabel}</span>
+						</a>
+					</Button>
 				</div>
 				<LegalLanguageToggle locale={locale} onLocaleChange={setLocale} />
 			</div>

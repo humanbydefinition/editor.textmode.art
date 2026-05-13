@@ -38,18 +38,6 @@ export function ImprintLegalContentDe({ className }: LegalContentProps) {
 							hello@textmode.art
 						</a>
 					</p>
-					<p className="text-zinc-500 text-[11px] leading-relaxed italic">
-						Alternative:{' '}
-						<a
-							href="/de/contact"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-emerald-400 hover:text-emerald-300 transition-colors"
-							>
-								Kontaktseite in neuem Tab oeffnen
-						</a>
-						.
-					</p>
 				</div>
 			</div>
 
@@ -248,20 +236,35 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Hosting und Server-Logs</h4>
 				<p className="text-zinc-500 break-words">
-					Der Dienst wird auf Infrastruktur von{' '}
+					Der Dienst wird als statische Website ueber{' '}
 					<a
-						href="https://www.hetzner.com/legal/privacy-policy"
+						href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="text-emerald-400 hover:text-emerald-300 transition-colors"
 					>
-						Hetzner
+						GitHub Pages
 					</a>
-					{' '}betrieben. Beim Zugriff können technisch erforderliche Verbindungsdaten verarbeitet werden, zum Beispiel
-					IP-Adresse, Zeitstempel, angeforderte URL, Referrer, User-Agent und Response-Status.
+					{' '}betrieben. GitHub erklaert, dass beim Besuch einer GitHub-Pages-Seite die IP-Adresse des Besuchers aus
+					Sicherheitsgruenden protokolliert und gespeichert wird, unabhaengig davon, ob der Besucher bei GitHub
+					angemeldet ist.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
-					Zweck: sicherer und stabiler Betrieb, Debugging, Missbrauchserkennung und Dienstschutz.
+					GitHub kann technisch erforderliche Verbindungsdaten fuer Hosting, Auslieferung, Sicherheit,
+					Missbrauchserkennung und Betrieb verarbeiten. Die Verarbeitung durch GitHub wird in der{' '}
+					<a
+						href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-emerald-400 hover:text-emerald-300 transition-colors"
+					>
+						GitHub Privacy Statement
+					</a>
+					{' '}beschrieben.
+				</p>
+				<p className="text-zinc-500 mt-2 break-words">
+					Zweck: Auslieferung der statischen Website, sicherer und stabiler Betrieb, Missbrauchserkennung und
+					Dienstschutz.
 					<br />
 					Rechtsgrundlage: Art. 6(1)(f) DSGVO (berechtigte Interessen).
 				</p>
@@ -270,8 +273,8 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Kontakt</h4>
 				<p className="text-zinc-500 break-words">
-					Wenn du uns per E-Mail oder ueber verlinkte externe Kanaele kontaktierst, verarbeiten wir die von dir
-					angegebenen Daten zur Bearbeitung und Beantwortung deiner Anfrage.
+					Auf dieser Website gibt es kein Kontaktformular. Wenn du uns per E-Mail oder ueber verlinkte externe Kanaele
+					kontaktierst, verarbeiten wir die von dir angegebenen Daten zur Bearbeitung und Beantwortung deiner Anfrage.
 				</p>
 				<p className="text-zinc-500 mt-2 break-words">
 					Zweck: Bearbeitung deiner Kontaktanfrage.
@@ -318,8 +321,17 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Empfänger und Auftragsverarbeiter</h4>
 				<p className="text-zinc-500 break-words">
-					Wir nutzen Dienstleister für den Infrastrukturbetrieb (insbesondere Hosting). Soweit erforderlich, schließen wir
-					Auftragsverarbeitungsverträge gemäß Art. 28 DSGVO.
+					Fuer das Website-Hosting nutzen wir GitHub Pages von GitHub, Inc. / GitHub B.V. GitHub kann Subprozessoren
+					fuer Betrieb und Auslieferung der Dienste einsetzen, einschliesslich Content-Delivery-Anbietern in der{' '}
+					<a
+						href="https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-emerald-400 hover:text-emerald-300 transition-colors"
+					>
+						GitHub Subprocessor List
+					</a>
+					.
 				</p>
 			</div>
 
@@ -329,7 +341,7 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 					Wir speichern Daten nur so lange, wie es für den jeweiligen Zweck und gesetzliche Pflichten erforderlich ist:
 				</p>
 				<ul className="list-disc list-inside mt-2 text-zinc-500 space-y-1">
-					<li>technische Log-Daten: begrenzte Aufbewahrung für Sicherheit und Betrieb</li>
+					<li>technische Log-Daten von GitHub Pages: Aufbewahrung durch GitHub nach den GitHub-Richtlinien</li>
 					<li>Local-Storage-Daten: bis du sie im Browser löschst</li>
 				</ul>
 			</div>
@@ -388,7 +400,7 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 
 			<div>
 				<h4 className="font-medium text-zinc-200 mb-2 text-xs uppercase tracking-wider">Zuletzt aktualisiert</h4>
-				<p className="text-zinc-500">2026-02-24</p>
+				<p className="text-zinc-500">2026-05-13</p>
 			</div>
 
 			<div>
@@ -422,6 +434,46 @@ export function PrivacyLegalContentDe({ className }: LegalContentProps) {
 							className="text-emerald-400 hover:text-emerald-300 transition-colors"
 						>
 							TDDDG Section 25
+						</a>
+					</li>
+					<li>
+						<a
+							href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-emerald-400 hover:text-emerald-300 transition-colors"
+						>
+							GitHub Pages Data Collection
+						</a>
+					</li>
+					<li>
+						<a
+							href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-emerald-400 hover:text-emerald-300 transition-colors"
+						>
+							GitHub Privacy Statement
+						</a>
+					</li>
+					<li>
+						<a
+							href="https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#pages"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-emerald-400 hover:text-emerald-300 transition-colors"
+						>
+							GitHub Pages Additional Terms
+						</a>
+					</li>
+					<li>
+						<a
+							href="https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-emerald-400 hover:text-emerald-300 transition-colors"
+						>
+							GitHub Subprocessors
 						</a>
 					</li>
 				</ul>
