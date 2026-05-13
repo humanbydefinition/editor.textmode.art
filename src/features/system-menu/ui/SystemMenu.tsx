@@ -60,6 +60,22 @@ export function SystemMenu({
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
+                        onClick={onShare}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className={`${floatingIconButtonVariants()} fixed top-2 right-[6.5rem] z-50 pointer-events-auto`}
+                        aria-label="Share sketch"
+                    >
+                        <Share className="w-[14px] h-[14px]" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>share sketch</p>
+                </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
                         onClick={onMakeRandomChange}
                         onMouseDown={(e) => e.preventDefault()}
                         className={`${floatingIconButtonVariants()} fixed top-2 right-[4.5rem] z-50 pointer-events-auto`}
