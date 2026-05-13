@@ -89,6 +89,28 @@ export class TextmodeEditor {
 		monaco.editor.setModelMarkers(this.model, 'textmode', markers);
 	}
 
+	setErrorMarker(error: { message: string; line?: number; column?: number }): void {
+		if (!Number.isFinite(error.line)) {
+			this.clearMarkers();
+			return;
+		}
+
+		const lineNumber = Math.min(this.model.getLineCount(), Math.max(1, Math.floor(error.line ?? 1)));
+		const maxColumn = this.model.getLineMaxColumn(lineNumber);
+		const startColumn = Math.min(maxColumn, Math.max(1, Math.floor(error.column ?? 1)));
+
+		this.setMarkers([
+			{
+				severity: monaco.MarkerSeverity.Error,
+				message: error.message,
+				startLineNumber: lineNumber,
+				startColumn,
+				endLineNumber: lineNumber,
+				endColumn: Math.min(maxColumn, startColumn + 1),
+			},
+		]);
+	}
+
 	clearMarkers(): void {
 		monaco.editor.setModelMarkers(this.model, 'textmode', []);
 	}

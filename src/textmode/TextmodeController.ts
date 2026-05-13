@@ -118,24 +118,29 @@ export class TextmodeController {
 
 	handleSynthError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-		this.deps.store.engine.setStatus('error');
-		this.deps.store.engine.setError({
+		const formattedError = {
 			...error,
 			message: this.formatErrorMessage(error.message),
 			source: 'textmode',
-		});
+		};
+
+		this.deps.store.engine.setStatus('error');
+		this.deps.store.engine.setError(formattedError);
+		this.deps.getEditor()?.setErrorMarker(formattedError);
 	}
 
 	private handleError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-
-		this.deps.store.engine.setError({
+		const formattedError = {
 			message: this.formatErrorMessage(error.message),
 			stack: error.stack,
 			line: error.line,
 			column: error.column,
 			source: 'textmode',
-		});
+		};
+
+		this.deps.store.engine.setError(formattedError);
+		this.deps.getEditor()?.setErrorMarker(formattedError);
 	}
 
 	private clearDebounce(): void {
