@@ -38,10 +38,10 @@ To run the project locally:
 # Install dependencies
 npm install
 
-# Start client dev server (Vite)
-npm run client:dev
+# Start dev server (Vite)
+npm run dev
 
-# Build for production (contracts -> client)
+# Build for production
 npm run build
 ```
 

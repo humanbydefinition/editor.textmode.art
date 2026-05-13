@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-	envDir: path.resolve(__dirname, '../..'),
+	envDir: __dirname,
 	envPrefix: ['VITE_', 'PUBLIC_'],
 	plugins: [react(), tailwindcss()],
 	resolve: {

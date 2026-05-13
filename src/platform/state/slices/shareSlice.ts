@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { SharePayload } from '@/features/share/model/sharePayload';
 import type { AppState } from '../appStore';
 
 export interface ShareSlice {

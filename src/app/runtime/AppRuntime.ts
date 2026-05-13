@@ -11,7 +11,7 @@ import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorSto
 
 import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { AppSettings } from '@/types';
-import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { SharePayload } from '@/features/share/model/sharePayload';
 import type { AppRuntimeContextValue } from './AppRuntimeContext';
 
 /**

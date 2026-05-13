@@ -1,6 +1,6 @@
 import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/types';
-import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { SharePayload } from '@/features/share/model/sharePayload';
 
 /**
  * Adapter for accessing settings state.

@@ -1,4 +1,4 @@
-import type { SharePayload } from '@synth.textmode.art/contracts/share';
+import type { SharePayload } from './sharePayload';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 
 const SHARE_HASH_KEY = 'share';
