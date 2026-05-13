@@ -12,9 +12,15 @@ interface ShareConsentDialogProps {
 	onUnlockAndRun: () => void;
 	onUnlockOnly: () => void;
 	onDiscard: () => void;
+	onKeepLocked: () => void;
 }
 
-export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: ShareConsentDialogProps) {
+export function ShareConsentDialog({
+	onUnlockAndRun,
+	onUnlockOnly,
+	onDiscard,
+	onKeepLocked,
+}: ShareConsentDialogProps) {
 	const sharePayload = useAppStore(selectSharePayload);
 	const shareConsented = useAppStore(selectShareConsented);
 	const sharePromptOpen = useAppStore(selectSharePromptOpen);
@@ -32,7 +38,7 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 			open={isOpen}
 			onOpenChange={(nextOpen) => {
 				if (!nextOpen) {
-					onUnlockOnly();
+					onKeepLocked();
 				}
 			}}
 		>
@@ -48,11 +54,11 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard }: 
 							untrusted sketch
 						</DialogTitle>
 						<DialogClose
-							onClick={onUnlockOnly}
+							onClick={onKeepLocked}
 							className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
 						>
 							<X className="w-4 h-4" />
-							<span className="sr-only">View code</span>
+							<span className="sr-only">Keep locked</span>
 						</DialogClose>
 					</div>
 					<DialogDescription className="text-sm text-zinc-400">

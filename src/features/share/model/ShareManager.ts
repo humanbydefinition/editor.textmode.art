@@ -65,11 +65,16 @@ export class ShareManager {
 		this.deps.applyPayload(payload);
 	}
 
+	keepLocked(): void {
+		this.deps.store.share.setPromptOpen(false);
+	}
+
 	discard(): void {
 		const payload = this.deps.store.share.getPayload();
 		if (!payload) return;
 
 		this.deps.store.share.setPayload(null);
+		this.deps.replaceUrl('/');
 		this.deps.setEditorReadOnly(false);
 		this.deps.restoreLocalSketches();
 		this.deps.runRestoredSketches();

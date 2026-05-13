@@ -104,6 +104,7 @@ export function AppShell() {
 						onUnlockAndRun={actions.unlockAndRun}
 						onUnlockOnly={actions.unlockOnly}
 						onDiscard={actions.discardShare}
+						onKeepLocked={actions.keepShareLocked}
 					/>
 				)}
 

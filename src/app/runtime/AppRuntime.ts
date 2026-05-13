@@ -88,6 +88,7 @@ export class AppRuntime {
 			unlockOnly: () => this.shareManager.unlockOnly(),
 			discardShare: () => this.shareManager.discard(),
 			openSharePrompt: () => this.shareManager.openPrompt(),
+			keepShareLocked: () => this.shareManager.keepLocked(),
 			copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
 			getShareExportData: () => this.uiActions.getShareExportData(),
 		};

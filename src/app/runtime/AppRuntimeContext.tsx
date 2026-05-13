@@ -21,6 +21,7 @@ export interface AppRuntimeContextValue {
 		unlockOnly: () => void;
 		discardShare: () => void;
 		openSharePrompt: () => void;
+		keepShareLocked: () => void;
 
 		copyShareExportUrl: (url: string) => void;
 
