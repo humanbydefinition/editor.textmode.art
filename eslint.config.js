@@ -25,7 +25,7 @@ const architectureZones = [
 ];
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist/**', 'sketches/**'] },
   { files: ['**/*.{ts,js}'], languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,

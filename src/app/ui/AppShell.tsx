@@ -8,6 +8,7 @@ import { useAppStore } from '@/platform/state/appStore';
 import {
 	selectEditorBackdrop,
 	selectError,
+	selectGallerySketchSummary,
 	selectRandomizeLoading,
 	selectShareConsented,
 	selectSharePayload,
@@ -16,6 +17,7 @@ import {
 	selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
+import { GallerySketchInfoButton } from '@/features/gallery-sketches';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
@@ -47,6 +49,7 @@ export function AppShell() {
 	const sharePayload = useAppStore(selectSharePayload);
 	const shareConsented = useAppStore(selectShareConsented);
 	const sharePromptOpen = useAppStore(selectSharePromptOpen);
+	const gallerySketchSummary = useAppStore(selectGallerySketchSummary);
 	const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
 	const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
 	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
@@ -145,6 +148,13 @@ export function AppShell() {
 				>
 					{!showShareLock && (
 						<>
+							<GallerySketchInfoButton
+								sketch={gallerySketchSummary}
+								autoOpenEnabled={!welcomeOpen}
+								onShare={handleShare}
+								className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"
+							/>
+
 							<SystemMenu
 								onShare={handleShare}
 								onRandomize={actions.randomize}

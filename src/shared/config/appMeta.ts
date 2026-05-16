@@ -30,6 +30,8 @@ export const APP_META = {
 	urls: {
 		support: 'https://code.textmode.art/docs/support',
 		repo: 'https://github.com/humanbydefinition/synth.textmode.art',
+		galleryContributionGuide: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/sketches/README.md',
+		galleryPullRequest: 'https://github.com/humanbydefinition/synth.textmode.art/compare',
 		license: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/LICENSE',
 		discord: 'https://discord.gg/sjrw8QXNks',
 	},

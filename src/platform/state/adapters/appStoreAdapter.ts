@@ -1,6 +1,7 @@
 import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
+import type { GallerySketch, GallerySketchSummary } from '@/features/gallery-sketches';
 
 /**
  * Adapter for accessing settings state.
@@ -45,6 +46,19 @@ export interface ShareAdapter {
 }
 
 /**
+ * Adapter for accessing repository-backed gallery sketch state.
+ */
+export interface GalleryAdapter {
+	getActiveSketch: () => GallerySketch | null;
+	setActiveSketch: (sketch: GallerySketch | null) => void;
+	getSketchSummary: () => GallerySketchSummary | null;
+	setSketchSummary: (summary: GallerySketchSummary | null) => void;
+	getOriginalSketch: () => GallerySketch | null;
+	getOriginalSketchSummary: () => GallerySketchSummary | null;
+	clearOriginalSketch: () => void;
+}
+
+/**
  * Adapter for accessing UI state.
  */
 export interface UIAdapter {
@@ -59,6 +73,7 @@ export interface AppStoreAdapter {
 	settings: SettingsAdapter;
 	engine: EngineAdapter;
 	share: ShareAdapter;
+	gallery: GalleryAdapter;
 	ui: UIAdapter;
 }
 
@@ -98,6 +113,15 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
 			setConsented: (consented) => getState().setShareConsented(consented),
 			getPromptOpen: () => getState().share.promptOpen,
 			setPromptOpen: (open) => getState().setSharePromptOpen(open),
+		},
+		gallery: {
+			getActiveSketch: () => getState().gallerySketch,
+			setActiveSketch: (sketch) => getState().setGallerySketch(sketch),
+			getSketchSummary: () => getState().gallerySketchSummary,
+			setSketchSummary: (summary) => getState().setGallerySketchSummary(summary),
+			getOriginalSketch: () => getState().originalGallerySketch,
+			getOriginalSketchSummary: () => getState().originalGallerySketchSummary,
+			clearOriginalSketch: () => getState().clearOriginalGallerySketch(),
 		},
 		ui: {
 			getIsMobile: () => getState().isMobile,

@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { APP_META } from '@/shared/config/appMeta';
 import { MAX_SHARE_URL_LENGTH, ShareService } from '../model/ShareService';
 import type { SharePayload } from '@/features/share/types';
 
-import { Check, Link2, Info } from 'lucide-react';
+import { Check, ExternalLink, GitPullRequest, Info, Link2 } from 'lucide-react';
 
 export interface ShareExportData {
 	createdAt: number;
@@ -125,6 +126,50 @@ export function ShareExportDialog({
 								</p>
 							</div>
 						)}
+
+						<div className="rounded-lg border border-violet-400/15 bg-violet-500/[0.04] p-4">
+							<div className="flex items-start gap-3">
+								<GitPullRequest className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
+								<div className="min-w-0 space-y-3">
+									<div className="space-y-1">
+										<h3 className="text-sm font-semibold leading-tight text-zinc-100">
+											contribute to the gallery
+										</h3>
+										<p className="text-[12px] leading-5 text-zinc-400">
+											to make this sketch discoverable through random gallery loading, add it under{' '}
+											<span className="font-mono text-zinc-300">sketches/&lt;slug&gt;</span> and
+											open a pull request on GitHub.
+										</p>
+									</div>
+
+									<div className="flex flex-wrap gap-2">
+										<Button
+											asChild
+											className="h-8 bg-violet-500/15 border border-violet-300/20 px-3 text-xs text-violet-100 hover:bg-violet-500/25"
+										>
+											<a href={APP_META.urls.galleryPullRequest} target="_blank" rel="noopener noreferrer">
+												<GitPullRequest className="h-3.5 w-3.5" />
+												open PR
+											</a>
+										</Button>
+										<Button
+											asChild
+											variant="ghost"
+											className="h-8 px-3 text-xs text-zinc-400 hover:text-white"
+										>
+											<a
+												href={APP_META.urls.galleryContributionGuide}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												<ExternalLink className="h-3.5 w-3.5" />
+												contribution guide
+											</a>
+										</Button>
+									</div>
+								</div>
+							</div>
+						</div>
 
 					</div>
 				</ScrollArea>

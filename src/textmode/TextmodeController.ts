@@ -38,6 +38,7 @@ export class TextmodeController {
 
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
+		this.clearGallerySketchIfCustomized(code);
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
 
@@ -191,4 +192,23 @@ export class TextmodeController {
 		return false;
 	}
 
+	private clearGallerySketchIfCustomized(code: string): void {
+		const activeSketch = this.deps.store.gallery.getActiveSketch();
+		if (activeSketch) {
+			if (code !== activeSketch.textmodeCode) {
+				this.deps.store.gallery.setActiveSketch(null);
+				this.deps.store.gallery.setSketchSummary(null);
+			}
+			return;
+		}
+
+		const originalSketch = this.deps.store.gallery.getOriginalSketch();
+		if (!originalSketch || code !== originalSketch.textmodeCode) return;
+
+		this.deps.store.gallery.setActiveSketch(originalSketch);
+		const originalSummary = this.deps.store.gallery.getOriginalSketchSummary();
+		if (originalSummary) {
+			this.deps.store.gallery.setSketchSummary(originalSummary);
+		}
+	}
 }

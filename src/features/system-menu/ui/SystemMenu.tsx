@@ -49,7 +49,7 @@ export function SystemMenu({
     const handleRandomize = async () => {
         const success = await onRandomize();
         if (!success) {
-            toast.error('failed to load random example', {
+            toast.error('no gallery sketches available', {
                 position: 'bottom-right',
             });
         }
@@ -57,22 +57,6 @@ export function SystemMenu({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        onClick={onShare}
-                        onMouseDown={(e) => e.preventDefault()}
-                        className={`${floatingIconButtonVariants()} fixed top-2 right-[6.5rem] z-50 pointer-events-auto`}
-                        aria-label="Share sketch"
-                    >
-                        <Share className="w-[14px] h-[14px]" />
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>share sketch</p>
-                </TooltipContent>
-            </Tooltip>
-
             <Tooltip>
                 <TooltipTrigger asChild>
                     <button
@@ -105,7 +89,7 @@ export function SystemMenu({
                     </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{randomizeLoading ? 'loading random example...' : 'load random example'}</p>
+                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random sketch'}</p>
                 </TooltipContent>
             </Tooltip>
 

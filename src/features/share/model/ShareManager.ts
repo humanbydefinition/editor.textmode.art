@@ -30,11 +30,6 @@ export class ShareManager {
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
 			this.deps.store.share.setPayload(payload);
-			return;
-		}
-
-		if (location.pathname !== '/') {
-			this.deps.replaceUrl('/');
 		}
 	}
 
