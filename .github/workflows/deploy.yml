@@ -42,7 +42,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_RUNNER_URL: https://rastergang.textmode.art/
+          VITE_RUNNER_URL: https://runner.textmode.art/
 
       - name: Create SPA fallback
         run: cp dist/index.html dist/404.html
