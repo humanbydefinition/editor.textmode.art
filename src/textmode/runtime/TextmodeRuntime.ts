@@ -40,7 +40,6 @@ export class TextmodeRuntime implements IHostRuntime {
 
 		this.runtime = new IframeTextmodeRuntime({
 			runnerUrl: options.runnerUrl,
-			client: 'synth',
 			mountMode: 'append',
 			handshakeTimeoutMs: HANDSHAKE_TIMEOUT_MS,
 			onReady: () => this.handleReady(),

@@ -143,5 +143,5 @@ function getRunnerUrl(): string {
 	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
 		return explicit.trim();
 	}
-	return 'https://rastergang.textmode.art/';
+	return 'https://runner.textmode.art/';
 }
