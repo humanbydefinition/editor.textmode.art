@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices, Heart, Settings2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -12,11 +12,11 @@ import {
 } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { APP_META } from '@/shared/config/appMeta';
+import { openAnalyticsConsentPreferences } from '@/features/analytics-consent';
+import { APP_META, buildLegalHref } from '@/shared/config/appMeta';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
-import { LegalTab } from './tabs/LegalTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
 
 import { useAppStore } from '@/platform/state/appStore';
@@ -32,6 +32,10 @@ export interface SystemMenuProps {
     renderExamplesTab: (onClose: () => void) => ReactNode;
 }
 
+function isAnalyticsConsentTarget(target: EventTarget | null): boolean {
+    return target instanceof HTMLElement && target.closest('.analytics-consent') !== null;
+}
+
 export function SystemMenu({
     onShare,
     onRandomize,
@@ -41,6 +45,7 @@ export function SystemMenu({
     onClearStorage,
     renderExamplesTab,
 }: SystemMenuProps) {
+    const currentYear = new Date().getFullYear();
     const settings = useAppStore(selectSettings);
     const setSettings = useAppStore((state) => state.setSettings);
 
@@ -116,10 +121,15 @@ export function SystemMenu({
                     const content = event.currentTarget as HTMLElement | null;
                     content?.focus();
                 }}
+                onInteractOutside={(event) => {
+                    if (isAnalyticsConsentTarget(event.detail.originalEvent.target)) {
+                        event.preventDefault();
+                    }
+                }}
                 className="sm:max-w-[600px] h-[85vh] sm:h-[600px] bg-zinc-950/95 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col"
             >
                 <DialogDescription className="sr-only">
-                    System Menu containing settings, shortcuts, about information, and legal documents.
+                    System Menu containing settings, shortcuts, about information, and external legal links.
                 </DialogDescription>
                 <DialogHeader className="px-6 py-4 border-b border-white/5 shrink-0">
                     <div className="flex items-center justify-between">
@@ -178,7 +188,6 @@ export function SystemMenu({
                             <TabsTrigger value="examples" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">examples</TabsTrigger>
                             <TabsTrigger value="shortcuts" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">controls</TabsTrigger>
                             <TabsTrigger value="about" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">about</TabsTrigger>
-                            <TabsTrigger value="legal" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">legal</TabsTrigger>
                         </TabsList>
                     </div>
 
@@ -203,27 +212,51 @@ export function SystemMenu({
                     <TabsContent value="about" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
                         <AboutTab />
                     </TabsContent>
-
-                    <TabsContent value="legal" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-                        <LegalTab />
-                    </TabsContent>
                 </Tabs>
 
-                <div className="border-t border-white/5 bg-zinc-950/50 shrink-0 relative">
-                    {/* Scroll indicator gradient on the right */}
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-950 to-transparent pointer-events-none z-10 sm:hidden" />
-
-                    <div className="p-4 overflow-x-auto scrollbar-hide">
-                        <div className="flex items-center gap-6 whitespace-nowrap min-w-max px-2">
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>run code</span>
-                                <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">Ctrl+Enter</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>reset sketch</span>
-                                <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">Ctrl+Shift+R</span>
-                            </div>
+                <div className="border-t border-white/5 bg-zinc-950/50 shrink-0">
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 text-[11px] text-zinc-500">
+                        <span className="whitespace-nowrap">textmode.art (c) {currentYear}</span>
+                        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-right">
+                            <a
+                                href={buildLegalHref('imprint')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors hover:text-zinc-300"
+                            >
+                                imprint
+                            </a>
+                            <a
+                                href={buildLegalHref('terms')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors hover:text-zinc-300"
+                            >
+                                terms
+                            </a>
+                            <a
+                                href={buildLegalHref('privacy')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors hover:text-zinc-300"
+                            >
+                                privacy
+                            </a>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        onClick={openAnalyticsConsentPreferences}
+                                        className="inline-flex h-5 w-5 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+                                        aria-label="Open privacy settings"
+                                    >
+                                        <Settings2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>privacy settings</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                     </div>
                 </div>

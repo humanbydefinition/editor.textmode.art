@@ -1,78 +1,22 @@
-import { lazy, Suspense, useEffect } from 'react';
-import { Switch, Route, useLocation } from 'wouter';
+import { lazy, Suspense } from 'react';
 import { TooltipProvider } from '@/shared/ui/tooltip';
+import { AnalyticsConsentBanner } from '@/features/analytics-consent';
 
 const EditorApp = lazy(() =>
 	import('@/app/EditorApp').then((m) => ({ default: m.EditorApp }))
 );
-const LegalDocumentPage = lazy(() =>
-	import('@/features/legal').then((m) => ({ default: m.LegalDocumentPage }))
-);
 
 /**
  * Root application component.
- * Uses wouter for client-side routing between the editor and legal pages.
- * Legal code is lazy-loaded so it doesn't bloat the editor bundle.
+ * Loads the editor shell and analytics consent UI.
  */
 export function App() {
-	const [location] = useLocation();
-
 	return (
 		<TooltipProvider>
-				<Suspense>
-					<Switch>
-					<Route path="/imprint">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="imprint" />
-						</RouteMode>
-					</Route>
-					<Route path="/tos">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="terms" />
-						</RouteMode>
-					</Route>
-					<Route path="/privacy">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="privacy" />
-						</RouteMode>
-					</Route>
-					{/* Locale-prefixed legal routes (/en/imprint, /de/tos, etc.) */}
-					<Route path="/:locale/imprint">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="imprint" />
-						</RouteMode>
-					</Route>
-					<Route path="/:locale/tos">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="terms" />
-						</RouteMode>
-					</Route>
-					<Route path="/:locale/privacy">
-						<RouteMode className="legal-mode">
-							<LegalDocumentPage documentId="privacy" />
-						</RouteMode>
-					</Route>
-					{/* Default: editor (handles / and any unmatched path) */}
-					<Route>
-						<EditorApp key={location} />
-					</Route>
-				</Switch>
+			<Suspense>
+				<EditorApp />
 			</Suspense>
+			<AnalyticsConsentBanner />
 		</TooltipProvider>
 	);
-}
-
-/**
- * Sets a CSS class on <body> while the route is active, and removes it on unmount.
- * Replaces the old imperative body.classList toggling in startClientApp.
- */
-function RouteMode({ className, children }: { className: string; children: React.ReactNode }) {
-	useEffect(() => {
-		document.body.classList.add(className);
-		return () => {
-			document.body.classList.remove(className);
-		};
-	}, [className]);
-
-	return <>{children}</>;
 }

@@ -10,9 +10,9 @@ export interface AppResourceLink {
 }
 
 const LEGAL_PATHS: Record<LegalRoute, string> = {
-	imprint: '/imprint',
-	terms: '/tos',
-	privacy: '/privacy',
+	imprint: 'imprint',
+	terms: 'tos',
+	privacy: 'privacy',
 };
 
 export const APP_META = {
@@ -58,5 +58,5 @@ export const APP_META = {
 } as const;
 
 export function buildLegalHref(route: LegalRoute, locale = 'en'): string {
-	return `${LEGAL_PATHS[route]}?lang=${locale}`;
+	return `https://legal.textmode.art/projects/synth.textmode.art/${locale}/${LEGAL_PATHS[route]}`;
 }

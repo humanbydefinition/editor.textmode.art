@@ -1,25 +1,23 @@
-
-import type { ParentToRunnerMessage, InitMessage } from './protocol';
-import { isRunnerMessage, PROTOCOL_VERSION } from './protocol';
+import { IframeTextmodeRuntime, type RunnerExecutionError } from '@textmode/runner-client';
 import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/types';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
 
 /**
- * TextmodeRuntime - manages the iframe lifecycle and communication from the parent window.
+ * TextmodeRuntime preserves synth's host runtime surface while delegating the
+ * iframe transport and current runner protocol to the shared client package.
  */
 export class TextmodeRuntime implements IHostRuntime {
 	readonly strategy = 'sandboxed' as const;
 
-	private iframe: HTMLIFrameElement | null = null;
-	private container: HTMLElement;
-	private _isReady = false;
+	private readonly container: HTMLElement;
+	private readonly runtime: IframeTextmodeRuntime;
+	private readonly options: HostRuntimeOptions;
+	private isRuntimeReady = false;
 	private pendingCode: string | null = null;
+	private pendingSoftReset = false;
 	private lastRequestedCode: string | null = null;
-	private messagePort: MessagePort | null = null;
-	private runnerOrigin: string;
-	private handshakeTimer: number | null = null;
 	private runnerUnavailable = false;
 
 	private onReadyCallback?: () => void;
@@ -30,8 +28,6 @@ export class TextmodeRuntime implements IHostRuntime {
 	private onRunnerConnected?: () => void;
 	private onRunnerDisconnected?: () => void;
 
-	private options: HostRuntimeOptions;
-
 	constructor(options: HostRuntimeOptions) {
 		this.options = options;
 		this.container = options.container;
@@ -41,45 +37,76 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.onSynthError = options.onSynthError;
 		this.onRunnerConnected = options.onRunnerConnected;
 		this.onRunnerDisconnected = options.onRunnerDisconnected;
-		this.runnerOrigin = new URL(this.options.runnerUrl, window.location.origin).origin;
+
+		this.runtime = new IframeTextmodeRuntime({
+			runnerUrl: options.runnerUrl,
+			client: 'synth',
+			mountMode: 'append',
+			handshakeTimeoutMs: HANDSHAKE_TIMEOUT_MS,
+			onReady: () => this.handleReady(),
+			onRunOk: (message) => {
+				this.onRunOk?.(message.timestamp);
+			},
+			onRunError: (error) => {
+				this.onRunError?.(this.toCodeError(error));
+			},
+			onSynthError: (message) => {
+				this.onSynthError?.({ message });
+			},
+			onToggleUI: () => {
+				this.options.onToggleUI?.();
+			},
+			onUserInteraction: () => {
+				this.onUserInteractionCallback?.();
+			},
+			onUnavailable: () => {
+				this.handleRunnerUnavailable();
+			},
+		});
 	}
 
 	/**
-	 * Create and initialize the iframe
+	 * Create and initialize the iframe.
 	 */
 	init(): void {
-		this.createIframe();
+		this.startRuntime();
 	}
 
 	/**
-	 * Check if iframe is ready to receive code
+	 * Check if iframe is ready to receive code.
 	 */
 	isReady(): boolean {
-		return this._isReady;
+		return this.isRuntimeReady && this.runtime.isReady;
 	}
 
 	/**
-	 * Run code immediately
+	 * Run code immediately.
 	 */
 	forceRun(code: string): void {
 		this.lastRequestedCode = code;
-		if (!this._isReady) {
-			this.pendingCode = code;
+		if (!this.isReady()) {
+			this.setPendingCode(code, false);
 			return;
 		}
-		this.sendMessage({ type: 'RUN_CODE', code });
+
+		void this.runtime.runCode(code).catch((error) => {
+			this.onRunError?.(this.toCodeError(error));
+		});
 	}
 
 	/**
-	 * Soft reset - reset frameCount to 0 and re-run code
+	 * Soft reset - reset frameCount to 0 and re-run code.
 	 */
 	softReset(code: string): void {
 		this.lastRequestedCode = code;
-		if (!this._isReady) {
-			this.pendingCode = code;
+		if (!this.isReady()) {
+			this.setPendingCode(code, true);
 			return;
 		}
-		this.sendMessage({ type: 'SOFT_RESET', code });
+
+		void this.runtime.runCode(code, { softReset: true }).catch((error) => {
+			this.onRunError?.(this.toCodeError(error));
+		});
 	}
 
 	setOnUserInteraction(callback: (() => void) | undefined): void {
@@ -90,7 +117,10 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Manually retry loading the runner iframe.
 	 */
 	reconnect(): void {
-		this.createIframe();
+		if (this.pendingCode === null && this.lastRequestedCode !== null) {
+			this.setPendingCode(this.lastRequestedCode, false);
+		}
+		this.startRuntime();
 	}
 
 	/**
@@ -98,215 +128,77 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Safari/WebKit may unlock full requestAnimationFrame cadence after this.
 	 */
 	activateFromUserGesture(): void {
-		if (!this.iframe) return;
-		this.iframe.tabIndex = -1;
-		this.focusElement(this.iframe);
-
-		try {
-			this.iframe.contentWindow?.focus();
-		} catch {
-			// Ignore focus errors; element focus still helps on Safari.
-		}
+		this.runtime.activateFromUserGesture();
 	}
 
 	/**
-	 * Cleanup
+	 * Cleanup.
 	 */
 	dispose(): void {
-		this.clearHandshakeTimer();
-		if (this.messagePort) {
-			if (this._isReady) {
-				this.sendMessage({ type: 'DISPOSE' });
-			}
-			this.messagePort.close();
-			this.messagePort = null;
-		}
-		if (this.iframe) {
-			this.iframe.removeEventListener('load', this.handleIframeLoad);
-			this.iframe.removeEventListener('error', this.handleIframeError);
-			this.iframe.remove();
-		}
+		this.isRuntimeReady = false;
+		this.pendingCode = null;
+		this.runtime.dispose();
 	}
 
-	/**
-	 * Create a new iframe
-	 */
-	private createIframe(): void {
-		// Remove existing iframe if any
-		if (this.iframe) {
-			this.iframe.removeEventListener('load', this.handleIframeLoad);
-			this.iframe.removeEventListener('error', this.handleIframeError);
-			this.iframe.remove();
-			this.iframe = null;
-		}
+	private startRuntime(): void {
+		this.isRuntimeReady = false;
 
-		this._isReady = false;
-		this.clearHandshakeTimer();
-		if (this.messagePort) {
-			this.messagePort.close();
-			this.messagePort = null;
-		}
+		void this.runtime
+			.init(this.container)
+			.then(() => {
+				this.decorateIframe();
+			})
+			.catch(() => {
+				this.handleRunnerUnavailable();
+			});
 
-		// Create new iframe
-		this.iframe = document.createElement('iframe');
-		this.iframe.id = 'runner-frame';
-		this.iframe.src = this.options.runnerUrl;
-		this.iframe.style.opacity = '0';
-		this.iframe.style.transition = 'opacity 140ms ease';
-
-		// Sandbox permissions: allow-scripts is required to run JS inside the frame.
-		// allow-same-origin lets the frame retain its real origin so that the
-		// MessagePort handshake (postMessage with a specific targetOrigin) works
-		// for cross-origin runner deployments.  This is safe because the runner
-		// is already hosted on a *separate* origin, so it cannot access the
-		// parent's cookies, storage, or DOM.
-		this.iframe.sandbox.add('allow-scripts');
-		this.iframe.sandbox.add('allow-same-origin');
-		this.iframe.referrerPolicy = 'no-referrer';
-		this.iframe.addEventListener('load', this.handleIframeLoad);
-		this.iframe.addEventListener('error', this.handleIframeError);
-
-		this.container.appendChild(this.iframe);
-
-		// Start the handshake timer immediately so we detect unavailability even
-		// when the iframe's `load`/`error` events don't fire as expected (iOS Safari)
-		// or when `contentWindow` is inaccessible for sandboxed cross-origin frames.
-		this.startHandshakeTimer();
+		this.decorateIframe();
 	}
 
-	/**
-	 * Handle messages from iframe via MessagePort
-	 */
-	private handlePortMessage = (event: MessageEvent): void => {
-		const msg = event.data as unknown;
-		if (!isRunnerMessage(msg)) return;
+	private handleReady(): void {
+		const wasUnavailable = this.runnerUnavailable;
+		this.isRuntimeReady = true;
+		this.decorateIframe();
+		this.runtime.frame?.style.setProperty('opacity', '1');
+		this.setRunnerUnavailable(false);
 
-		switch (msg.type) {
-			case 'READY': {
-				const wasUnavailable = this.runnerUnavailable;
-				this._isReady = true;
-				this.iframe?.style.setProperty('opacity', '1');
-				this.clearHandshakeTimer();
-				this.setRunnerUnavailable(false);
-				// Initial successful handshake should mark runner connected even
-				// when unavailable state never flipped to true.
-				if (!wasUnavailable) {
-					this.onRunnerConnected?.();
-				}
-				this.onReadyCallback?.();
-				// Run pending code if any
-				if (this.pendingCode !== null) {
-					this.forceRun(this.pendingCode);
-					this.pendingCode = null;
-				}
-				break;
-			}
-
-			case 'RUN_OK':
-				this.onRunOk?.(msg.timestamp);
-				break;
-
-			case 'RUN_ERROR':
-				this.onRunError?.({
-					message: msg.message,
-					stack: msg.stack,
-					line: msg.line,
-					column: msg.column,
-				});
-				break;
-
-			case 'SYNTH_ERROR':
-				this.onSynthError?.({
-					message: msg.message,
-				});
-				break;
-
-			case 'TOGGLE_UI':
-				this.options.onToggleUI?.();
-				break;
-
-			case 'USER_INTERACTION':
-				this.onUserInteractionCallback?.();
-				break;
+		if (!wasUnavailable) {
+			this.onRunnerConnected?.();
 		}
-	};
 
-	private handleIframeLoad = (): void => {
-		this.initializeMessagePort();
-	};
-
-	private handleIframeError = (): void => {
-		this.handleRunnerUnavailable();
-	};
-
-	/**
-	 * Send message to iframe
-	 */
-	private sendMessage(msg: ParentToRunnerMessage): void {
-		if (!this.messagePort) return;
-		this.messagePort.postMessage(msg);
-	}
-
-	private initializeMessagePort(): void {
-		if (!this.iframe?.contentWindow) return;
-
-		const channel = new MessageChannel();
-		this.messagePort = channel.port1;
-		this.messagePort.onmessage = this.handlePortMessage;
-		this.messagePort.start();
-
-		const initMessage: InitMessage = {
-			type: 'INIT',
-			v: PROTOCOL_VERSION,
-		};
-		const targetOrigin = import.meta.env.DEV ? '*' : this.runnerOrigin;
-		this.iframe.contentWindow.postMessage(initMessage, targetOrigin, [channel.port2]);
-		this.startHandshakeTimer();
-	}
-
-	private startHandshakeTimer(): void {
-		this.clearHandshakeTimer();
-		this.handshakeTimer = window.setTimeout(() => {
-			this.handleRunnerUnavailable();
-		}, HANDSHAKE_TIMEOUT_MS);
-	}
-
-	private clearHandshakeTimer(): void {
-		if (this.handshakeTimer) {
-			window.clearTimeout(this.handshakeTimer);
-			this.handshakeTimer = null;
-		}
-	}
-
-	private focusElement(element: HTMLElement): void {
-		try {
-			element.focus({ preventScroll: true });
-		} catch {
-			element.focus();
-		}
+		this.onReadyCallback?.();
+		this.flushPendingCode();
 	}
 
 	private handleRunnerUnavailable(): void {
-		this._isReady = false;
-		this.clearHandshakeTimer();
-
-		if (this.messagePort) {
-			this.messagePort.close();
-			this.messagePort = null;
-		}
+		this.isRuntimeReady = false;
 
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.pendingCode = this.lastRequestedCode;
-		}
-
-		if (this.iframe) {
-			this.iframe.removeEventListener('load', this.handleIframeLoad);
-			this.iframe.removeEventListener('error', this.handleIframeError);
-			this.iframe.remove();
-			this.iframe = null;
+			this.setPendingCode(this.lastRequestedCode, false);
 		}
 
 		this.setRunnerUnavailable(true);
+	}
+
+	private setPendingCode(code: string, softReset: boolean): void {
+		this.pendingCode = code;
+		this.pendingSoftReset = softReset;
+	}
+
+	private flushPendingCode(): void {
+		if (this.pendingCode === null) return;
+
+		const code = this.pendingCode;
+		const softReset = this.pendingSoftReset;
+		this.pendingCode = null;
+		this.pendingSoftReset = false;
+
+		if (softReset) {
+			this.softReset(code);
+			return;
+		}
+
+		this.forceRun(code);
 	}
 
 	private setRunnerUnavailable(isUnavailable: boolean): void {
@@ -317,5 +209,34 @@ export class TextmodeRuntime implements IHostRuntime {
 			return;
 		}
 		this.onRunnerConnected?.();
+	}
+
+	private decorateIframe(): void {
+		const frame = this.runtime.frame;
+		if (!frame) return;
+
+		frame.id = 'runner-frame';
+		frame.style.opacity = this.isRuntimeReady ? '1' : '0';
+		frame.style.transition = 'opacity 140ms ease';
+	}
+
+	private toCodeError(error: unknown): CodeError {
+		if (this.isRunnerExecutionError(error)) {
+			return {
+				message: error.message,
+				stack: error.stack,
+				line: error.line,
+				column: error.column,
+			};
+		}
+
+		return {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		};
+	}
+
+	private isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
+		return typeof error === 'object' && error !== null && 'message' in error;
 	}
 }
