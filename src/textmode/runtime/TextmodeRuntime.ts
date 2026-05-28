@@ -119,6 +119,7 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
 			this.setPendingCode(this.lastRequestedCode, false);
 		}
+		this.runtime.dispose();
 		this.startRuntime();
 	}
 
