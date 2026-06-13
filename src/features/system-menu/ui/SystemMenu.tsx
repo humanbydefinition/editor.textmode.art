@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Menu, Shuffle, X, Share, Dices, Heart, Settings2 } from 'lucide-react';
+import { Loader2, Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -12,7 +12,6 @@ import {
 } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { openAnalyticsConsentPreferences } from '@/features/analytics-consent';
 import { APP_META, buildLegalHref } from '@/shared/config/appMeta';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { PreferencesTab } from './tabs/PreferencesTab';
@@ -30,10 +29,6 @@ export interface SystemMenuProps {
     onResetRunners: () => void;
     onClearStorage: () => void;
     renderExamplesTab: (onClose: () => void) => ReactNode;
-}
-
-function isAnalyticsConsentTarget(target: EventTarget | null): boolean {
-    return target instanceof HTMLElement && target.closest('.analytics-consent') !== null;
 }
 
 export function SystemMenu({
@@ -120,11 +115,6 @@ export function SystemMenu({
                     event.preventDefault();
                     const content = event.currentTarget as HTMLElement | null;
                     content?.focus();
-                }}
-                onInteractOutside={(event) => {
-                    if (isAnalyticsConsentTarget(event.detail.originalEvent.target)) {
-                        event.preventDefault();
-                    }
                 }}
                 className="sm:max-w-[600px] h-[85vh] sm:h-[600px] bg-zinc-950/95 backdrop-blur-2xl border-white/10 p-0 overflow-hidden flex flex-col"
             >
@@ -242,21 +232,6 @@ export function SystemMenu({
                             >
                                 privacy
                             </a>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        onClick={openAnalyticsConsentPreferences}
-                                        className="inline-flex h-5 w-5 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
-                                        aria-label="Open privacy settings"
-                                    >
-                                        <Settings2 className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    <p>privacy settings</p>
-                                </TooltipContent>
-                            </Tooltip>
                         </div>
                     </div>
                 </div>

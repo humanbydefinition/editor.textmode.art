@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { TooltipProvider } from '@/shared/ui/tooltip';
-import { AnalyticsConsentBanner } from '@/features/analytics-consent';
 
 const EditorApp = lazy(() =>
 	import('@/app/EditorApp').then((m) => ({ default: m.EditorApp }))
@@ -8,7 +7,7 @@ const EditorApp = lazy(() =>
 
 /**
  * Root application component.
- * Loads the editor shell and analytics consent UI.
+ * Loads the editor shell.
  */
 export function App() {
 	return (
@@ -16,7 +15,6 @@ export function App() {
 			<Suspense>
 				<EditorApp />
 			</Suspense>
-			<AnalyticsConsentBanner />
 		</TooltipProvider>
 	);
 }
