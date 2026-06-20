@@ -30,7 +30,8 @@ export const APP_META = {
 	urls: {
 		support: 'https://code.textmode.art/docs/support',
 		repo: 'https://github.com/humanbydefinition/synth.textmode.art',
-		galleryContributionGuide: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/sketches/README.md',
+		galleryContributionGuide:
+			'https://github.com/humanbydefinition/synth.textmode.art/blob/main/sketches/README.md',
 		galleryPullRequest: 'https://github.com/humanbydefinition/synth.textmode.art/compare',
 		license: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/LICENSE',
 		discord: 'https://discord.gg/sjrw8QXNks',
@@ -52,6 +53,18 @@ export const APP_META = {
 			name: 'textmode.filters.js',
 			description: 'filter add-on library',
 			url: 'https://github.com/humanbydefinition/textmode.filters.js',
+			license: 'MIT',
+		},
+		{
+			name: 'textmode.export.js',
+			description: 'export add-on library',
+			url: 'https://github.com/humanbydefinition/textmode.export.js',
+			license: 'MIT',
+		},
+		{
+			name: 'textmode.figlet.js',
+			description: 'FIGlet font add-on library',
+			url: 'https://github.com/humanbydefinition/textmode.figlet.js',
 			license: 'MIT',
 		},
 	] satisfies AppResourceLink[],
