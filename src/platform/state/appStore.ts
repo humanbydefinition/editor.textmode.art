@@ -19,21 +19,21 @@ import { createUISlice, initUISlice, type UISlice } from './slices/uiSlice';
 export type AppState = SettingsSlice & RuntimeSlice & ShareSlice & GallerySlice & UISlice;
 
 export const useAppStore = create<AppState>()(
-    devtools(
-        subscribeWithSelector((...a) => ({
-            ...createSettingsSlice(...a),
+	devtools(
+		subscribeWithSelector((...a) => ({
+			...createSettingsSlice(...a),
 			...createRuntimeSlice(...a),
 			...createShareSlice(...a),
 			...createGallerySlice(...a),
 			...createUISlice(...a),
-        })),
-        { name: 'AppStore', enabled: import.meta.env.DEV },
-    ),
+		})),
+		{ name: 'AppStore', enabled: import.meta.env.DEV }
+	)
 );
 
 /**
  * Initialize app store with window resize listener.
  */
 export function initAppStore(): () => void {
-    return initUISlice(() => useAppStore.getState());
+	return initUISlice(() => useAppStore.getState());
 }

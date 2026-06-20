@@ -1,12 +1,12 @@
 import type { Example } from '@/features/examples/types';
 
 export const tutorials: Example[] = [
-    {
-        id: 'tutorial-1',
-        name: 'tutorial #1',
-        description: 'introduction to synth.textmode.art',
-        category: 'tutorial',
-        code: `/**
+	{
+		id: 'tutorial-1',
+		name: 'tutorial #1',
+		description: 'introduction to synth.textmode.art',
+		category: 'tutorial',
+		code: `/**
  * Welcome to \`synth.textmode.art\`!
  * 
  * At its core, this environment works just like standard \`hydra-synth\`.
@@ -41,13 +41,13 @@ t.fontSize(16);
 t.layers.base.synth(
   noise()
 );`,
-    },
-    {
-        id: 'tutorial-2',
-        name: 'tutorial #2',
-        description: 'layering channels & composition',
-        category: 'tutorial',
-        code: `/**
+	},
+	{
+		id: 'tutorial-2',
+		name: 'tutorial #2',
+		description: 'layering channels & composition',
+		category: 'tutorial',
+		code: `/**
  * @title synth.textmode.art - tutorial #2
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
@@ -95,13 +95,13 @@ t.layers.base.synth(
     .charColor(colors)
     .cellColor(background)
 );`,
-    },
-    {
-        id: 'tutorial-3',
-        name: 'tutorial #3',
-        description: 'custom character maps',
-        category: 'tutorial',
-        code: `/**
+	},
+	{
+		id: 'tutorial-3',
+		name: 'tutorial #3',
+		description: 'custom character maps',
+		category: 'tutorial',
+		code: `/**
  * @title synth.textmode.art - tutorial #3
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
@@ -142,13 +142,13 @@ t.layers.base.synth(
     .charMap('01')               // Define our alphabet as just '0' and '1'
     .charColor(matrixColor)      // Color them green
 );`,
-    },
-    {
-        id: 'tutorial-4',
-        name: 'tutorial #4',
-        description: 'layering system & composition',
-        category: 'tutorial',
-        code: `/**
+	},
+	{
+		id: 'tutorial-4',
+		name: 'tutorial #4',
+		description: 'layering system & composition',
+		category: 'tutorial',
+		code: `/**
  * @title synth.textmode.art - tutorial #4
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
@@ -259,5 +259,5 @@ layer4.draw(() => {
   // Add subtle rotation to the whole layer
   layer4.rotateZ(Math.sin(time * 0.3) * 10);
 });`,
-    },
+	},
 ];
