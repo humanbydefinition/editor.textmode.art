@@ -1,2 +1,3 @@
 export { ExamplesTab, type ExamplesTabProps } from './ui/ExamplesTab';
-export { getExampleEngineCatalog, type ExampleEngineCatalog } from './model/exampleCatalog';
+export { EXAMPLE_LIBRARY_ORDER, getExampleLibraryCatalog } from './model/exampleCatalog';
+export type { Example, ExampleCategory, ExampleLibraryCatalog, ExampleLibraryId } from './types';

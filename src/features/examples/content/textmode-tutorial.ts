@@ -2,7 +2,7 @@ import type { Example } from '@/features/examples/types';
 
 export const tutorials: Example[] = [
 	{
-		id: 'tutorial-1',
+		id: 'synth-tutorial-1',
 		name: 'tutorial #1',
 		description: 'introduction to editor.textmode.art',
 		category: 'tutorial',
@@ -43,7 +43,7 @@ t.layers.base.synth(
 );`,
 	},
 	{
-		id: 'tutorial-2',
+		id: 'synth-tutorial-2',
 		name: 'tutorial #2',
 		description: 'layering channels & composition',
 		category: 'tutorial',
@@ -97,7 +97,7 @@ t.layers.base.synth(
 );`,
 	},
 	{
-		id: 'tutorial-3',
+		id: 'synth-tutorial-3',
 		name: 'tutorial #3',
 		description: 'custom character maps',
 		category: 'tutorial',
@@ -144,7 +144,7 @@ t.layers.base.synth(
 );`,
 	},
 	{
-		id: 'tutorial-4',
+		id: 'synth-tutorial-4',
 		name: 'tutorial #4',
 		description: 'layering system & composition',
 		category: 'tutorial',
@@ -154,7 +154,7 @@ t.layers.base.synth(
  */
 
 /**
- * Welcome to Tutorial #5!
+ * Welcome to Tutorial #4!
  *
  * In this tutorial, we'll explore the layering system.
  * Layers let you stack multiple synths on top of each other,

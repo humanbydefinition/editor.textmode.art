@@ -1,20 +1,44 @@
-import { tutorials as textmodeTutorials } from '@/features/examples/content/textmode-tutorial';
-import type { Example } from '@/features/examples/types';
+import { figletExampleCategories } from '@/features/examples/content/textmode-figlet';
+import { filtersExampleCategories } from '@/features/examples/content/textmode-filters';
+import { exportExampleCategories } from '@/features/examples/content/textmode-export';
+import { textmodeExampleCategories } from '@/features/examples/content/textmode-js';
+import { synthExampleCategories } from '@/features/examples/content/textmode-synth';
+import type { ExampleLibraryCatalog, ExampleLibraryId } from '@/features/examples/types';
 
-export interface ExampleEngineCatalog {
-	id: 'textmode';
-	displayName: string;
-	examples: Record<string, Example[]>;
-}
+export const EXAMPLE_LIBRARY_ORDER = ['textmode', 'synth', 'figlet', 'filters', 'export'] as const satisfies readonly ExampleLibraryId[];
 
-export function getExampleEngineCatalog(): ExampleEngineCatalog[] {
-	return [
-		{
-			id: 'textmode' as const,
-			displayName: 'textmode.js',
-			examples: {
-				tutorial: textmodeTutorials,
-			},
-		},
-	].filter((engine) => Object.keys(engine.examples).length > 0);
+const EXAMPLE_LIBRARY_CATALOG: ExampleLibraryCatalog[] = [
+	{
+		id: 'textmode',
+		displayName: 'textmode.js',
+		categories: textmodeExampleCategories,
+	},
+	{
+		id: 'synth',
+		displayName: 'textmode.synth.js',
+		categories: synthExampleCategories,
+	},
+	{
+		id: 'figlet',
+		displayName: 'textmode.figlet.js',
+		categories: figletExampleCategories,
+	},
+	{
+		id: 'filters',
+		displayName: 'textmode.filters.js',
+		categories: filtersExampleCategories,
+	},
+	{
+		id: 'export',
+		displayName: 'textmode.export.js',
+		categories: exportExampleCategories,
+	},
+];
+
+export function getExampleLibraryCatalog(): ExampleLibraryCatalog[] {
+	const catalogById = new Map(EXAMPLE_LIBRARY_CATALOG.map((library) => [library.id, library]));
+
+	return EXAMPLE_LIBRARY_ORDER.map((id) => catalogById.get(id)).filter((library): library is ExampleLibraryCatalog => {
+		return Boolean(library && library.categories.some((category) => category.examples.length > 0));
+	});
 }
