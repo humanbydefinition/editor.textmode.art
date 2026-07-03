@@ -1,4 +1,4 @@
-# Contributing to synth.textmode.art
+# Contributing to editor.textmode.art
 
 ## License
 
@@ -24,14 +24,14 @@ Before opening a pull request:
 - Pick a unique slug with lowercase letters, numbers, and hyphens only.
 - Keep the slug between 3 and 32 characters.
 - Make sure `meta.json` follows the schema documented in [`sketches/README.md`](sketches/README.md).
-- Keep `sketch.js` self-contained and compatible with `synth.textmode.art`.
+- Keep `sketch.js` self-contained and compatible with `editor.textmode.art`.
 
 Merged sketch PRs are treated as reviewed gallery entries. They may run automatically when users load their `/s/<slug>` URL or press the random sketch button.
 
 ## Gallery sketch licensing
 
-The `synth.textmode.art` application remains licensed under the [GNU Affero General Public License v3.0 or later](LICENSE), including when it includes, hosts, or runs merged gallery sketches.
+The `editor.textmode.art` application remains licensed under the [GNU Affero General Public License v3.0 or later](LICENSE), including when it includes, hosts, or runs merged gallery sketches.
 
 You retain your copyright in sketches you submit. By submitting files under [`sketches/`](sketches/), you confirm that you have the rights to contribute them and that you grant this project permission to include, host, run, modify, and distribute the submitted sketch under the AGPL-3.0-or-later terms as part of this repository and website.
 
-You may also choose an additional standalone license for the sketch itself in `meta.json` using the `license` field. That license describes how others may reuse the sketch as an independent creative/code work outside the bundled `synth.textmode.art` application. If you set `license` to `null`, no additional standalone license is declared; the AGPL gallery inclusion grant above still applies.
+You may also choose an additional standalone license for the sketch itself in `meta.json` using the `license` field. That license describes how others may reuse the sketch as an independent creative/code work outside the bundled `editor.textmode.art` application. If you set `license` to `null`, no additional standalone license is declared; the AGPL gallery inclusion grant above still applies.

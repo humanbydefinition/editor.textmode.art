@@ -4,10 +4,10 @@ export const tutorials: Example[] = [
 	{
 		id: 'tutorial-1',
 		name: 'tutorial #1',
-		description: 'introduction to synth.textmode.art',
+		description: 'introduction to editor.textmode.art',
 		category: 'tutorial',
 		code: `/**
- * Welcome to \`synth.textmode.art\`!
+ * Welcome to \`editor.textmode.art\`!
  * 
  * At its core, this environment works just like standard \`hydra-synth\`.
  * You can throw in your favorite hydra sketches into the \`synth\` method below
@@ -48,7 +48,7 @@ t.layers.base.synth(
 		description: 'layering channels & composition',
 		category: 'tutorial',
 		code: `/**
- * @title synth.textmode.art - tutorial #2
+ * @title editor.textmode.art - tutorial #2
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 
@@ -60,7 +60,7 @@ t.layers.base.synth(
  * - \`charColor(src)\`: Controls ONLY the glyph colors.
  * - \`cellColor(src)\`: Controls ONLY the background cell colors.
  *
- * The real power of \`synth.textmode.art\` comes from driving these 3 textures with DIFFERENT sources.
+ * The real power of \`editor.textmode.art\` comes from driving these 3 textures with DIFFERENT sources.
  *
  * In this example:
  * 1. We use \`voronoi\` to drive the characters. The brightness of the pattern selects the character index.
@@ -102,7 +102,7 @@ t.layers.base.synth(
 		description: 'custom character maps',
 		category: 'tutorial',
 		code: `/**
- * @title synth.textmode.art - tutorial #3
+ * @title editor.textmode.art - tutorial #3
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 
@@ -149,7 +149,7 @@ t.layers.base.synth(
 		description: 'layering system & composition',
 		category: 'tutorial',
 		code: `/**
- * @title synth.textmode.art - tutorial #4
+ * @title editor.textmode.art - tutorial #4
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 

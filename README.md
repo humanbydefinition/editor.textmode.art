@@ -1,13 +1,13 @@
-# synth.textmode.art (✿◠‿◠)
+# editor.textmode.art (✿◠‿◠)
 
 <div align="center">
 
-| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-synth.textmode.art-646cff?logo=web&logoColor=white)](https://synth.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
+| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-editor.textmode.art-646cff?logo=web&logoColor=white)](https://editor.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
 |:-------------|:-------------|:-------------|
 
 </div>
 
-`synth.textmode.art` is a browser-based live coding environment for procedural text generation and ASCII synthesis. It builds on [`textmode.js`](https://github.com/humanbydefinition/textmode.js) to create a browser-based creative coding environment with real-time execution.
+`editor.textmode.art` is a browser-based web editor for the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) creative coding ecosystem. It supports live coding, procedural text generation, and ASCII/textmode synthesis with real-time execution.
 
 ## Features
 
@@ -21,7 +21,7 @@
 
 ## Getting started
 
-Visit **[synth.textmode.art](https://synth.textmode.art)** to start coding immediately - no installation required.
+Visit **[editor.textmode.art](https://editor.textmode.art)** to start coding immediately - no installation required.
 
 1. **Start coding**: Write your scripts in the integrated editors. The environment will auto-execute your changes by default.
 2. **Explore examples**: Check the `Examples` menu to see what's possible and learn from pre-made sketches.

@@ -42,7 +42,7 @@ Rules:
 
 ## `sketch.js`
 
-`sketch.js` should contain the code that runs in `synth.textmode.art`. Keep it self-contained and compatible with the same live-coding names available in the editor, such as `t`, `osc`, `noise`, `gradient`, `char`, and `shape`.
+`sketch.js` should contain the code that runs in `editor.textmode.art`. Keep it self-contained and compatible with the same live-coding names available in the editor, such as `t`, `osc`, `noise`, `gradient`, `char`, and `shape`.
 
 The code must not be empty and must stay under 300,000 characters.
 
@@ -50,7 +50,7 @@ Gallery sketch code is not linted by the project ESLint setup. Sketch PR review 
 
 ## Review Expectations
 
-You retain your copyright in sketches you submit. By submitting a pull request, you confirm that you have the rights to contribute the sketch and grant this project permission to include, host, run, modify, and distribute it under the repository's AGPL-3.0-or-later terms as part of `synth.textmode.art`.
+You retain your copyright in sketches you submit. By submitting a pull request, you confirm that you have the rights to contribute the sketch and grant this project permission to include, host, run, modify, and distribute it under the repository's AGPL-3.0-or-later terms as part of `editor.textmode.art`.
 
 You may also declare an additional standalone license in `meta.json`. That license applies to reuse of the sketch as an independent creative/code work outside the bundled app. If `license` is `null`, no additional standalone license is declared.
 
