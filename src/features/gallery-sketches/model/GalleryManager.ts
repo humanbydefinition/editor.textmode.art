@@ -37,7 +37,9 @@ export class GalleryManager {
 	}
 
 	getInitialCodeOverride(): string | null {
-		return this.pendingGallerySketch?.textmodeCode ?? this.deps.store.gallery.getActiveSketch()?.textmodeCode ?? null;
+		return (
+			this.pendingGallerySketch?.textmodeCode ?? this.deps.store.gallery.getActiveSketch()?.textmodeCode ?? null
+		);
 	}
 
 	applyPendingGallerySketchIfPresent(): void {

@@ -216,6 +216,9 @@ export class TextmodeEditor {
 			paths: {
 				'textmode.js': ['file:///node_modules/textmode.js/dist/types/index.d.ts'],
 				'textmode.synth.js': ['file:///node_modules/textmode.synth.js/dist/types/index.d.ts'],
+				'textmode.filters.js': ['file:///node_modules/textmode.filters.js/dist/types/index.d.ts'],
+				'textmode.export.js': ['file:///node_modules/textmode.export.js/dist/types/index.d.ts'],
+				'textmode.figlet.js': ['file:///node_modules/textmode.figlet.js/dist/types/index.d.ts'],
 			},
 		});
 

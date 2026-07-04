@@ -16,8 +16,8 @@ const LEGAL_PATHS: Record<LegalRoute, string> = {
 };
 
 export const APP_META = {
-	name: 'synth.textmode.art',
-	description: 'a live coding environment for procedural text generation and ASCII synthesis.',
+	name: 'editor.textmode.art',
+	description: 'a browser-based textmode.js editor for live coding, ASCII art, and textmode synthesis.',
 	version: packageJson.version,
 	licenseLabel: 'GNU AGPLv3',
 	author: {
@@ -29,10 +29,11 @@ export const APP_META = {
 	contactEmail: 'hello@textmode.art',
 	urls: {
 		support: 'https://code.textmode.art/docs/support',
-		repo: 'https://github.com/humanbydefinition/synth.textmode.art',
-		galleryContributionGuide: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/sketches/README.md',
-		galleryPullRequest: 'https://github.com/humanbydefinition/synth.textmode.art/compare',
-		license: 'https://github.com/humanbydefinition/synth.textmode.art/blob/main/LICENSE',
+		repo: 'https://github.com/humanbydefinition/editor.textmode.art',
+		galleryContributionGuide:
+			'https://github.com/humanbydefinition/editor.textmode.art/blob/main/sketches/README.md',
+		galleryPullRequest: 'https://github.com/humanbydefinition/editor.textmode.art/compare',
+		license: 'https://github.com/humanbydefinition/editor.textmode.art/blob/main/LICENSE',
 		discord: 'https://discord.gg/sjrw8QXNks',
 	},
 	resources: [
@@ -54,9 +55,21 @@ export const APP_META = {
 			url: 'https://github.com/humanbydefinition/textmode.filters.js',
 			license: 'MIT',
 		},
+		{
+			name: 'textmode.export.js',
+			description: 'export add-on library',
+			url: 'https://github.com/humanbydefinition/textmode.export.js',
+			license: 'MIT',
+		},
+		{
+			name: 'textmode.figlet.js',
+			description: 'FIGlet font add-on library',
+			url: 'https://github.com/humanbydefinition/textmode.figlet.js',
+			license: 'MIT',
+		},
 	] satisfies AppResourceLink[],
 } as const;
 
 export function buildLegalHref(route: LegalRoute, locale = 'en'): string {
-	return `https://legal.textmode.art/projects/synth.textmode.art/${locale}/${LEGAL_PATHS[route]}`;
+	return `https://legal.textmode.art/projects/editor.textmode.art/${locale}/${LEGAL_PATHS[route]}`;
 }

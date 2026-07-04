@@ -39,7 +39,8 @@ export function pickRandomGallerySketch(
 ): GallerySketch | null {
 	if (sketches.length === 0) return null;
 
-	const candidates = excludeSlug && sketches.length > 1 ? sketches.filter((sketch) => sketch.slug !== excludeSlug) : sketches;
+	const candidates =
+		excludeSlug && sketches.length > 1 ? sketches.filter((sketch) => sketch.slug !== excludeSlug) : sketches;
 	if (candidates.length === 0) return null;
 
 	const index = Math.min(candidates.length - 1, Math.floor(rng() * candidates.length));
@@ -79,7 +80,9 @@ export function buildGallerySketchCatalog(metaModuleMap: ModuleMap, codeModuleMa
 		assertGallerySketchMeta(meta, path);
 
 		if (meta.slug !== folderSlug) {
-			throw new Error(`Gallery sketch slug mismatch: ${path} declares "${meta.slug}" but folder is "${folderSlug}"`);
+			throw new Error(
+				`Gallery sketch slug mismatch: ${path} declares "${meta.slug}" but folder is "${folderSlug}"`
+			);
 		}
 
 		const slugValidation = validateSlug(meta.slug);

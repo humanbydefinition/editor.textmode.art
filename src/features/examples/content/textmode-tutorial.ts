@@ -1,13 +1,13 @@
 import type { Example } from '@/features/examples/types';
 
 export const tutorials: Example[] = [
-    {
-        id: 'tutorial-1',
-        name: 'tutorial #1',
-        description: 'introduction to synth.textmode.art',
-        category: 'tutorial',
-        code: `/**
- * Welcome to \`synth.textmode.art\`!
+	{
+		id: 'synth-tutorial-1',
+		name: 'tutorial #1',
+		description: 'introduction to editor.textmode.art',
+		category: 'tutorial',
+		code: `/**
+ * Welcome to \`editor.textmode.art\`!
  * 
  * At its core, this environment works just like standard \`hydra-synth\`.
  * You can throw in your favorite hydra sketches into the \`synth\` method below
@@ -41,14 +41,14 @@ t.fontSize(16);
 t.layers.base.synth(
   noise()
 );`,
-    },
-    {
-        id: 'tutorial-2',
-        name: 'tutorial #2',
-        description: 'layering channels & composition',
-        category: 'tutorial',
-        code: `/**
- * @title synth.textmode.art - tutorial #2
+	},
+	{
+		id: 'synth-tutorial-2',
+		name: 'tutorial #2',
+		description: 'layering channels & composition',
+		category: 'tutorial',
+		code: `/**
+ * @title editor.textmode.art - tutorial #2
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 
@@ -60,7 +60,7 @@ t.layers.base.synth(
  * - \`charColor(src)\`: Controls ONLY the glyph colors.
  * - \`cellColor(src)\`: Controls ONLY the background cell colors.
  *
- * The real power of \`synth.textmode.art\` comes from driving these 3 textures with DIFFERENT sources.
+ * The real power of \`editor.textmode.art\` comes from driving these 3 textures with DIFFERENT sources.
  *
  * In this example:
  * 1. We use \`voronoi\` to drive the characters. The brightness of the pattern selects the character index.
@@ -95,14 +95,14 @@ t.layers.base.synth(
     .charColor(colors)
     .cellColor(background)
 );`,
-    },
-    {
-        id: 'tutorial-3',
-        name: 'tutorial #3',
-        description: 'custom character maps',
-        category: 'tutorial',
-        code: `/**
- * @title synth.textmode.art - tutorial #3
+	},
+	{
+		id: 'synth-tutorial-3',
+		name: 'tutorial #3',
+		description: 'custom character maps',
+		category: 'tutorial',
+		code: `/**
+ * @title editor.textmode.art - tutorial #3
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 
@@ -142,19 +142,19 @@ t.layers.base.synth(
     .charMap('01')               // Define our alphabet as just '0' and '1'
     .charColor(matrixColor)      // Color them green
 );`,
-    },
-    {
-        id: 'tutorial-4',
-        name: 'tutorial #4',
-        description: 'layering system & composition',
-        category: 'tutorial',
-        code: `/**
- * @title synth.textmode.art - tutorial #4
+	},
+	{
+		id: 'synth-tutorial-4',
+		name: 'tutorial #4',
+		description: 'layering system & composition',
+		category: 'tutorial',
+		code: `/**
+ * @title editor.textmode.art - tutorial #4
  * @author humanbydefinition - https://github.com/humanbydefinition
  */
 
 /**
- * Welcome to Tutorial #5!
+ * Welcome to Tutorial #4!
  *
  * In this tutorial, we'll explore the layering system.
  * Layers let you stack multiple synths on top of each other,
@@ -259,5 +259,5 @@ layer4.draw(() => {
   // Add subtle rotation to the whole layer
   layer4.rotateZ(Math.sin(time * 0.3) * 10);
 });`,
-    },
+	},
 ];

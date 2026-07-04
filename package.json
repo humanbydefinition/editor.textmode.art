@@ -1,5 +1,5 @@
 {
-  "name": "synth.textmode.art",
+  "name": "editor.textmode.art",
   "version": "1.0.0",
   "license": "AGPL-3.0-or-later",
   "author": "humanbydefinition <hello@textmode.art> (https://code.textmode.art)",
@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{ts,js}\"",
     "format:check": "prettier --check \"**/*.{ts,js}\"",
-    "extract-types": "npx tsx scripts/extractTypes.ts"
+    "extract-types": "tsx scripts/extractTypes.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -27,8 +27,8 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@textmode/runner-client": "^0.1.0",
-    "@textmode/runner-protocol": "^0.1.0",
+    "@textmode/runner-client": "^0.2.1",
+    "@textmode/runner-protocol": "^0.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
@@ -57,9 +57,12 @@
     "jsdom": "^28.0.0",
     "prettier": "^3.7.4",
     "tailwindcss": "^4.1.10",
-    "textmode.filters.js": "^1.2.0",
-    "textmode.js": "^0.12.0",
-    "textmode.synth.js": "^1.6.0",
+    "textmode.export.js": "^1.5.2",
+    "textmode.figlet.js": "^1.0.2",
+    "textmode.filters.js": "^1.2.2",
+    "textmode.js": "^0.17.0-beta.2",
+    "textmode.synth.js": "^1.7.0",
+    "tsx": "^4.22.4",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",

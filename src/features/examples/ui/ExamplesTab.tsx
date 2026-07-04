@@ -1,90 +1,76 @@
-import { ScrollArea } from "@/shared/ui/scroll-area";
-import { Separator } from "@/shared/ui/separator";
-import { Play } from 'lucide-react';
-import type { Example } from '@/features/examples/types';
-import { getExampleEngineCatalog } from '../model/exampleCatalog';
+import { useState, useCallback, useEffect } from 'react';
+import { getExampleLibraryCatalog } from '@/features/examples/model/exampleCatalog';
+import { LibrarySidebar } from './LibrarySidebar';
+import { ExampleList } from './ExampleList';
+import type { Example, ExampleLibraryId } from '@/features/examples/types';
+
+const STORAGE_KEY = 'textmode:examples:selected-library';
+
+function loadPersistedLibrary(): ExampleLibraryId | null {
+	try {
+		const stored = localStorage.getItem(STORAGE_KEY);
+		if (stored === 'textmode' || stored === 'synth' || stored === 'figlet' || stored === 'filters' || stored === 'export') {
+			return stored;
+		}
+	} catch {
+		/* storage unavailable */
+	}
+	return null;
+}
+
+function persistLibrary(id: ExampleLibraryId): void {
+	try {
+		localStorage.setItem(STORAGE_KEY, id);
+	} catch {
+		/* storage full or unavailable */
+	}
+}
 
 export interface ExamplesTabProps {
-    onLoadExample: (code: string) => void;
-    onClose: () => void;
+	onLoadExample: (code: string) => void;
+	onClose: () => void;
 }
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
-    const engines = getExampleEngineCatalog();
-    const engine = engines[0];
+	const libraries = getExampleLibraryCatalog();
+	const defaultLibrary = libraries[0]?.id ?? null;
+	const initialLibrary = loadPersistedLibrary();
+	const initialId =
+		initialLibrary && libraries.some((l) => l.id === initialLibrary) ? initialLibrary : defaultLibrary;
 
-    const handleSelect = (example: Example) => {
-        onLoadExample(example.code);
-        onClose();
-    };
+	const [selectedLibraryId, setSelectedLibraryId] = useState<ExampleLibraryId | null>(initialId);
+	const selectedLibrary = libraries.find((l) => l.id === selectedLibraryId) ?? libraries[0] ?? null;
 
-    if (!engine) {
-        return (
-            <div className="p-6 text-center text-zinc-500 italic">
-                No examples available.
-            </div>
-        );
-    }
+	useEffect(() => {
+		if (selectedLibraryId) {
+			persistLibrary(selectedLibraryId);
+		}
+	}, [selectedLibraryId]);
 
-    return (
-        <EngineExampleList
-            examplesByCategory={engine.examples}
-            onSelect={handleSelect}
-        />
-    );
-}
+	const handleSelect = useCallback(
+		(example: Example) => {
+			onLoadExample(example.code);
+			onClose();
+		},
+		[onLoadExample, onClose]
+	);
 
-function EngineExampleList({
-    examplesByCategory,
-    onSelect,
-}: {
-    examplesByCategory: Record<string, Example[]>;
-    onSelect: (ex: Example) => void;
-}) {
-    const categories = Object.keys(examplesByCategory);
+	const handleLibraryChange = useCallback((id: ExampleLibraryId) => {
+		setSelectedLibraryId(id);
+	}, []);
 
-    // Simple helper to capitalize category names
-    const getCategoryName = (cat: string) => cat.charAt(0).toUpperCase() + cat.slice(1);
+	if (!defaultLibrary || !selectedLibrary) {
+		return <div className="p-6 text-center text-zinc-500 italic">No examples available.</div>;
+	}
 
-    return (
-        <ScrollArea className="h-full">
-            <div className="p-6 space-y-6">
-                <p className="text-sm text-zinc-400">
-                    select an example to load. your current code will be replaced.
-                </p>
-
-                {categories.map((category, index) => (
-                    <div key={category}>
-                        {index > 0 && <Separator className="bg-white/5 mb-6" />}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider pl-1 border-l-2 border-zinc-700">
-                                {getCategoryName(category)}
-                            </h3>
-                            <div className="grid grid-cols-1 gap-3">
-                                {examplesByCategory[category]?.map((example) => (
-                                    <button
-                                        key={example.id}
-                                        onClick={() => onSelect(example)}
-                                        className="flex items-start gap-4 p-4 rounded-lg bg-zinc-900/30 border border-white/5 hover:bg-zinc-800/50 hover:border-white/10 transition-all group text-left w-full"
-                                    >
-                                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors shrink-0">
-                                            <Play className="w-5 h-5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-sm font-medium text-zinc-200 group-hover:text-white transition-colors">
-                                                {example.name}
-                                            </h4>
-                                            <p className="text-xs text-zinc-500 group-hover:text-zinc-400 mt-1 line-clamp-2">
-                                                {example.description}
-                                            </p>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </ScrollArea>
-    );
+	return (
+		<div className="flex h-full min-h-0 flex-col">
+			<LibrarySidebar
+				libraries={libraries}
+				selectedId={selectedLibrary.id}
+				onSelect={handleLibraryChange}
+			/>
+			<ExampleList library={selectedLibrary} onSelect={handleSelect} />
+		</div>
+	);
 }

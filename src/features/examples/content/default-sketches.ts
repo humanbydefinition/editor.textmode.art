@@ -13,7 +13,7 @@ t.layers.base.synth( // define a synth for the textmode.js base layer
 
 // custom layer for the label, rendered on top of the base layer
 const labelLayer = t.layers.add({ fontSize: 64, blendMode: "difference" });
-const label = "synth.textmode.art";
+const label = "editor.textmode.art";
 
 const drawText = (s, x, y) => {
   t.charColor("#fff");
