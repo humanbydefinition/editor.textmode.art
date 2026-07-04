@@ -29,6 +29,24 @@
     transform-origin: left top;
 }
 
+/* Monaco uses a hidden textarea for input. Keep its native selection painting
+   invisible so highlighted editor text is rendered only by Monaco's view layer. */
+.monaco-editor .inputarea,
+.monaco-editor textarea.inputarea {
+    background: transparent !important;
+    color: transparent !important;
+    caret-color: transparent !important;
+    text-shadow: none !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+.monaco-editor .inputarea::selection,
+.monaco-editor textarea.inputarea::selection {
+    background: transparent !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
 /* ===== HIDE IPAD KEYBOARD WIDGET ===== */
 /* Monaco's built-in keyboard icon for iOS/iPad - redundant for this app */
 .monaco-editor .iPadShowKeyboard {
@@ -89,7 +107,9 @@
 
 /* Selection visibility */
 .monaco-editor .selected-text {
-    background: rgba(100, 150, 255, 0.4) !important;
+    background: rgba(56, 104, 170, 0.94) !important;
+    opacity: 1 !important;
+    mix-blend-mode: normal !important;
 }
 
 /* Cursor visibility */
