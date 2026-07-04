@@ -39,7 +39,7 @@ export function LibrarySidebar({ libraries, selectedId, onSelect }: LibrarySideb
 			role="tablist"
 			aria-label="Example libraries"
 			aria-orientation="horizontal"
-			className="flex shrink-0 flex-wrap items-center gap-x-1 gap-y-1.5 border-b border-white/5 px-4 py-3 sm:px-6"
+			className="grid shrink-0 grid-cols-1 gap-1.5 border-b border-white/5 px-4 py-3 min-[420px]:grid-cols-6 sm:px-6"
 		>
 			{libraries.map((library, index) => (
 				<LibrarySidebarItem
@@ -51,6 +51,7 @@ export function LibrarySidebar({ libraries, selectedId, onSelect }: LibrarySideb
 					onKeyDown={(e) => handleKeyDown(e, index)}
 					tabIndex={library.id === selectedId ? 0 : -1}
 					panelId={`examples-panel-${library.id}`}
+					className={index < 3 ? 'min-[420px]:col-span-2' : 'min-[420px]:col-span-3'}
 				/>
 			))}
 		</div>
