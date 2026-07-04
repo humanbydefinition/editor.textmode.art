@@ -38,7 +38,7 @@ const EXAMPLE_LIBRARY_CATALOG: ExampleLibraryCatalog[] = [
 export function getExampleLibraryCatalog(): ExampleLibraryCatalog[] {
 	const catalogById = new Map(EXAMPLE_LIBRARY_CATALOG.map((library) => [library.id, library]));
 
-	return EXAMPLE_LIBRARY_ORDER.map((id) => catalogById.get(id)).filter((library): library is ExampleLibraryCatalog => {
-		return Boolean(library && library.categories.some((category) => category.examples.length > 0));
-	});
+	return EXAMPLE_LIBRARY_ORDER.map((id) => catalogById.get(id)).filter(
+		(library): library is ExampleLibraryCatalog => Boolean(library)
+	);
 }

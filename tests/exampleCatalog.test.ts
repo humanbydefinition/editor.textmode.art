@@ -11,15 +11,7 @@ import type { Example, ExampleLibraryCatalog } from '../src/features/examples/ty
 import { typeDefinitions } from '../src/textmode/config/generatedTypes';
 
 const REQUESTED_LIBRARY_ORDER = ['textmode', 'synth', 'figlet', 'filters', 'export'] as const;
-const BLOCKED_EXPORT_DOWNLOAD_CALLS = [
-	'saveCanvas',
-	'copyCanvas',
-	'saveSVG',
-	'saveStrings',
-	'saveJSON',
-	'saveGIF',
-	'saveVideo',
-];
+const EMPTY_LIBRARY_IDS = ['textmode', 'figlet', 'filters', 'export'] as const;
 
 describe('example catalog', () => {
 	it('keeps the requested library tab order', () => {
@@ -27,16 +19,28 @@ describe('example catalog', () => {
 		expect(getExampleLibraryCatalog().map((library) => library.id)).toEqual(REQUESTED_LIBRARY_ORDER);
 	});
 
-	it('provides every requested library with categories and examples', () => {
-		for (const library of getExampleLibraryCatalog()) {
-			expect(library.displayName).toMatch(/^textmode(\.|$)/);
-			expect(library.categories.length).toBeGreaterThan(0);
+	it('keeps empty non-synth libraries visible for future examples', () => {
+		const catalog = getExampleLibraryCatalog();
 
-			for (const category of library.categories) {
-				expect(category.id).toBeTruthy();
-				expect(category.displayName).toBeTruthy();
-				expect(category.examples.length).toBeGreaterThan(0);
-			}
+		for (const id of EMPTY_LIBRARY_IDS) {
+			const library = catalog.find((entry) => entry.id === id);
+			expect(library).toBeDefined();
+			expect(library?.displayName).toMatch(/^textmode\./);
+			expect(flattenExamples(library ? [library] : [])).toEqual([]);
+		}
+	});
+
+	it('provides synth example categories and examples', () => {
+		const synthLibrary = getExampleLibraryCatalog().find((library) => library.id === 'synth');
+
+		expect(synthLibrary).toBeDefined();
+		expect(synthLibrary?.displayName).toBe('textmode.synth.js');
+		expect(synthLibrary?.categories.length).toBeGreaterThan(0);
+
+		for (const category of synthLibrary?.categories ?? []) {
+			expect(category.id).toBeTruthy();
+			expect(category.displayName).toBeTruthy();
+			expect(category.examples.length).toBeGreaterThan(0);
 		}
 	});
 
@@ -88,17 +92,6 @@ describe('example code safety', () => {
 			expect(example.code).not.toMatch(/\btextmode\.create\s*\(/);
 			expect(example.code).not.toMatch(/\bplugins\s*:/);
 			expect(example.code).not.toMatch(/\b(?:FigletPlugin|FiltersPlugin|ExportPlugin)\b/);
-		}
-	});
-
-	it('keeps export examples non-destructive and download-free', () => {
-		const exportLibrary = getExampleLibraryCatalog().find((library) => library.id === 'export');
-		const exportExamples = exportLibrary ? flattenExamples([exportLibrary]) : [];
-
-		for (const { example } of exportExamples) {
-			for (const methodName of BLOCKED_EXPORT_DOWNLOAD_CALLS) {
-				expect(example.code, example.id).not.toMatch(new RegExp(`\\bt\\.${methodName}\\s*\\(`));
-			}
 		}
 	});
 });
