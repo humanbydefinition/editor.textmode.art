@@ -25,6 +25,6 @@ export function validateSlug(slug: string): { valid: true } | { valid: false; re
 }
 
 export function getGallerySlugFromPathname(pathname: string): string | null {
-	const match = pathname.match(/^\/s\/([a-z0-9-]+)$/i);
+	const match = pathname.match(/^\/s\/([a-z0-9-]+)\/?$/i);
 	return match?.[1] ?? null;
 }

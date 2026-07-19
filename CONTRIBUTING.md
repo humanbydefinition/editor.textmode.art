@@ -8,7 +8,7 @@ Gallery sketch contributions use the additional licensing terms below so authors
 
 ## Contributing gallery sketches
 
-User-contributed gallery sketches are stored directly in this repository under [`sketches/`](sketches/). They power the random sketch button and `/s/<slug>` gallery links.
+User-contributed gallery sketches are stored directly in this repository under [`sketches/`](sketches/). They power the random sketch button and `/s/<slug>/` gallery links.
 
 Create one folder per sketch:
 
@@ -17,6 +17,7 @@ sketches/
   your-sketch-slug/
     meta.json
     sketch.js
+    og.png
 ```
 
 Before opening a pull request:
@@ -25,6 +26,9 @@ Before opening a pull request:
 - Keep the slug between 3 and 32 characters.
 - Make sure `meta.json` follows the schema documented in [`sketches/README.md`](sketches/README.md).
 - Keep `sketch.js` self-contained and compatible with `editor.textmode.art`.
+- Install Chromium once with `npm run playwright:install`.
+- Generate `og.png` with `npm run generate:og -- your-sketch-slug`; use `--frame` while choosing the best frame and persist that value as `ogFrame`.
+- Run `npm test` and `npm run build`. The production build rejects missing, corrupt, or incorrectly sized gallery images.
 
 Merged sketch PRs are treated as reviewed gallery entries. They may run automatically when users load their `/s/<slug>` URL or press the random sketch button.
 

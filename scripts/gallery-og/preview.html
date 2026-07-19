@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Gallery OG Preview</title>
+		<style>
+			@font-face {
+				font-family: 'Monogram Extended';
+				src: url('/scripts/gallery-og/assets/monogram-extended.ttf') format('truetype');
+				font-style: normal;
+			}
+			@font-face {
+				font-family: 'Monogram Extended';
+				src: url('/scripts/gallery-og/assets/monogram-extended-italic.ttf') format('truetype');
+				font-style: italic;
+			}
+			html,
+			body {
+				width: 1200px;
+				height: 630px;
+				margin: 0;
+				overflow: hidden;
+				background: #000;
+			}
+			canvas {
+				position: absolute;
+				inset: 0;
+				display: block;
+				width: 1200px;
+				height: 630px;
+			}
+			#gallery-og-overlay {
+				position: absolute;
+				inset: 0;
+				z-index: 10;
+				pointer-events: none;
+			}
+		</style>
+	</head>
+	<body data-status="idle">
+		<script type="module" src="/scripts/gallery-og/preview.ts"></script>
+	</body>
+</html>

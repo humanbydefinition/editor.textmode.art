@@ -2,6 +2,9 @@ import type { GallerySketch, GallerySketchMeta, GallerySketchSummary, SocialLink
 import { validateSlug } from './slug';
 
 export const MAX_SKETCH_CODE_CHARS = 300_000;
+export const DEFAULT_GALLERY_OG_FRAME = 60;
+export const MIN_GALLERY_OG_FRAME = 1;
+export const MAX_GALLERY_OG_FRAME = 1000;
 
 type ModuleValue = unknown;
 type ModuleMap = Record<string, ModuleValue>;
@@ -152,6 +155,14 @@ function assertGallerySketchMeta(value: unknown, path: string): asserts value is
 	assertNullableString(meta.authorName, 'authorName', path, 80);
 	assertNullableString(meta.license, 'license', path, 120);
 	assertString(meta.createdAt, 'createdAt', path, { required: true, maxLength: 64 });
+	if (
+		meta.ogFrame !== undefined &&
+		(!Number.isInteger(meta.ogFrame) || meta.ogFrame < MIN_GALLERY_OG_FRAME || meta.ogFrame > MAX_GALLERY_OG_FRAME)
+	) {
+		throw new Error(
+			`Gallery sketch metadata field "ogFrame" must be an integer from ${MIN_GALLERY_OG_FRAME} to ${MAX_GALLERY_OG_FRAME}: ${path}`
+		);
+	}
 
 	if (Number.isNaN(Date.parse(meta.createdAt as string))) {
 		throw new Error(`Gallery sketch metadata field "createdAt" must be an ISO date string: ${path}`);

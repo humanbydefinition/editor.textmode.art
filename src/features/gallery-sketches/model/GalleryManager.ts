@@ -34,6 +34,8 @@ export class GalleryManager {
 		this.pendingGallerySketch = sketch;
 		this.deps.store.gallery.setActiveSketch(sketch);
 		this.deps.store.gallery.setSketchSummary(toGallerySketchSummary(sketch));
+		const canonicalPath = `/s/${sketch.slug}/`;
+		if (location.pathname !== canonicalPath) this.deps.replaceUrl(canonicalPath);
 	}
 
 	getInitialCodeOverride(): string | null {
@@ -59,7 +61,7 @@ export class GalleryManager {
 			if (!sketch) return false;
 
 			this.applyGallerySketch(sketch);
-			this.deps.replaceUrl(`/s/${sketch.slug}`);
+			this.deps.replaceUrl(`/s/${sketch.slug}/`);
 			return true;
 		} finally {
 			this.deps.store.engine.setRandomizeLoading(false);

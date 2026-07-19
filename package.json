@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "dev": "vite --host --port 5180",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && tsx scripts/buildGallerySocialPages.ts",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "lint": "eslint .",
@@ -15,7 +15,10 @@
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{ts,js}\"",
     "format:check": "prettier --check \"**/*.{ts,js}\"",
-    "extract-types": "tsx scripts/extractTypes.ts"
+    "extract-types": "tsx scripts/extractTypes.ts",
+    "playwright:install": "playwright install chromium",
+    "generate:og": "tsx scripts/generateGalleryOg.ts",
+    "test:og": "tsx scripts/smokeGalleryOg.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -55,6 +58,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^28.0.0",
+    "playwright": "^1.61.1",
     "prettier": "^3.7.4",
     "tailwindcss": "^4.1.10",
     "textmode.export.js": "^1.5.2",

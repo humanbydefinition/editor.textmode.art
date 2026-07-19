@@ -42,6 +42,15 @@ npm run dev
 npm run build
 ```
 
+Gallery contributors can install Playwright Chromium once and generate a sketch's social preview locally:
+
+```bash
+npm run playwright:install
+npm run generate:og -- your-sketch-slug
+```
+
+See [`sketches/README.md`](sketches/README.md) for the complete gallery contribution workflow.
+
 The client loads the hosted sandbox runner from `https://runner.textmode.art/` by default.
 Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate deployments.
 
@@ -50,6 +59,8 @@ Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate 
 This application is licensed under the **GNU Affero General Public License v3.0 or later** - see the [LICENSE](LICENSE) file for details.
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
+
+Monogram Extended is a CC0 pixel font by Vinicius Menezio and is used by the gallery Open Graph image generator. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ### Acknowledgements
 

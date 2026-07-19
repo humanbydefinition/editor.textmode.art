@@ -18,6 +18,7 @@ export interface GallerySketchSummary {
 export interface GallerySketch extends GallerySketchSummary {
 	textmodeCode: string;
 	createdAt: string;
+	ogFrame?: number;
 }
 
 export type GallerySketchMeta = Omit<GallerySketch, 'textmodeCode' | 'status'>;
