@@ -64,6 +64,9 @@ export class TextmodeRuntime implements IHostRuntime {
 			onSynthError: (message) => {
 				this.onSynthError?.({ message });
 			},
+			onHardReset: () => {
+				this.options.onHardReset?.();
+			},
 			onToggleUI: () => {
 				this.options.onToggleUI?.();
 			},
@@ -100,9 +103,21 @@ export class TextmodeRuntime implements IHostRuntime {
 			return;
 		}
 
+		this.clearPendingCode();
 		void this.runtime.runCode(code).catch((error) => {
 			this.onRunError?.(this.toCodeError(error));
 		});
+	}
+
+	/**
+	 * Hard reset - recreate the iframe so textmode setup and resource initialization run again.
+	 */
+	hardReset(code: string): void {
+		if (this.disposed) return;
+
+		this.lastRequestedCode = code;
+		this.setPendingCode(code, false);
+		this.restartRuntime();
 	}
 
 	/**
@@ -115,6 +130,7 @@ export class TextmodeRuntime implements IHostRuntime {
 			return;
 		}
 
+		this.clearPendingCode();
 		void this.runtime.runCode(code, { softReset: true }).catch((error) => {
 			this.onRunError?.(this.toCodeError(error));
 		});
@@ -148,8 +164,7 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
 			this.setPendingCode(this.lastRequestedCode, false);
 		}
-		this.runtime.dispose();
-		this.startRuntime();
+		this.restartRuntime();
 	}
 
 	/**
@@ -217,13 +232,22 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.pendingSoftReset = softReset;
 	}
 
+	private clearPendingCode(): void {
+		this.pendingCode = null;
+		this.pendingSoftReset = false;
+	}
+
+	private restartRuntime(): void {
+		this.runtime.dispose();
+		this.startRuntime();
+	}
+
 	private flushPendingCode(): void {
 		if (this.pendingCode === null) return;
 
 		const code = this.pendingCode;
 		const softReset = this.pendingSoftReset;
-		this.pendingCode = null;
-		this.pendingSoftReset = false;
+		this.clearPendingCode();
 
 		if (softReset) {
 			this.softReset(code);

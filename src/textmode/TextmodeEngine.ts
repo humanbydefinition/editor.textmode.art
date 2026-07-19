@@ -105,7 +105,6 @@ export class TextmodeEngine {
 			lineNumbers: context.getSettings().lineNumbers,
 			onChange: (value) => this.controller?.handleCodeChange(value),
 			onRun: () => this.controller?.handleForceRun(),
-			onSoftReset: () => this.controller?.handleSoftReset(),
 		};
 		return new TextmodeEditor(options);
 	}
@@ -118,6 +117,7 @@ export class TextmodeEngine {
 			onRunOk: () => this.controller?.handleRunOk(),
 			onRunError: (error) => this.controller?.handleRunError(error),
 			onSynthError: (error) => this.controller?.handleSynthError(error),
+			onHardReset: () => this.controller?.handleHardReset(),
 			onToggleUI: () => context.toggleUI(),
 			onRunnerConnected: () => context.onRunnerConnected?.(),
 			onRunnerDisconnected: () => context.onRunnerDisconnected?.(),

@@ -77,7 +77,7 @@ export class TextmodeController {
 		this.deps.getRuntime()?.forceRun(lastWorkingCode);
 	}
 
-	handleSoftReset(): void {
+	handleHardReset(): void {
 		if (this.isExecutionLocked()) return;
 		const editor = this.deps.getEditor();
 		const code = editor?.getValue() ?? '';
@@ -86,7 +86,7 @@ export class TextmodeController {
 		this.deps.store.engine.clearError();
 		this.deps.store.engine.setStatus('ready');
 		editor?.clearMarkers();
-		this.deps.getRuntime()?.softReset(code);
+		this.deps.getRuntime()?.hardReset(code);
 	}
 
 	handleRuntimeReady(): void {

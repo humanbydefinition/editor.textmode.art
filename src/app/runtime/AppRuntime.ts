@@ -608,7 +608,7 @@ export class AppRuntime {
 
 		const code = sketch.textmodeCode;
 		this.textmodeEngine.setCode(code, { silent: true });
-		this.textmodeEngine.getRuntime()?.forceRun(code);
+		this.textmodeEngine.getRuntime()?.hardReset(code);
 	}
 
 	private reconnectTextmodeRunner(options?: { runCurrentCode?: boolean }): void {
@@ -658,6 +658,7 @@ export class AppRuntime {
 					const s = this.settings;
 					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
 				},
+				hardReset: () => this.textmodeEngine.getController()?.handleHardReset(),
 				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
 				runCode: () => this.runEngine(),
 			},

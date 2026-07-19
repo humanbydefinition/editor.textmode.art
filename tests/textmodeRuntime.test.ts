@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TextmodeRuntime } from '../src/textmode/runtime/TextmodeRuntime';
 
 type RuntimeOptions = {
+	onHardReset?: () => void;
 	onReady?: () => void;
 	onRunOk?: (message: { timestamp: number }) => void;
 	onUnavailable?: () => void;
@@ -24,6 +25,7 @@ type MockRuntime = {
 	isReady: boolean;
 	runCode: ReturnType<typeof vi.fn>;
 	sendAudioData: ReturnType<typeof vi.fn>;
+	triggerHardReset: ReturnType<typeof vi.fn>;
 };
 
 const runnerClientMock = vi.hoisted(() => ({
@@ -75,6 +77,7 @@ vi.mock('@textmode/runner-client', () => {
 		});
 
 		readonly sendAudioData = vi.fn(() => this.isReady);
+		readonly triggerHardReset = vi.fn(() => this.options.onHardReset?.());
 
 		readonly activateFromUserGesture = vi.fn();
 
@@ -122,6 +125,29 @@ describe('TextmodeRuntime', () => {
 		expect(iframeRuntime.runCode).toHaveBeenCalledWith('t.draw(() => {})');
 	});
 
+	it('hard-resets by restarting the iframe and runs the requested code once', async () => {
+		const runtimeRef: { current?: TextmodeRuntime } = {};
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onReady: () => runtimeRef.current?.forceRun('gallery sketch'),
+		});
+		runtimeRef.current = runtime;
+
+		runtime.init();
+		await flushPromises();
+
+		const iframeRuntime = runnerClientMock.instances[0];
+		iframeRuntime.runCode.mockClear();
+		runtime.hardReset('gallery sketch');
+		await flushPromises();
+
+		expect(iframeRuntime.dispose).toHaveBeenCalledTimes(1);
+		expect(iframeRuntime.init).toHaveBeenCalledTimes(2);
+		expect(iframeRuntime.runCode).toHaveBeenCalledTimes(1);
+		expect(iframeRuntime.runCode).toHaveBeenCalledWith('gallery sketch');
+	});
+
 	it('forwards audio frames once the iframe runtime is ready', async () => {
 		const runtime = new TextmodeRuntime({
 			container: document.createElement('div'),
@@ -140,6 +166,21 @@ describe('TextmodeRuntime', () => {
 
 		expect(runtime.sendAudioData(frame)).toBe(true);
 		expect(runnerClientMock.instances[0].sendAudioData).toHaveBeenCalledWith(frame);
+	});
+
+	it('forwards hard reset requests from the runner iframe', async () => {
+		const onHardReset = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onHardReset,
+		});
+
+		runtime.init();
+		await flushPromises();
+		runnerClientMock.instances[0].triggerHardReset();
+
+		expect(onHardReset).toHaveBeenCalledTimes(1);
 	});
 
 	it('does not fire unavailable callbacks when disposed during a pending handshake', async () => {

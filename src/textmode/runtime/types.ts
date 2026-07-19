@@ -19,6 +19,8 @@ export interface IRuntimeEvents {
 	onSynthError?(error: CodeError): void;
 	/** Called when the toggle UI shortcut is triggered from within the runtime */
 	onToggleUI?: () => void;
+	/** Called when the hard reset shortcut is triggered from within the runtime */
+	onHardReset?: () => void;
 }
 
 /**
@@ -33,6 +35,8 @@ export interface IHostRuntime {
 	isReady(): boolean;
 	/** Run code immediately */
 	forceRun(code: string): void;
+	/** Recreate the iframe runtime and run code in a fresh textmode instance */
+	hardReset(code: string): void;
 	/** Clean up resources */
 	dispose(): void;
 	/** Soft reset (reset frameCount to 0) and re-run code */

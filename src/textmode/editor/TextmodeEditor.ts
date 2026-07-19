@@ -23,7 +23,6 @@ export interface TextmodeEditorOptions {
 	readOnly?: boolean;
 	onChange?: (value: string) => void;
 	onRun?: () => void;
-	onSoftReset?: () => void;
 }
 
 /**
@@ -49,7 +48,6 @@ export class TextmodeEditor {
 		this.setupSubscriptions();
 		this.registerCommonKeybindings();
 		this.configureTypeScript();
-		this.registerTextmodeKeybindings();
 	}
 
 	getValue(): string {
@@ -187,12 +185,6 @@ export class TextmodeEditor {
 	private registerCommonKeybindings(): void {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
 			this.options.onRun?.();
-		});
-	}
-
-	private registerTextmodeKeybindings(): void {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR, () => {
-			this.options.onSoftReset?.();
 		});
 	}
 

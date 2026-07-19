@@ -1,3 +1,5 @@
+import { isHardResetShortcut } from './shortcuts';
+
 /**
  * Actions that can be triggered by keyboard shortcuts.
  */
@@ -12,6 +14,8 @@ export interface ShortcutActions {
 	toggleUIVisibility: () => void;
 	/** Run code */
 	runCode: () => void;
+	/** Recreate the textmode runtime and run the current code */
+	hardReset: () => void;
 }
 
 /**
@@ -65,6 +69,14 @@ export class ShortcutsManager implements IShortcutsManager {
 	 * Handle keydown events.
 	 */
 	private handleKeydown(e: KeyboardEvent): void {
+		// Hard reset: Ctrl + Shift + R
+		if (isHardResetShortcut(e)) {
+			e.preventDefault();
+			e.stopPropagation();
+			this.actions.hardReset();
+			return;
+		}
+
 		// Font size shortcuts: Ctrl + Shift + +/-
 		if (e.ctrlKey && e.shiftKey && (e.key === '+' || e.key === '=' || e.key === '_' || e.key === '-')) {
 			e.preventDefault();
