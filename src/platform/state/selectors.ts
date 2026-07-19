@@ -11,3 +11,4 @@ export const selectTextmodeRunnerUnavailable = (state: AppState): boolean => sta
 export const selectTextmodeRunnerReconnecting = (state: AppState): boolean => state.runnerReconnecting;
 export const selectRandomizeLoading = (state: AppState): boolean => state.randomizeLoading;
 export const selectEditorBackdrop = (state: AppState): boolean => state.settings.editorBackdrop;
+export const selectAudioInput = (state: AppState) => state.audioInput;

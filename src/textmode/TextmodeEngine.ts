@@ -89,6 +89,10 @@ export class TextmodeEngine {
 		this.editor?.setValue(code, options);
 	}
 
+	sendAudioData(data: { fft: Uint8Array; waveform: Uint8Array; timestamp: number }): boolean {
+		return this.runtime?.sendAudioData(data) ?? false;
+	}
+
 	reconnectRuntime(): void {
 		this.runtime?.reconnect();
 	}

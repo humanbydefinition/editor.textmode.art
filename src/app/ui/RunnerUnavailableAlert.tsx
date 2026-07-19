@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { RotateCcw } from 'lucide-react';
+
+const SHOW_GRACE_MS = 750;
 
 interface RunnerUnavailableAlertProps {
     isVisible: boolean;
@@ -13,7 +16,19 @@ export function RunnerUnavailableAlert({
     isReconnecting,
     onReconnect,
 }: RunnerUnavailableAlertProps) {
-    if (!isVisible) return null;
+    const [shouldRender, setShouldRender] = useState(isVisible);
+
+    useEffect(() => {
+        if (!isVisible) {
+            setShouldRender(false);
+            return;
+        }
+
+        const timer = setTimeout(() => setShouldRender(true), SHOW_GRACE_MS);
+        return () => clearTimeout(timer);
+    }, [isVisible]);
+
+    if (!shouldRender) return null;
 
     return (
         <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center p-3 sm:p-6">

@@ -4,6 +4,17 @@ import type { CodeError } from '@/types';
 
 const HANDSHAKE_TIMEOUT_MS = 5000;
 
+export interface AudioDataFrame {
+	fft: Uint8Array;
+	waveform: Uint8Array;
+	timestamp: number;
+}
+
+interface AudioCapableRuntime {
+	sendAudioData?: (data: AudioDataFrame) => boolean;
+	postMessage?: (message: { type: 'AUDIO_DATA' } & AudioDataFrame) => void;
+}
+
 /**
  * TextmodeRuntime preserves synth's host runtime surface while delegating the
  * iframe transport and current runner protocol to the shared client package.
@@ -19,6 +30,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	private pendingSoftReset = false;
 	private lastRequestedCode: string | null = null;
 	private runnerUnavailable = false;
+	private disposed = false;
 
 	private onReadyCallback?: () => void;
 	private onRunOk?: (timestamp: number) => void;
@@ -108,6 +120,22 @@ export class TextmodeRuntime implements IHostRuntime {
 		});
 	}
 
+	sendAudioData(data: AudioDataFrame): boolean {
+		if (!this.isReady()) return false;
+
+		const runtime = this.runtime as unknown as AudioCapableRuntime;
+		if (runtime.sendAudioData) {
+			return runtime.sendAudioData(data);
+		}
+
+		if (runtime.postMessage) {
+			runtime.postMessage({ type: 'AUDIO_DATA', ...data });
+			return true;
+		}
+
+		return false;
+	}
+
 	setOnUserInteraction(callback: (() => void) | undefined): void {
 		this.onUserInteractionCallback = callback;
 	}
@@ -116,6 +144,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Manually retry loading the runner iframe.
 	 */
 	reconnect(): void {
+		if (this.disposed) return;
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
 			this.setPendingCode(this.lastRequestedCode, false);
 		}
@@ -135,6 +164,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	 * Cleanup.
 	 */
 	dispose(): void {
+		this.disposed = true;
 		this.isRuntimeReady = false;
 		this.pendingCode = null;
 		this.runtime.dispose();
@@ -146,9 +176,11 @@ export class TextmodeRuntime implements IHostRuntime {
 		void this.runtime
 			.init(this.container)
 			.then(() => {
+				if (this.disposed) return;
 				this.decorateIframe();
 			})
 			.catch(() => {
+				if (this.disposed) return;
 				this.handleRunnerUnavailable();
 			});
 

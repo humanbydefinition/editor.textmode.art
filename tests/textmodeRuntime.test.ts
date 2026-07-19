@@ -23,6 +23,7 @@ type MockRuntime = {
 	init: ReturnType<typeof vi.fn>;
 	isReady: boolean;
 	runCode: ReturnType<typeof vi.fn>;
+	sendAudioData: ReturnType<typeof vi.fn>;
 };
 
 const runnerClientMock = vi.hoisted(() => ({
@@ -49,15 +50,21 @@ vi.mock('@textmode/runner-client', () => {
 	class IframeTextmodeRuntime {
 		frame = createFrame();
 		isReady = false;
+		private pendingRejecter: ((reason: Error) => void) | null = null;
 
 		readonly init = vi.fn(async () => {
-			this.frame = createFrame();
-			this.isReady = true;
-			this.options.onReady?.();
-			return true;
+			return new Promise<boolean>((resolve, reject) => {
+				this.pendingRejecter = reject;
+				this.frame = createFrame();
+				this.isReady = true;
+				this.options.onReady?.();
+				resolve(true);
+			});
 		});
 
 		readonly dispose = vi.fn(() => {
+			this.pendingRejecter?.(new Error('runner disposed'));
+			this.pendingRejecter = null;
 			this.isReady = false;
 			this.frame.isConnected = false;
 		});
@@ -66,6 +73,8 @@ vi.mock('@textmode/runner-client', () => {
 			this.options.onRunOk?.({ timestamp: Date.now() });
 			return code.length > 0;
 		});
+
+		readonly sendAudioData = vi.fn(() => this.isReady);
 
 		readonly activateFromUserGesture = vi.fn();
 
@@ -111,5 +120,62 @@ describe('TextmodeRuntime', () => {
 		expect(iframeRuntime.frame.id).toBe('runner-frame');
 		expect(iframeRuntime.frame.style.opacity).toBe('1');
 		expect(iframeRuntime.runCode).toHaveBeenCalledWith('t.draw(() => {})');
+	});
+
+	it('forwards audio frames once the iframe runtime is ready', async () => {
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+		});
+		const frame = {
+			fft: new Uint8Array([1, 2]),
+			waveform: new Uint8Array([128, 129]),
+			timestamp: 123,
+		};
+
+		expect(runtime.sendAudioData(frame)).toBe(false);
+
+		runtime.init();
+		await flushPromises();
+
+		expect(runtime.sendAudioData(frame)).toBe(true);
+		expect(runnerClientMock.instances[0].sendAudioData).toHaveBeenCalledWith(frame);
+	});
+
+	it('does not fire unavailable callbacks when disposed during a pending handshake', async () => {
+		const onRunnerDisconnected = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunnerDisconnected,
+		});
+
+		runtime.init();
+		runtime.dispose();
+		await flushPromises();
+
+		expect(onRunnerDisconnected).not.toHaveBeenCalled();
+	});
+
+	it('reconnect after dispose is a no-op', async () => {
+		const onRunnerDisconnected = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunnerDisconnected,
+		});
+
+		runtime.init();
+		await flushPromises();
+		runtime.dispose();
+
+		const iframeRuntime = runnerClientMock.instances[0];
+		const initCallsBeforeReconnect = iframeRuntime.init.mock.calls.length;
+
+		runtime.reconnect();
+		await flushPromises();
+
+		expect(onRunnerDisconnected).not.toHaveBeenCalled();
+		expect(iframeRuntime.init.mock.calls.length).toBe(initCallsBeforeReconnect);
 	});
 });

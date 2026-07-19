@@ -2,6 +2,7 @@ import { useAppStore } from '../appStore';
 import type { AppSettings, StatusState, CodeError } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
 import type { GallerySketch, GallerySketchSummary } from '@/features/gallery-sketches';
+import type { AudioInputState } from '@/platform/state/slices/audioSlice';
 
 /**
  * Adapter for accessing settings state.
@@ -66,6 +67,14 @@ export interface UIAdapter {
 }
 
 /**
+ * Adapter for accessing external audio input state.
+ */
+export interface AudioAdapter {
+	getInput: () => AudioInputState;
+	setInput: (state: Partial<AudioInputState>) => void;
+}
+
+/**
  * Unified application store adapter.
  * Provides access to Zustand store state for non-React classes.
  */
@@ -75,6 +84,7 @@ export interface AppStoreAdapter {
 	share: ShareAdapter;
 	gallery: GalleryAdapter;
 	ui: UIAdapter;
+	audio: AudioAdapter;
 }
 
 /**
@@ -125,6 +135,10 @@ export const createAppStoreAdapter = (): AppStoreAdapter => {
 		},
 		ui: {
 			getIsMobile: () => getState().isMobile,
+		},
+		audio: {
+			getInput: () => getState().audioInput,
+			setInput: (state) => getState().setAudioInput(state),
 		},
 	};
 };

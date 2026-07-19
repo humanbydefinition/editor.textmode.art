@@ -6,6 +6,7 @@ import { Toaster } from '@/shared/ui/sonner';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import {
+	selectAudioInput,
 	selectEditorBackdrop,
 	selectError,
 	selectGallerySketchSummary,
@@ -52,6 +53,7 @@ export function AppShell() {
 	const gallerySketchSummary = useAppStore(selectGallerySketchSummary);
 	const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
 	const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
+	const audioInput = useAppStore(selectAudioInput);
 	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
 
 	useEffect(() => {
@@ -162,6 +164,11 @@ export function AppShell() {
 								randomizeLoading={randomizeLoading}
 								onResetRunners={actions.resetRunners}
 								onClearStorage={actions.clearStorage}
+								audioInput={audioInput}
+								onEnableAudioInput={actions.enableAudioInput}
+								onDisableAudioInput={actions.disableAudioInput}
+								onRefreshAudioInputDevices={actions.refreshAudioInputDevices}
+								onSelectAudioInputDevice={actions.selectAudioInputDevice}
 								renderExamplesTab={(onClose) => (
 									<ExamplesTab onLoadExample={actions.loadExample} onClose={onClose} />
 								)}

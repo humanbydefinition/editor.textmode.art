@@ -17,9 +17,11 @@ import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
+import { AudioTab } from './tabs/AudioTab';
 
 import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
+import type { AudioInputState } from '@/platform/state/slices/audioSlice';
 
 export interface SystemMenuProps {
     onShare: () => void;
@@ -28,6 +30,11 @@ export interface SystemMenuProps {
     randomizeLoading: boolean;
     onResetRunners: () => void;
     onClearStorage: () => void;
+    audioInput: AudioInputState;
+    onEnableAudioInput: (deviceId?: string) => Promise<void>;
+    onDisableAudioInput: () => void;
+    onRefreshAudioInputDevices: () => Promise<void>;
+    onSelectAudioInputDevice: (deviceId: string) => Promise<void>;
     renderExamplesTab: (onClose: () => void) => ReactNode;
 }
 
@@ -38,6 +45,11 @@ export function SystemMenu({
     randomizeLoading,
     onResetRunners,
     onClearStorage,
+    audioInput,
+    onEnableAudioInput,
+    onDisableAudioInput,
+    onRefreshAudioInputDevices,
+    onSelectAudioInputDevice,
     renderExamplesTab,
 }: SystemMenuProps) {
     const currentYear = new Date().getFullYear();
@@ -175,6 +187,7 @@ export function SystemMenu({
                         <div className="absolute right-6 top-2 bottom-0 w-8 bg-gradient-to-l from-zinc-950/80 to-transparent pointer-events-none z-10 sm:hidden" />
                         <TabsList className="flex w-full justify-start bg-zinc-900/50 p-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
                             <TabsTrigger value="settings" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">settings</TabsTrigger>
+                            <TabsTrigger value="audio" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">audio</TabsTrigger>
                             <TabsTrigger value="examples" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">examples</TabsTrigger>
                             <TabsTrigger value="shortcuts" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">controls</TabsTrigger>
                             <TabsTrigger value="about" className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4">about</TabsTrigger>
@@ -188,6 +201,16 @@ export function SystemMenu({
                             onResetRunners={onResetRunners}
                             onClearStorage={onClearStorage}
                             onClose={() => setOpen(false)}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="audio" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
+                        <AudioTab
+                            audioInput={audioInput}
+                            onEnable={onEnableAudioInput}
+                            onDisable={onDisableAudioInput}
+                            onRefreshDevices={onRefreshAudioInputDevices}
+                            onSelectDevice={onSelectAudioInputDevice}
                         />
                     </TabsContent>
 

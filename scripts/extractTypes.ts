@@ -80,6 +80,20 @@ declare global {
   // Main Textmode Instance
   const t: Textmodifier;
 
+  interface AudioAnalysis {
+    fft(): Uint8Array;
+    waveform(): Uint8Array;
+    bass(): number;
+    mid(): number;
+    high(): number;
+    volume(): number;
+    timestamp(): number;
+    hasData(): boolean;
+  }
+
+  // Latest external audio input analysis frame
+  const audio: AudioAnalysis;
+
   // Bundled plugin globals
   const SynthPlugin: typeof import('textmode.synth.js').SynthPlugin;
   const FiltersPlugin: typeof import('textmode.filters.js').FiltersPlugin;

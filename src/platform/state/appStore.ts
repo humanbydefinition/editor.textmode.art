@@ -12,11 +12,12 @@ import { createRuntimeSlice, type RuntimeSlice } from './slices/runtimeSlice';
 import { createShareSlice, type ShareSlice } from './slices/shareSlice';
 import { createGallerySlice, type GallerySlice } from './slices/gallerySlice';
 import { createUISlice, initUISlice, type UISlice } from './slices/uiSlice';
+import { createAudioSlice, type AudioSlice } from './slices/audioSlice';
 
 /**
  * Combined application state — intersection of all slices.
  */
-export type AppState = SettingsSlice & RuntimeSlice & ShareSlice & GallerySlice & UISlice;
+export type AppState = SettingsSlice & RuntimeSlice & ShareSlice & GallerySlice & UISlice & AudioSlice;
 
 export const useAppStore = create<AppState>()(
 	devtools(
@@ -26,6 +27,7 @@ export const useAppStore = create<AppState>()(
 			...createShareSlice(...a),
 			...createGallerySlice(...a),
 			...createUISlice(...a),
+			...createAudioSlice(...a),
 		})),
 		{ name: 'AppStore', enabled: import.meta.env.DEV }
 	)

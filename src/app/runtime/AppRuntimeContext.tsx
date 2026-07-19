@@ -15,6 +15,10 @@ export interface AppRuntimeContextValue {
 		loadExample: (code: string) => void;
 		revertToLastWorking: () => void;
 		reconnectTextmodeRunner: () => void;
+		enableAudioInput: (deviceId?: string) => Promise<void>;
+		disableAudioInput: () => void;
+		refreshAudioInputDevices: () => Promise<void>;
+		selectAudioInputDevice: (deviceId: string) => Promise<void>;
 
 		// Share / Export
 		unlockAndRun: () => void;
