@@ -70,8 +70,9 @@ describe('gallery OG arguments and metadata', () => {
 	});
 
 	it('shrinks long overlay metadata without going below its minimum size', () => {
-		expect(getFittedFontSize(1800, 1104, 76, 40)).toBe(46);
-		expect(getFittedFontSize(4000, 720, 28, 18)).toBe(18);
+		expect(getFittedFontSize(1800, 1104, 96, 48)).toBe(58);
+		expect(getFittedFontSize(3000, 1104, 44, 24)).toBe(24);
+		expect(getFittedFontSize(4000, 1104, 32, 20)).toBe(20);
 	});
 
 	it('escapes SVG labels and falls back to an anonymous author', () => {

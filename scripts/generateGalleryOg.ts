@@ -70,6 +70,7 @@ export async function generateGalleryOg(
 				code,
 				frame: options.frame,
 				title: entry.meta.title,
+				description: entry.meta.description,
 				authorName: entry.meta.authorName,
 			});
 		} catch (error) {
@@ -91,7 +92,13 @@ export async function generateGalleryOg(
 		await page.locator('#gallery-og-overlay').waitFor({ state: 'visible', timeout: CAPTURE_TIMEOUT_MS });
 		const overlayText = (await page.locator('#gallery-og-overlay').textContent()) ?? '';
 		const expectedAuthor = formatOgAuthor(entry.meta.authorName);
-		if (!overlayText.includes(entry.meta.title) || !overlayText.includes(expectedAuthor)) {
+		const hasExpectedDescription =
+			entry.meta.description === null || overlayText.includes(entry.meta.description.trim());
+		if (
+			!overlayText.includes(entry.meta.title) ||
+			!hasExpectedDescription ||
+			!overlayText.includes(expectedAuthor)
+		) {
 			throw new Error(`Preview overlay is missing expected metadata for "${entry.meta.slug}".`);
 		}
 		await page.screenshot({

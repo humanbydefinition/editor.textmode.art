@@ -44,6 +44,7 @@ interface PreviewRequest {
 	code: string;
 	frame: number;
 	title: string;
+	description: string | null;
 	authorName: string | null;
 }
 
@@ -175,9 +176,9 @@ window.renderGalleryOg = async (request) => {
 		await waitFor(() => instance.frameCount >= request.frame || runtimeError !== null, 10_000);
 		if (runtimeError) throw runtimeError;
 		instance.noLoop();
-		buildOverlay(request.title, request.authorName);
+		buildOverlay(request.title, request.description, request.authorName);
 		await document.fonts.ready;
-		fitTitle();
+		fitMetadata();
 		await nextPaint();
 
 		document.body.dataset.status = 'ready';
@@ -299,7 +300,7 @@ function createSafeTextmodeRuntime(instance: Textmodifier, onError: (error: unkn
 	};
 }
 
-function buildOverlay(title: string, authorName: string | null): void {
+function buildOverlay(title: string, description: string | null, authorName: string | null): void {
 	const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
 	svg.id = 'gallery-og-overlay';
 	svg.setAttribute('width', String(OG_WIDTH));
@@ -311,25 +312,22 @@ function buildOverlay(title: string, authorName: string | null): void {
 				<stop offset="0" stop-color="#000" stop-opacity="0.76" />
 				<stop offset="1" stop-color="#000" stop-opacity="0" />
 			</linearGradient>
-			<linearGradient id="bottom-scrim" x1="0" y1="0" x2="0" y2="1">
-				<stop offset="0" stop-color="#000" stop-opacity="0" />
-				<stop offset="1" stop-color="#000" stop-opacity="0.84" />
-			</linearGradient>
 		</defs>
 		<rect width="1200" height="150" fill="url(#top-scrim)" />
-		<rect y="410" width="1200" height="220" fill="url(#bottom-scrim)" />
 		<g transform="translate(48 49) scale(${20 / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
 		<text x="82" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="36">editor.textmode.art</text>
 		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="28" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
-		<text id="gallery-og-title" x="48" y="566" fill="#f2f2ec" font-family="Monogram Extended" font-size="76" font-style="italic">${escapeXml(title)}</text>
-		<text id="gallery-og-author" x="1152" y="603" fill="#d8d8d2" font-family="Monogram Extended" font-size="28" text-anchor="end" letter-spacing="1">${escapeXml(formatOgAuthor(authorName))}</text>
+		<text id="gallery-og-title" x="48" y="342" fill="#f2f2ec" font-family="Monogram Extended" font-size="96" font-style="italic">${escapeXml(title)}</text>
+		<text id="gallery-og-description" x="48" y="394" fill="#f2f2ec" font-family="Monogram Extended" font-size="44">${escapeXml(description?.trim() ?? '')}</text>
+		<text id="gallery-og-author" x="48" y="434" fill="#d8d8d2" font-family="Monogram Extended" font-size="32" letter-spacing="1">${escapeXml(formatOgAuthor(authorName))}</text>
 	`;
 	document.body.appendChild(svg);
 }
 
-function fitTitle(): void {
-	fitSvgText('gallery-og-title', 1104, 76, 40);
-	fitSvgText('gallery-og-author', 720, 28, 18);
+function fitMetadata(): void {
+	fitSvgText('gallery-og-title', 1104, 96, 48);
+	fitSvgText('gallery-og-description', 1104, 44, 24);
+	fitSvgText('gallery-og-author', 1104, 32, 20);
 }
 
 function fitSvgText(id: string, maxWidth: number, initialFontSize: number, minimumFontSize: number): void {
