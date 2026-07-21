@@ -85,7 +85,7 @@ window.renderGalleryOg = async (request) => {
 			height: OG_HEIGHT,
 			fontSize: 16,
 			frameRate: 60,
-			plugins: [ExportPlugin, SynthPlugin, FiltersPlugin, FigletPlugin as unknown as TextmodePlugin],
+			plugins: [ExportPlugin, SynthPlugin, FiltersPlugin as unknown as TextmodePlugin, FigletPlugin as unknown as TextmodePlugin],
 		});
 	} catch (error) {
 		markError(error);
