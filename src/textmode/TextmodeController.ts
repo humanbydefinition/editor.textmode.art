@@ -6,13 +6,14 @@ const CONFIRMATION_DELAY_MS = 100;
 
 export interface TextmodeControllerCallbacks {
 	onSaveCode: (code: string) => void;
+	onClearCode: () => void;
 }
 
 export interface TextmodeControllerState {
 	clearError: () => void;
 	setError: (error: CodeError) => void;
 	getLastWorkingCode: () => string | null;
-	setLastWorkingCode: (code: string) => void;
+	setLastWorkingCode: (code: string | null) => void;
 }
 
 export interface TextmodeControllerDependencies {
@@ -54,47 +55,34 @@ export class TextmodeController {
 		if (!this.deps.getAutoExecute()) return;
 
 		this.debounceTimer = window.setTimeout(() => {
-			this.deps.getRuntime()?.forceRun(code);
 			this.debounceTimer = null;
+			this.deps.getRuntime()?.forceRun(code);
 		}, this.deps.getAutoExecuteDelay());
 	}
 
 	handleForceRun(): void {
 		if (this.isExecutionLocked()) return;
-		this.clearDebounce();
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
+		this.execute(this.deps.getEditor()?.getValue() ?? '', 'run');
+	}
 
-		this.callbacks.onSaveCode(code);
-		this.deps.state.clearError();
-		editor?.clearMarkers();
-
-		this.deps.getRuntime()?.forceRun(code);
+	replaceAndRun(code: string, reason: 'run' | 'restart' | 'reset' = 'run'): void {
+		if (this.isExecutionLocked()) return;
+		if (reason === 'reset') {
+			this.callbacks.onClearCode();
+			this.deps.state.setLastWorkingCode(null);
+		}
+		this.replaceCode(code);
+		this.execute(code, reason === 'run' ? 'run' : 'restart', reason !== 'restart');
 	}
 
 	handleRevertToLastWorking(): void {
-		if (this.isExecutionLocked()) return;
 		const lastWorkingCode = this.deps.state.getLastWorkingCode();
-		if (!lastWorkingCode) return;
-
-		const editor = this.deps.getEditor();
-		editor?.setValue(lastWorkingCode);
-		this.callbacks.onSaveCode(lastWorkingCode);
-		this.deps.state.clearError();
-		editor?.clearMarkers();
-
-		this.deps.getRuntime()?.forceRun(lastWorkingCode);
+		if (lastWorkingCode) this.replaceAndRun(lastWorkingCode);
 	}
 
 	handleHardReset(): void {
 		if (this.isExecutionLocked()) return;
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
-
-		this.callbacks.onSaveCode(code);
-		this.deps.state.clearError();
-		editor?.clearMarkers();
-		this.deps.getRuntime()?.restart(code);
+		this.execute(this.deps.getEditor()?.getValue() ?? '', 'restart');
 	}
 
 	handleRunOk(): void {
@@ -107,34 +95,30 @@ export class TextmodeController {
 		editor?.clearMarkers();
 	}
 
-	handleRunError(error: CodeError): void {
-		this.handleError(error);
+	handleExecutionError(error: CodeError): void {
+		this.cancelPendingWorkingCode();
+		const presentedError = { ...error, source: 'textmode' };
+		this.deps.state.setError(presentedError);
+		this.deps.getEditor()?.setErrorMarker(presentedError);
 	}
 
-	handleSynthError(error: CodeError): void {
-		this.cancelPendingWorkingCode();
-		const formattedError = {
-			...error,
-			message: this.formatErrorMessage(error.message),
-			source: 'textmode',
-		};
+	private execute(code: string, mode: 'run' | 'restart', persist = true): void {
+		this.clearDebounce();
+		if (persist) this.callbacks.onSaveCode(code);
+		this.deps.state.clearError();
+		this.deps.getEditor()?.clearMarkers();
 
-		this.deps.state.setError(formattedError);
-		this.deps.getEditor()?.setErrorMarker(formattedError);
+		const runtime = this.deps.getRuntime();
+		if (mode === 'restart') {
+			runtime?.restart(code);
+		} else {
+			runtime?.forceRun(code);
+		}
 	}
 
-	private handleError(error: CodeError): void {
-		this.cancelPendingWorkingCode();
-		const formattedError = {
-			message: this.formatErrorMessage(error.message),
-			stack: error.stack,
-			line: error.line,
-			column: error.column,
-			source: 'textmode',
-		};
-
-		this.deps.state.setError(formattedError);
-		this.deps.getEditor()?.setErrorMarker(formattedError);
+	private replaceCode(code: string): void {
+		this.deps.getEditor()?.setValue(code, { silent: true });
+		this.deps.onCodeChanged(code);
 	}
 
 	private clearDebounce(): void {
@@ -166,10 +150,6 @@ export class TextmodeController {
 		if (this.confirmationTimer === null) return;
 		window.clearTimeout(this.confirmationTimer);
 		this.confirmationTimer = null;
-	}
-
-	private formatErrorMessage(message: string): string {
-		return message;
 	}
 
 	private isExecutionLocked(): boolean {

@@ -112,8 +112,8 @@ export class TextmodeEngine {
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
 			onRunOk: () => this.controller?.handleRunOk(),
-			onRunError: (error) => this.controller?.handleRunError(error),
-			onSynthError: (error) => this.controller?.handleSynthError(error),
+			onRunError: (error) => this.controller?.handleExecutionError(error),
+			onSynthError: (error) => this.controller?.handleExecutionError(error),
 			onHardReset: () => this.controller?.handleHardReset(),
 			onToggleUI: () => context.toggleUI(),
 			onRunnerConnected: () => context.onRunnerConnected?.(),
@@ -125,6 +125,7 @@ export class TextmodeEngine {
 	private createController(context: TextmodeEngineContext): TextmodeController {
 		const callbacks: TextmodeControllerCallbacks = {
 			onSaveCode: context.callbacks.onSaveCode,
+			onClearCode: context.callbacks.onClearCode,
 		};
 
 		const deps: TextmodeControllerDependencies = {

@@ -71,8 +71,7 @@ export class AppRuntime {
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
 			restoreLocalSketches: () => this.restoreLocalSketches(),
-			runRestoredSketches: () => this.runRestoredSketches(),
-			runSharedSketch: () => this.runEngine(),
+			runCode: () => this.textmodeEngine.getController()?.handleForceRun(),
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
@@ -90,12 +89,10 @@ export class AppRuntime {
 		this.actions = {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
-			resetRunners: () => this.reconnectTextmodeRunner({ runCurrentCode: true }),
+			resetRunners: () => this.reconnectTextmodeRunner(),
 			clearStorage: () => this.clearStorage(),
 			loadExample: (code: string) => this.loadExample(code),
-			revertToLastWorking: () => {
-				this.textmodeEngine.getController()?.handleRevertToLastWorking();
-			},
+			revertToLastWorking: () => this.textmodeEngine.getController()?.handleRevertToLastWorking(),
 			reconnectTextmodeRunner: () => this.reconnectTextmodeRunner(),
 			enableAudioInput: (deviceId?: string) => this.enableAudioInput(deviceId),
 			disableAudioInput: () => this.disableAudioInput(),
@@ -238,6 +235,7 @@ export class AppRuntime {
 			onCodeChanged: (code) => this.galleryManager.syncActiveSketchWithCode(code),
 			callbacks: {
 				onSaveCode: (code: string) => this.storage.saveCode(code),
+				onClearCode: () => this.storage.clearCode(),
 			},
 			getInitialCode: () => this.getInitialCode(),
 			toggleUI: () => this.toggleUIVisibility(),
@@ -267,10 +265,6 @@ export class AppRuntime {
 			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
 		});
 		editor.updateEnvironment({ backdrop: settings.editorBackdrop });
-	}
-
-	private runEngine(): void {
-		this.textmodeEngine.getController()?.handleForceRun();
 	}
 
 	private async initializeApp(): Promise<void> {
@@ -312,9 +306,7 @@ export class AppRuntime {
 
 		this.galleryManager.clear();
 		this.replaceEditorUrl('/');
-		this.textmodeEngine.setCode(code);
-		this.storage.saveCode(code);
-		this.textmodeEngine.getController()?.handleForceRun();
+		this.textmodeEngine.getController()?.replaceAndRun(code);
 
 		return true;
 	}
@@ -339,8 +331,11 @@ export class AppRuntime {
 	}
 
 	private clearStorage(): void {
-		this.resetAll();
-		this.reconnectTextmodeRunner({ runCurrentCode: true });
+		if (!this.textmodeEngine.isInitialized()) return;
+		this.galleryManager.clear();
+		this.replaceEditorUrl('/');
+		this.textmodeEngine.getController()?.replaceAndRun(defaultTextmodeSketch, 'reset');
+		this.markRunnerReconnecting();
 	}
 
 	private toggleUIVisibility(): void {
@@ -366,10 +361,6 @@ export class AppRuntime {
 		this.galleryManager.clear();
 		const code = this.storage.loadCode();
 		this.textmodeEngine.setCode(code, { silent: true });
-	}
-
-	private runRestoredSketches(): void {
-		this.textmodeEngine.getController()?.handleForceRun();
 	}
 
 	private setEditorReadOnly(readOnly: boolean): void {
@@ -630,19 +621,18 @@ export class AppRuntime {
 		if (!this.textmodeEngine.isInitialized()) return;
 
 		const code = sketch.textmodeCode;
-		this.textmodeEngine.setCode(code, { silent: true });
-		this.textmodeEngine.reconnectRuntime(code);
+		this.textmodeEngine.getController()?.replaceAndRun(code, 'restart');
 	}
 
-	private reconnectTextmodeRunner(options?: { runCurrentCode?: boolean }): void {
+	private reconnectTextmodeRunner(): void {
 		if (!this.textmodeEngine.isInitialized()) return;
 
-		getAppState().setRunnerReconnecting(true);
 		this.textmodeEngine.reconnectRuntime();
-		if (options?.runCurrentCode) {
-			this.textmodeEngine.getController()?.handleForceRun();
-		}
+		this.markRunnerReconnecting();
+	}
 
+	private markRunnerReconnecting(): void {
+		getAppState().setRunnerReconnecting(true);
 		this.clearRunnerReconnectTimer();
 		this.runnerReconnectTimer = window.setTimeout(() => {
 			this.runnerReconnectTimer = null;
@@ -654,17 +644,6 @@ export class AppRuntime {
 		if (this.runnerReconnectTimer === null) return;
 		window.clearTimeout(this.runnerReconnectTimer);
 		this.runnerReconnectTimer = null;
-	}
-
-	private resetAll(): void {
-		this.galleryManager.clear();
-		this.replaceEditorUrl('/');
-		getAppState().setLastWorkingCode(null);
-		this.storage.clearCode();
-
-		if (!this.textmodeEngine.isInitialized()) return;
-		const defaultCode = this.storage.loadCode();
-		this.textmodeEngine.setCode(defaultCode);
 	}
 
 	// ----- End engine lifecycle -----
@@ -683,7 +662,7 @@ export class AppRuntime {
 				},
 				hardReset: () => this.textmodeEngine.getController()?.handleHardReset(),
 				toggleUIVisibility: () => this.toggleUIVisibility(),
-				runCode: () => this.runEngine(),
+				runCode: () => this.textmodeEngine.getController()?.handleForceRun(),
 			},
 		});
 	}
@@ -716,9 +695,7 @@ export class AppRuntime {
 
 		if (code !== newCode) {
 			getAppState().setGallerySketch(null);
-			// Avoid triggering auto-execute debounce + manual forceRun in the same click.
-			this.textmodeEngine.setCode(newCode, { silent: true });
-			this.textmodeEngine.getController()?.handleForceRun();
+			this.textmodeEngine.getController()?.replaceAndRun(newCode);
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			if (window.innerWidth > MOBILE_BREAKPOINT) {
 				this.focusEditor();

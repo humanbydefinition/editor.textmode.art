@@ -10,8 +10,7 @@ export interface ShareManagerDependencies {
 	applyPayload: (payload: SharePayload) => void;
 	focusEditor: () => void;
 	restoreLocalSketches: () => void;
-	runRestoredSketches: () => void;
-	runSharedSketch: () => void;
+	runCode: () => void;
 	replaceUrl: (url: string) => void;
 }
 
@@ -51,7 +50,7 @@ export class ShareManager {
 	unlockAndRun(): void {
 		const payload = this.unlockInternal();
 		if (!payload) return;
-		this.deps.runSharedSketch();
+		this.deps.runCode();
 	}
 
 	unlockOnly(): void {
@@ -74,7 +73,7 @@ export class ShareManager {
 		this.deps.replaceUrl('/');
 		this.deps.setEditorReadOnly(false);
 		this.deps.restoreLocalSketches();
-		this.deps.runRestoredSketches();
+		this.deps.runCode();
 	}
 
 	openPrompt(): void {
