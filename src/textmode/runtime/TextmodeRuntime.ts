@@ -27,7 +27,6 @@ export class TextmodeRuntime implements IHostRuntime {
 	private readonly options: HostRuntimeOptions;
 	private isRuntimeReady = false;
 	private pendingCode: string | null = null;
-	private pendingSoftReset = false;
 	private lastRequestedCode: string | null = null;
 	private runnerUnavailable = false;
 	private disposed = false;
@@ -99,7 +98,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	forceRun(code: string): void {
 		this.lastRequestedCode = code;
 		if (!this.isReady()) {
-			this.setPendingCode(code, false);
+			this.setPendingCode(code);
 			return;
 		}
 
@@ -116,24 +115,8 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (this.disposed) return;
 
 		this.lastRequestedCode = code;
-		this.setPendingCode(code, false);
+		this.setPendingCode(code);
 		this.restartRuntime();
-	}
-
-	/**
-	 * Soft reset - reset frameCount to 0 and re-run code.
-	 */
-	softReset(code: string): void {
-		this.lastRequestedCode = code;
-		if (!this.isReady()) {
-			this.setPendingCode(code, true);
-			return;
-		}
-
-		this.clearPendingCode();
-		void this.runtime.runCode(code, { softReset: true }).catch((error) => {
-			this.onRunError?.(this.toCodeError(error));
-		});
 	}
 
 	sendAudioData(data: AudioDataFrame): boolean {
@@ -162,7 +145,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	reconnect(): void {
 		if (this.disposed) return;
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode, false);
+			this.setPendingCode(this.lastRequestedCode);
 		}
 		this.restartRuntime();
 	}
@@ -221,20 +204,18 @@ export class TextmodeRuntime implements IHostRuntime {
 		this.isRuntimeReady = false;
 
 		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode, false);
+			this.setPendingCode(this.lastRequestedCode);
 		}
 
 		this.setRunnerUnavailable(true);
 	}
 
-	private setPendingCode(code: string, softReset: boolean): void {
+	private setPendingCode(code: string): void {
 		this.pendingCode = code;
-		this.pendingSoftReset = softReset;
 	}
 
 	private clearPendingCode(): void {
 		this.pendingCode = null;
-		this.pendingSoftReset = false;
 	}
 
 	private restartRuntime(): void {
@@ -246,14 +227,7 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (this.pendingCode === null) return;
 
 		const code = this.pendingCode;
-		const softReset = this.pendingSoftReset;
 		this.clearPendingCode();
-
-		if (softReset) {
-			this.softReset(code);
-			return;
-		}
-
 		this.forceRun(code);
 	}
 

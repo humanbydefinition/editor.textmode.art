@@ -39,8 +39,6 @@ export interface IHostRuntime {
 	hardReset(code: string): void;
 	/** Clean up resources */
 	dispose(): void;
-	/** Soft reset (reset frameCount to 0) and re-run code */
-	softReset(code: string): void;
 }
 
 /**
