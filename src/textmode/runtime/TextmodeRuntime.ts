@@ -10,7 +10,6 @@ export interface AudioDataFrame {
 export interface TextmodeRuntimeOptions {
 	runnerUrl: string;
 	container: HTMLElement;
-	onReady?: () => void;
 	onRunOk: (timestamp: number) => void;
 	onRunError: (error: CodeError) => void;
 	onSynthError?: (error: CodeError) => void;
@@ -91,7 +90,6 @@ export class TextmodeRuntime {
 		if (this.disposed) return;
 		this.decorateIframe();
 		this.options.onRunnerConnected?.();
-		this.options.onReady?.();
 		this.flushPendingCode();
 	}
 

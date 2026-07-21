@@ -51,15 +51,6 @@ export interface CodeError {
 }
 
 /**
- * Status indicator states for the application.
- * - ready: waiting for code changes
- * - running: sketch is actively running
- * - updated: code executed successfully (transient state)
- * - error: execution failed
- */
-export type StatusState = 'ready' | 'running' | 'updated' | 'error';
-
-/**
  * Mobile breakpoint in pixels.
  */
 export const MOBILE_BREAKPOINT = 768;

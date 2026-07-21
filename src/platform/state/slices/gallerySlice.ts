@@ -1,15 +1,12 @@
 import type { StateCreator } from 'zustand';
-import type { GallerySketch, GallerySketchSummary } from '@/features/gallery-sketches';
+import type { GallerySketch } from '@/features/gallery-sketches';
 import type { AppState } from '../appStore';
 
 export interface GallerySlice {
 	gallerySketch: GallerySketch | null;
-	gallerySketchSummary: GallerySketchSummary | null;
 	originalGallerySketch: GallerySketch | null;
-	originalGallerySketchSummary: GallerySketchSummary | null;
 
 	setGallerySketch: (sketch: GallerySketch | null) => void;
-	setGallerySketchSummary: (summary: GallerySketchSummary | null) => void;
 	clearOriginalGallerySketch: () => void;
 }
 
@@ -20,9 +17,7 @@ export const createGallerySlice: StateCreator<
 	GallerySlice
 > = (set) => ({
 	gallerySketch: null,
-	gallerySketchSummary: null,
 	originalGallerySketch: null,
-	originalGallerySketchSummary: null,
 
 	setGallerySketch: (sketch) =>
 		set(() => {
@@ -36,23 +31,9 @@ export const createGallerySlice: StateCreator<
 			};
 		}),
 
-	setGallerySketchSummary: (summary) =>
-		set(() => {
-			if (!summary) {
-				return { gallerySketchSummary: null };
-			}
-
-			return {
-				gallerySketchSummary: summary,
-				originalGallerySketchSummary: summary,
-			};
-		}),
-
 	clearOriginalGallerySketch: () =>
 		set({
 			gallerySketch: null,
-			gallerySketchSummary: null,
 			originalGallerySketch: null,
-			originalGallerySketchSummary: null,
 		}),
 });

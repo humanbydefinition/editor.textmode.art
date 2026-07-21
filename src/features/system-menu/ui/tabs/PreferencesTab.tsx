@@ -11,7 +11,7 @@ import type { AppSettings } from '@/types';
 
 export interface PreferencesTabProps {
     settings: AppSettings;
-    onSettingsChange: (settings: AppSettings) => void;
+    onSettingsChange: (settings: Partial<AppSettings>) => void;
     onResetRunners: () => void;
     onClearStorage: () => void;
     onClose: () => void;
@@ -46,7 +46,7 @@ export function PreferencesTab({
                         <Switch
                             id="auto-execute"
                             checked={settings.autoExecute}
-                            onCheckedChange={(checked) => onSettingsChange({ ...settings, autoExecute: checked })}
+                            onCheckedChange={(checked) => onSettingsChange({ autoExecute: checked })}
                         />
                     </div>
 
@@ -66,7 +66,7 @@ export function PreferencesTab({
                                     min={100}
                                     max={2000}
                                     step={100}
-                                    onValueChange={(values) => onSettingsChange({ ...settings, autoExecuteDelay: values[0] })}
+                                    onValueChange={(values) => onSettingsChange({ autoExecuteDelay: values[0] })}
                                 />
                                 <span className="text-xs text-zinc-500 font-mono">2s</span>
                             </div>
@@ -87,7 +87,7 @@ export function PreferencesTab({
                         <Switch
                             id="editor-backdrop"
                             checked={settings.editorBackdrop}
-                            onCheckedChange={(checked) => onSettingsChange({ ...settings, editorBackdrop: checked })}
+                            onCheckedChange={(checked) => onSettingsChange({ editorBackdrop: checked })}
                         />
                     </div>
 
@@ -105,7 +105,7 @@ export function PreferencesTab({
                         <Switch
                             id="line-numbers"
                             checked={settings.lineNumbers}
-                            onCheckedChange={(checked) => onSettingsChange({ ...settings, lineNumbers: checked })}
+                            onCheckedChange={(checked) => onSettingsChange({ lineNumbers: checked })}
                         />
                     </div>
 
@@ -127,7 +127,7 @@ export function PreferencesTab({
                                 min={10}
                                 max={32}
                                 step={1}
-                                onValueChange={(values) => onSettingsChange({ ...settings, fontSize: values[0] })}
+                                onValueChange={(values) => onSettingsChange({ fontSize: values[0] })}
                             />
                             <span className="text-xs text-zinc-500 font-mono">32</span>
                         </div>

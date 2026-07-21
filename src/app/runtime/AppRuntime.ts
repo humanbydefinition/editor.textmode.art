@@ -1,22 +1,21 @@
-import { ShareManager } from '@/features/share';
+import { ShareManager, type ShareExportData } from '@/features/share';
 import { GalleryManager, type GallerySketch } from '@/features/gallery-sketches';
-import { UIActions } from '@/app/runtime/UIActions';
 import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import type { TextmodeEditor } from '@/textmode/editor/TextmodeEditor';
-import { initAppStore, useAppStore } from '@/platform/state/appStore';
+import { useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 import { AudioInputService, type AudioInputFrame } from '@/platform/audio/AudioInputService';
 
-import { createAppStoreAdapter, type AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { AudioInputErrorState, AudioInputPermission } from '@/platform/state/slices/audioSlice';
-import type { AppSettings } from '@/types';
+import { MOBILE_BREAKPOINT, type AppSettings } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
 import type { AppRuntimeContextValue } from './AppRuntimeContext';
 
 const AUDIO_LEVEL_UI_INTERVAL_MS = 1000 / 12;
+const getAppState = useAppStore.getState;
 
 /**
  * Main application composition root.
@@ -25,12 +24,10 @@ const AUDIO_LEVEL_UI_INTERVAL_MS = 1000 / 12;
  */
 export class AppRuntime {
 	private readonly storage: IEditorStorage;
-	private readonly storeAdapter: AppStoreAdapter;
 
 	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareManager: ShareManager;
 	private readonly galleryManager: GalleryManager;
-	private readonly uiActions: UIActions;
 	private readonly audioInputService: AudioInputService;
 
 	/** Stable action references for React context (never change after construction). */
@@ -46,7 +43,6 @@ export class AppRuntime {
 	private storeUnsubscribers: Array<() => void> = [];
 	private audioInputUnsubscribe: (() => void) | null = null;
 	private audioDeviceChangeUnsubscribe: (() => void) | null = null;
-	private storeInitCleanup: (() => void) | null = null;
 	private initialized = false;
 	private hydrationComplete = false;
 	private lifecycleId = 0;
@@ -57,7 +53,6 @@ export class AppRuntime {
 	constructor() {
 		this.creationLifecycleId = this.lifecycleId;
 		this.storage = editorStorage;
-		this.storeAdapter = createAppStoreAdapter();
 
 		// Register default code
 		this.storage.setDefaultCode(defaultTextmodeSketch);
@@ -67,17 +62,11 @@ export class AppRuntime {
 		this.audioInputService = new AudioInputService();
 		this.attachAudioInputService();
 
-		this.uiActions = new UIActions({
-			storage: this.storage,
-			getCode: () => this.textmodeEngine.getCode(),
-			store: this.storeAdapter,
-			loadExample: (code) => this.loadExample(code),
-			reconnectRunners: () => this.reconnectTextmodeRunner({ runCurrentCode: true }),
-			resetAll: () => this.resetAll(),
-		});
-
 		this.shareManager = new ShareManager({
-			store: this.storeAdapter,
+			getShare: () => getAppState().share,
+			setSharePayload: (payload) => getAppState().setSharePayload(payload),
+			setShareConsented: (consented) => getAppState().setShareConsented(consented),
+			setSharePromptOpen: (open) => getAppState().setSharePromptOpen(open),
 			setEditorReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
@@ -88,7 +77,12 @@ export class AppRuntime {
 		});
 
 		this.galleryManager = new GalleryManager({
-			store: this.storeAdapter,
+			getGallerySketch: () => getAppState().gallerySketch,
+			getOriginalGallerySketch: () => getAppState().originalGallerySketch,
+			setGallerySketch: (sketch) => getAppState().setGallerySketch(sketch),
+			clearGallerySketches: () => getAppState().clearOriginalGallerySketch(),
+			setSharePayload: (payload) => getAppState().setSharePayload(payload),
+			setError: (error) => getAppState().setError(error),
 			applyGallerySketch: (sketch) => this.applyGallerySketch(sketch),
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
@@ -96,9 +90,9 @@ export class AppRuntime {
 		this.actions = {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
-			resetRunners: () => this.uiActions.resetRunners(),
-			clearStorage: () => this.uiActions.clearStorage(),
-			loadExample: (code: string) => this.uiActions.loadExample(code),
+			resetRunners: () => this.reconnectTextmodeRunner({ runCurrentCode: true }),
+			clearStorage: () => this.clearStorage(),
+			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => {
 				this.textmodeEngine.getController()?.handleRevertToLastWorking();
 			},
@@ -112,8 +106,8 @@ export class AppRuntime {
 			discardShare: () => this.shareManager.discard(),
 			openSharePrompt: () => this.shareManager.openPrompt(),
 			keepShareLocked: () => this.shareManager.keepLocked(),
-			copyShareExportUrl: (url: string) => this.uiActions.copyShareExportUrl(url),
-			getShareExportData: () => this.uiActions.getShareExportData(),
+			copyShareExportUrl: (url: string) => this.copyShareExportUrl(url),
+			getShareExportData: () => this.getShareExportData(),
 		};
 
 		this.layout = {
@@ -122,7 +116,7 @@ export class AppRuntime {
 	}
 
 	private get settings(): AppSettings {
-		return this.storeAdapter.settings.getSettings();
+		return getAppState().settings;
 	}
 
 	async init(): Promise<void> {
@@ -147,7 +141,7 @@ export class AppRuntime {
 		this.audioDeviceChangeUnsubscribe?.();
 		this.audioDeviceChangeUnsubscribe = null;
 		this.lastAudioLevelUiUpdateAt = 0;
-		this.storeAdapter.audio.setInput({
+		getAppState().setAudioInput({
 			enabled: false,
 			status: 'idle',
 			permission: 'unknown',
@@ -164,11 +158,6 @@ export class AppRuntime {
 		}
 		this.storeUnsubscribers = [];
 
-		if (this.storeInitCleanup) {
-			this.storeInitCleanup();
-			this.storeInitCleanup = null;
-		}
-
 		this.textmodeEditor = null;
 		this.textmodeContainer = null;
 		this.engineBootstrapPromise = null;
@@ -176,10 +165,8 @@ export class AppRuntime {
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
-		this.storeAdapter.engine.setIsInitialized(false);
-		this.storeAdapter.engine.setRunnerUnavailable(false);
-		this.storeAdapter.engine.setRunnerReconnecting(false);
-		this.storeAdapter.engine.setRunnerReady(false);
+		getAppState().setRunnerUnavailable(false);
+		getAppState().setRunnerReconnecting(false);
 
 		this.initialized = false;
 		this.hydrationComplete = false;
@@ -240,25 +227,30 @@ export class AppRuntime {
 		return {
 			editorContainer,
 			visualContainer: document.body,
-			getSettings: this.storeAdapter.settings.getSettings,
-			store: this.storeAdapter,
+			getSettings: () => getAppState().settings,
+			controllerState: {
+				clearError: () => getAppState().clearError(),
+				setError: (error) => getAppState().setError(error),
+				getLastWorkingCode: () => getAppState().lastWorkingCode,
+				setLastWorkingCode: (code) => getAppState().setLastWorkingCode(code),
+			},
+			isExecutionLocked: () => this.shareManager.lockExecutionIfNeeded(),
+			onCodeChanged: (code) => this.galleryManager.syncActiveSketchWithCode(code),
 			callbacks: {
 				onSaveCode: (code: string) => this.storage.saveCode(code),
 			},
 			getInitialCode: () => this.getInitialCode(),
-			toggleUI: () => this.uiActions.toggleUIVisibility(),
-			changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
+			toggleUI: () => this.toggleUIVisibility(),
+			changeFontSize: (delta) => this.changeFontSize(delta),
 			onRunnerConnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
-				this.storeAdapter.engine.setRunnerUnavailable(false);
-				this.storeAdapter.engine.setRunnerReconnecting(false);
-				this.storeAdapter.engine.setRunnerReady(true);
+				getAppState().setRunnerUnavailable(false);
+				getAppState().setRunnerReconnecting(false);
 			},
 			onRunnerDisconnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
-				this.storeAdapter.engine.setRunnerUnavailable(true);
-				this.storeAdapter.engine.setRunnerReconnecting(false);
-				this.storeAdapter.engine.setRunnerReady(false);
+				getAppState().setRunnerUnavailable(true);
+				getAppState().setRunnerReconnecting(false);
 			},
 		};
 	}
@@ -267,7 +259,7 @@ export class AppRuntime {
 		const editor = this.textmodeEditor;
 		if (!editor) return;
 
-		const settings = this.storeAdapter.settings.getSettings();
+		const settings = getAppState().settings;
 		editor.updateOptions({
 			fontSize: settings.fontSize,
 			lineNumbers: settings.lineNumbers ? 'on' : 'off',
@@ -288,9 +280,9 @@ export class AppRuntime {
 
 		const lifecycleId = this.lifecycleId;
 		const loadedSettings = this.storage.loadSettings();
-		this.storeAdapter.settings.setSettings(loadedSettings);
+		getAppState().setSettings(loadedSettings);
 		this.shareManager.hydrateFromLocation(window.location);
-		if (!this.storeAdapter.share.getPayload()) {
+		if (!getAppState().share.payload) {
 			this.galleryManager.hydrateFromLocation(window.location);
 			this.replaceUnknownEditorPath(window.location);
 		} else {
@@ -298,10 +290,6 @@ export class AppRuntime {
 		}
 		if (lifecycleId !== this.lifecycleId) {
 			return;
-		}
-
-		if (!this.storeInitCleanup) {
-			this.storeInitCleanup = initAppStore();
 		}
 
 		this.initialized = true;
@@ -329,6 +317,41 @@ export class AppRuntime {
 		this.textmodeEngine.getController()?.handleForceRun();
 
 		return true;
+	}
+
+	private getShareExportData(): ShareExportData {
+		return {
+			createdAt: Date.now(),
+			textmodeCode: this.textmodeEngine.getCode(),
+		};
+	}
+
+	private copyShareExportUrl(url: string): void {
+		if (navigator.clipboard?.writeText) {
+			navigator.clipboard.writeText(url).catch(() => this.fallbackCopy(url));
+			return;
+		}
+		this.fallbackCopy(url);
+	}
+
+	private fallbackCopy(value: string): void {
+		window.prompt('Copy this link to share your sketch:', value);
+	}
+
+	private clearStorage(): void {
+		this.resetAll();
+		this.reconnectTextmodeRunner({ runCurrentCode: true });
+	}
+
+	private toggleUIVisibility(): void {
+		getAppState().updateSettings({ uiVisible: !this.settings.uiVisible });
+	}
+
+	private changeFontSize(delta: number): void {
+		const fontSize = Math.min(32, Math.max(10, this.settings.fontSize + delta));
+		if (fontSize !== this.settings.fontSize) {
+			getAppState().updateSettings({ fontSize });
+		}
 	}
 
 	private applySharePayload(payload: SharePayload): void {
@@ -360,7 +383,7 @@ export class AppRuntime {
 	private async refreshAudioInputDevices(): Promise<void> {
 		if (this.lifecycleId !== this.creationLifecycleId) return;
 		if (!this.audioInputService.isSupported()) {
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				enabled: false,
 				status: 'unavailable',
 				permission: 'unknown',
@@ -376,8 +399,8 @@ export class AppRuntime {
 			return;
 		}
 
-		const current = this.storeAdapter.audio.getInput();
-		this.storeAdapter.audio.setInput({
+		const current = getAppState().audioInput;
+		getAppState().setAudioInput({
 			isRefreshingDevices: true,
 			status: current.status === 'idle' ? 'checking' : current.status,
 			error: current.status === 'active' ? null : current.error,
@@ -389,7 +412,7 @@ export class AppRuntime {
 				this.queryAudioInputPermission(),
 			]);
 			if (this.lifecycleId !== this.creationLifecycleId) return;
-			const latest = this.storeAdapter.audio.getInput();
+			const latest = getAppState().audioInput;
 			const selectedDeviceStillExists =
 				latest.selectedDeviceId === '' || devices.some((device) => device.deviceId === latest.selectedDeviceId);
 			const selectedDeviceId = selectedDeviceStillExists ? latest.selectedDeviceId : '';
@@ -405,7 +428,7 @@ export class AppRuntime {
 					nextStatus = 'idle';
 				}
 			}
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				devices,
 				selectedDeviceId,
 				permission,
@@ -414,7 +437,7 @@ export class AppRuntime {
 				error: null,
 			});
 		} catch (error) {
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				enabled: false,
 				status: 'error',
 				isRefreshingDevices: false,
@@ -426,7 +449,7 @@ export class AppRuntime {
 	private async enableAudioInput(deviceId?: string): Promise<void> {
 		if (this.lifecycleId !== this.creationLifecycleId) return;
 		if (!this.audioInputService.isSupported()) {
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				enabled: false,
 				status: 'unavailable',
 				permission: 'unknown',
@@ -441,9 +464,9 @@ export class AppRuntime {
 			return;
 		}
 
-		const current = this.storeAdapter.audio.getInput();
+		const current = getAppState().audioInput;
 		const selectedDeviceId = deviceId ?? current.selectedDeviceId;
-		this.storeAdapter.audio.setInput({
+		getAppState().setAudioInput({
 			enabled: false,
 			status: 'requesting',
 			selectedDeviceId,
@@ -455,7 +478,7 @@ export class AppRuntime {
 			if (this.lifecycleId !== this.creationLifecycleId) return;
 			const devices = await this.audioInputService.listDevices();
 			if (this.lifecycleId !== this.creationLifecycleId) return;
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				enabled: true,
 				status: 'active',
 				permission: 'granted',
@@ -467,7 +490,7 @@ export class AppRuntime {
 		} catch (error) {
 			this.audioInputService.stop({ emitSilence: true });
 			const errorState = this.toAudioErrorState(error);
-			this.storeAdapter.audio.setInput({
+			getAppState().setAudioInput({
 				enabled: false,
 				status: this.getAudioErrorStatus(errorState),
 				permission: errorState.kind === 'permission-denied' ? 'denied' : current.permission,
@@ -482,7 +505,7 @@ export class AppRuntime {
 		if (this.lifecycleId !== this.creationLifecycleId) return;
 		this.audioInputService.stop({ emitSilence: true });
 		this.lastAudioLevelUiUpdateAt = 0;
-		this.storeAdapter.audio.setInput({
+		getAppState().setAudioInput({
 			enabled: false,
 			status: 'idle',
 			isRefreshingDevices: false,
@@ -493,8 +516,8 @@ export class AppRuntime {
 
 	private async selectAudioInputDevice(deviceId: string): Promise<void> {
 		if (this.lifecycleId !== this.creationLifecycleId) return;
-		this.storeAdapter.audio.setInput({ selectedDeviceId: deviceId });
-		if (!this.storeAdapter.audio.getInput().enabled) return;
+		getAppState().setAudioInput({ selectedDeviceId: deviceId });
+		if (!getAppState().audioInput.enabled) return;
 		await this.enableAudioInput(deviceId);
 		if (this.lifecycleId !== this.creationLifecycleId) return;
 	}
@@ -507,7 +530,7 @@ export class AppRuntime {
 			frame.level === 0
 		) {
 			this.lastAudioLevelUiUpdateAt = frame.timestamp;
-			this.storeAdapter.audio.setInput({ level: frame.level });
+			getAppState().setAudioInput({ level: frame.level });
 		}
 		this.textmodeEngine.sendAudioData({
 			fft: frame.fft,
@@ -614,7 +637,7 @@ export class AppRuntime {
 	private reconnectTextmodeRunner(options?: { runCurrentCode?: boolean }): void {
 		if (!this.textmodeEngine.isInitialized()) return;
 
-		this.storeAdapter.engine.setRunnerReconnecting(true);
+		getAppState().setRunnerReconnecting(true);
 		this.textmodeEngine.reconnectRuntime();
 		if (options?.runCurrentCode) {
 			this.textmodeEngine.getController()?.handleForceRun();
@@ -623,7 +646,7 @@ export class AppRuntime {
 		this.clearRunnerReconnectTimer();
 		this.runnerReconnectTimer = window.setTimeout(() => {
 			this.runnerReconnectTimer = null;
-			this.storeAdapter.engine.setRunnerReconnecting(false);
+			getAppState().setRunnerReconnecting(false);
 		}, 10000);
 	}
 
@@ -636,7 +659,7 @@ export class AppRuntime {
 	private resetAll(): void {
 		this.galleryManager.clear();
 		this.replaceEditorUrl('/');
-		this.storeAdapter.engine.setLastWorkingCode(null);
+		getAppState().setLastWorkingCode(null);
 		this.storage.clearCode();
 
 		if (!this.textmodeEngine.isInitialized()) return;
@@ -649,17 +672,17 @@ export class AppRuntime {
 	private createShortcutsManager(): IShortcutsManager {
 		return new ShortcutsManager({
 			actions: {
-				changeFontSize: (delta) => this.uiActions.changeFontSize(delta),
+				changeFontSize: (delta) => this.changeFontSize(delta),
 				toggleAutoExecute: () => {
 					const s = this.settings;
-					this.storeAdapter.settings.setSettings({ ...s, autoExecute: !s.autoExecute });
+					getAppState().updateSettings({ autoExecute: !s.autoExecute });
 				},
 				toggleEditorBackdrop: () => {
 					const s = this.settings;
-					this.storeAdapter.settings.setSettings({ ...s, editorBackdrop: !s.editorBackdrop });
+					getAppState().updateSettings({ editorBackdrop: !s.editorBackdrop });
 				},
 				hardReset: () => this.textmodeEngine.getController()?.handleHardReset(),
-				toggleUIVisibility: () => this.uiActions.toggleUIVisibility(),
+				toggleUIVisibility: () => this.toggleUIVisibility(),
 				runCode: () => this.runEngine(),
 			},
 		});
@@ -692,27 +715,25 @@ export class AppRuntime {
 		const newCode = CodeRandomizer.makeRandomChange(code);
 
 		if (code !== newCode) {
-			this.storeAdapter.gallery.setActiveSketch(null);
-			this.storeAdapter.gallery.setSketchSummary(null);
+			getAppState().setGallerySketch(null);
 			// Avoid triggering auto-execute debounce + manual forceRun in the same click.
 			this.textmodeEngine.setCode(newCode, { silent: true });
 			this.textmodeEngine.getController()?.handleForceRun();
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
-			const isMobile = this.storeAdapter.ui.getIsMobile();
-			if (!isMobile) {
+			if (window.innerWidth > MOBILE_BREAKPOINT) {
 				this.focusEditor();
 			}
 		}
 	}
 
-	private async loadRandomGallerySketch(): Promise<boolean> {
+	private loadRandomGallerySketch(): boolean {
 		if (!this.textmodeEngine.isInitialized()) return false;
 		return this.galleryManager.loadRandom();
 	}
 
 	private replaceUnknownEditorPath(location: Location): void {
 		if (location.pathname === '/') return;
-		if (this.storeAdapter.gallery.getActiveSketch()) return;
+		if (getAppState().gallerySketch) return;
 		this.replaceEditorUrl('/');
 	}
 

@@ -1,11 +1,11 @@
 import type { AppSettings } from '@/types';
-import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import {
 	TextmodeController,
 	type TextmodeControllerCallbacks,
 	type TextmodeControllerDependencies,
+	type TextmodeControllerState,
 } from './TextmodeController';
 
 /**
@@ -15,7 +15,9 @@ export interface TextmodeEngineContext {
 	editorContainer: HTMLElement;
 	visualContainer?: HTMLElement;
 	getSettings: () => AppSettings;
-	store: AppStoreAdapter;
+	controllerState: TextmodeControllerState;
+	isExecutionLocked: () => boolean;
+	onCodeChanged: (code: string) => void;
 	callbacks: TextmodeControllerCallbacks;
 	getInitialCode: () => string;
 	toggleUI: () => void;
@@ -109,7 +111,6 @@ export class TextmodeEngine {
 		this.runtime = new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
-			onReady: () => this.controller?.handleRuntimeReady(),
 			onRunOk: () => this.controller?.handleRunOk(),
 			onRunError: (error) => this.controller?.handleRunError(error),
 			onSynthError: (error) => this.controller?.handleSynthError(error),
@@ -131,7 +132,9 @@ export class TextmodeEngine {
 			getRuntime: () => this.runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
-			store: context.store,
+			state: context.controllerState,
+			isExecutionLocked: context.isExecutionLocked,
+			onCodeChanged: context.onCodeChanged,
 		};
 
 		return new TextmodeController(callbacks, deps);

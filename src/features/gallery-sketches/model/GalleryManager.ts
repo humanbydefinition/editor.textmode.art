@@ -1,10 +1,16 @@
-import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
+import type { CodeError } from '@/types';
+import type { SharePayload } from '@/features/share/model/sharePayload';
 import type { GallerySketch } from '../types';
-import { getGallerySketchBySlug, getRandomGallerySketch, toGallerySketchSummary } from './catalog';
+import { getGallerySketchBySlug, getRandomGallerySketch } from './catalog';
 import { getGallerySlugFromPathname, normalizeSlug } from './slug';
 
 export interface GalleryManagerDependencies {
-	store: AppStoreAdapter;
+	getGallerySketch: () => GallerySketch | null;
+	getOriginalGallerySketch: () => GallerySketch | null;
+	setGallerySketch: (sketch: GallerySketch | null) => void;
+	clearGallerySketches: () => void;
+	setSharePayload: (payload: SharePayload | null) => void;
+	setError: (error: CodeError | null) => void;
 	applyGallerySketch: (sketch: GallerySketch) => void;
 	replaceUrl: (url: string) => void;
 	getSketchBySlug?: (slug: string) => GallerySketch | null;
@@ -20,7 +26,7 @@ export class GalleryManager {
 	}
 
 	hydrateFromLocation(location: Location): void {
-		this.resetHydratedState();
+		this.clear();
 
 		const detectedSlug = getGallerySlugFromPathname(location.pathname);
 		if (!detectedSlug) return;
@@ -32,15 +38,14 @@ export class GalleryManager {
 		}
 
 		this.pendingGallerySketch = sketch;
-		this.deps.store.gallery.setActiveSketch(sketch);
-		this.deps.store.gallery.setSketchSummary(toGallerySketchSummary(sketch));
+		this.deps.setGallerySketch(sketch);
 		const canonicalPath = `/s/${sketch.slug}/`;
 		if (location.pathname !== canonicalPath) this.deps.replaceUrl(canonicalPath);
 	}
 
 	getInitialCodeOverride(): string | null {
 		return (
-			this.pendingGallerySketch?.textmodeCode ?? this.deps.store.gallery.getActiveSketch()?.textmodeCode ?? null
+			this.pendingGallerySketch?.textmodeCode ?? this.deps.getGallerySketch()?.textmodeCode ?? null
 		);
 	}
 
@@ -52,37 +57,39 @@ export class GalleryManager {
 	}
 
 	loadRandom(): boolean {
-		if (this.deps.store.engine.getRandomizeLoading()) return false;
+		const currentSlug = this.deps.getGallerySketch()?.slug;
+		const sketch = (this.deps.getRandomSketch ?? getRandomGallerySketch)(currentSlug);
+		if (!sketch) return false;
 
-		this.deps.store.engine.setRandomizeLoading(true);
-		try {
-			const currentSlug = this.deps.store.gallery.getActiveSketch()?.slug;
-			const sketch = (this.deps.getRandomSketch ?? getRandomGallerySketch)(currentSlug);
-			if (!sketch) return false;
+		this.applyGallerySketch(sketch);
+		this.deps.replaceUrl(`/s/${sketch.slug}/`);
+		return true;
+	}
 
-			this.applyGallerySketch(sketch);
-			this.deps.replaceUrl(`/s/${sketch.slug}/`);
-			return true;
-		} finally {
-			this.deps.store.engine.setRandomizeLoading(false);
+	syncActiveSketchWithCode(code: string): void {
+		const activeSketch = this.deps.getGallerySketch();
+		if (activeSketch) {
+			if (code !== activeSketch.textmodeCode) {
+				this.deps.setGallerySketch(null);
+			}
+			return;
+		}
+
+		const originalSketch = this.deps.getOriginalGallerySketch();
+		if (originalSketch?.textmodeCode === code) {
+			this.deps.setGallerySketch(originalSketch);
 		}
 	}
 
 	clear(): void {
 		this.pendingGallerySketch = null;
-		this.deps.store.gallery.clearOriginalSketch();
+		this.deps.clearGallerySketches();
 	}
 
 	private applyGallerySketch(sketch: GallerySketch): void {
-		this.deps.store.share.setPayload(null);
-		this.deps.store.gallery.setActiveSketch(sketch);
-		this.deps.store.gallery.setSketchSummary(toGallerySketchSummary(sketch));
-		this.deps.store.engine.setError(null);
+		this.deps.setSharePayload(null);
+		this.deps.setGallerySketch(sketch);
+		this.deps.setError(null);
 		this.deps.applyGallerySketch(sketch);
-	}
-
-	private resetHydratedState(): void {
-		this.pendingGallerySketch = null;
-		this.deps.store.gallery.clearOriginalSketch();
 	}
 }

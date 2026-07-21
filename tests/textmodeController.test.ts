@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { TextmodeController } from '../src/textmode/TextmodeController';
-import type { AppStoreAdapter } from '../src/platform/state/adapters/appStoreAdapter';
+import { TextmodeController, type TextmodeControllerState } from '../src/textmode/TextmodeController';
 import type { TextmodeEditor } from '../src/textmode/editor/TextmodeEditor';
 import type { TextmodeRuntime } from '../src/textmode/runtime/TextmodeRuntime';
 
@@ -16,10 +15,11 @@ describe('TextmodeController hard reset', () => {
 				getRuntime: () => ({ restart }) as unknown as TextmodeRuntime,
 				getAutoExecute: () => true,
 				getAutoExecuteDelay: () => 0,
-				store: {
-					engine: { clearError: vi.fn(), setStatus: vi.fn() },
-					share: { getPayload: () => null, getConsented: () => false, getPromptOpen: () => false },
-				} as unknown as AppStoreAdapter,
+				state: {
+					clearError: vi.fn(),
+				} as unknown as TextmodeControllerState,
+				isExecutionLocked: () => false,
+				onCodeChanged: vi.fn(),
 			}
 		);
 
@@ -30,3 +30,60 @@ describe('TextmodeController hard reset', () => {
 		expect(clearMarkers).toHaveBeenCalled();
 	});
 });
+
+describe('TextmodeController working-code confirmation', () => {
+	it('confirms successful code through its narrow state interface', () => {
+		vi.useFakeTimers();
+		const setLastWorkingCode = vi.fn();
+		const controller = createController(setLastWorkingCode);
+
+		controller.handleRunOk();
+		expect(setLastWorkingCode).not.toHaveBeenCalled();
+
+		vi.advanceTimersByTime(100);
+		expect(setLastWorkingCode).toHaveBeenCalledWith('t.draw(() => {});');
+
+		controller.dispose();
+		vi.useRealTimers();
+	});
+
+	it('cancels pending confirmation when execution fails', () => {
+		vi.useFakeTimers();
+		const setLastWorkingCode = vi.fn();
+		const controller = createController(setLastWorkingCode);
+
+		controller.handleRunOk();
+		controller.handleRunError({ message: 'failed' });
+		vi.advanceTimersByTime(100);
+
+		expect(setLastWorkingCode).not.toHaveBeenCalled();
+
+		controller.dispose();
+		vi.useRealTimers();
+	});
+});
+
+function createController(setLastWorkingCode: (code: string) => void): TextmodeController {
+	return new TextmodeController(
+		{ onSaveCode: vi.fn() },
+		{
+			getEditor: () =>
+				({
+					getValue: () => 't.draw(() => {});',
+					clearMarkers: vi.fn(),
+					setErrorMarker: vi.fn(),
+				}) as unknown as TextmodeEditor,
+			getRuntime: () => null,
+			getAutoExecute: () => true,
+			getAutoExecuteDelay: () => 0,
+			state: {
+				clearError: vi.fn(),
+				setError: vi.fn(),
+				getLastWorkingCode: () => null,
+				setLastWorkingCode,
+			},
+			isExecutionLocked: () => false,
+			onCodeChanged: vi.fn(),
+		}
+	);
+}

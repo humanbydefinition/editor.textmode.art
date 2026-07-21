@@ -4,11 +4,11 @@ import type { ShareExportData } from '@/features/share';
 /**
  * Context value provided by AppRuntime to the React tree.
  * Only contains stable action/layout references — runtime state
- * (randomizeLoading, editorBackdrop, etc.) is read from the Zustand store.
+ * (editorBackdrop, audio input, etc.) is read from the Zustand store.
  */
 export interface AppRuntimeContextValue {
 	actions: {
-		randomize: () => Promise<boolean>;
+		randomize: () => boolean;
 		makeRandomChange: () => void;
 		resetRunners: () => void;
 		clearStorage: () => void;

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
+import { Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -25,9 +25,8 @@ import type { AudioInputState } from '@/platform/state/slices/audioSlice';
 
 export interface SystemMenuProps {
     onShare: () => void;
-    onRandomize: () => Promise<boolean>;
+    onRandomize: () => boolean;
     onMakeRandomChange?: () => void;
-    randomizeLoading: boolean;
     onResetRunners: () => void;
     onClearStorage: () => void;
     audioInput: AudioInputState;
@@ -42,7 +41,6 @@ export function SystemMenu({
     onShare,
     onRandomize,
     onMakeRandomChange,
-    randomizeLoading,
     onResetRunners,
     onClearStorage,
     audioInput,
@@ -54,12 +52,12 @@ export function SystemMenu({
 }: SystemMenuProps) {
     const currentYear = new Date().getFullYear();
     const settings = useAppStore(selectSettings);
-    const setSettings = useAppStore((state) => state.setSettings);
+    const updateSettings = useAppStore((state) => state.updateSettings);
 
     const [open, setOpen] = useState(false);
 
-    const handleRandomize = async () => {
-        const success = await onRandomize();
+    const handleRandomize = () => {
+        const success = onRandomize();
         if (!success) {
             toast.error('no gallery sketches available', {
                 position: 'bottom-right',
@@ -89,19 +87,14 @@ export function SystemMenu({
                 <TooltipTrigger asChild>
                     <button
                         onClick={handleRandomize}
-                        disabled={randomizeLoading}
                         className={`${floatingIconButtonVariants()} fixed top-2 right-[2.5rem] z-50 pointer-events-auto`}
                         aria-label="Load random sketch"
                     >
-                        {randomizeLoading ? (
-                            <Loader2 className="w-[14px] h-[14px] animate-spin" />
-                        ) : (
-                            <Shuffle className="w-[14px] h-[14px]" />
-                        )}
+                        <Shuffle className="w-[14px] h-[14px]" />
                     </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{randomizeLoading ? 'loading random sketch...' : 'load random sketch'}</p>
+                    <p>load random sketch</p>
                 </TooltipContent>
             </Tooltip>
 
@@ -197,7 +190,7 @@ export function SystemMenu({
                     <TabsContent value="settings" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
                         <PreferencesTab
                             settings={settings}
-                            onSettingsChange={setSettings}
+                            onSettingsChange={updateSettings}
                             onResetRunners={onResetRunners}
                             onClearStorage={onClearStorage}
                             onClose={() => setOpen(false)}

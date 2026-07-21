@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EditorLayout } from '@/features/editor-layout';
 import { WelcomeDialog } from '@/features/onboarding';
 import { SystemMenu } from '@/features/system-menu';
@@ -9,8 +9,7 @@ import {
 	selectAudioInput,
 	selectEditorBackdrop,
 	selectError,
-	selectGallerySketchSummary,
-	selectRandomizeLoading,
+	selectGallerySketch,
 	selectShareConsented,
 	selectSharePayload,
 	selectSharePromptOpen,
@@ -18,7 +17,7 @@ import {
 	selectTextmodeRunnerUnavailable,
 } from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
-import { GallerySketchInfoButton } from '@/features/gallery-sketches';
+import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gallery-sketches';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
@@ -43,14 +42,17 @@ export function AppShell() {
 
 	// Store State
 	const editorBackdrop = useAppStore(selectEditorBackdrop);
-	const randomizeLoading = useAppStore(selectRandomizeLoading);
 	const error = useAppStore(selectError);
 	const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
 	const clearError = useAppStore((state) => state.clearError);
 	const sharePayload = useAppStore(selectSharePayload);
 	const shareConsented = useAppStore(selectShareConsented);
 	const sharePromptOpen = useAppStore(selectSharePromptOpen);
-	const gallerySketchSummary = useAppStore(selectGallerySketchSummary);
+	const gallerySketch = useAppStore(selectGallerySketch);
+	const gallerySketchSummary = useMemo(
+		() => (gallerySketch ? toGallerySketchSummary(gallerySketch) : null),
+		[gallerySketch]
+	);
 	const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
 	const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
 	const audioInput = useAppStore(selectAudioInput);
@@ -161,7 +163,6 @@ export function AppShell() {
 								onShare={handleShare}
 								onRandomize={actions.randomize}
 								onMakeRandomChange={actions.makeRandomChange}
-								randomizeLoading={randomizeLoading}
 								onResetRunners={actions.resetRunners}
 								onClearStorage={actions.clearStorage}
 								audioInput={audioInput}
