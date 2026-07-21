@@ -59,8 +59,7 @@ describe('state-owning managers', () => {
 			applyPayload: vi.fn(),
 			focusEditor: vi.fn(),
 			restoreLocalSketches: vi.fn(),
-			runRestoredSketches: vi.fn(),
-			runSharedSketch: vi.fn(),
+			runCode: vi.fn(),
 			replaceUrl: vi.fn(),
 		} satisfies ShareManagerDependencies);
 
