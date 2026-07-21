@@ -26,6 +26,7 @@ Before opening a pull request:
 - Keep the slug between 3 and 32 characters.
 - Make sure `meta.json` follows the schema documented in [`sketches/README.md`](sketches/README.md).
 - Keep `sketch.js` self-contained and compatible with `editor.textmode.art`.
+- Initialize stateful sketches in `t.setup()` so each submitted execution can recreate its state; the runner automatically releases resources created through textmode APIs.
 - Install Chromium once with `npm run playwright:install`.
 - Generate `og.png` with `npm run generate:og -- your-sketch-slug`; use `--frame` while choosing the best frame and persist that value as `ogFrame`.
 - Run `npm test` and `npm run build`. The production build rejects missing, corrupt, or incorrectly sized gallery images.

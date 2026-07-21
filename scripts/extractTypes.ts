@@ -114,15 +114,6 @@ declare global {
 
   // Cleanup
   function onDispose(fn: () => void): void;
-  
-  // Tracked Timers (overridden from window for resource tracking)
-  function setTimeout(handler: TimerHandler, timeout?: number, ...args: unknown[]): number;
-  function clearTimeout(id?: number): void;
-  function setInterval(handler: TimerHandler, timeout?: number, ...args: unknown[]): number;
-  function clearInterval(id?: number): void;
-  function requestAnimationFrame(callback: FrameRequestCallback): number;
-  function cancelAnimationFrame(id: number): void;
-  function addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
 
   // Synth Source Functions (re-exported as globals)
   const osc: typeof import('textmode.synth.js').osc;

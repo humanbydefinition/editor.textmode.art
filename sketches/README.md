@@ -51,6 +51,20 @@ The code must not be empty and must stay under 300,000 characters.
 
 Gallery sketch code is not linted by the project ESLint setup. Sketch PR review focuses on metadata validity, compatibility with the live editor, and whether the sketch is appropriate for the gallery.
 
+### Live-coding lifecycle
+
+Inside `editor.textmode.art`, `t.setup()` runs once for every submitted code execution and is awaited before drawing resumes. This intentionally differs from standalone textmode.js, where setup runs once when the textmode instance initializes. Re-executing a stateful sketch should therefore rebuild its state from the edited code rather than relying on objects from the previous execution.
+
+The runner automatically releases shaders, framebuffers, textures, layers, and synths created through textmode APIs before the next execution. Use the optional `onDispose()` global only for external side effects that the runner cannot own, such as custom DOM nodes, sockets, observers, timers, or event listeners:
+
+```javascript
+const controller = new AbortController();
+window.addEventListener('pointermove', handlePointerMove, { signal: controller.signal });
+onDispose(() => controller.abort());
+```
+
+Normal live execution preserves `t.frameCount` and `t.secs`, but creates a new JavaScript closure and setup state. Simulations that depend on accumulated framebuffer history should deliberately recreate or reseed that history during setup. Only the `Ctrl+Shift+R` hard reset recreates the runner and resets the timeline.
+
 ## `og.png`
 
 Every gallery sketch includes a committed `1200×630` Open Graph image. Install Chromium once, then generate it locally:
