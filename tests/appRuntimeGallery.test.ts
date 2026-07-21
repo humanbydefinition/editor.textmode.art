@@ -4,16 +4,10 @@ import type { GallerySketch } from '../src/features/gallery-sketches';
 
 vi.mock('@/textmode/TextmodeEngine', () => {
 	class TextmodeEngine {
-		readonly runtime = {
-			forceRun: vi.fn(),
-			hardReset: vi.fn(),
-		};
-
 		dispose = vi.fn();
 		getCode = vi.fn(() => '');
 		getController = vi.fn(() => null);
 		getEditor = vi.fn(() => null);
-		getRuntime = vi.fn(() => this.runtime);
 		init = vi.fn(async () => {});
 		isInitialized = vi.fn(() => true);
 		reconnectRuntime = vi.fn();
@@ -30,7 +24,7 @@ describe('AppRuntime gallery loading', () => {
 		const engine = (
 			appRuntime as unknown as {
 				textmodeEngine: {
-					getRuntime: () => { forceRun: ReturnType<typeof vi.fn>; hardReset: ReturnType<typeof vi.fn> };
+					reconnectRuntime: ReturnType<typeof vi.fn>;
 					setCode: ReturnType<typeof vi.fn>;
 				};
 			}
@@ -50,8 +44,7 @@ describe('AppRuntime gallery loading', () => {
 		callPrivate(appRuntime, 'applyGallerySketch', sketch);
 
 		expect(engine.setCode).toHaveBeenCalledWith(sketch.textmodeCode, { silent: true });
-		expect(engine.getRuntime().hardReset).toHaveBeenCalledWith(sketch.textmodeCode);
-		expect(engine.getRuntime().forceRun).not.toHaveBeenCalled();
+		expect(engine.reconnectRuntime).toHaveBeenCalledWith(sketch.textmodeCode);
 	});
 });
 

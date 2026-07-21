@@ -45,7 +45,7 @@ export class TextmodeEngine {
 			this.runtime = this.createRuntime(context);
 			this.controller = this.createController(context);
 
-			this.runtime.init();
+			this.runtime.init(initialCode);
 			this.initialized = true;
 		} finally {
 			this.initializing = false;
@@ -73,10 +73,6 @@ export class TextmodeEngine {
 		return this.controller;
 	}
 
-	getRuntime(): TextmodeRuntime | null {
-		return this.runtime;
-	}
-
 	isInitialized(): boolean {
 		return this.initialized;
 	}
@@ -93,8 +89,8 @@ export class TextmodeEngine {
 		return this.runtime?.sendAudioData(data) ?? false;
 	}
 
-	reconnectRuntime(): void {
-		this.runtime?.reconnect();
+	reconnectRuntime(code = this.getCode()): void {
+		this.runtime?.restart(code);
 	}
 
 	private createEditor(context: TextmodeEngineContext, initialCode: string): TextmodeEditor {

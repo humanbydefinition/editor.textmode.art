@@ -6,14 +6,14 @@ import type { TextmodeRuntime } from '../src/textmode/runtime/TextmodeRuntime';
 
 describe('TextmodeController hard reset', () => {
 	it('restarts the runtime for the advertised hard-reset shortcut', () => {
-		const hardReset = vi.fn();
+		const restart = vi.fn();
 		const clearMarkers = vi.fn();
 		const onSaveCode = vi.fn();
 		const controller = new TextmodeController(
 			{ onSaveCode },
 			{
 				getEditor: () => ({ getValue: () => 't.setup(() => {});', clearMarkers }) as unknown as TextmodeEditor,
-				getRuntime: () => ({ hardReset }) as unknown as TextmodeRuntime,
+				getRuntime: () => ({ restart }) as unknown as TextmodeRuntime,
 				getAutoExecute: () => true,
 				getAutoExecuteDelay: () => 0,
 				store: {
@@ -25,7 +25,7 @@ describe('TextmodeController hard reset', () => {
 
 		controller.handleHardReset();
 
-		expect(hardReset).toHaveBeenCalledWith('t.setup(() => {});');
+		expect(restart).toHaveBeenCalledWith('t.setup(() => {});');
 		expect(onSaveCode).toHaveBeenCalledWith('t.setup(() => {});');
 		expect(clearMarkers).toHaveBeenCalled();
 	});

@@ -86,19 +86,12 @@ export class TextmodeController {
 		this.deps.store.engine.clearError();
 		this.deps.store.engine.setStatus('ready');
 		editor?.clearMarkers();
-		this.deps.getRuntime()?.hardReset(code);
+		this.deps.getRuntime()?.restart(code);
 	}
 
 	handleRuntimeReady(): void {
 		this.deps.store.engine.setStatus('ready');
 		this.deps.store.engine.setIsInitialized(true);
-
-		if (this.isExecutionLocked()) return;
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
-		if (code) {
-			this.deps.getRuntime()?.forceRun(code);
-		}
 	}
 
 	handleRunOk(): void {

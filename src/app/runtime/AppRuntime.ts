@@ -608,7 +608,7 @@ export class AppRuntime {
 
 		const code = sketch.textmodeCode;
 		this.textmodeEngine.setCode(code, { silent: true });
-		this.textmodeEngine.getRuntime()?.hardReset(code);
+		this.textmodeEngine.reconnectRuntime(code);
 	}
 
 	private reconnectTextmodeRunner(options?: { runCurrentCode?: boolean }): void {

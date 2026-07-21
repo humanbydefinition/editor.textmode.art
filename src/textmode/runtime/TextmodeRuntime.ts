@@ -1,8 +1,5 @@
 import { IframeTextmodeRuntime, type RunnerExecutionError } from '@textmode/runner-client';
-import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/types';
-
-const HANDSHAKE_TIMEOUT_MS = 5000;
 
 export interface AudioDataFrame {
 	fft: Uint8Array;
@@ -10,235 +7,102 @@ export interface AudioDataFrame {
 	timestamp: number;
 }
 
-interface AudioCapableRuntime {
-	sendAudioData?: (data: AudioDataFrame) => boolean;
-	postMessage?: (message: { type: 'AUDIO_DATA' } & AudioDataFrame) => void;
+export interface TextmodeRuntimeOptions {
+	runnerUrl: string;
+	container: HTMLElement;
+	onReady?: () => void;
+	onRunOk: (timestamp: number) => void;
+	onRunError: (error: CodeError) => void;
+	onSynthError?: (error: CodeError) => void;
+	onToggleUI?: () => void;
+	onHardReset?: () => void;
+	onRunnerConnected?: () => void;
+	onRunnerDisconnected?: () => void;
 }
 
 /**
- * TextmodeRuntime preserves synth's host runtime surface while delegating the
- * iframe transport and current runner protocol to the shared client package.
+ * Adapts the shared runner client to editor-specific execution errors, iframe
+ * presentation, and the latest code requested before the runner becomes ready.
  */
-export class TextmodeRuntime implements IHostRuntime {
-	readonly strategy = 'sandboxed' as const;
-
-	private readonly container: HTMLElement;
+export class TextmodeRuntime {
+	private readonly options: TextmodeRuntimeOptions;
 	private readonly runtime: IframeTextmodeRuntime;
-	private readonly options: HostRuntimeOptions;
-	private isRuntimeReady = false;
 	private pendingCode: string | null = null;
-	private lastRequestedCode: string | null = null;
-	private runnerUnavailable = false;
 	private disposed = false;
 
-	private onReadyCallback?: () => void;
-	private onRunOk?: (timestamp: number) => void;
-	private onRunError?: (error: CodeError) => void;
-	private onSynthError?: (error: CodeError) => void;
-	private onUserInteractionCallback?: () => void;
-	private onRunnerConnected?: () => void;
-	private onRunnerDisconnected?: () => void;
-
-	constructor(options: HostRuntimeOptions) {
+	constructor(options: TextmodeRuntimeOptions) {
 		this.options = options;
-		this.container = options.container;
-		this.onReadyCallback = options.onReady;
-		this.onRunOk = options.onRunOk;
-		this.onRunError = options.onRunError;
-		this.onSynthError = options.onSynthError;
-		this.onRunnerConnected = options.onRunnerConnected;
-		this.onRunnerDisconnected = options.onRunnerDisconnected;
-
 		this.runtime = new IframeTextmodeRuntime({
 			runnerUrl: options.runnerUrl,
 			mountMode: 'append',
-			handshakeTimeoutMs: HANDSHAKE_TIMEOUT_MS,
 			onReady: () => this.handleReady(),
-			onRunOk: (message) => {
-				this.onRunOk?.(message.timestamp);
-			},
-			onRunError: (error) => {
-				this.onRunError?.(this.toCodeError(error));
-			},
-			onSynthError: (message) => {
-				this.onSynthError?.({ message });
-			},
-			onHardReset: () => {
-				this.options.onHardReset?.();
-			},
-			onToggleUI: () => {
-				this.options.onToggleUI?.();
-			},
-			onUserInteraction: () => {
-				this.onUserInteractionCallback?.();
-			},
-			onUnavailable: () => {
-				this.handleRunnerUnavailable();
-			},
+			onRunOk: (message) => options.onRunOk(message.timestamp),
+			onRunError: (error) => options.onRunError(toCodeError(error)),
+			onSynthError: (message) => options.onSynthError?.({ message }),
+			onHardReset: options.onHardReset,
+			onToggleUI: options.onToggleUI,
+			onUnavailable: () => this.handleUnavailable(),
 		});
 	}
 
-	/**
-	 * Create and initialize the iframe.
-	 */
-	init(): void {
-		this.startRuntime();
+	init(initialCode = ''): void {
+		if (initialCode) {
+			this.pendingCode = initialCode;
+		}
+
+		const initialization = this.runtime.init(this.options.container);
+		this.decorateIframe();
+		void initialization.catch(() => undefined);
 	}
 
-	/**
-	 * Check if iframe is ready to receive code.
-	 */
-	isReady(): boolean {
-		return this.isRuntimeReady && this.runtime.isReady;
-	}
-
-	/**
-	 * Run code immediately.
-	 */
 	forceRun(code: string): void {
-		this.lastRequestedCode = code;
-		if (!this.isReady()) {
-			this.setPendingCode(code);
+		if (this.disposed) return;
+		if (!this.runtime.isReady) {
+			this.pendingCode = code;
 			return;
 		}
 
-		this.clearPendingCode();
+		this.pendingCode = null;
 		void this.runtime.runCode(code).catch((error) => {
-			this.onRunError?.(this.toCodeError(error));
+			this.options.onRunError(toCodeError(error));
 		});
 	}
 
-	/**
-	 * Hard reset - recreate the iframe so textmode setup and resource initialization run again.
-	 */
-	hardReset(code: string): void {
+	restart(code: string): void {
 		if (this.disposed) return;
+		this.pendingCode = code;
 
-		this.lastRequestedCode = code;
-		this.setPendingCode(code);
-		this.restartRuntime();
+		const reconnection = this.runtime.reconnect({ rerun: false });
+		this.decorateIframe();
+		void reconnection.catch(() => undefined);
 	}
 
 	sendAudioData(data: AudioDataFrame): boolean {
-		if (!this.isReady()) return false;
-
-		const runtime = this.runtime as unknown as AudioCapableRuntime;
-		if (runtime.sendAudioData) {
-			return runtime.sendAudioData(data);
-		}
-
-		if (runtime.postMessage) {
-			runtime.postMessage({ type: 'AUDIO_DATA', ...data });
-			return true;
-		}
-
-		return false;
+		return this.runtime.sendAudioData(data);
 	}
 
-	setOnUserInteraction(callback: (() => void) | undefined): void {
-		this.onUserInteractionCallback = callback;
-	}
-
-	/**
-	 * Manually retry loading the runner iframe.
-	 */
-	reconnect(): void {
-		if (this.disposed) return;
-		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode);
-		}
-		this.restartRuntime();
-	}
-
-	/**
-	 * Trigger iframe activation from a trusted user gesture (e.g. click).
-	 * Safari/WebKit may unlock full requestAnimationFrame cadence after this.
-	 */
-	activateFromUserGesture(): void {
-		this.runtime.activateFromUserGesture();
-	}
-
-	/**
-	 * Cleanup.
-	 */
 	dispose(): void {
 		this.disposed = true;
-		this.isRuntimeReady = false;
 		this.pendingCode = null;
 		this.runtime.dispose();
-	}
-
-	private startRuntime(): void {
-		this.isRuntimeReady = false;
-
-		void this.runtime
-			.init(this.container)
-			.then(() => {
-				if (this.disposed) return;
-				this.decorateIframe();
-			})
-			.catch(() => {
-				if (this.disposed) return;
-				this.handleRunnerUnavailable();
-			});
-
-		this.decorateIframe();
 	}
 
 	private handleReady(): void {
-		const wasUnavailable = this.runnerUnavailable;
-		this.isRuntimeReady = true;
+		if (this.disposed) return;
 		this.decorateIframe();
-		this.runtime.frame?.style.setProperty('opacity', '1');
-		this.setRunnerUnavailable(false);
-
-		if (!wasUnavailable) {
-			this.onRunnerConnected?.();
-		}
-
-		this.onReadyCallback?.();
+		this.options.onRunnerConnected?.();
+		this.options.onReady?.();
 		this.flushPendingCode();
 	}
 
-	private handleRunnerUnavailable(): void {
-		this.isRuntimeReady = false;
-
-		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode);
-		}
-
-		this.setRunnerUnavailable(true);
-	}
-
-	private setPendingCode(code: string): void {
-		this.pendingCode = code;
-	}
-
-	private clearPendingCode(): void {
-		this.pendingCode = null;
-	}
-
-	private restartRuntime(): void {
-		this.runtime.dispose();
-		this.startRuntime();
+	private handleUnavailable(): void {
+		if (this.disposed) return;
+		this.options.onRunnerDisconnected?.();
 	}
 
 	private flushPendingCode(): void {
 		if (this.pendingCode === null) return;
-
-		const code = this.pendingCode;
-		this.clearPendingCode();
-		this.forceRun(code);
-	}
-
-	private setRunnerUnavailable(isUnavailable: boolean): void {
-		if (this.runnerUnavailable === isUnavailable) return;
-		this.runnerUnavailable = isUnavailable;
-		if (isUnavailable) {
-			this.onRunnerDisconnected?.();
-			return;
-		}
-		this.onRunnerConnected?.();
+		this.forceRun(this.pendingCode);
 	}
 
 	private decorateIframe(): void {
@@ -246,27 +110,27 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (!frame) return;
 
 		frame.id = 'runner-frame';
-		frame.style.opacity = this.isRuntimeReady ? '1' : '0';
+		frame.style.opacity = this.runtime.isReady ? '1' : '0';
 		frame.style.transition = 'opacity 140ms ease';
 	}
+}
 
-	private toCodeError(error: unknown): CodeError {
-		if (this.isRunnerExecutionError(error)) {
-			return {
-				message: error.message,
-				stack: error.stack,
-				line: error.line,
-				column: error.column,
-			};
-		}
-
+function toCodeError(error: unknown): CodeError {
+	if (isRunnerExecutionError(error)) {
 		return {
-			message: error instanceof Error ? error.message : String(error),
-			stack: error instanceof Error ? error.stack : undefined,
+			message: error.message,
+			stack: error.stack,
+			line: error.line,
+			column: error.column,
 		};
 	}
 
-	private isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
-		return typeof error === 'object' && error !== null && 'message' in error;
-	}
+	return {
+		message: error instanceof Error ? error.message : String(error),
+		stack: error instanceof Error ? error.stack : undefined,
+	};
+}
+
+function isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
+	return typeof error === 'object' && error !== null && 'message' in error;
 }
