@@ -141,6 +141,14 @@
     border: none !important;
 }
 
+/* Monaco anchors the find widget to the editor's top-right corner inline.
+   Center it horizontally without replacing its vertical reveal transform. */
+.panel-editor .monaco-editor .find-widget {
+    left: 50% !important;
+    right: auto !important;
+    translate: -50% 0;
+}
+
 /* Line numbers styling - match text background if enabled */
 .panel-editor.editor-backdrop .monaco-editor .line-numbers {
     background: rgba(0, 0, 0, 0.7);
