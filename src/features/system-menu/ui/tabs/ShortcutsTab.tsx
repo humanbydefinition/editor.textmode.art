@@ -5,47 +5,51 @@ interface ShortcutGroup {
     title: string;
     shortcuts: {
         keys: string[];
+        macKeys?: string[];
         description: string;
     }[];
 }
 
+const groups: ShortcutGroup[] = [
+    {
+        title: "Editor Control",
+        shortcuts: [
+            { keys: ["Ctrl", "Enter"], macKeys: ["Cmd", "Enter"], description: "run code / apply changes" },
+            { keys: ["Ctrl", "Shift", "R"], description: "reset sketch runtime" },
+        ]
+    },
+    {
+        title: "Appearance",
+        shortcuts: [
+            { keys: ["Ctrl", "+"], description: "increase font size" },
+            { keys: ["Ctrl", "-"], description: "decrease font size" },
+            { keys: ["Ctrl", "B"], description: "toggle text background" },
+            { keys: ["Ctrl", "Shift", "H"], description: "hide / show ui" },
+        ]
+    },
+    {
+        title: "Navigation & Editing",
+        shortcuts: [
+            { keys: ["Ctrl", "F"], macKeys: ["Cmd", "F"], description: "open find" },
+            { keys: ["Ctrl", "H"], macKeys: ["Option", "Cmd", "F"], description: "open replace" },
+            { keys: ["Esc"], description: "close find / replace" },
+            { keys: ["Ctrl", "Z"], macKeys: ["Cmd", "Z"], description: "undo" },
+            { keys: ["Ctrl", "Y"], macKeys: ["Cmd", "Shift", "Z"], description: "redo" },
+            { keys: ["Ctrl", "/"], macKeys: ["Cmd", "/"], description: "toggle comment" },
+            { keys: ["Alt", "Click"], macKeys: ["Option", "Click"], description: "add multi-cursor" },
+            { keys: ["F1"], description: "open command palette" },
+        ]
+    },
+    {
+        title: "Settings",
+        shortcuts: [
+            { keys: ["Ctrl", "E"], description: "toggle auto-execute" },
+        ]
+    }
+];
+
 export function ShortcutsTab() {
-    const groups: ShortcutGroup[] = [
-        {
-            title: "Editor Control",
-            shortcuts: [
-                { keys: ["Ctrl", "Enter"], description: "run code / apply changes" },
-                { keys: ["Ctrl", "Shift", "R"], description: "reset sketch runtime" },
-            ]
-        },
-        {
-            title: "Appearance",
-            shortcuts: [
-                { keys: ["Ctrl", "+"], description: "increase font size" },
-                { keys: ["Ctrl", "-"], description: "decrease font size" },
-                { keys: ["Ctrl", "B"], description: "toggle text background" },
-                { keys: ["Ctrl", "Shift", "H"], description: "hide / show ui" },
-            ]
-        },
-        {
-            title: "Navigation & Editing",
-            shortcuts: [
-                { keys: ["Ctrl", "F"], description: "find" },
-                { keys: ["Ctrl", "H"], description: "replace" },
-                { keys: ["Ctrl", "Z"], description: "undo" },
-                { keys: ["Ctrl", "Y"], description: "redo" },
-                { keys: ["Ctrl", "/"], description: "toggle comment" },
-                { keys: ["Alt", "Click"], description: "add multi-cursor" },
-                { keys: ["F1"], description: "open command palette" },
-            ]
-        },
-        {
-            title: "Settings",
-            shortcuts: [
-                { keys: ["Ctrl", "E"], description: "toggle auto-execute" },
-            ]
-        }
-    ];
+    const usesMacKeys = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
     return (
         <ScrollArea className="h-full">
@@ -71,7 +75,7 @@ export function ShortcutsTab() {
                                             {shortcut.description}
                                         </span>
                                         <div className="flex items-center gap-1.5">
-                                            {shortcut.keys.map((key) => (
+                                            {(usesMacKeys ? shortcut.macKeys ?? shortcut.keys : shortcut.keys).map((key) => (
                                                 <kbd
                                                     key={key}
                                                     className="px-2 py-1 min-w-[24px] text-center rounded bg-zinc-800 border-b-2 border-zinc-700 text-zinc-400 font-mono text-[10px] font-bold shadow-sm"
