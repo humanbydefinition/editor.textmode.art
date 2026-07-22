@@ -27,6 +27,7 @@ export class TextmodeRuntime {
 	private readonly options: TextmodeRuntimeOptions;
 	private readonly runtime: IframeTextmodeRuntime;
 	private pendingExecution: { code: string; mode: 'run' | 'reset-runtime' } | null = null;
+	private userActivationRequired = false;
 	private disposed = false;
 
 	constructor(options: TextmodeRuntimeOptions) {
@@ -40,6 +41,8 @@ export class TextmodeRuntime {
 			onSynthError: (message) => options.onSynthError?.({ message }),
 			onHardReset: options.onHardReset,
 			onToggleUI: options.onToggleUI,
+			onUserActivationRequired: () => this.handleUserActivationRequired(),
+			onUserInteraction: () => this.handleUserInteraction(),
 			onUnavailable: () => this.handleUnavailable(),
 		});
 	}
@@ -83,6 +86,8 @@ export class TextmodeRuntime {
 	reloadSandbox(code: string): void {
 		if (this.disposed) return;
 		this.pendingExecution = { code, mode: 'run' };
+		this.userActivationRequired = false;
+		this.updateActivationPresentation();
 
 		const reconnection = this.runtime.reconnect({ rerun: false });
 		this.decorateIframe();
@@ -96,6 +101,8 @@ export class TextmodeRuntime {
 	dispose(): void {
 		this.disposed = true;
 		this.pendingExecution = null;
+		this.userActivationRequired = false;
+		this.updateActivationPresentation();
 		this.runtime.dispose();
 	}
 
@@ -109,6 +116,18 @@ export class TextmodeRuntime {
 	private handleUnavailable(): void {
 		if (this.disposed) return;
 		this.options.onRunnerDisconnected?.();
+	}
+
+	private handleUserActivationRequired(): void {
+		if (this.disposed) return;
+		this.userActivationRequired = true;
+		this.updateActivationPresentation();
+	}
+
+	private handleUserInteraction(): void {
+		if (this.disposed) return;
+		this.userActivationRequired = false;
+		this.updateActivationPresentation();
 	}
 
 	private flushPendingCode(): void {
@@ -128,6 +147,19 @@ export class TextmodeRuntime {
 		frame.id = 'runner-frame';
 		frame.style.opacity = this.runtime.isReady ? '1' : '0';
 		frame.style.transition = 'opacity 140ms ease';
+		this.updateActivationPresentation();
+	}
+
+	private updateActivationPresentation(): void {
+		document.body.classList.toggle('runner-activation-required', this.userActivationRequired);
+
+		const frame = this.runtime.frame;
+		if (!frame) return;
+		if (this.userActivationRequired) {
+			frame.dataset.userActivation = 'required';
+		} else {
+			delete frame.dataset.userActivation;
+		}
 	}
 }
 

@@ -6,11 +6,14 @@ type RuntimeOptions = {
 	onReady?: () => void;
 	onRunOk?: (message: { timestamp: number }) => void;
 	onUnavailable?: () => void;
+	onUserActivationRequired?: () => void;
+	onUserInteraction?: () => void;
 };
 
 type FakeFrame = {
 	id: string;
 	isConnected: boolean;
+	dataset: Record<string, string>;
 	style: {
 		opacity: string;
 		transition: string;
@@ -28,6 +31,8 @@ type MockRuntime = {
 	runCode: ReturnType<typeof vi.fn>;
 	sendAudioData: ReturnType<typeof vi.fn>;
 	triggerHardReset: ReturnType<typeof vi.fn>;
+	triggerUserActivationRequired: ReturnType<typeof vi.fn>;
+	triggerUserInteraction: ReturnType<typeof vi.fn>;
 };
 
 const runnerClientMock = vi.hoisted(() => ({
@@ -46,6 +51,7 @@ function createFrame(): FakeFrame {
 	return {
 		id: '',
 		isConnected: true,
+		dataset: {},
 		style,
 	};
 }
@@ -93,6 +99,8 @@ vi.mock('@textmode/runner-client', () => {
 
 		readonly sendAudioData = vi.fn(() => this.isReady);
 		readonly triggerHardReset = vi.fn(() => this.options.onHardReset?.());
+		readonly triggerUserActivationRequired = vi.fn(() => this.options.onUserActivationRequired?.());
+		readonly triggerUserInteraction = vi.fn(() => this.options.onUserInteraction?.());
 
 		constructor(private readonly options: RuntimeOptions) {
 			runnerClientMock.instances.push(this as unknown as MockRuntime);
@@ -110,6 +118,7 @@ async function flushPromises(): Promise<void> {
 describe('TextmodeRuntime', () => {
 	beforeEach(() => {
 		runnerClientMock.instances = [];
+		document.body.classList.remove('runner-activation-required');
 	});
 
 	it('resets the runtime without replacing the iframe', async () => {
@@ -163,6 +172,56 @@ describe('TextmodeRuntime', () => {
 		expect(iframeRuntime.reconnect).toHaveBeenCalledWith({ rerun: false });
 		expect(iframeRuntime.runCode).toHaveBeenCalledTimes(1);
 		expect(iframeRuntime.runCode).toHaveBeenCalledWith('gallery sketch');
+	});
+
+	it('exposes only the runner activation cutout until trusted interaction', async () => {
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+		});
+
+		runtime.init();
+		await flushPromises();
+
+		const iframeRuntime = runnerClientMock.instances[0];
+		const originalFrame = iframeRuntime.frame;
+		iframeRuntime.triggerUserActivationRequired();
+
+		expect(iframeRuntime.frame).toBe(originalFrame);
+		expect(iframeRuntime.frame.dataset.userActivation).toBe('required');
+		expect(document.body.classList.contains('runner-activation-required')).toBe(true);
+
+		runtime.resetRuntime('fresh sketch');
+		await flushPromises();
+		expect(iframeRuntime.frame).toBe(originalFrame);
+		expect(iframeRuntime.frame.dataset.userActivation).toBe('required');
+		expect(document.body.classList.contains('runner-activation-required')).toBe(true);
+
+		iframeRuntime.triggerUserInteraction();
+		expect(iframeRuntime.frame.dataset.userActivation).toBeUndefined();
+		expect(document.body.classList.contains('runner-activation-required')).toBe(false);
+	});
+
+	it('clears activation presentation while replacing the sandbox', async () => {
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+		});
+
+		runtime.init();
+		await flushPromises();
+
+		const iframeRuntime = runnerClientMock.instances[0];
+		iframeRuntime.triggerUserActivationRequired();
+		runtime.reloadSandbox('fresh sketch');
+		await flushPromises();
+
+		expect(iframeRuntime.frame.dataset.userActivation).toBeUndefined();
+		expect(document.body.classList.contains('runner-activation-required')).toBe(false);
 	});
 
 	it('runs only the latest code requested before initial readiness', async () => {

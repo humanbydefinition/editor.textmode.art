@@ -11,6 +11,19 @@
 	pointer-events: none;
 }
 
+/* Leave only the runner-owned activation card exposed. The rest of Monaco
+   keeps its normal painting, hit testing, and stacking behavior. */
+body.runner-activation-required #app-container {
+	clip-path: polygon(
+		0 0,
+		100% 0,
+		100% calc(100% - 66px),
+		calc(100% - 212px) calc(100% - 66px),
+		calc(100% - 212px) 100%,
+		0 100%
+	);
+}
+
 /* Admin mode: enable normal pointer events and scrolling */
 body.admin-mode #app-container {
 	pointer-events: auto;
