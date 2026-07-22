@@ -26,7 +26,7 @@ export interface TextmodeRuntimeOptions {
 export class TextmodeRuntime {
 	private readonly options: TextmodeRuntimeOptions;
 	private readonly runtime: IframeTextmodeRuntime;
-	private pendingCode: string | null = null;
+	private pendingExecution: { code: string; mode: 'run' | 'reset-runtime' } | null = null;
 	private disposed = false;
 
 	constructor(options: TextmodeRuntimeOptions) {
@@ -46,7 +46,7 @@ export class TextmodeRuntime {
 
 	init(initialCode = ''): void {
 		if (initialCode) {
-			this.pendingCode = initialCode;
+			this.pendingExecution = { code: initialCode, mode: 'run' };
 		}
 
 		const initialization = this.runtime.init(this.options.container);
@@ -57,19 +57,32 @@ export class TextmodeRuntime {
 	forceRun(code: string): void {
 		if (this.disposed) return;
 		if (!this.runtime.isReady) {
-			this.pendingCode = code;
+			this.pendingExecution = { code, mode: 'run' };
 			return;
 		}
 
-		this.pendingCode = null;
+		this.pendingExecution = null;
 		void this.runtime.runCode(code).catch((error) => {
 			this.options.onRunError(toCodeError(error));
 		});
 	}
 
-	restart(code: string): void {
+	resetRuntime(code: string): void {
 		if (this.disposed) return;
-		this.pendingCode = code;
+		if (!this.runtime.isReady) {
+			this.pendingExecution = { code, mode: 'reset-runtime' };
+			return;
+		}
+
+		this.pendingExecution = null;
+		void this.runtime.resetRuntime(code).catch((error) => {
+			this.options.onRunError(toCodeError(error));
+		});
+	}
+
+	reloadSandbox(code: string): void {
+		if (this.disposed) return;
+		this.pendingExecution = { code, mode: 'run' };
 
 		const reconnection = this.runtime.reconnect({ rerun: false });
 		this.decorateIframe();
@@ -82,7 +95,7 @@ export class TextmodeRuntime {
 
 	dispose(): void {
 		this.disposed = true;
-		this.pendingCode = null;
+		this.pendingExecution = null;
 		this.runtime.dispose();
 	}
 
@@ -99,8 +112,13 @@ export class TextmodeRuntime {
 	}
 
 	private flushPendingCode(): void {
-		if (this.pendingCode === null) return;
-		this.forceRun(this.pendingCode);
+		const pending = this.pendingExecution;
+		if (!pending) return;
+		if (pending.mode === 'reset-runtime') {
+			this.resetRuntime(pending.code);
+			return;
+		}
+		this.forceRun(pending.code);
 	}
 
 	private decorateIframe(): void {

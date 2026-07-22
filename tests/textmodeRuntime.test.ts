@@ -24,6 +24,7 @@ type MockRuntime = {
 	init: ReturnType<typeof vi.fn>;
 	isReady: boolean;
 	reconnect: ReturnType<typeof vi.fn>;
+	resetRuntime: ReturnType<typeof vi.fn>;
 	runCode: ReturnType<typeof vi.fn>;
 	sendAudioData: ReturnType<typeof vi.fn>;
 	triggerHardReset: ReturnType<typeof vi.fn>;
@@ -85,6 +86,10 @@ vi.mock('@textmode/runner-client', () => {
 			this.options.onRunOk?.({ timestamp: Date.now() });
 			return code.length > 0;
 		});
+		readonly resetRuntime = vi.fn(async (code: string) => {
+			this.options.onRunOk?.({ timestamp: Date.now() });
+			return code.length > 0;
+		});
 
 		readonly sendAudioData = vi.fn(() => this.isReady);
 		readonly triggerHardReset = vi.fn(() => this.options.onHardReset?.());
@@ -107,7 +112,7 @@ describe('TextmodeRuntime', () => {
 		runnerClientMock.instances = [];
 	});
 
-	it('delegates iframe restart without letting the client rerun stale code', async () => {
+	it('resets the runtime without replacing the iframe', async () => {
 		const runtime = new TextmodeRuntime({
 			container: document.createElement('div'),
 			runnerUrl: 'https://runner.textmode.art/',
@@ -124,19 +129,22 @@ describe('TextmodeRuntime', () => {
 		expect(iframeRuntime.init).toHaveBeenCalledTimes(1);
 		expect(iframeRuntime.runCode).toHaveBeenCalledWith('t.draw(() => {})');
 
+		const originalFrame = iframeRuntime.frame;
 		iframeRuntime.runCode.mockClear();
-		runtime.restart('t.draw(() => {})');
+		runtime.resetRuntime('t.draw(() => {})');
 		await flushPromises();
 
-		expect(iframeRuntime.reconnect).toHaveBeenCalledWith({ rerun: false });
+		expect(iframeRuntime.resetRuntime).toHaveBeenCalledWith('t.draw(() => {})');
+		expect(iframeRuntime.reconnect).not.toHaveBeenCalled();
 		expect(iframeRuntime.dispose).not.toHaveBeenCalled();
 		expect(iframeRuntime.init).toHaveBeenCalledTimes(1);
+		expect(iframeRuntime.frame).toBe(originalFrame);
 		expect(iframeRuntime.frame.id).toBe('runner-frame');
 		expect(iframeRuntime.frame.style.opacity).toBe('1');
-		expect(iframeRuntime.runCode).toHaveBeenCalledWith('t.draw(() => {})');
+		expect(iframeRuntime.runCode).not.toHaveBeenCalled();
 	});
 
-	it('restarts the iframe and runs the requested code once', async () => {
+	it('reloads the iframe sandbox and runs the requested code once', async () => {
 		const runtime = new TextmodeRuntime({
 			container: document.createElement('div'),
 			runnerUrl: 'https://runner.textmode.art/',
@@ -149,7 +157,7 @@ describe('TextmodeRuntime', () => {
 
 		const iframeRuntime = runnerClientMock.instances[0];
 		iframeRuntime.runCode.mockClear();
-		runtime.restart('gallery sketch');
+		runtime.reloadSandbox('gallery sketch');
 		await flushPromises();
 
 		expect(iframeRuntime.reconnect).toHaveBeenCalledWith({ rerun: false });
@@ -230,7 +238,7 @@ describe('TextmodeRuntime', () => {
 		expect(onRunnerDisconnected).not.toHaveBeenCalled();
 	});
 
-	it('restart after dispose is a no-op', async () => {
+	it('reset and sandbox reload after dispose are no-ops', async () => {
 		const onRunnerDisconnected = vi.fn();
 		const runtime = new TextmodeRuntime({
 			container: document.createElement('div'),
@@ -247,10 +255,12 @@ describe('TextmodeRuntime', () => {
 		const iframeRuntime = runnerClientMock.instances[0];
 		const reconnectCallsBeforeRestart = iframeRuntime.reconnect.mock.calls.length;
 
-		runtime.restart('t.draw(() => {})');
+		runtime.resetRuntime('t.draw(() => {})');
+		runtime.reloadSandbox('t.draw(() => {})');
 		await flushPromises();
 
 		expect(onRunnerDisconnected).not.toHaveBeenCalled();
+		expect(iframeRuntime.resetRuntime).not.toHaveBeenCalled();
 		expect(iframeRuntime.reconnect.mock.calls.length).toBe(reconnectCallsBeforeRestart);
 	});
 });

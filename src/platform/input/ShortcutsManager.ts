@@ -14,7 +14,7 @@ export interface ShortcutActions {
 	toggleUIVisibility: () => void;
 	/** Run code */
 	runCode: () => void;
-	/** Recreate the textmode runtime and run the current code */
+	/** Recreate the textmode runtime in the current iframe and run the current code */
 	hardReset: () => void;
 }
 
@@ -69,7 +69,7 @@ export class ShortcutsManager implements IShortcutsManager {
 	 * Handle keydown events.
 	 */
 	private handleKeydown(e: KeyboardEvent): void {
-		// Hard reset: Ctrl + Shift + R
+		// Reset sketch runtime: Ctrl + Shift + R
 		if (isHardResetShortcut(e)) {
 			e.preventDefault();
 			e.stopPropagation();

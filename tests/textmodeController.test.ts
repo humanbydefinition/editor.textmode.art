@@ -22,7 +22,7 @@ describe('TextmodeController execution', () => {
 		vi.useRealTimers();
 	});
 
-	it('resets persisted and working code before one restart', () => {
+	it('resets persisted and working code before one runtime reset', () => {
 		const harness = createHarness();
 
 		harness.controller.replaceAndRun('default code', 'reset');
@@ -30,7 +30,16 @@ describe('TextmodeController execution', () => {
 		expect(harness.onClearCode).toHaveBeenCalledOnce();
 		expect(harness.setLastWorkingCode).toHaveBeenCalledWith(null);
 		expect(harness.onSaveCode).toHaveBeenCalledOnce();
-		expect(harness.restart).toHaveBeenCalledWith('default code');
+		expect(harness.resetRuntime).toHaveBeenCalledWith('default code');
+	});
+
+	it('resets the current sketch runtime in place for the hard-reset shortcut', () => {
+		const harness = createHarness();
+
+		harness.controller.handleHardReset();
+
+		expect(harness.resetRuntime).toHaveBeenCalledWith('current code');
+		expect(harness.forceRun).not.toHaveBeenCalled();
 	});
 
 	it('confirms successful code and cancels confirmation after an error', () => {
@@ -58,7 +67,7 @@ function createHarness() {
 	const onClearCode = vi.fn();
 	const setValue = vi.fn();
 	const forceRun = vi.fn();
-	const restart = vi.fn();
+	const resetRuntime = vi.fn();
 	const setError = vi.fn();
 	const setLastWorkingCode = vi.fn();
 	const editor = {
@@ -77,7 +86,7 @@ function createHarness() {
 		{ onSaveCode, onClearCode },
 		{
 			getEditor: () => editor,
-			getRuntime: () => ({ forceRun, restart }) as unknown as TextmodeRuntime,
+			getRuntime: () => ({ forceRun, resetRuntime }) as unknown as TextmodeRuntime,
 			getAutoExecute: () => true,
 			getAutoExecuteDelay: () => 500,
 			state,
@@ -92,7 +101,7 @@ function createHarness() {
 		onClearCode,
 		setValue,
 		forceRun,
-		restart,
+		resetRuntime,
 		setError,
 		setLastWorkingCode,
 	};

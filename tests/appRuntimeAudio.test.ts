@@ -11,7 +11,7 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 		getController = vi.fn(() => null);
 		getRuntime = vi.fn(() => null);
 		setCode = vi.fn();
-		reconnectRuntime = vi.fn();
+		reloadSandbox = vi.fn();
 		init = vi.fn(async () => {});
 		getEditor = vi.fn(() => null);
 	}

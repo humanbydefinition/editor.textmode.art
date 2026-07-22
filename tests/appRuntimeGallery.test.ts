@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppRuntime } from '../src/app/runtime/AppRuntime';
 import type { GallerySketch } from '../src/features/gallery-sketches';
 
-const { replaceAndRun } = vi.hoisted(() => ({ replaceAndRun: vi.fn() }));
+const { reloadSandbox, replaceAndRun } = vi.hoisted(() => ({ reloadSandbox: vi.fn(), replaceAndRun: vi.fn() }));
 
 vi.mock('@/textmode/TextmodeEngine', () => {
 	class TextmodeEngine {
@@ -12,6 +12,7 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 		getEditor = vi.fn(() => null);
 		init = vi.fn(async () => {});
 		isInitialized = vi.fn(() => true);
+		reloadSandbox = reloadSandbox;
 		sendAudioData = vi.fn();
 	}
 
@@ -19,7 +20,12 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 });
 
 describe('AppRuntime gallery loading', () => {
-	it('replaces and restarts the runtime when applying a gallery sketch', () => {
+	beforeEach(() => {
+		reloadSandbox.mockClear();
+		replaceAndRun.mockClear();
+	});
+
+	it('replaces code and resets the runtime in place when applying a gallery sketch', () => {
 		const appRuntime = new AppRuntime();
 		const sketch: GallerySketch = {
 			status: 'APPROVED',
@@ -35,7 +41,20 @@ describe('AppRuntime gallery loading', () => {
 
 		callPrivate(appRuntime, 'applyGallerySketch', sketch);
 
-		expect(replaceAndRun).toHaveBeenCalledWith(sketch.textmodeCode, 'restart');
+		expect(replaceAndRun).toHaveBeenCalledWith(sketch.textmodeCode, 'reset-runtime');
+		expect(reloadSandbox).not.toHaveBeenCalled();
+	});
+
+	it('resets workspace code in place but reloads the sandbox for explicit recovery', () => {
+		const appRuntime = new AppRuntime();
+
+		callPrivate(appRuntime, 'clearStorage');
+
+		expect(replaceAndRun).toHaveBeenCalledWith(expect.any(String), 'reset');
+		expect(reloadSandbox).not.toHaveBeenCalled();
+
+		callPrivate(appRuntime, 'reloadTextmodeSandbox');
+		expect(reloadSandbox).toHaveBeenCalledOnce();
 	});
 });
 

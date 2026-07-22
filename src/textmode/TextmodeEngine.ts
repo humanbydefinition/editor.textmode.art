@@ -91,8 +91,8 @@ export class TextmodeEngine {
 		return this.runtime?.sendAudioData(data) ?? false;
 	}
 
-	reconnectRuntime(code = this.getCode()): void {
-		this.runtime?.restart(code);
+	reloadSandbox(code = this.getCode()): void {
+		this.runtime?.reloadSandbox(code);
 	}
 
 	private createEditor(context: TextmodeEngineContext, initialCode: string): TextmodeEditor {

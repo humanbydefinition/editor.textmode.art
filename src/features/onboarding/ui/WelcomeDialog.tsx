@@ -128,7 +128,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
 						</p>
 						<p>
 							<span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">Ctrl+Shift+R</span>
-							{' '}to reset the sketch
+							{' '}to reset the sketch runtime
 						</p>
 					</div>
 

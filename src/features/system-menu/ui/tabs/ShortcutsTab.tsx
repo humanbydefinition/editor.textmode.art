@@ -15,7 +15,7 @@ export function ShortcutsTab() {
             title: "Editor Control",
             shortcuts: [
                 { keys: ["Ctrl", "Enter"], description: "run code / apply changes" },
-                { keys: ["Ctrl", "Shift", "R"], description: "hard reset" },
+                { keys: ["Ctrl", "Shift", "R"], description: "reset sketch runtime" },
             ]
         },
         {

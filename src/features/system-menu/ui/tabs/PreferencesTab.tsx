@@ -152,11 +152,11 @@ export function PreferencesTab({
                                     }}
                                 >
                                     <RotateCcw className="w-4 h-4" />
-                                    reset runner
+                                    reload sandbox
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>reload iframe runners without changing code</p>
+                                <p>reload the iframe; Safari may require canvas interaction again</p>
                             </TooltipContent>
                         </Tooltip>
 
@@ -175,7 +175,7 @@ export function PreferencesTab({
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>reload runners and reset to default sketches</p>
+                                <p>reset to the default sketch without reloading the iframe</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>

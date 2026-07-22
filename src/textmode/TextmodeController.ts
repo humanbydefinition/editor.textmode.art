@@ -65,14 +65,14 @@ export class TextmodeController {
 		this.execute(this.deps.getEditor()?.getValue() ?? '', 'run');
 	}
 
-	replaceAndRun(code: string, reason: 'run' | 'restart' | 'reset' = 'run'): void {
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' | 'reset' = 'run'): void {
 		if (this.isExecutionLocked()) return;
 		if (reason === 'reset') {
 			this.callbacks.onClearCode();
 			this.deps.state.setLastWorkingCode(null);
 		}
 		this.replaceCode(code);
-		this.execute(code, reason === 'run' ? 'run' : 'restart', reason !== 'restart');
+		this.execute(code, reason === 'run' ? 'run' : 'reset-runtime', reason !== 'reset-runtime');
 	}
 
 	handleRevertToLastWorking(): void {
@@ -82,7 +82,7 @@ export class TextmodeController {
 
 	handleHardReset(): void {
 		if (this.isExecutionLocked()) return;
-		this.execute(this.deps.getEditor()?.getValue() ?? '', 'restart');
+		this.execute(this.deps.getEditor()?.getValue() ?? '', 'reset-runtime');
 	}
 
 	handleRunOk(): void {
@@ -102,15 +102,15 @@ export class TextmodeController {
 		this.deps.getEditor()?.setErrorMarker(presentedError);
 	}
 
-	private execute(code: string, mode: 'run' | 'restart', persist = true): void {
+	private execute(code: string, mode: 'run' | 'reset-runtime', persist = true): void {
 		this.clearDebounce();
 		if (persist) this.callbacks.onSaveCode(code);
 		this.deps.state.clearError();
 		this.deps.getEditor()?.clearMarkers();
 
 		const runtime = this.deps.getRuntime();
-		if (mode === 'restart') {
-			runtime?.restart(code);
+		if (mode === 'reset-runtime') {
+			runtime?.resetRuntime(code);
 		} else {
 			runtime?.forceRun(code);
 		}

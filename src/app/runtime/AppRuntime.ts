@@ -89,11 +89,11 @@ export class AppRuntime {
 		this.actions = {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
-			resetRunners: () => this.reconnectTextmodeRunner(),
+			resetRunners: () => this.reloadTextmodeSandbox(),
 			clearStorage: () => this.clearStorage(),
 			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => this.textmodeEngine.getController()?.handleRevertToLastWorking(),
-			reconnectTextmodeRunner: () => this.reconnectTextmodeRunner(),
+			reconnectTextmodeRunner: () => this.reloadTextmodeSandbox(),
 			enableAudioInput: (deviceId?: string) => this.enableAudioInput(deviceId),
 			disableAudioInput: () => this.disableAudioInput(),
 			refreshAudioInputDevices: () => this.refreshAudioInputDevices(),
@@ -335,7 +335,6 @@ export class AppRuntime {
 		this.galleryManager.clear();
 		this.replaceEditorUrl('/');
 		this.textmodeEngine.getController()?.replaceAndRun(defaultTextmodeSketch, 'reset');
-		this.markRunnerReconnecting();
 	}
 
 	private toggleUIVisibility(): void {
@@ -621,13 +620,13 @@ export class AppRuntime {
 		if (!this.textmodeEngine.isInitialized()) return;
 
 		const code = sketch.textmodeCode;
-		this.textmodeEngine.getController()?.replaceAndRun(code, 'restart');
+		this.textmodeEngine.getController()?.replaceAndRun(code, 'reset-runtime');
 	}
 
-	private reconnectTextmodeRunner(): void {
+	private reloadTextmodeSandbox(): void {
 		if (!this.textmodeEngine.isInitialized()) return;
 
-		this.textmodeEngine.reconnectRuntime();
+		this.textmodeEngine.reloadSandbox();
 		this.markRunnerReconnecting();
 	}
 
