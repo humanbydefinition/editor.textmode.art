@@ -37,6 +37,7 @@ interface CaptureOptions {
 export interface GalleryOgCaptureResult {
 	frame: number;
 	seconds: number;
+	descriptionLines: number;
 }
 
 export async function generateGalleryOg(
@@ -93,7 +94,8 @@ export async function generateGalleryOg(
 		const overlayText = (await page.locator('#gallery-og-overlay').textContent()) ?? '';
 		const expectedAuthor = formatOgAuthor(entry.meta.authorName);
 		const hasExpectedDescription =
-			entry.meta.description === null || overlayText.includes(entry.meta.description.trim());
+			entry.meta.description === null ||
+			removeWhitespace(overlayText).includes(removeWhitespace(entry.meta.description.trim()));
 		if (
 			!overlayText.includes(entry.meta.title) ||
 			!hasExpectedDescription ||
@@ -117,6 +119,10 @@ export async function generateGalleryOg(
 		await Promise.allSettled([browser?.close(), server?.close()]);
 		await rm(temporaryOutput, { force: true });
 	}
+}
+
+function removeWhitespace(value: string): string {
+	return value.replace(/\s/g, '');
 }
 
 async function startPreviewServer(projectRoot: string): Promise<ViteDevServer> {

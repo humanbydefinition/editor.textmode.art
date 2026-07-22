@@ -14,7 +14,7 @@ export function escapeXml(value: string): string {
 }
 
 export function formatOgAuthor(authorName: string | null): string {
-	return `BY ${authorName?.trim() || 'ANONYMOUS'}`;
+	return `by ${authorName?.trim() || 'anonymous'}`;
 }
 
 export function getFittedFontSize(

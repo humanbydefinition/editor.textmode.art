@@ -13,7 +13,8 @@ try {
 	const meta: GalleryOgMeta = {
 		slug: 'frame-seek',
 		title: 'Frame & Seek <Smoke Test>',
-		description: 'A deterministic capture fixture.',
+		description:
+			'A deterministic capture fixture with enough descriptive detail to verify that the Open Graph metadata column wraps cleanly without spanning the entire image.',
 		authorName: 'Test Runner',
 		license: null,
 		socialLinks: null,
@@ -45,6 +46,9 @@ t.draw(() => {
 	if (result.frame !== 60) throw new Error(`Smoke capture rendered frame ${result.frame} instead of frame 60.`);
 	if (Math.abs(result.seconds - 59 / 60) > 0.25) {
 		throw new Error(`Smoke capture seconds were not aligned to frame 60: ${result.seconds}.`);
+	}
+	if (result.descriptionLines < 2) {
+		throw new Error(`Smoke capture description did not wrap (${result.descriptionLines} line).`);
 	}
 	await validatePng(outputPath);
 	const image = await readFile(outputPath);
