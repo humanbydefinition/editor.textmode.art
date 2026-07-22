@@ -77,9 +77,9 @@ describe('gallery OG arguments and metadata', () => {
 
 	it('escapes SVG labels and falls back to an anonymous author', () => {
 		expect(escapeXml(`A & <B> "C" 'D'`)).toBe('A &amp; &lt;B&gt; &quot;C&quot; &apos;D&apos;');
-		expect(formatOgAuthor(null)).toBe('BY ANONYMOUS');
-		expect(formatOgAuthor('')).toBe('BY ANONYMOUS');
-		expect(formatOgAuthor('Ada')).toBe('BY Ada');
+		expect(formatOgAuthor(null)).toBe('by anonymous');
+		expect(formatOgAuthor('')).toBe('by anonymous');
+		expect(formatOgAuthor('Ada')).toBe('by Ada');
 	});
 
 	it('rejects gallery folders with missing required files', async () => {
