@@ -45,5 +45,5 @@ labelLayer.draw(() => {
   labelLayer.offset(x, y); // offset the layer in pixel space when compositing all textmode layers
 });
 
-// Return a cleanup function (optional):
-// return () => { console.log('cleanup!'); };`;
+// Register cleanup for external side effects (optional):
+// onDispose(() => { console.log("cleanup!"); });`;
