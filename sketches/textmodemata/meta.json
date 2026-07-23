@@ -1,0 +1,15 @@
+{
+	"slug": "textmodemata",
+	"title": "TEXTMODEMATA",
+	"description": "ASCIIMATA16 @ home",
+	"authorName": "humanbydefinition",
+	"license": "CC-BY-NC-ND-4.0",
+	"socialLinks": [
+		{
+			"label": "Original",
+			"url": "https://github.com/humanbydefinition/p5-cellular-asciimata"
+		}
+	],
+	"createdAt": "2026-07-20T00:00:00.000Z",
+	"ogFrame": 60
+}
