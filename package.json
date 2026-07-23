@@ -40,7 +40,6 @@
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@shaderfrog/glsl-parser": "^7.0.1",
 		"@textmode/runner-client": "file:../runner.textmode.art/packages/runner-client",
-		"@textmode/runner-protocol": "file:../runner.textmode.art/packages/runner-protocol",
 		"acorn": "^8.17.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
