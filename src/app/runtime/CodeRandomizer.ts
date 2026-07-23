@@ -1,3 +1,7 @@
+import { collectGlslTargets } from './code-randomizer/glslTargets';
+import { collectJavaScriptTargets } from './code-randomizer/javascriptTargets';
+import type { MutationTarget, NumericMutationTarget, RandomSource } from './code-randomizer/types';
+
 const BLEND_MODES = [
 	'normal',
 	'additive',
@@ -15,128 +19,83 @@ const BLEND_MODES = [
 	'exclusion',
 ] as const;
 
+const VALID_BLEND_MODES: ReadonlySet<string> = new Set(BLEND_MODES);
+
 /**
  * Service to handle random code modifications.
  * Mimics the "make random change" feature from Hydra.
  */
 export class CodeRandomizer {
 	/**
-	 * Makes a single random change to the code — either mutating a number
-	 * or swapping a blend mode (if any are present).
+	 * Makes a single syntax-aware random change to JavaScript or embedded GLSL.
+	 * Returns the original source when either language cannot be parsed safely.
 	 */
-	static makeRandomChange(code: string): string {
-		const numberTargets = this.findNumberTargets(code);
-		const blendTargets = this.findBlendModeTargets(code);
-
-		const totalTargets = numberTargets.length + blendTargets.length;
-		if (totalTargets === 0) return code;
-
-		// Pick one target at random from the combined pool
-		const pick = Math.floor(Math.random() * totalTargets);
-
-		if (pick < numberTargets.length) {
-			return this.applyNumberChange(code, numberTargets[pick]);
-		}
-		return this.applyBlendModeChange(code, blendTargets[pick - numberTargets.length]);
-	}
-
-	// ---- Number mutation ----
-
-	private static findNumberTargets(code: string): Array<{ index: number; text: string }> {
-		// Group 1: Single line comments (// ...)
-		// Group 2: Multi-line comments (/* ... */)
-		// Group 3: Strings ("...", '...', `...`) — handles escaped quotes
-		// Group 4: Numbers (integers or floats, respecting word boundaries)
-		const tokenRegex =
-			/(\/\/.*)|(\/\*[\s\S]*?\*\/)|(['"`](?:\\.|[^\\\n\r])*['"`])|((?<![\w$])-?\d+(?:\.\d+)?(?![\w$]))/g;
-		const matches = [...code.matchAll(tokenRegex)];
-		const results: Array<{ index: number; text: string }> = [];
-		for (const m of matches) {
-			if (m[4] !== undefined && m.index !== undefined) {
-				results.push({ index: m.index, text: m[4] });
+	static makeRandomChange(code: string, rng: RandomSource = Math.random): string {
+		let targets: MutationTarget[];
+		try {
+			const javascript = collectJavaScriptTargets(code, VALID_BLEND_MODES);
+			targets = [...javascript.targets];
+			for (const template of javascript.glslTemplates) {
+				targets.push(...collectGlslTargets(template));
 			}
-		}
-		return results;
-	}
-
-	private static applyNumberChange(code: string, target: { index: number; text: string }): string {
-		const originalValue = parseFloat(target.text);
-		const isFloat = target.text.includes('.');
-		let newValue: number;
-
-		if (isFloat) {
-			const delta = Math.max(Math.abs(originalValue) * 0.1, 0.1);
-			const variation = (Math.random() * 2 - 1) * delta;
-			newValue = parseFloat((originalValue + variation).toFixed(4));
-		} else {
-			const variation = Math.floor(Math.random() * 10) + 1;
-			const sign = Math.random() < 0.5 ? -1 : 1;
-			newValue = Math.round(originalValue + variation * sign);
+		} catch {
+			return code;
 		}
 
-		if (newValue === originalValue) {
-			newValue = isFloat ? parseFloat((originalValue + 0.1).toFixed(4)) : originalValue + 1;
-		}
+		if (targets.length === 0) return code;
+		targets.sort((left, right) => left.start - right.start);
+		const target = targets[randomIndex(targets.length, rng)];
+		const replacement = target.kind === 'number' ? mutateNumber(target, rng) : mutateBlendMode(target.text, rng);
 
-		return (
-			code.substring(0, target.index) + newValue.toString() + code.substring(target.index + target.text.length)
-		);
+		return code.slice(0, target.start) + replacement + code.slice(target.end);
+	}
+}
+
+function mutateNumber(target: NumericMutationTarget, rng: RandomSource): string {
+	if (target.numericKind === 'float') {
+		return formatFloat(mutateFloat(target.value, rng), target);
 	}
 
-	// ---- Blend mode mutation ----
-
-	private static findBlendModeTargets(code: string): Array<{ index: number; text: string; quote: string }> {
-		// Match blend mode values in two contexts (outside comments):
-		//   1. blendMode property:  blendMode: 'screen'  or  blendMode: "screen"
-		//   2. blendMode method:    .blendMode('screen')  or  .blendMode("screen")
-		const blendRegex = /(?:blendMode\s*:\s*|\.blendMode\s*\(\s*)(['"])(\w+)\1/g;
-
-		// Also build a set of valid modes for fast lookup.
-		const validModes: Set<string> = new Set(BLEND_MODES);
-
-		// We need to skip matches inside comments.
-		// Build a simple set of comment ranges first.
-		const commentRanges = this.getCommentRanges(code);
-
-		const results: Array<{ index: number; text: string; quote: string }> = [];
-		for (const m of code.matchAll(blendRegex)) {
-			if (m.index === undefined) continue;
-			const quote = m[1];
-			const mode = m[2];
-			if (!validModes.has(mode)) continue;
-
-			// The captured mode string (group 2) starts after the quote character (group 1).
-			// We need the index of the full quoted value (quote + mode + quote) so we can
-			// replace only the mode text inside the quotes.
-			const modeStart = m.index + m[0].indexOf(quote) + 1;
-			if (this.isInsideComment(modeStart, commentRanges)) continue;
-
-			results.push({ index: modeStart, text: mode, quote });
-		}
-		return results;
+	const nextValue = mutateInteger(target.value, rng, target.numericKind === 'unsignedInteger');
+	if (target.language === 'glsl' && target.numericKind === 'unsignedInteger') {
+		const suffix = target.text.endsWith('U') ? 'U' : 'u';
+		return `${nextValue}${suffix}`;
 	}
+	return nextValue.toString();
+}
 
-	private static applyBlendModeChange(code: string, target: { index: number; text: string }): string {
-		// Pick a different blend mode
-		const candidates = BLEND_MODES.filter((m) => m !== target.text);
-		const newMode = candidates[Math.floor(Math.random() * candidates.length)];
-		return code.substring(0, target.index) + newMode + code.substring(target.index + target.text.length);
+function mutateInteger(value: number, rng: RandomSource, unsigned: boolean): number {
+	const variation = Math.floor(rng() * 10) + 1;
+	const sign = rng() < 0.5 ? -1 : 1;
+	let nextValue = Math.round(value + variation * sign);
+	if (unsigned) nextValue = Math.max(0, nextValue);
+	if (nextValue === value) nextValue = value + 1;
+	return nextValue;
+}
+
+function mutateFloat(value: number, rng: RandomSource): number {
+	const delta = Math.max(Math.abs(value) * 0.1, 0.1);
+	const variation = (rng() * 2 - 1) * delta;
+	let nextValue = Number.parseFloat((value + variation).toFixed(4));
+	if (nextValue === value) nextValue = Number.parseFloat((value + 0.1).toFixed(4));
+	return Object.is(nextValue, -0) ? 0 : nextValue;
+}
+
+function formatFloat(value: number, target: NumericMutationTarget): string {
+	let formatted = value.toString();
+	if (target.language === 'glsl') {
+		if (!/[.eE]/.test(formatted)) formatted += '.0';
+		const suffix = target.text.match(/[fF]$/)?.[0];
+		if (suffix) formatted += suffix;
 	}
+	return formatted;
+}
 
-	// ---- Helpers ----
+function mutateBlendMode(currentMode: string, rng: RandomSource): string {
+	const candidates = BLEND_MODES.filter((mode) => mode !== currentMode);
+	return candidates[randomIndex(candidates.length, rng)];
+}
 
-	private static getCommentRanges(code: string): Array<[number, number]> {
-		const ranges: Array<[number, number]> = [];
-		const commentRegex = /\/\/.*|\/\*[\s\S]*?\*\//g;
-		for (const m of code.matchAll(commentRegex)) {
-			if (m.index !== undefined) {
-				ranges.push([m.index, m.index + m[0].length]);
-			}
-		}
-		return ranges;
-	}
-
-	private static isInsideComment(index: number, ranges: Array<[number, number]>): boolean {
-		return ranges.some(([start, end]) => index >= start && index < end);
-	}
+function randomIndex(length: number, rng: RandomSource): number {
+	return Math.min(length - 1, Math.max(0, Math.floor(rng() * length)));
 }
