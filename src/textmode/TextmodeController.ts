@@ -1,6 +1,6 @@
 import type { CodeError } from '@/types';
 import type { TextmodeEditor } from './editor/TextmodeEditor';
-import { TextmodeRuntime } from './runtime/TextmodeRuntime';
+import type { TextmodeRuntime } from './runtime/TextmodeRuntime';
 
 const CONFIRMATION_DELAY_MS = 100;
 
@@ -17,8 +17,8 @@ export interface TextmodeControllerState {
 }
 
 export interface TextmodeControllerDependencies {
-	getEditor: () => TextmodeEditor | null;
-	getRuntime: () => TextmodeRuntime | null;
+	editor: TextmodeEditor;
+	runtime: TextmodeRuntime;
 	getAutoExecute: () => boolean;
 	getAutoExecuteDelay: () => number;
 	state: TextmodeControllerState;
@@ -56,13 +56,13 @@ export class TextmodeController {
 
 		this.debounceTimer = window.setTimeout(() => {
 			this.debounceTimer = null;
-			this.deps.getRuntime()?.forceRun(code);
+			this.deps.runtime.forceRun(code);
 		}, this.deps.getAutoExecuteDelay());
 	}
 
 	handleForceRun(): void {
 		if (this.isExecutionLocked()) return;
-		this.execute(this.deps.getEditor()?.getValue() ?? '', 'run');
+		this.execute(this.deps.editor.getValue(), 'run');
 	}
 
 	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' | 'reset' = 'run'): void {
@@ -82,42 +82,40 @@ export class TextmodeController {
 
 	handleHardReset(): void {
 		if (this.isExecutionLocked()) return;
-		this.execute(this.deps.getEditor()?.getValue() ?? '', 'reset-runtime');
+		this.execute(this.deps.editor.getValue(), 'reset-runtime');
 	}
 
 	handleRunOk(): void {
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
+		const code = this.deps.editor.getValue();
 
 		this.setPendingWorkingCode(code);
 
 		this.deps.state.clearError();
-		editor?.clearMarkers();
+		this.deps.editor.clearMarkers();
 	}
 
 	handleExecutionError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
 		const presentedError = { ...error, source: 'textmode' };
 		this.deps.state.setError(presentedError);
-		this.deps.getEditor()?.setErrorMarker(presentedError);
+		this.deps.editor.setErrorMarker(presentedError);
 	}
 
 	private execute(code: string, mode: 'run' | 'reset-runtime', persist = true): void {
 		this.clearDebounce();
 		if (persist) this.callbacks.onSaveCode(code);
 		this.deps.state.clearError();
-		this.deps.getEditor()?.clearMarkers();
+		this.deps.editor.clearMarkers();
 
-		const runtime = this.deps.getRuntime();
 		if (mode === 'reset-runtime') {
-			runtime?.resetRuntime(code);
+			this.deps.runtime.resetRuntime(code);
 		} else {
-			runtime?.forceRun(code);
+			this.deps.runtime.forceRun(code);
 		}
 	}
 
 	private replaceCode(code: string): void {
-		this.deps.getEditor()?.setValue(code, { silent: true });
+		this.deps.editor.setValue(code, { silent: true });
 		this.deps.onCodeChanged(code);
 	}
 

@@ -39,12 +39,15 @@ export class TextmodeEngine {
 		if (this.initialized) return;
 
 		const initialCode = context.getInitialCode();
+		const editor = this.createEditor(context, initialCode);
+		const runtime = this.createRuntime(context);
+		const controller = this.createController(context, editor, runtime);
 
-		this.editor = this.createEditor(context, initialCode);
-		this.runtime = this.createRuntime(context);
-		this.controller = this.createController(context);
+		this.editor = editor;
+		this.runtime = runtime;
+		this.controller = controller;
 
-		this.runtime.init(initialCode);
+		runtime.init(initialCode);
 		this.initialized = true;
 	}
 
@@ -60,16 +63,24 @@ export class TextmodeEngine {
 		this.initialized = false;
 	}
 
-	getEditor(): TextmodeEditor | null {
-		return this.editor;
-	}
-
-	getController(): TextmodeController | null {
-		return this.controller;
-	}
-
 	isInitialized(): boolean {
 		return this.initialized;
+	}
+
+	run(): void {
+		this.controller?.handleForceRun();
+	}
+
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' | 'reset' = 'run'): void {
+		this.controller?.replaceAndRun(code, reason);
+	}
+
+	resetRuntime(): void {
+		this.controller?.handleHardReset();
+	}
+
+	revertToLastWorking(): void {
+		this.controller?.handleRevertToLastWorking();
 	}
 
 	getCode(): string {
@@ -78,6 +89,23 @@ export class TextmodeEngine {
 
 	setCode(code: string, options?: { silent?: boolean }): void {
 		this.editor?.setValue(code, options);
+	}
+
+	updateSettings(settings: Pick<AppSettings, 'fontSize' | 'lineNumbers'>): void {
+		this.editor?.updateOptions({
+			fontSize: settings.fontSize,
+			lineNumbers: settings.lineNumbers ? 'on' : 'off',
+			lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
+			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
+		});
+	}
+
+	setReadOnly(readOnly: boolean): void {
+		this.editor?.updateOptions({ readOnly });
+	}
+
+	focus(): void {
+		this.editor?.focus();
 	}
 
 	sendAudioData(data: { fft: Uint8Array; waveform: Uint8Array; timestamp: number }): boolean {
@@ -101,7 +129,7 @@ export class TextmodeEngine {
 	}
 
 	private createRuntime(context: TextmodeEngineContext): TextmodeRuntime {
-		this.runtime = new TextmodeRuntime({
+		return new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
 			onRunOk: () => this.controller?.handleRunOk(),
@@ -112,18 +140,16 @@ export class TextmodeEngine {
 			onRunnerConnected: () => context.onRunnerConnected?.(),
 			onRunnerDisconnected: () => context.onRunnerDisconnected?.(),
 		});
-		return this.runtime;
 	}
 
-	private createController(context: TextmodeEngineContext): TextmodeController {
-		const callbacks: TextmodeControllerCallbacks = {
-			onSaveCode: context.callbacks.onSaveCode,
-			onClearCode: context.callbacks.onClearCode,
-		};
-
+	private createController(
+		context: TextmodeEngineContext,
+		editor: TextmodeEditor,
+		runtime: TextmodeRuntime
+	): TextmodeController {
 		const deps: TextmodeControllerDependencies = {
-			getEditor: () => this.editor,
-			getRuntime: () => this.runtime,
+			editor,
+			runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
 			state: context.controllerState,
@@ -131,7 +157,7 @@ export class TextmodeEngine {
 			onCodeChanged: context.onCodeChanged,
 		};
 
-		return new TextmodeController(callbacks, deps);
+		return new TextmodeController(context.callbacks, deps);
 	}
 }
 

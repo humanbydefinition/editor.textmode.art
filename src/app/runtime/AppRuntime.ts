@@ -4,7 +4,6 @@ import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/Short
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
-import type { TextmodeEditor } from '@/textmode/editor/TextmodeEditor';
 import { useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
 import { AudioInputService, type AudioInputFrame } from '@/platform/audio/AudioInputService';
@@ -35,7 +34,6 @@ export class AppRuntime {
 	/** Stable layout callbacks for React context. */
 	readonly layout: AppRuntimeContextValue['layout'];
 
-	private textmodeEditor: TextmodeEditor | null = null;
 	private textmodeContainer: HTMLElement | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
@@ -65,7 +63,7 @@ export class AppRuntime {
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
 			restoreLocalSketches: () => this.restoreLocalSketches(),
-			runCode: () => this.textmodeEngine.getController()?.handleForceRun(),
+			runCode: () => this.textmodeEngine.run(),
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
@@ -86,7 +84,7 @@ export class AppRuntime {
 			resetRunners: () => this.reloadTextmodeSandbox(),
 			clearStorage: () => this.clearStorage(),
 			loadExample: (code: string) => this.loadExample(code),
-			revertToLastWorking: () => this.textmodeEngine.getController()?.handleRevertToLastWorking(),
+			revertToLastWorking: () => this.textmodeEngine.revertToLastWorking(),
 			reconnectTextmodeRunner: () => this.reloadTextmodeSandbox(),
 			enableAudioInput: (deviceId?: string) => this.enableAudioInput(deviceId),
 			disableAudioInput: () => this.disableAudioInput(),
@@ -145,7 +143,6 @@ export class AppRuntime {
 		}
 		this.storeUnsubscribers = [];
 
-		this.textmodeEditor = null;
 		this.textmodeContainer = null;
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
@@ -182,8 +179,6 @@ export class AppRuntime {
 		this.textmodeEngine.init(this.createEngineContext(container));
 		if (!this.initialized) return;
 
-		this.textmodeEditor = this.textmodeEngine.getEditor();
-		this.applyEditorSettings();
 		this.shareManager.applyInitialShareIfPresent();
 		this.galleryManager.applyPendingGallerySketchIfPresent();
 		this.shareManager.attachInteractionGuards();
@@ -232,19 +227,6 @@ export class AppRuntime {
 		};
 	}
 
-	private applyEditorSettings(): void {
-		const editor = this.textmodeEditor;
-		if (!editor) return;
-
-		const settings = getAppState().settings;
-		editor.updateOptions({
-			fontSize: settings.fontSize,
-			lineNumbers: settings.lineNumbers ? 'on' : 'off',
-			lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
-			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
-		});
-	}
-
 	private initializeApp(): void {
 		if (this.initialized) return;
 
@@ -275,7 +257,7 @@ export class AppRuntime {
 
 		this.galleryManager.clear();
 		this.replaceEditorUrl('/');
-		this.textmodeEngine.getController()?.replaceAndRun(code);
+		this.textmodeEngine.replaceAndRun(code);
 
 		return true;
 	}
@@ -303,7 +285,7 @@ export class AppRuntime {
 		if (!this.textmodeEngine.isInitialized()) return;
 		this.galleryManager.clear();
 		this.replaceEditorUrl('/');
-		this.textmodeEngine.getController()?.replaceAndRun(defaultTextmodeSketch, 'reset');
+		this.textmodeEngine.replaceAndRun(defaultTextmodeSketch, 'reset');
 	}
 
 	private toggleUIVisibility(): void {
@@ -332,11 +314,11 @@ export class AppRuntime {
 	}
 
 	private setEditorReadOnly(readOnly: boolean): void {
-		this.textmodeEditor?.updateOptions({ readOnly });
+		this.textmodeEngine.setReadOnly(readOnly);
 	}
 
 	private focusEditor(): void {
-		this.textmodeEditor?.focus();
+		this.textmodeEngine.focus();
 	}
 
 	private async refreshAudioInputDevices(): Promise<void> {
@@ -589,7 +571,7 @@ export class AppRuntime {
 		if (!this.textmodeEngine.isInitialized()) return;
 
 		const code = sketch.textmodeCode;
-		this.textmodeEngine.getController()?.replaceAndRun(code, 'reset-runtime');
+		this.textmodeEngine.replaceAndRun(code, 'reset-runtime');
 	}
 
 	private reloadTextmodeSandbox(): void {
@@ -628,9 +610,9 @@ export class AppRuntime {
 					const s = this.settings;
 					getAppState().updateSettings({ editorBackdrop: !s.editorBackdrop });
 				},
-				hardReset: () => this.textmodeEngine.getController()?.handleHardReset(),
+				hardReset: () => this.textmodeEngine.resetRuntime(),
 				toggleUIVisibility: () => this.toggleUIVisibility(),
-				runCode: () => this.textmodeEngine.getController()?.handleForceRun(),
+				runCode: () => this.textmodeEngine.run(),
 			},
 		});
 	}
@@ -640,7 +622,7 @@ export class AppRuntime {
 			(state) => state.settings,
 			(settings) => {
 				this.storage.saveSettings(settings);
-				this.applyEditorSettings();
+				this.textmodeEngine.updateSettings(settings);
 			}
 		);
 
@@ -663,7 +645,7 @@ export class AppRuntime {
 
 		if (code !== newCode) {
 			getAppState().setGallerySketch(null);
-			this.textmodeEngine.getController()?.replaceAndRun(newCode);
+			this.textmodeEngine.replaceAndRun(newCode);
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			if (window.innerWidth > MOBILE_BREAKPOINT) {
 				this.focusEditor();
