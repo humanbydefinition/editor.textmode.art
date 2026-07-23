@@ -49,7 +49,6 @@ export function pickRandomGallerySketch(
 
 export function toGallerySketchSummary(sketch: GallerySketch): GallerySketchSummary {
 	return {
-		status: sketch.status,
 		slug: sketch.slug,
 		title: sketch.title,
 		description: sketch.description,
@@ -106,11 +105,7 @@ export function buildGallerySketchCatalog(metaModuleMap: ModuleMap, codeModuleMa
 			throw new Error(`Gallery sketch code is too large: ${folderSlug}`);
 		}
 
-		sketches.push({
-			status: 'APPROVED',
-			...meta,
-			textmodeCode,
-		});
+		sketches.push({ ...meta, textmodeCode });
 	}
 
 	return sketches.sort((a, b) => a.slug.localeCompare(b.slug));

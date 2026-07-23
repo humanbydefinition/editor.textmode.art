@@ -2,10 +2,7 @@ import type { GallerySketchMeta, SocialLink } from './model/metadata';
 
 export type { GallerySketchMeta, SocialLink } from './model/metadata';
 
-export type GallerySketchStatus = 'APPROVED';
-
 export interface GallerySketchSummary {
-	status: GallerySketchStatus;
 	slug: string;
 	title: string;
 	description: string | null;
@@ -15,6 +12,5 @@ export interface GallerySketchSummary {
 }
 
 export interface GallerySketch extends GallerySketchMeta {
-	status: GallerySketchStatus;
 	textmodeCode: string;
 }
