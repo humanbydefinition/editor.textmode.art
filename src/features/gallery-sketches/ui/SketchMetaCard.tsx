@@ -112,11 +112,7 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 function LicenseBadge({ license }: { license: string }) {
 	const url = LICENSE_LINKS[license];
 	if (!url) {
-		return (
-			<span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-				{license}
-			</span>
-		);
+		return <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">{license}</span>;
 	}
 
 	return (

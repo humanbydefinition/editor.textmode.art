@@ -44,9 +44,7 @@ export class GalleryManager {
 	}
 
 	getInitialCodeOverride(): string | null {
-		return (
-			this.pendingGallerySketch?.textmodeCode ?? this.deps.getGallerySketch()?.textmodeCode ?? null
-		);
+		return this.pendingGallerySketch?.textmodeCode ?? this.deps.getGallerySketch()?.textmodeCode ?? null;
 	}
 
 	applyPendingGallerySketchIfPresent(): void {

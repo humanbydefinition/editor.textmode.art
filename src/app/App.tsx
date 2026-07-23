@@ -1,9 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { TooltipProvider } from '@/shared/ui/tooltip';
 
-const EditorApp = lazy(() =>
-	import('@/app/EditorApp').then((m) => ({ default: m.EditorApp }))
-);
+const EditorApp = lazy(() => import('@/app/EditorApp').then((m) => ({ default: m.EditorApp })));
 
 /**
  * Root application component.

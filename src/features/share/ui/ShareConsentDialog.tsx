@@ -15,12 +15,7 @@ interface ShareConsentDialogProps {
 	onKeepLocked: () => void;
 }
 
-export function ShareConsentDialog({
-	onUnlockAndRun,
-	onUnlockOnly,
-	onDiscard,
-	onKeepLocked,
-}: ShareConsentDialogProps) {
+export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard, onKeepLocked }: ShareConsentDialogProps) {
 	const sharePayload = useAppStore(selectSharePayload);
 	const shareConsented = useAppStore(selectShareConsented);
 	const sharePromptOpen = useAppStore(selectSharePromptOpen);

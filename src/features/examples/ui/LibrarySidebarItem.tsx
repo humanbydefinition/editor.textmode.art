@@ -35,9 +35,7 @@ export function LibrarySidebarItem({
 			className={cn(
 				'flex min-h-8 w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors',
 				'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70',
-				isActive
-					? 'bg-zinc-800 text-white'
-					: 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+				isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
 				className
 			)}
 		>

@@ -16,12 +16,7 @@ export type AudioInputStatus =
 export type AudioInputPermission = 'unknown' | 'prompt' | 'granted' | 'denied';
 
 export type AudioInputErrorKind =
-	| 'unsupported'
-	| 'permission-denied'
-	| 'no-device'
-	| 'device-busy'
-	| 'constraint'
-	| 'unknown';
+	'unsupported' | 'permission-denied' | 'no-device' | 'device-busy' | 'constraint' | 'unknown';
 
 export interface AudioInputErrorState {
 	kind: AudioInputErrorKind;

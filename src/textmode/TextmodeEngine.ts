@@ -147,5 +147,7 @@ function getRunnerUrl(): string {
 	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
 		return explicit.trim();
 	}
-	return import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5181/` : 'https://runner.textmode.art/';
+	return import.meta.env.DEV
+		? `${window.location.protocol}//${window.location.hostname}:5181/`
+		: 'https://runner.textmode.art/';
 }

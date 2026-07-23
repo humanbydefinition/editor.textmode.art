@@ -604,7 +604,9 @@ export class AppRuntime {
 		};
 	}
 
-	private getAudioErrorStatus(error: AudioInputErrorState): 'permission-denied' | 'no-device' | 'unavailable' | 'error' {
+	private getAudioErrorStatus(
+		error: AudioInputErrorState
+	): 'permission-denied' | 'no-device' | 'unavailable' | 'error' {
 		if (error.kind === 'permission-denied') return 'permission-denied';
 		if (error.kind === 'no-device') return 'no-device';
 		if (error.kind === 'unsupported') return 'unavailable';

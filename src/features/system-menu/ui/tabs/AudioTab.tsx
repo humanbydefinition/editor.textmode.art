@@ -50,13 +50,7 @@ const TONE_CLASSES = {
 	},
 } as const;
 
-export function AudioTab({
-	audioInput,
-	onEnable,
-	onDisable,
-	onRefreshDevices,
-	onSelectDevice,
-}: AudioTabProps) {
+export function AudioTab({ audioInput, onEnable, onDisable, onRefreshDevices, onSelectDevice }: AudioTabProps) {
 	useEffect(() => {
 		void onRefreshDevices();
 	}, [onRefreshDevices]);
@@ -77,24 +71,34 @@ export function AudioTab({
 				<section className="p-3 rounded-lg bg-zinc-900/30 border border-white/5">
 					<div className="flex items-start justify-between gap-3">
 						<div className="flex min-w-0 items-start gap-3">
-							<div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}>
+							<div
+								className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}
+							>
 								{getStatusIcon(audioInput.status)}
 							</div>
 							<div className="min-w-0">
 								<div className="flex flex-wrap items-center gap-2">
 									<p className="text-sm font-medium text-white">audio input</p>
-									<span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone.badge}`}>
+									<span
+										className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone.badge}`}
+									>
 										{status.label}
 									</span>
 								</div>
-								<p className="mt-1 text-xs leading-5 text-zinc-500">{audioInput.error?.message ?? status.text}</p>
+								<p className="mt-1 text-xs leading-5 text-zinc-500">
+									{audioInput.error?.message ?? status.text}
+								</p>
 							</div>
 						</div>
 						<Button
 							type="button"
 							size="sm"
 							variant={isActive ? 'ghost' : 'default'}
-							className={isActive ? 'text-zinc-200 hover:bg-zinc-800 hover:text-white' : 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400'}
+							className={
+								isActive
+									? 'text-zinc-200 hover:bg-zinc-800 hover:text-white'
+									: 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400'
+							}
 							disabled={isRequesting || isUnavailable}
 							onClick={() => {
 								if (isActive) {
@@ -126,7 +130,9 @@ export function AudioTab({
 									onClick={() => void onRefreshDevices()}
 									aria-label="Refresh audio input devices"
 								>
-									<RefreshCw className={`w-4 h-4 ${audioInput.isRefreshingDevices ? 'animate-spin' : ''}`} />
+									<RefreshCw
+										className={`w-4 h-4 ${audioInput.isRefreshingDevices ? 'animate-spin' : ''}`}
+									/>
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
@@ -170,7 +176,10 @@ export function AudioTab({
 						aria-valuemax={100}
 						aria-valuenow={levelPercent}
 					>
-						<div className="h-full rounded-full bg-lime-300 transition-[width] duration-75" style={{ width: `${levelPercent}%` }} />
+						<div
+							className="h-full rounded-full bg-lime-300 transition-[width] duration-75"
+							style={{ width: `${levelPercent}%` }}
+						/>
 					</div>
 				</section>
 			</div>
@@ -181,7 +190,8 @@ export function AudioTab({
 function getStatusIcon(status: AudioInputStatus) {
 	if (status === 'requesting' || status === 'checking') return <Loader2 className="w-4 h-4 animate-spin" />;
 	if (status === 'active') return <CheckCircle2 className="w-4 h-4" />;
-	if (status === 'permission-denied' || status === 'unavailable' || status === 'error') return <XCircle className="w-4 h-4" />;
+	if (status === 'permission-denied' || status === 'unavailable' || status === 'error')
+		return <XCircle className="w-4 h-4" />;
 	return <Mic2 className="w-4 h-4" />;
 }
 
@@ -195,5 +205,7 @@ function getActionLabel(audioInput: AudioInputState): string {
 function getSelectedDeviceLabel(audioInput: AudioInputState): string {
 	if (!audioInput.enabled) return 'stopped';
 	if (!audioInput.selectedDeviceId) return 'default input';
-	return audioInput.devices.find((device) => device.deviceId === audioInput.selectedDeviceId)?.label ?? 'selected input';
+	return (
+		audioInput.devices.find((device) => device.deviceId === audioInput.selectedDeviceId)?.label ?? 'selected input'
+	);
 }

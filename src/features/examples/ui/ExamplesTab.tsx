@@ -9,7 +9,13 @@ const STORAGE_KEY = 'textmode:examples:selected-library';
 function loadPersistedLibrary(): ExampleLibraryId | null {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored === 'textmode' || stored === 'synth' || stored === 'figlet' || stored === 'filters' || stored === 'export') {
+		if (
+			stored === 'textmode' ||
+			stored === 'synth' ||
+			stored === 'figlet' ||
+			stored === 'filters' ||
+			stored === 'export'
+		) {
 			return stored;
 		}
 	} catch {
@@ -65,11 +71,7 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
-			<LibrarySidebar
-				libraries={libraries}
-				selectedId={selectedLibrary.id}
-				onSelect={handleLibraryChange}
-			/>
+			<LibrarySidebar libraries={libraries} selectedId={selectedLibrary.id} onSelect={handleLibraryChange} />
 			<ExampleList library={selectedLibrary} onSelect={handleSelect} />
 		</div>
 	);

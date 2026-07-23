@@ -36,9 +36,7 @@ describe('generated type definition docs', () => {
 			'interface Textmodifier extends TextmodifierFigletExtensions'
 		);
 		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain("declare module 'textmode.js'");
-		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain(
-			'interface Textmodifier extends TextmodeExportAPI'
-		);
+		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain('interface Textmodifier extends TextmodeExportAPI');
 	});
 });
 

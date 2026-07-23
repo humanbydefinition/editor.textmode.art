@@ -164,7 +164,7 @@ async function launchChromium(): Promise<Browser> {
 
 	try {
 		return await chromium.launch({ headless: true, channel: 'chromium', args });
-	} catch (channelError) {
+	} catch {
 		try {
 			return await chromium.launch({ headless: true, args });
 		} catch (fallbackError) {
@@ -178,7 +178,7 @@ async function launchChromium(): Promise<Browser> {
 				);
 			}
 			throw new Error('Could not launch Chromium for gallery OG capture.', {
-				cause: new AggregateError([channelError, fallbackError]),
+				cause: fallbackError,
 			});
 		}
 	}

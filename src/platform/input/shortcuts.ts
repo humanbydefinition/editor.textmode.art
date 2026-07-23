@@ -8,12 +8,5 @@ export interface ShortcutKeyEvent {
 }
 
 export function isHardResetShortcut(event: ShortcutKeyEvent): boolean {
-	return (
-		event.code === 'KeyR' &&
-		event.ctrlKey &&
-		event.shiftKey &&
-		!event.altKey &&
-		!event.metaKey &&
-		!event.repeat
-	);
+	return event.code === 'KeyR' && event.ctrlKey && event.shiftKey && !event.altKey && !event.metaKey && !event.repeat;
 }

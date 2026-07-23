@@ -3,10 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import {
-	EXAMPLE_LIBRARY_ORDER,
-	getExampleLibraryCatalog,
-} from '../src/features/examples/model/exampleCatalog';
+import { EXAMPLE_LIBRARY_ORDER, getExampleLibraryCatalog } from '../src/features/examples/model/exampleCatalog';
 import type { Example, ExampleLibraryCatalog } from '../src/features/examples/types';
 import { typeDefinitions } from '../src/textmode/config/generatedTypes';
 
@@ -96,7 +93,9 @@ describe('example code safety', () => {
 	});
 });
 
-function flattenExamples(catalog: ExampleLibraryCatalog[]): Array<{ library: ExampleLibraryCatalog; example: Example }> {
+function flattenExamples(
+	catalog: ExampleLibraryCatalog[]
+): Array<{ library: ExampleLibraryCatalog; example: Example }> {
 	return catalog.flatMap((library) =>
 		library.categories.flatMap((category) => category.examples.map((example) => ({ library, example })))
 	);
