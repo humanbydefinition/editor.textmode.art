@@ -34,24 +34,18 @@ export class TextmodeEngine {
 	private runtime: TextmodeRuntime | null = null;
 	private controller: TextmodeController | null = null;
 	private initialized = false;
-	private initializing = false;
 
-	async init(context: TextmodeEngineContext): Promise<void> {
-		if (this.initialized || this.initializing) return;
-		this.initializing = true;
+	init(context: TextmodeEngineContext): void {
+		if (this.initialized) return;
 
 		const initialCode = context.getInitialCode();
 
-		try {
-			this.editor = this.createEditor(context, initialCode);
-			this.runtime = this.createRuntime(context);
-			this.controller = this.createController(context);
+		this.editor = this.createEditor(context, initialCode);
+		this.runtime = this.createRuntime(context);
+		this.controller = this.createController(context);
 
-			this.runtime.init(initialCode);
-			this.initialized = true;
-		} finally {
-			this.initializing = false;
-		}
+		this.runtime.init(initialCode);
+		this.initialized = true;
 	}
 
 	dispose(): void {
@@ -64,7 +58,6 @@ export class TextmodeEngine {
 		this.editor?.dispose();
 		this.editor = null;
 		this.initialized = false;
-		this.initializing = false;
 	}
 
 	getEditor(): TextmodeEditor | null {

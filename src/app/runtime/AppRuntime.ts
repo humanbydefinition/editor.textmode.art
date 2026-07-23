@@ -37,14 +37,11 @@ export class AppRuntime {
 
 	private textmodeEditor: TextmodeEditor | null = null;
 	private textmodeContainer: HTMLElement | null = null;
-	private engineBootstrapPromise: Promise<void> | null = null;
-	private initPromise: Promise<void> | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private audioInputUnsubscribe: (() => void) | null = null;
 	private audioDeviceChangeUnsubscribe: (() => void) | null = null;
 	private initialized = false;
-	private hydrationComplete = false;
 	private lifecycleId = 0;
 	private runnerReconnectTimer: number | null = null;
 	private lastAudioLevelUiUpdateAt = 0;
@@ -113,14 +110,11 @@ export class AppRuntime {
 		return getAppState().settings;
 	}
 
-	async init(): Promise<void> {
-		if (this.initPromise) {
-			return this.initPromise;
-		}
+	init(): void {
+		if (this.initialized) return;
 
 		this.attachAudioInputService();
-		this.initPromise = this.initializeApp();
-		return this.initPromise;
+		this.initializeApp();
 	}
 
 	dispose(): void {
@@ -153,8 +147,6 @@ export class AppRuntime {
 
 		this.textmodeEditor = null;
 		this.textmodeContainer = null;
-		this.engineBootstrapPromise = null;
-		this.initPromise = null;
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
@@ -162,7 +154,6 @@ export class AppRuntime {
 		getAppState().setRunnerReconnecting(false);
 
 		this.initialized = false;
-		this.hydrationComplete = false;
 	}
 
 	private attachAudioInputService(): void {
@@ -180,23 +171,15 @@ export class AppRuntime {
 	// ----- Engine lifecycle (inlined from EngineLifecycle) -----
 
 	private maybeInitializeEngine(): void {
-		if (
-			!this.initialized ||
-			!this.hydrationComplete ||
-			this.engineBootstrapPromise ||
-			this.textmodeEngine.isInitialized() ||
-			!this.textmodeContainer
-		) {
+		if (!this.initialized || this.textmodeEngine.isInitialized() || !this.textmodeContainer) {
 			return;
 		}
 
-		this.engineBootstrapPromise = this.bootstrapEngine(this.textmodeContainer).finally(() => {
-			this.engineBootstrapPromise = null;
-		});
+		this.bootstrapEngine(this.textmodeContainer);
 	}
 
-	private async bootstrapEngine(container: HTMLElement): Promise<void> {
-		await this.textmodeEngine.init(this.createEngineContext(container));
+	private bootstrapEngine(container: HTMLElement): void {
+		this.textmodeEngine.init(this.createEngineContext(container));
 		if (!this.initialized) return;
 
 		this.textmodeEditor = this.textmodeEngine.getEditor();
@@ -263,12 +246,9 @@ export class AppRuntime {
 		editor.updateEnvironment({ backdrop: settings.editorBackdrop });
 	}
 
-	private async initializeApp(): Promise<void> {
-		if (this.initialized) {
-			return this.engineBootstrapPromise ?? Promise.resolve();
-		}
+	private initializeApp(): void {
+		if (this.initialized) return;
 
-		const lifecycleId = this.lifecycleId;
 		const loadedSettings = this.storage.loadSettings();
 		getAppState().setSettings(loadedSettings);
 		this.shareManager.hydrateFromLocation(window.location);
@@ -278,15 +258,9 @@ export class AppRuntime {
 		} else {
 			this.galleryManager.clear();
 		}
-		if (lifecycleId !== this.lifecycleId) {
-			return;
-		}
 
 		this.initialized = true;
-		this.hydrationComplete = true;
 		this.maybeInitializeEngine();
-
-		return this.engineBootstrapPromise ?? Promise.resolve();
 	}
 
 	private getInitialCode(): string {

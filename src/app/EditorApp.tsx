@@ -18,7 +18,7 @@ export function EditorApp() {
 	const runtime = runtimeRef.current;
 
 	useEffect(() => {
-		void runtime.init();
+		runtime.init();
 
 		if (import.meta.env.DEV) {
 			(window as unknown as Record<string, unknown>).app = runtime;
