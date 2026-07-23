@@ -1,17 +1,15 @@
-import { defineConfig } from 'vitest/config';
-import path from 'node:path';
+import { defineTextmodeProject } from '@textmode/vitest-config';
 
-export default defineConfig({
-	resolve: {
-		alias: {
-			'@': path.resolve(__dirname, './src'),
+export default defineTextmodeProject({
+	projects: [
+		{
+			extends: true,
+			test: {
+				name: 'editor',
+				include: ['tests/**/*.test.ts'],
+				clearMocks: true,
+				restoreMocks: true,
+			},
 		},
-	},
-	test: {
-		environment: 'jsdom',
-		globals: true,
-		include: ['tests/**/*.test.ts'],
-		clearMocks: true,
-		restoreMocks: true,
-	},
+	],
 });
