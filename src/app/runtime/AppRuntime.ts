@@ -243,7 +243,6 @@ export class AppRuntime {
 			lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
 			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
 		});
-		editor.updateEnvironment({ backdrop: settings.editorBackdrop });
 	}
 
 	private initializeApp(): void {

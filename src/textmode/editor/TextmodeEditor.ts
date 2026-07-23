@@ -71,14 +71,6 @@ export class TextmodeEditor {
 		this.editor.updateOptions(options);
 	}
 
-	updateEnvironment(env: { backdrop: boolean }): void {
-		if (env.backdrop) {
-			this.options.container.classList.add('editor-backdrop');
-		} else {
-			this.options.container.classList.remove('editor-backdrop');
-		}
-	}
-
 	setMarkers(markers: monaco.editor.IMarkerData[]): void {
 		monaco.editor.setModelMarkers(this.model, 'textmode', markers);
 	}
