@@ -34,7 +34,7 @@ import {
 	type TextmodeLayerManager,
 	type TextmodePlugin,
 } from 'textmode.js';
-import { escapeXml, getFittedFontSize, OG_HEIGHT, OG_WIDTH } from './contracts';
+import { escapeMarkup, getFittedFontSize, OG_HEIGHT, OG_WIDTH } from './contracts';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const BRAND_MARK_PATH =
@@ -349,9 +349,9 @@ function buildOverlay(title: string, description: string | null, authorName: str
 		<g transform="translate(48 49) scale(${20 / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
 		<text x="82" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="36">editor.textmode.art</text>
 		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="28" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
-		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeXml(title)}</text>
-		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeXml(description?.trim() ?? '')}</text>
-		<text id="gallery-og-author" x="${METADATA_LEFT}" y="0" fill="#8e8e88" font-family="Monogram Extended" font-size="${AUTHOR_FONT_SIZE}" letter-spacing="1"><tspan>by </tspan><tspan id="gallery-og-author-name" fill="#d8d8d2" font-style="italic">${escapeXml(displayAuthorName)}</tspan></text>
+		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeMarkup(title)}</text>
+		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeMarkup(description?.trim() ?? '')}</text>
+		<text id="gallery-og-author" x="${METADATA_LEFT}" y="0" fill="#8e8e88" font-family="Monogram Extended" font-size="${AUTHOR_FONT_SIZE}" letter-spacing="1"><tspan>by </tspan><tspan id="gallery-og-author-name" fill="#d8d8d2" font-style="italic">${escapeMarkup(displayAuthorName)}</tspan></text>
 	`;
 	document.body.appendChild(svg);
 }

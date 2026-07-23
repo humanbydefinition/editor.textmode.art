@@ -2,7 +2,7 @@ import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promi
 import os from 'node:os';
 import path from 'node:path';
 import { generateGalleryOg } from './generateGalleryOg';
-import { validatePng, type GalleryOgEntry, type GalleryOgMeta } from './gallery-og/shared';
+import { validatePng, type GalleryOgEntry, type GallerySketchMeta } from './gallery-og/shared';
 
 const root = path.resolve(import.meta.dirname, '..');
 const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'gallery-og-smoke-'));
@@ -10,7 +10,7 @@ const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'gallery-og-smok
 try {
 	const sketchDirectory = path.join(temporaryDirectory, 'frame-seek');
 	await mkdir(sketchDirectory, { recursive: true });
-	const meta: GalleryOgMeta = {
+	const meta: GallerySketchMeta = {
 		slug: 'frame-seek',
 		title: 'Frame & Seek <Smoke Test>',
 		description:
