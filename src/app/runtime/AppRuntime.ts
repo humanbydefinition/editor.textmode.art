@@ -58,7 +58,6 @@ export class AppRuntime {
 		// Create engine directly
 		this.textmodeEngine = new TextmodeEngine();
 		this.audioInputService = new AudioInputService();
-		this.attachAudioInputService();
 
 		this.shareManager = new ShareManager({
 			getShare: () => getAppState().share,

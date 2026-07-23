@@ -26,7 +26,6 @@ export function EditorApp() {
 
 		return () => {
 			runtime.dispose();
-			runtimeRef.current = null;
 
 			if (import.meta.env.DEV) {
 				delete (window as unknown as Record<string, unknown>).app;
