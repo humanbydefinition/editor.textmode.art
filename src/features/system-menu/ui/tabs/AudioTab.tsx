@@ -6,7 +6,7 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import type { AudioInputState, AudioInputStatus } from '@/platform/state/slices/audioSlice';
 
-export interface AudioTabProps {
+interface AudioTabProps {
 	audioInput: AudioInputState;
 	onEnable: (deviceId?: string) => Promise<void>;
 	onDisable: () => void;

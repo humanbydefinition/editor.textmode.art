@@ -63,10 +63,6 @@ export class TextmodeEditor {
 		this.model.setValue(value);
 	}
 
-	layout(): void {
-		this.editor.layout();
-	}
-
 	focus(): void {
 		this.editor.focus();
 	}

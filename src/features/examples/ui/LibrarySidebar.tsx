@@ -2,7 +2,7 @@ import { useCallback, type KeyboardEvent } from 'react';
 import type { ExampleLibraryCatalog, ExampleLibraryId } from '@/features/examples/types';
 import { LibrarySidebarItem } from './LibrarySidebarItem';
 
-export interface LibrarySidebarProps {
+interface LibrarySidebarProps {
 	libraries: ExampleLibraryCatalog[];
 	selectedId: ExampleLibraryId;
 	onSelect: (id: ExampleLibraryId) => void;

@@ -2,7 +2,7 @@ import { cn } from '@/shared/lib/cn';
 import type { KeyboardEvent } from 'react';
 import type { ExampleLibraryId } from '@/features/examples/types';
 
-export interface LibrarySidebarItemProps {
+interface LibrarySidebarItemProps {
 	id: ExampleLibraryId;
 	label: string;
 	isActive: boolean;

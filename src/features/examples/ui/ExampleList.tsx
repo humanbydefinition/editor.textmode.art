@@ -2,7 +2,7 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { ExampleCategorySection } from './ExampleCategorySection';
 import type { ExampleLibraryCatalog, Example } from '@/features/examples/types';
 
-export interface ExampleListProps {
+interface ExampleListProps {
 	library: ExampleLibraryCatalog;
 	onSelect: (example: Example) => void;
 }

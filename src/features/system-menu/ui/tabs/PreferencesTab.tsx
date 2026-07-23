@@ -8,7 +8,7 @@ import { Separator } from '@/shared/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import type { AppSettings } from '@/types';
 
-export interface PreferencesTabProps {
+interface PreferencesTabProps {
 	settings: AppSettings;
 	onSettingsChange: (settings: Partial<AppSettings>) => void;
 	onResetRunners: () => void;

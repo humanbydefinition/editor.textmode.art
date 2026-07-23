@@ -23,7 +23,7 @@ import { useAppStore } from '@/platform/state/appStore';
 import { selectSettings } from '@/platform/state/selectors';
 import type { AudioInputState } from '@/platform/state/slices/audioSlice';
 
-export interface SystemMenuProps {
+interface SystemMenuProps {
 	onShare: () => void;
 	onRandomize: () => boolean;
 	onMakeRandomChange?: () => void;

@@ -32,7 +32,7 @@ function persistLibrary(id: ExampleLibraryId): void {
 	}
 }
 
-export interface ExamplesTabProps {
+interface ExamplesTabProps {
 	onLoadExample: (code: string) => void;
 	onClose: () => void;
 }

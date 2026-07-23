@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react';
 import type { Example } from '@/features/examples/types';
 
-export interface ExampleCardProps {
+interface ExampleCardProps {
 	example: Example;
 	onSelect: (example: Example) => void;
 }

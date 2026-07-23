@@ -2,7 +2,7 @@ import { Separator } from '@/shared/ui/separator';
 import { ExampleCard } from './ExampleCard';
 import type { ExampleCategory, Example } from '@/features/examples/types';
 
-export interface ExampleCategorySectionProps {
+interface ExampleCategorySectionProps {
 	category: ExampleCategory;
 	index: number;
 	onSelect: (example: Example) => void;
