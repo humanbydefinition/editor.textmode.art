@@ -20,16 +20,14 @@ Use this shape:
 
 ```json
 {
-  "slug": "your-sketch-slug",
-  "title": "Your Sketch Title",
-  "description": "A short description of the sketch.",
-  "authorName": "Your Name",
-  "license": "MIT",
-  "socialLinks": [
-    { "label": "Website", "url": "https://example.com" }
-  ],
-  "createdAt": "2026-05-16T00:00:00.000Z",
-  "ogFrame": 60
+	"slug": "your-sketch-slug",
+	"title": "Your Sketch Title",
+	"description": "A short description of the sketch.",
+	"authorName": "Your Name",
+	"license": "MIT",
+	"socialLinks": [{ "label": "Website", "url": "https://example.com" }],
+	"createdAt": "2026-05-16T00:00:00.000Z",
+	"ogFrame": 60
 }
 ```
 
@@ -50,6 +48,21 @@ Rules:
 The code must not be empty and must stay under 300,000 characters.
 
 Gallery sketch code is not linted by the project ESLint setup. Sketch PR review focuses on metadata validity, compatibility with the live editor, and whether the sketch is appropriate for the gallery.
+
+Gallery sketches must render deterministically at a given timeline position. Do not use ambient entropy sources such as `Math.random()`, `Date.now()`, `performance.now()`, or `crypto` randomness. Seed textmode's random or noise generator before using it:
+
+```javascript
+t.randomSeed('your-sketch-v1');
+t.noiseSeed('your-sketch-v1');
+```
+
+For controlled variation across recurring resets, derive the seed from deterministic state such as `t.frameCount`:
+
+```javascript
+t.randomSeed(`your-sketch-v1:${t.frameCount}`);
+```
+
+The test suite rejects ambient entropy and unseeded textmode random/noise usage in gallery sketches.
 
 ### Live-coding lifecycle
 
