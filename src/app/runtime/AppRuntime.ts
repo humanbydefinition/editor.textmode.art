@@ -46,12 +46,10 @@ export class AppRuntime {
 	private initialized = false;
 	private hydrationComplete = false;
 	private lifecycleId = 0;
-	private creationLifecycleId: number;
 	private runnerReconnectTimer: number | null = null;
 	private lastAudioLevelUiUpdateAt = 0;
 
 	constructor() {
-		this.creationLifecycleId = this.lifecycleId;
 		this.storage = editorStorage;
 
 		// Register default code
@@ -121,7 +119,6 @@ export class AppRuntime {
 			return this.initPromise;
 		}
 
-		this.creationLifecycleId = this.lifecycleId;
 		this.attachAudioInputService();
 		this.initPromise = this.initializeApp();
 		return this.initPromise;
@@ -371,7 +368,7 @@ export class AppRuntime {
 	}
 
 	private async refreshAudioInputDevices(): Promise<void> {
-		if (this.lifecycleId !== this.creationLifecycleId) return;
+		const lifecycleId = this.lifecycleId;
 		if (!this.audioInputService.isSupported()) {
 			getAppState().setAudioInput({
 				enabled: false,
@@ -401,7 +398,7 @@ export class AppRuntime {
 				this.audioInputService.listDevices(),
 				this.queryAudioInputPermission(),
 			]);
-			if (this.lifecycleId !== this.creationLifecycleId) return;
+			if (lifecycleId !== this.lifecycleId) return;
 			const latest = getAppState().audioInput;
 			const selectedDeviceStillExists =
 				latest.selectedDeviceId === '' || devices.some((device) => device.deviceId === latest.selectedDeviceId);
@@ -427,6 +424,7 @@ export class AppRuntime {
 				error: null,
 			});
 		} catch (error) {
+			if (lifecycleId !== this.lifecycleId) return;
 			getAppState().setAudioInput({
 				enabled: false,
 				status: 'error',
@@ -437,7 +435,7 @@ export class AppRuntime {
 	}
 
 	private async enableAudioInput(deviceId?: string): Promise<void> {
-		if (this.lifecycleId !== this.creationLifecycleId) return;
+		const lifecycleId = this.lifecycleId;
 		if (!this.audioInputService.isSupported()) {
 			getAppState().setAudioInput({
 				enabled: false,
@@ -465,9 +463,9 @@ export class AppRuntime {
 
 		try {
 			const activeDeviceId = await this.audioInputService.start(selectedDeviceId || undefined);
-			if (this.lifecycleId !== this.creationLifecycleId) return;
+			if (lifecycleId !== this.lifecycleId) return;
 			const devices = await this.audioInputService.listDevices();
-			if (this.lifecycleId !== this.creationLifecycleId) return;
+			if (lifecycleId !== this.lifecycleId) return;
 			getAppState().setAudioInput({
 				enabled: true,
 				status: 'active',
@@ -478,6 +476,7 @@ export class AppRuntime {
 				error: null,
 			});
 		} catch (error) {
+			if (lifecycleId !== this.lifecycleId) return;
 			this.audioInputService.stop({ emitSilence: true });
 			const errorState = this.toAudioErrorState(error);
 			getAppState().setAudioInput({
@@ -492,7 +491,6 @@ export class AppRuntime {
 	}
 
 	private disableAudioInput(): void {
-		if (this.lifecycleId !== this.creationLifecycleId) return;
 		this.audioInputService.stop({ emitSilence: true });
 		this.lastAudioLevelUiUpdateAt = 0;
 		getAppState().setAudioInput({
@@ -505,15 +503,12 @@ export class AppRuntime {
 	}
 
 	private async selectAudioInputDevice(deviceId: string): Promise<void> {
-		if (this.lifecycleId !== this.creationLifecycleId) return;
 		getAppState().setAudioInput({ selectedDeviceId: deviceId });
 		if (!getAppState().audioInput.enabled) return;
 		await this.enableAudioInput(deviceId);
-		if (this.lifecycleId !== this.creationLifecycleId) return;
 	}
 
 	private handleAudioInputFrame(frame: AudioInputFrame): void {
-		if (this.lifecycleId !== this.creationLifecycleId) return;
 		if (
 			this.lastAudioLevelUiUpdateAt === 0 ||
 			frame.timestamp - this.lastAudioLevelUiUpdateAt >= AUDIO_LEVEL_UI_INTERVAL_MS ||
