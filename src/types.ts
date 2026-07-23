@@ -40,14 +40,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export interface CodeError {
 	/** Error message */
 	message: string;
-	/** Full stack trace */
-	stack?: string;
 	/** Line number in user code (1-indexed) */
 	line?: number;
 	/** Column number in user code (1-indexed) */
 	column?: number;
-	/** Source of the error (e.g., 'textmode') */
-	source?: string;
 }
 
 /**

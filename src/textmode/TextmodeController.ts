@@ -96,9 +96,8 @@ export class TextmodeController {
 
 	handleExecutionError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-		const presentedError = { ...error, source: 'textmode' };
-		this.deps.state.setError(presentedError);
-		this.deps.editor.setErrorMarker(presentedError);
+		this.deps.state.setError(error);
+		this.deps.editor.setErrorMarker(error);
 	}
 
 	private execute(code: string, mode: 'run' | 'reset-runtime', persist = true): void {

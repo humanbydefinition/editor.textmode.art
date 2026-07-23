@@ -203,7 +203,7 @@ function getActionLabel(audioInput: AudioInputState): string {
 }
 
 function getSelectedDeviceLabel(audioInput: AudioInputState): string {
-	if (!audioInput.enabled) return 'stopped';
+	if (audioInput.status !== 'active') return 'stopped';
 	if (!audioInput.selectedDeviceId) return 'default input';
 	return (
 		audioInput.devices.find((device) => device.deviceId === audioInput.selectedDeviceId)?.label ?? 'selected input'

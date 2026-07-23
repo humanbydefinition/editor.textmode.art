@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { RotateCcw } from 'lucide-react';
+import type { RunnerStatus } from '@/platform/state/slices/runtimeSlice';
 
 const SHOW_GRACE_MS = 750;
 
 interface RunnerUnavailableAlertProps {
-	isVisible: boolean;
-	isReconnecting: boolean;
+	status: RunnerStatus;
 	onReconnect: () => void;
 }
 
-export function RunnerUnavailableAlert({ isVisible, isReconnecting, onReconnect }: RunnerUnavailableAlertProps) {
+export function RunnerUnavailableAlert({ status, onReconnect }: RunnerUnavailableAlertProps) {
+	const isVisible = status !== 'connected';
+	const isReconnecting = status === 'reconnecting';
 	const [shouldRender, setShouldRender] = useState(isVisible);
 
 	useEffect(() => {

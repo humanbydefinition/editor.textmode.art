@@ -13,8 +13,7 @@ import {
 	selectShareConsented,
 	selectSharePayload,
 	selectSharePromptOpen,
-	selectTextmodeRunnerReconnecting,
-	selectTextmodeRunnerUnavailable,
+	selectTextmodeRunnerStatus,
 } from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gallery-sketches';
@@ -53,8 +52,7 @@ export function AppShell() {
 		() => (gallerySketch ? toGallerySketchSummary(gallerySketch) : null),
 		[gallerySketch]
 	);
-	const textmodeRunnerUnavailable = useAppStore(selectTextmodeRunnerUnavailable);
-	const textmodeRunnerReconnecting = useAppStore(selectTextmodeRunnerReconnecting);
+	const textmodeRunnerStatus = useAppStore(selectTextmodeRunnerStatus);
 	const audioInput = useAppStore(selectAudioInput);
 	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
 
@@ -98,11 +96,7 @@ export function AppShell() {
 
 			{/* UI shell layer - elevated above editors */}
 			<div id="shell-container" className="fixed inset-0 z-[100] pointer-events-none">
-				<RunnerUnavailableAlert
-					isVisible={textmodeRunnerUnavailable}
-					isReconnecting={textmodeRunnerReconnecting}
-					onReconnect={actions.reconnectTextmodeRunner}
-				/>
+				<RunnerUnavailableAlert status={textmodeRunnerStatus} onReconnect={actions.reconnectTextmodeRunner} />
 
 				<WelcomeDialog onOpenChange={setWelcomeOpen} />
 

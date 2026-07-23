@@ -2,17 +2,17 @@ import type { StateCreator } from 'zustand';
 import type { CodeError } from '@/types';
 import type { AppState } from '../appStore';
 
+export type RunnerStatus = 'connected' | 'unavailable' | 'reconnecting';
+
 export interface RuntimeSlice {
 	error: CodeError | null;
 	lastWorkingCode: string | null;
-	runnerUnavailable: boolean;
-	runnerReconnecting: boolean;
+	runnerStatus: RunnerStatus;
 
 	setError: (error: CodeError | null) => void;
 	clearError: () => void;
 	setLastWorkingCode: (code: string | null) => void;
-	setRunnerUnavailable: (value: boolean) => void;
-	setRunnerReconnecting: (value: boolean) => void;
+	setRunnerStatus: (status: RunnerStatus) => void;
 }
 
 export const createRuntimeSlice: StateCreator<
@@ -23,12 +23,10 @@ export const createRuntimeSlice: StateCreator<
 > = (set) => ({
 	error: null,
 	lastWorkingCode: null,
-	runnerUnavailable: false,
-	runnerReconnecting: false,
+	runnerStatus: 'connected',
 
-	setError: (error) => set({ error: error ? { ...error, source: error.source ?? 'textmode' } : null }),
+	setError: (error) => set({ error }),
 	clearError: () => set({ error: null }),
 	setLastWorkingCode: (code) => set({ lastWorkingCode: code }),
-	setRunnerUnavailable: (value) => set({ runnerUnavailable: value }),
-	setRunnerReconnecting: (value) => set({ runnerReconnecting: value }),
+	setRunnerStatus: (runnerStatus) => set({ runnerStatus }),
 });

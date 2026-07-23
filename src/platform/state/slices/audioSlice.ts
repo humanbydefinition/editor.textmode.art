@@ -25,7 +25,6 @@ export interface AudioInputErrorState {
 }
 
 export interface AudioInputState {
-	enabled: boolean;
 	status: AudioInputStatus;
 	permission: AudioInputPermission;
 	isRefreshingDevices: boolean;
@@ -47,7 +46,6 @@ export const createAudioSlice: StateCreator<
 	AudioSlice
 > = (set) => ({
 	audioInput: {
-		enabled: false,
 		status: 'idle',
 		permission: 'unknown',
 		isRefreshingDevices: false,

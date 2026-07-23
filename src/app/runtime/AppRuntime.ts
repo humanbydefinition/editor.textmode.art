@@ -127,7 +127,6 @@ export class AppRuntime {
 		this.audioDeviceChangeUnsubscribe = null;
 		this.lastAudioLevelUiUpdateAt = 0;
 		getAppState().setAudioInput({
-			enabled: false,
 			status: 'idle',
 			permission: 'unknown',
 			isRefreshingDevices: false,
@@ -147,8 +146,7 @@ export class AppRuntime {
 		if (this.textmodeEngine.isInitialized()) {
 			this.textmodeEngine.dispose();
 		}
-		getAppState().setRunnerUnavailable(false);
-		getAppState().setRunnerReconnecting(false);
+		getAppState().setRunnerStatus('connected');
 
 		this.initialized = false;
 	}
@@ -216,13 +214,11 @@ export class AppRuntime {
 			changeFontSize: (delta) => this.changeFontSize(delta),
 			onRunnerConnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
-				getAppState().setRunnerUnavailable(false);
-				getAppState().setRunnerReconnecting(false);
+				getAppState().setRunnerStatus('connected');
 			},
 			onRunnerDisconnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
-				getAppState().setRunnerUnavailable(true);
-				getAppState().setRunnerReconnecting(false);
+				getAppState().setRunnerStatus('unavailable');
 			},
 		};
 	}
@@ -325,7 +321,6 @@ export class AppRuntime {
 		const lifecycleId = this.lifecycleId;
 		if (!this.audioInputService.isSupported()) {
 			getAppState().setAudioInput({
-				enabled: false,
 				status: 'unavailable',
 				permission: 'unknown',
 				isRefreshingDevices: false,
@@ -380,7 +375,6 @@ export class AppRuntime {
 		} catch (error) {
 			if (lifecycleId !== this.lifecycleId) return;
 			getAppState().setAudioInput({
-				enabled: false,
 				status: 'error',
 				isRefreshingDevices: false,
 				error: this.toAudioErrorState(error),
@@ -392,7 +386,6 @@ export class AppRuntime {
 		const lifecycleId = this.lifecycleId;
 		if (!this.audioInputService.isSupported()) {
 			getAppState().setAudioInput({
-				enabled: false,
 				status: 'unavailable',
 				permission: 'unknown',
 				isRefreshingDevices: false,
@@ -409,7 +402,6 @@ export class AppRuntime {
 		const current = getAppState().audioInput;
 		const selectedDeviceId = deviceId ?? current.selectedDeviceId;
 		getAppState().setAudioInput({
-			enabled: false,
 			status: 'requesting',
 			selectedDeviceId,
 			error: null,
@@ -421,7 +413,6 @@ export class AppRuntime {
 			const devices = await this.audioInputService.listDevices();
 			if (lifecycleId !== this.lifecycleId) return;
 			getAppState().setAudioInput({
-				enabled: true,
 				status: 'active',
 				permission: 'granted',
 				isRefreshingDevices: false,
@@ -434,7 +425,6 @@ export class AppRuntime {
 			this.audioInputService.stop({ emitSilence: true });
 			const errorState = this.toAudioErrorState(error);
 			getAppState().setAudioInput({
-				enabled: false,
 				status: this.getAudioErrorStatus(errorState),
 				permission: errorState.kind === 'permission-denied' ? 'denied' : current.permission,
 				isRefreshingDevices: false,
@@ -448,7 +438,6 @@ export class AppRuntime {
 		this.audioInputService.stop({ emitSilence: true });
 		this.lastAudioLevelUiUpdateAt = 0;
 		getAppState().setAudioInput({
-			enabled: false,
 			status: 'idle',
 			isRefreshingDevices: false,
 			level: 0,
@@ -458,7 +447,7 @@ export class AppRuntime {
 
 	private async selectAudioInputDevice(deviceId: string): Promise<void> {
 		getAppState().setAudioInput({ selectedDeviceId: deviceId });
-		if (!getAppState().audioInput.enabled) return;
+		if (getAppState().audioInput.status !== 'active') return;
 		await this.enableAudioInput(deviceId);
 	}
 
@@ -582,11 +571,13 @@ export class AppRuntime {
 	}
 
 	private markRunnerReconnecting(): void {
-		getAppState().setRunnerReconnecting(true);
+		getAppState().setRunnerStatus('reconnecting');
 		this.clearRunnerReconnectTimer();
 		this.runnerReconnectTimer = window.setTimeout(() => {
 			this.runnerReconnectTimer = null;
-			getAppState().setRunnerReconnecting(false);
+			if (getAppState().runnerStatus === 'reconnecting') {
+				getAppState().setRunnerStatus('unavailable');
+			}
 		}, 10000);
 	}
 

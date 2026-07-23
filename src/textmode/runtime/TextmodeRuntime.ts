@@ -167,7 +167,6 @@ function toCodeError(error: unknown): CodeError {
 	if (isRunnerExecutionError(error)) {
 		return {
 			message: error.message,
-			stack: error.stack,
 			line: error.line,
 			column: error.column,
 		};
@@ -175,7 +174,6 @@ function toCodeError(error: unknown): CodeError {
 
 	return {
 		message: error instanceof Error ? error.message : String(error),
-		stack: error instanceof Error ? error.stack : undefined,
 	};
 }
 
