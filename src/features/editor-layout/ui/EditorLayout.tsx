@@ -1,6 +1,3 @@
-import { useCallback } from 'react';
-import { EditorPane } from './EditorPane';
-
 export interface EditorLayoutProps {
 	/** Whether to show editor backdrop */
 	editorBackdrop?: boolean;
@@ -9,29 +6,18 @@ export interface EditorLayoutProps {
 }
 
 /**
- * EditorLayout component - the main layout wrapper.
- * Renders a single full-size editor pane.
+ * EditorLayout component - the single full-size editor pane.
  */
 export function EditorLayout({ editorBackdrop = false, onTextmodeReady }: EditorLayoutProps) {
-	const handleContainerReady = useCallback(
-		(container: HTMLElement) => {
-			onTextmodeReady?.(container);
-		},
-		[onTextmodeReady]
-	);
-
 	return (
 		<div
-			className="app-layout-container"
-			style={{
-				display: 'flex',
-				width: '100%',
-				height: '100%',
+			ref={(container) => {
+				if (container) {
+					onTextmodeReady?.(container);
+				}
 			}}
-		>
-			<div className="layout-pane" style={{ width: '100%', height: '100%' }}>
-				<EditorPane hasBackdrop={editorBackdrop} onContainerReady={handleContainerReady} />
-			</div>
-		</div>
+			id="editor-panel-textmode"
+			className={`layout-pane panel-editor ${editorBackdrop ? 'editor-backdrop' : ''}`}
+		/>
 	);
 }
