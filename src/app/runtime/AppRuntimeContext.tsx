@@ -1,41 +1,12 @@
 import { createContext, useContext } from 'react';
-import type { ShareExportData } from '@/features/share';
+import type { AppRuntime } from './AppRuntime';
 
 /**
  * Context value provided by AppRuntime to the React tree.
  * Only contains stable action/layout references — runtime state
  * (editorBackdrop, audio input, etc.) is read from the Zustand store.
  */
-export interface AppRuntimeContextValue {
-	actions: {
-		randomize: () => boolean;
-		makeRandomChange: () => void;
-		resetRunners: () => void;
-		clearStorage: () => void;
-		loadExample: (code: string) => void;
-		revertToLastWorking: () => void;
-		reconnectTextmodeRunner: () => void;
-		enableAudioInput: (deviceId?: string) => Promise<void>;
-		disableAudioInput: () => void;
-		refreshAudioInputDevices: () => Promise<void>;
-		selectAudioInputDevice: (deviceId: string) => Promise<void>;
-
-		// Share / Export
-		unlockAndRun: () => void;
-		unlockOnly: () => void;
-		discardShare: () => void;
-		openSharePrompt: () => void;
-		keepShareLocked: () => void;
-
-		copyShareExportUrl: (url: string) => void;
-
-		getShareExportData: () => ShareExportData;
-	};
-
-	layout: {
-		onTextmodeReady: (container: HTMLElement) => void;
-	};
-}
+export type AppRuntimeContextValue = Pick<AppRuntime, 'actions' | 'layout'>;
 
 const AppRuntimeContext = createContext<AppRuntimeContextValue | null>(null);
 

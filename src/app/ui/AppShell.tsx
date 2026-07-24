@@ -96,7 +96,7 @@ export function AppShell() {
 
 			{/* UI shell layer - elevated above editors */}
 			<div id="shell-container" className="fixed inset-0 z-[100] pointer-events-none">
-				<RunnerUnavailableAlert status={textmodeRunnerStatus} onReconnect={actions.reconnectTextmodeRunner} />
+				<RunnerUnavailableAlert status={textmodeRunnerStatus} onReconnect={actions.reloadSandbox} />
 
 				<WelcomeDialog onOpenChange={setWelcomeOpen} />
 
@@ -157,7 +157,7 @@ export function AppShell() {
 								onShare={handleShare}
 								onRandomize={actions.randomize}
 								onMakeRandomChange={actions.makeRandomChange}
-								onResetRunners={actions.resetRunners}
+								onResetRunners={actions.reloadSandbox}
 								onClearStorage={actions.clearStorage}
 								audioInput={audioInput}
 								onEnableAudioInput={actions.enableAudioInput}

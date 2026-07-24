@@ -11,7 +11,6 @@ import { AudioInputService, type AudioInputFrame } from '@/platform/audio/AudioI
 import type { AudioInputErrorState, AudioInputPermission } from '@/platform/state/slices/audioSlice';
 import { MOBILE_BREAKPOINT, type AppSettings } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
-import type { AppRuntimeContextValue } from './AppRuntimeContext';
 
 const AUDIO_LEVEL_UI_INTERVAL_MS = 1000 / 12;
 const getAppState = useAppStore.getState;
@@ -30,9 +29,9 @@ export class AppRuntime {
 	private readonly audioInputService: AudioInputService;
 
 	/** Stable action references for React context (never change after construction). */
-	readonly actions: AppRuntimeContextValue['actions'];
+	readonly actions;
 	/** Stable layout callbacks for React context. */
-	readonly layout: AppRuntimeContextValue['layout'];
+	readonly layout;
 
 	private textmodeContainer: HTMLElement | null = null;
 	private shortcuts: IShortcutsManager | null = null;
@@ -81,11 +80,10 @@ export class AppRuntime {
 		this.actions = {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
-			resetRunners: () => this.reloadTextmodeSandbox(),
+			reloadSandbox: () => this.reloadTextmodeSandbox(),
 			clearStorage: () => this.clearStorage(),
 			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => this.textmodeEngine.revertToLastWorking(),
-			reconnectTextmodeRunner: () => this.reloadTextmodeSandbox(),
 			enableAudioInput: (deviceId?: string) => this.enableAudioInput(deviceId),
 			disableAudioInput: () => this.disableAudioInput(),
 			refreshAudioInputDevices: () => this.refreshAudioInputDevices(),
