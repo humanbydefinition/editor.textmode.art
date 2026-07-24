@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getExampleLibraryCatalog } from '@/features/examples/model/exampleCatalog';
+import { EXAMPLE_LIBRARIES } from '@/features/examples/model/exampleCatalog';
 import { LibrarySidebar } from './LibrarySidebar';
 import { ExampleList } from './ExampleList';
 import type { Example, ExampleLibraryId } from '@/features/examples/types';
@@ -9,19 +9,15 @@ const STORAGE_KEY = 'textmode:examples:selected-library';
 function loadPersistedLibrary(): ExampleLibraryId | null {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY);
-		if (
-			stored === 'textmode' ||
-			stored === 'synth' ||
-			stored === 'figlet' ||
-			stored === 'filters' ||
-			stored === 'export'
-		) {
-			return stored;
-		}
+		if (isExampleLibraryId(stored)) return stored;
 	} catch {
 		/* storage unavailable */
 	}
 	return null;
+}
+
+function isExampleLibraryId(id: string | null): id is ExampleLibraryId {
+	return EXAMPLE_LIBRARIES.some((library) => library.id === id);
 }
 
 function persistLibrary(id: ExampleLibraryId): void {
@@ -38,7 +34,7 @@ interface ExamplesTabProps {
 }
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
-	const libraries = getExampleLibraryCatalog();
+	const libraries = EXAMPLE_LIBRARIES;
 	const defaultLibrary = libraries[0]?.id ?? null;
 	const initialLibrary = loadPersistedLibrary();
 	const initialId =

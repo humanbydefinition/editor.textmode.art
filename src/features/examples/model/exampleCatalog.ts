@@ -1,23 +1,11 @@
-import { figletExampleCategories } from '@/features/examples/content/textmode-figlet';
-import { filtersExampleCategories } from '@/features/examples/content/textmode-filters';
-import { exportExampleCategories } from '@/features/examples/content/textmode-export';
-import { textmodeExampleCategories } from '@/features/examples/content/textmode-js';
 import { synthExampleCategories } from '@/features/examples/content/textmode-synth';
-import type { ExampleLibraryCatalog, ExampleLibraryId } from '@/features/examples/types';
+import type { ExampleCategory } from '@/features/examples/types';
 
-export const EXAMPLE_LIBRARY_ORDER = [
-	'textmode',
-	'synth',
-	'figlet',
-	'filters',
-	'export',
-] as const satisfies readonly ExampleLibraryId[];
-
-const EXAMPLE_LIBRARY_CATALOG: ExampleLibraryCatalog[] = [
+export const EXAMPLE_LIBRARIES = [
 	{
 		id: 'textmode',
 		displayName: 'textmode.js',
-		categories: textmodeExampleCategories,
+		categories: [],
 	},
 	{
 		id: 'synth',
@@ -27,24 +15,20 @@ const EXAMPLE_LIBRARY_CATALOG: ExampleLibraryCatalog[] = [
 	{
 		id: 'figlet',
 		displayName: 'textmode.figlet.js',
-		categories: figletExampleCategories,
+		categories: [],
 	},
 	{
 		id: 'filters',
 		displayName: 'textmode.filters.js',
-		categories: filtersExampleCategories,
+		categories: [],
 	},
 	{
 		id: 'export',
 		displayName: 'textmode.export.js',
-		categories: exportExampleCategories,
+		categories: [],
 	},
-];
-
-export function getExampleLibraryCatalog(): ExampleLibraryCatalog[] {
-	const catalogById = new Map(EXAMPLE_LIBRARY_CATALOG.map((library) => [library.id, library]));
-
-	return EXAMPLE_LIBRARY_ORDER.map((id) => catalogById.get(id)).filter((library): library is ExampleLibraryCatalog =>
-		Boolean(library)
-	);
-}
+] as const satisfies readonly {
+	id: string;
+	displayName: string;
+	categories: readonly ExampleCategory[];
+}[];

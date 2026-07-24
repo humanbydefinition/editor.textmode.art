@@ -1,7 +1,7 @@
-/**
- * Stable library identifier for the example catalog.
- */
-export type ExampleLibraryId = 'textmode' | 'synth' | 'figlet' | 'filters' | 'export';
+import type { EXAMPLE_LIBRARIES } from './model/exampleCatalog';
+
+/** Stable library identifier, derived from the catalog. */
+export type ExampleLibraryId = (typeof EXAMPLE_LIBRARIES)[number]['id'];
 
 /**
  * Example sketch metadata.
@@ -10,7 +10,6 @@ export interface Example {
 	id: string;
 	name: string;
 	description: string;
-	category: string;
 	code: string;
 }
 
@@ -29,5 +28,5 @@ export interface ExampleCategory {
 export interface ExampleLibraryCatalog {
 	id: ExampleLibraryId;
 	displayName: string;
-	categories: ExampleCategory[];
+	categories: readonly ExampleCategory[];
 }

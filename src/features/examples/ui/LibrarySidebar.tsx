@@ -3,7 +3,7 @@ import type { ExampleLibraryCatalog, ExampleLibraryId } from '@/features/example
 import { LibrarySidebarItem } from './LibrarySidebarItem';
 
 interface LibrarySidebarProps {
-	libraries: ExampleLibraryCatalog[];
+	libraries: readonly ExampleLibraryCatalog[];
 	selectedId: ExampleLibraryId;
 	onSelect: (id: ExampleLibraryId) => void;
 }
