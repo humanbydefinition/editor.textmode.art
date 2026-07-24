@@ -5,7 +5,7 @@ import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import { useAppStore } from '@/platform/state/appStore';
-import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
+import { EditorStorage, editorStorage } from '@/platform/storage/EditorStorage';
 import { AudioInputController } from '@/platform/audio/AudioInputController';
 
 import { MOBILE_BREAKPOINT, type AppSettings } from '@/types';
@@ -19,7 +19,7 @@ const getAppState = useAppStore.getState;
  * Instantiated from within a React component (EditorApp).
  */
 export class AppRuntime {
-	private readonly storage: IEditorStorage;
+	private readonly storage: EditorStorage;
 
 	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareManager: ShareManager;
@@ -40,9 +40,6 @@ export class AppRuntime {
 
 	constructor() {
 		this.storage = editorStorage;
-
-		// Register default code
-		this.storage.setDefaultCode(defaultTextmodeSketch);
 
 		// Create engine directly
 		this.textmodeEngine = new TextmodeEngine();
@@ -217,7 +214,7 @@ export class AppRuntime {
 		return (
 			this.shareManager.getInitialCodeOverride() ??
 			this.galleryManager.getInitialCodeOverride() ??
-			this.storage.loadCode()
+			this.storage.loadCode(defaultTextmodeSketch)
 		);
 	}
 
@@ -278,7 +275,7 @@ export class AppRuntime {
 	private restoreLocalSketches(): void {
 		if (!this.textmodeEngine.isInitialized()) return;
 		this.galleryManager.clear();
-		const code = this.storage.loadCode();
+		const code = this.storage.loadCode(defaultTextmodeSketch);
 		this.textmodeEngine.setCode(code, { silent: true });
 	}
 

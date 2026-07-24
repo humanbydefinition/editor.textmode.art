@@ -3,27 +3,10 @@ import { DEFAULT_SETTINGS, type AppSettings } from '@/types';
 const SETTINGS_STORAGE_KEY = 'app_settings';
 const CODE_STORAGE_KEY = 'textmode_code';
 
-export interface IEditorStorage {
-	setDefaultCode(code: string): void;
-	loadCode(): string;
-	saveCode(code: string): void;
-	clearCode(): void;
-	loadSettings(): AppSettings;
-	saveSettings(settings: AppSettings): void;
-}
-
-export class EditorStorage implements IEditorStorage {
-	private defaultCode = '';
-
-	setDefaultCode(code: string): void {
-		this.defaultCode = code;
-	}
-
-	loadCode(): string {
+export class EditorStorage {
+	loadCode(fallback: string): string {
 		const storedCode = localStorage.getItem(CODE_STORAGE_KEY);
-		if (storedCode) return storedCode;
-
-		return this.defaultCode || '// No default code found';
+		return storedCode ?? fallback;
 	}
 
 	saveCode(code: string): void {
