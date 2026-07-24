@@ -85,9 +85,16 @@ export function validateGallerySketchMeta(value: unknown): GalleryMetadataValida
 		if (meta.socialLinks.length > GALLERY_SOCIAL_LINKS_MAX_COUNT) {
 			return invalid(`field "socialLinks" must contain at most ${GALLERY_SOCIAL_LINKS_MAX_COUNT} links.`);
 		}
+		const socialLinkKeys = new Set<string>();
 		for (const [index, link] of meta.socialLinks.entries()) {
 			const linkError = validateSocialLink(link, index);
 			if (linkError) return invalid(linkError);
+			const { label, url } = link as SocialLink;
+			const key = `${label}\u0000${url}`;
+			if (socialLinkKeys.has(key)) {
+				return invalid(`socialLinks[${index}] duplicates an earlier link.`);
+			}
+			socialLinkKeys.add(key);
 		}
 	}
 
