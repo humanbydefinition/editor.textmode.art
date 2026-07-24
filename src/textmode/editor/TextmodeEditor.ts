@@ -57,7 +57,7 @@ export interface TextmodeEditorOptions {
  * TextmodeEditor - Monaco-based editor for textmode.js live coding.
  */
 export class TextmodeEditor {
-	readonly editor: monaco.editor.IStandaloneCodeEditor;
+	private readonly editor: monaco.editor.IStandaloneCodeEditor;
 	private readonly model: monaco.editor.ITextModel;
 	private readonly options: TextmodeEditorOptions;
 	private disposables: monaco.IDisposable[] = [];
@@ -99,7 +99,7 @@ export class TextmodeEditor {
 		this.editor.updateOptions(options);
 	}
 
-	setMarkers(markers: monaco.editor.IMarkerData[]): void {
+	private setMarkers(markers: monaco.editor.IMarkerData[]): void {
 		monaco.editor.setModelMarkers(this.model, 'textmode', markers);
 	}
 

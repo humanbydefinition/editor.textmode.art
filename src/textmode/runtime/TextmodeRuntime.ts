@@ -58,36 +58,17 @@ export class TextmodeRuntime {
 	}
 
 	forceRun(code: string): void {
-		if (this.disposed) return;
-		if (!this.runtime.isReady) {
-			this.pendingExecution = { code, mode: 'run' };
-			return;
-		}
-
-		this.pendingExecution = null;
-		void this.runtime.runCode(code).catch((error) => {
-			this.options.onRunError(toCodeError(error));
-		});
+		this.execute(code, 'run');
 	}
 
 	resetRuntime(code: string): void {
-		if (this.disposed) return;
-		if (!this.runtime.isReady) {
-			this.pendingExecution = { code, mode: 'reset-runtime' };
-			return;
-		}
-
-		this.pendingExecution = null;
-		void this.runtime.resetRuntime(code).catch((error) => {
-			this.options.onRunError(toCodeError(error));
-		});
+		this.execute(code, 'reset-runtime');
 	}
 
 	reloadSandbox(code: string): void {
 		if (this.disposed) return;
 		this.pendingExecution = { code, mode: 'run' };
-		this.userActivationRequired = false;
-		this.updateActivationPresentation();
+		this.setUserActivationRequired(false);
 
 		const reconnection = this.runtime.reconnect({ rerun: false });
 		this.decorateIframe();
@@ -101,9 +82,22 @@ export class TextmodeRuntime {
 	dispose(): void {
 		this.disposed = true;
 		this.pendingExecution = null;
-		this.userActivationRequired = false;
-		this.updateActivationPresentation();
+		this.setUserActivationRequired(false);
 		this.runtime.dispose();
+	}
+
+	private execute(code: string, mode: 'run' | 'reset-runtime'): void {
+		if (this.disposed) return;
+		if (!this.runtime.isReady) {
+			this.pendingExecution = { code, mode };
+			return;
+		}
+
+		this.pendingExecution = null;
+		const execution = mode === 'reset-runtime' ? this.runtime.resetRuntime(code) : this.runtime.runCode(code);
+		void execution.catch((error) => {
+			this.options.onRunError(toCodeError(error));
+		});
 	}
 
 	private handleReady(): void {
@@ -120,24 +114,23 @@ export class TextmodeRuntime {
 
 	private handleUserActivationRequired(): void {
 		if (this.disposed) return;
-		this.userActivationRequired = true;
-		this.updateActivationPresentation();
+		this.setUserActivationRequired(true);
 	}
 
 	private handleUserInteraction(): void {
 		if (this.disposed) return;
-		this.userActivationRequired = false;
-		this.updateActivationPresentation();
+		this.setUserActivationRequired(false);
 	}
 
 	private flushPendingCode(): void {
 		const pending = this.pendingExecution;
 		if (!pending) return;
-		if (pending.mode === 'reset-runtime') {
-			this.resetRuntime(pending.code);
-			return;
-		}
-		this.forceRun(pending.code);
+		this.execute(pending.code, pending.mode);
+	}
+
+	private setUserActivationRequired(required: boolean): void {
+		this.userActivationRequired = required;
+		this.updateActivationPresentation();
 	}
 
 	private decorateIframe(): void {
