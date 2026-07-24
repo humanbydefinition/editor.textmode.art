@@ -2,11 +2,11 @@ import * as monaco from 'monaco-editor';
 import { typeDefinitions } from '../config/generatedTypes';
 
 // Import Monaco workers
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import editorWorker from 'monaco-editor/editor/editor.worker.js?worker';
+import tsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
 
 // Configure Monaco environment for web workers
-self.MonacoEnvironment = {
+(self as typeof globalThis & { MonacoEnvironment?: monaco.Environment }).MonacoEnvironment = {
 	getWorker(_: unknown, label: string) {
 		if (label === 'typescript' || label === 'javascript') {
 			return new tsWorker();
@@ -141,7 +141,10 @@ export class TextmodeEditor {
 			occurrencesHighlight: 'off',
 			selectionHighlight: false,
 			links: true,
-			colorDecorators: false,
+			colorDecorators: true,
+			defaultColorDecorators: 'always',
+			colorDecoratorsActivatedOn: 'click',
+			colorDecoratorsLimit: 500,
 			automaticLayout: true,
 			fontSize: this.options.fontSize ?? 14,
 			fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
@@ -177,14 +180,14 @@ export class TextmodeEditor {
 	}
 
 	private configureTypeScript(): void {
-		const tsDefaults = monaco.languages.typescript.javascriptDefaults;
+		const tsDefaults = monaco.typescript.javascriptDefaults;
 
 		// Compiler options
 		tsDefaults.setCompilerOptions({
-			target: monaco.languages.typescript.ScriptTarget.ES2020,
+			target: monaco.typescript.ScriptTarget.ES2020,
 			allowNonTsExtensions: true,
-			moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-			module: monaco.languages.typescript.ModuleKind.ESNext,
+			moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
+			module: monaco.typescript.ModuleKind.ESNext,
 			noEmit: true,
 			checkJs: true,
 			strict: false,
