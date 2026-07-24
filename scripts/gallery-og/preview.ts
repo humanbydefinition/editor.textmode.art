@@ -184,16 +184,19 @@ window.renderGalleryOg = async (request) => {
 
 		instance.noLoop();
 		instance.exportOverlay.hide();
-		const targetFrameRate = instance.targetFrameRate();
-		const framesPerSecond = typeof targetFrameRate === 'number' && targetFrameRate > 0 ? targetFrameRate : 60;
-		instance.frameCount = request.frame - 1;
-		const targetSeconds = (request.frame - 1) / framesPerSecond;
-		instance.secs = targetSeconds;
-		runtime.armCapture(targetSeconds);
-		instance.redraw(1);
+		const remainingFrames = request.frame - instance.frameCount;
+		if (remainingFrames < 0) {
+			throw new Error(
+				`Preview rendered past requested frame ${request.frame} before capture (${instance.frameCount}).`
+			);
+		}
+		if (remainingFrames > 0) instance.redraw(remainingFrames);
 
 		await waitFor(() => instance.frameCount >= request.frame || runtimeError !== null, 10_000);
 		if (runtimeError) throw runtimeError;
+		if (instance.frameCount !== request.frame) {
+			throw new Error(`Preview rendered frame ${instance.frameCount}; expected ${request.frame}.`);
+		}
 		instance.noLoop();
 		buildOverlay(request.title, request.description, request.authorName);
 		await document.fonts.ready;
@@ -204,7 +207,7 @@ window.renderGalleryOg = async (request) => {
 		document.body.dataset.status = 'ready';
 		return {
 			frame: instance.frameCount,
-			seconds: runtime.capturedSeconds() ?? targetSeconds,
+			seconds: runtime.capturedSeconds() ?? getFrameSeconds(instance),
 			descriptionLines,
 		};
 	} catch (error) {
@@ -229,13 +232,10 @@ interface SafeTextmodeRuntime {
 	proxy: Textmodifier;
 	setupComplete: Promise<void>;
 	finishCodeEvaluation(): void;
-	armCapture(seconds: number): void;
 	capturedSeconds(): number | null;
 }
 
 function createSafeTextmodeRuntime(instance: Textmodifier, onError: (error: unknown) => void): SafeTextmodeRuntime {
-	let captureArmed = false;
-	let targetCaptureSeconds = 0;
 	let observedCaptureSeconds: number | null = null;
 	let userSetup: (() => void | Promise<void>) | undefined;
 	let finishCodeEvaluation!: () => void;
@@ -262,9 +262,8 @@ function createSafeTextmodeRuntime(instance: Textmodifier, onError: (error: unkn
 	});
 
 	const wrapCallback = (callback: () => void) => () => {
-		if (!captureArmed) return;
 		try {
-			instance.secs = targetCaptureSeconds;
+			instance.secs = getFrameSeconds(instance);
 			observedCaptureSeconds = instance.secs;
 			callback();
 		} catch (error) {
@@ -316,12 +315,14 @@ function createSafeTextmodeRuntime(instance: Textmodifier, onError: (error: unkn
 		proxy,
 		setupComplete,
 		finishCodeEvaluation,
-		armCapture: (seconds) => {
-			targetCaptureSeconds = seconds;
-			captureArmed = true;
-		},
 		capturedSeconds: () => observedCaptureSeconds,
 	};
+}
+
+function getFrameSeconds(instance: Textmodifier): number {
+	const targetFrameRate = instance.targetFrameRate();
+	const framesPerSecond = typeof targetFrameRate === 'number' && targetFrameRate > 0 ? targetFrameRate : 60;
+	return Math.max(0, instance.frameCount - 1) / framesPerSecond;
 }
 
 function buildOverlay(title: string, description: string | null, authorName: string | null): void {

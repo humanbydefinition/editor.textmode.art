@@ -23,14 +23,17 @@ try {
 	};
 	const sketchPath = path.join(sketchDirectory, 'sketch.js');
 	const outputPath = path.join(sketchDirectory, 'og.png');
+	const firstFrameOutputPath = path.join(sketchDirectory, 'og-frame-1.png');
 	await writeFile(
 		sketchPath,
-		`t.fontSize(16);
+		`let drawCount = 0;
+t.fontSize(16);
 t.draw(() => {
-  t.background(8, 10, 14);
+  drawCount += 1;
+  t.background(drawCount % 256, 10, 14);
   t.charColor(242, 242, 236);
-  t.cellColor(8, 10, 14);
-  t.print("FRAME " + t.frameCount + " / " + t.secs.toFixed(2) + "S", -12, 0);
+  t.cellColor(drawCount % 256, 10, 14);
+  t.print("DRAW " + drawCount, -4, 0);
 });`,
 		'utf8'
 	);
@@ -42,6 +45,7 @@ t.draw(() => {
 		meta,
 	};
 
+	await generateGalleryOg(entry, { frame: 1, outputPath: firstFrameOutputPath, rootDirectory: root });
 	const result = await generateGalleryOg(entry, { frame: 60, outputPath, rootDirectory: root });
 	if (result.frame !== 60) throw new Error(`Smoke capture rendered frame ${result.frame} instead of frame 60.`);
 	if (Math.abs(result.seconds - 59 / 60) > 0.25) {
@@ -51,7 +55,10 @@ t.draw(() => {
 		throw new Error(`Smoke capture description did not wrap (${result.descriptionLines} line).`);
 	}
 	await validatePng(outputPath);
-	const image = await readFile(outputPath);
+	const [firstFrameImage, image] = await Promise.all([readFile(firstFrameOutputPath), readFile(outputPath)]);
+	if (firstFrameImage.equals(image)) {
+		throw new Error('Smoke capture did not advance stateful draw callbacks to the requested frame.');
+	}
 	if (image.length < 10_000) throw new Error(`Smoke image was unexpectedly small (${image.length} bytes).`);
 	const preservedOutput = process.env.GALLERY_OG_SMOKE_OUTPUT;
 	if (preservedOutput) await copyFile(outputPath, preservedOutput);
