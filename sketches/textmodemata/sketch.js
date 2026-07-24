@@ -193,7 +193,6 @@ t.setup(async () => {
 	nextState = t.createFramebuffer({ width: WORLD_SIZE, height: WORLD_SIZE, attachments: 1 });
 	renderState(previousState, nextState, 0);
 	generation = 1;
-	for (let i = 0; i < 48; i++) stepAutomata();
 });
 
 t.draw(() => {
