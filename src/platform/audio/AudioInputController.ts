@@ -11,16 +11,27 @@ const getAppState = useAppStore.getState;
 
 export { INITIAL_AUDIO_INPUT_STATE } from '@/platform/state/slices/audioSlice';
 
+/** Browser audio capabilities required by the input controller. */
+export interface AudioInputAdapter {
+	isSupported(): boolean;
+	subscribe(callback: (frame: AudioInputFrame) => void): () => void;
+	subscribeToDeviceChanges(callback: () => void): () => void;
+	listDevices(): ReturnType<AudioInputService['listDevices']>;
+	start(deviceId?: string): ReturnType<AudioInputService['start']>;
+	stop(options?: { emitSilence?: boolean }): void;
+	dispose(): void;
+}
+
 /** Coordinates browser audio capture with the application's audio-input state. */
 export class AudioInputController {
-	private readonly service: AudioInputService;
+	private readonly service: AudioInputAdapter;
 	private frameUnsubscribe: (() => void) | null = null;
 	private deviceChangeUnsubscribe: (() => void) | null = null;
 	private captureGeneration = 0;
 	private refreshGeneration = 0;
 	private lastAudioLevelUiUpdateAt = 0;
 
-	constructor(service = new AudioInputService()) {
+	constructor(service: AudioInputAdapter = new AudioInputService()) {
 		this.service = service;
 	}
 
