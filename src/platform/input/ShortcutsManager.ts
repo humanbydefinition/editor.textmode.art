@@ -12,20 +12,8 @@ export interface ShortcutActions {
 	toggleEditorBackdrop: () => void;
 	/** Toggle UI visibility */
 	toggleUIVisibility: () => void;
-	/** Run code */
-	runCode: () => void;
 	/** Recreate the textmode runtime in the current iframe and run the current code */
 	hardReset: () => void;
-}
-
-/**
- * Shortcuts manager interface for dependency injection and testing.
- */
-export interface IShortcutsManager {
-	/** Initialize the shortcuts manager */
-	init(): void;
-	/** Cleanup resources */
-	dispose(): void;
 }
 
 /**
@@ -39,7 +27,7 @@ export interface ShortcutsManagerOptions {
 /**
  * Shortcuts Manager implementation.
  */
-export class ShortcutsManager implements IShortcutsManager {
+export class ShortcutsManager {
 	private readonly actions: ShortcutActions;
 	private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
@@ -100,16 +88,6 @@ export class ShortcutsManager implements IShortcutsManager {
 		if (e.ctrlKey && e.shiftKey && e.key === 'H') {
 			e.preventDefault();
 			this.actions.toggleUIVisibility();
-		}
-
-		// Run code: Ctrl/Cmd + Enter (from Monaco editor)
-		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-			const target = e.target as HTMLElement | null;
-			if (target?.closest('.monaco-editor')) {
-				e.preventDefault();
-				e.stopPropagation();
-				this.actions.runCode();
-			}
 		}
 	}
 }

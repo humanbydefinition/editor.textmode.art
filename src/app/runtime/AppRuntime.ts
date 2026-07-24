@@ -1,6 +1,6 @@
 import { ShareManager, type ShareExportData } from '@/features/share';
 import { GalleryManager, type GallerySketch } from '@/features/gallery-sketches';
-import { ShortcutsManager, type IShortcutsManager } from '@/platform/input/ShortcutsManager';
+import { ShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
 import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
@@ -32,7 +32,7 @@ export class AppRuntime {
 	readonly layout;
 
 	private textmodeContainer: HTMLElement | null = null;
-	private shortcuts: IShortcutsManager | null = null;
+	private shortcuts: ShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private initialized = false;
 	private lifecycleId = 0;
@@ -325,7 +325,7 @@ export class AppRuntime {
 
 	// ----- End engine lifecycle -----
 
-	private createShortcutsManager(): IShortcutsManager {
+	private createShortcutsManager(): ShortcutsManager {
 		return new ShortcutsManager({
 			actions: {
 				changeFontSize: (delta) => this.changeFontSize(delta),
@@ -339,7 +339,6 @@ export class AppRuntime {
 				},
 				hardReset: () => this.textmodeEngine.resetRuntime(),
 				toggleUIVisibility: () => this.toggleUIVisibility(),
-				runCode: () => this.textmodeEngine.run(),
 			},
 		});
 	}
