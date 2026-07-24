@@ -233,7 +233,7 @@ function stopStream(stream: MediaStream): void {
 	}
 }
 
-function isConstraintError(error: unknown): boolean {
+export function isConstraintError(error: unknown): boolean {
 	const name = error instanceof DOMException ? error.name : error instanceof Error ? error.name : '';
 	const message = error instanceof Error ? error.message.toLowerCase() : '';
 	return (

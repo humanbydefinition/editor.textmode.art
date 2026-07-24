@@ -6,13 +6,11 @@ import { defaultTextmodeSketch } from '@/features/examples/content/default-sketc
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import { useAppStore } from '@/platform/state/appStore';
 import { editorStorage, type IEditorStorage } from '@/platform/storage/EditorStorage';
-import { AudioInputService, type AudioInputFrame } from '@/platform/audio/AudioInputService';
+import { AudioInputController } from '@/platform/audio/AudioInputController';
 
-import type { AudioInputErrorState, AudioInputPermission } from '@/platform/state/slices/audioSlice';
 import { MOBILE_BREAKPOINT, type AppSettings } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
 
-const AUDIO_LEVEL_UI_INTERVAL_MS = 1000 / 12;
 const getAppState = useAppStore.getState;
 
 /**
@@ -26,7 +24,7 @@ export class AppRuntime {
 	private readonly textmodeEngine: TextmodeEngine;
 	private readonly shareManager: ShareManager;
 	private readonly galleryManager: GalleryManager;
-	private readonly audioInputService: AudioInputService;
+	private readonly audioInput: AudioInputController;
 
 	/** Stable action references for React context (never change after construction). */
 	readonly actions;
@@ -36,12 +34,9 @@ export class AppRuntime {
 	private textmodeContainer: HTMLElement | null = null;
 	private shortcuts: IShortcutsManager | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
-	private audioInputUnsubscribe: (() => void) | null = null;
-	private audioDeviceChangeUnsubscribe: (() => void) | null = null;
 	private initialized = false;
 	private lifecycleId = 0;
 	private runnerReconnectTimer: number | null = null;
-	private lastAudioLevelUiUpdateAt = 0;
 
 	constructor() {
 		this.storage = editorStorage;
@@ -51,7 +46,7 @@ export class AppRuntime {
 
 		// Create engine directly
 		this.textmodeEngine = new TextmodeEngine();
-		this.audioInputService = new AudioInputService();
+		this.audioInput = new AudioInputController();
 
 		this.shareManager = new ShareManager({
 			getShare: () => getAppState().share,
@@ -84,10 +79,10 @@ export class AppRuntime {
 			clearStorage: () => this.clearStorage(),
 			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => this.textmodeEngine.revertToLastWorking(),
-			enableAudioInput: (deviceId?: string) => this.enableAudioInput(deviceId),
-			disableAudioInput: () => this.disableAudioInput(),
-			refreshAudioInputDevices: () => this.refreshAudioInputDevices(),
-			selectAudioInputDevice: (deviceId: string) => this.selectAudioInputDevice(deviceId),
+			enableAudioInput: (deviceId?: string) => this.audioInput.enable(deviceId),
+			disableAudioInput: () => this.audioInput.disable(),
+			refreshAudioInputDevices: () => this.audioInput.refresh(),
+			selectAudioInputDevice: (deviceId: string) => this.audioInput.select(deviceId),
 			unlockAndRun: () => this.shareManager.unlockAndRun(),
 			unlockOnly: () => this.shareManager.unlockOnly(),
 			discardShare: () => this.shareManager.discard(),
@@ -109,7 +104,13 @@ export class AppRuntime {
 	init(): void {
 		if (this.initialized) return;
 
-		this.attachAudioInputService();
+		this.audioInput.init((frame) => {
+			this.textmodeEngine.sendAudioData({
+				fft: frame.fft,
+				waveform: frame.waveform,
+				timestamp: frame.timestamp,
+			});
+		});
 		this.initializeApp();
 	}
 
@@ -118,21 +119,7 @@ export class AppRuntime {
 		this.clearRunnerReconnectTimer();
 		this.shortcuts?.dispose();
 		this.shortcuts = null;
-		this.audioInputService.dispose();
-		this.audioInputUnsubscribe?.();
-		this.audioInputUnsubscribe = null;
-		this.audioDeviceChangeUnsubscribe?.();
-		this.audioDeviceChangeUnsubscribe = null;
-		this.lastAudioLevelUiUpdateAt = 0;
-		getAppState().setAudioInput({
-			status: 'idle',
-			permission: 'unknown',
-			isRefreshingDevices: false,
-			devices: [],
-			selectedDeviceId: '',
-			level: 0,
-			error: null,
-		});
+		this.audioInput.dispose();
 		this.shareManager.dispose();
 
 		for (const unsubscribe of this.storeUnsubscribers) {
@@ -147,18 +134,6 @@ export class AppRuntime {
 		getAppState().setRunnerStatus('connected');
 
 		this.initialized = false;
-	}
-
-	private attachAudioInputService(): void {
-		if (!this.audioInputUnsubscribe) {
-			this.audioInputUnsubscribe = this.audioInputService.subscribe((frame) => this.handleAudioInputFrame(frame));
-		}
-
-		if (!this.audioDeviceChangeUnsubscribe) {
-			this.audioDeviceChangeUnsubscribe = this.audioInputService.subscribeToDeviceChanges(() => {
-				void this.refreshAudioInputDevices();
-			});
-		}
 	}
 
 	// ----- Engine lifecycle (inlined from EngineLifecycle) -----
@@ -313,240 +288,6 @@ export class AppRuntime {
 
 	private focusEditor(): void {
 		this.textmodeEngine.focus();
-	}
-
-	private async refreshAudioInputDevices(): Promise<void> {
-		const lifecycleId = this.lifecycleId;
-		if (!this.audioInputService.isSupported()) {
-			getAppState().setAudioInput({
-				status: 'unavailable',
-				permission: 'unknown',
-				isRefreshingDevices: false,
-				devices: [],
-				level: 0,
-				error: {
-					kind: 'unsupported',
-					message: 'audio input is not supported in this browser',
-					retryable: false,
-				},
-			});
-			return;
-		}
-
-		const current = getAppState().audioInput;
-		getAppState().setAudioInput({
-			isRefreshingDevices: true,
-			status: current.status === 'idle' ? 'checking' : current.status,
-			error: current.status === 'active' ? null : current.error,
-		});
-
-		try {
-			const [devices, permission] = await Promise.all([
-				this.audioInputService.listDevices(),
-				this.queryAudioInputPermission(),
-			]);
-			if (lifecycleId !== this.lifecycleId) return;
-			const latest = getAppState().audioInput;
-			const selectedDeviceStillExists =
-				latest.selectedDeviceId === '' || devices.some((device) => device.deviceId === latest.selectedDeviceId);
-			const selectedDeviceId = selectedDeviceStillExists ? latest.selectedDeviceId : '';
-			let nextStatus = latest.status;
-			if (latest.status !== 'active') {
-				if (permission === 'denied') {
-					nextStatus = 'permission-denied';
-				} else if (devices.length === 0) {
-					nextStatus = 'no-device';
-				} else if (permission === 'prompt') {
-					nextStatus = 'needs-permission';
-				} else {
-					nextStatus = 'idle';
-				}
-			}
-			getAppState().setAudioInput({
-				devices,
-				selectedDeviceId,
-				permission,
-				status: nextStatus,
-				isRefreshingDevices: false,
-				error: null,
-			});
-		} catch (error) {
-			if (lifecycleId !== this.lifecycleId) return;
-			getAppState().setAudioInput({
-				status: 'error',
-				isRefreshingDevices: false,
-				error: this.toAudioErrorState(error),
-			});
-		}
-	}
-
-	private async enableAudioInput(deviceId?: string): Promise<void> {
-		const lifecycleId = this.lifecycleId;
-		if (!this.audioInputService.isSupported()) {
-			getAppState().setAudioInput({
-				status: 'unavailable',
-				permission: 'unknown',
-				isRefreshingDevices: false,
-				level: 0,
-				error: {
-					kind: 'unsupported',
-					message: 'audio input is not supported in this browser',
-					retryable: false,
-				},
-			});
-			return;
-		}
-
-		const current = getAppState().audioInput;
-		const selectedDeviceId = deviceId ?? current.selectedDeviceId;
-		getAppState().setAudioInput({
-			status: 'requesting',
-			selectedDeviceId,
-			error: null,
-		});
-
-		try {
-			const activeDeviceId = await this.audioInputService.start(selectedDeviceId || undefined);
-			if (lifecycleId !== this.lifecycleId) return;
-			const devices = await this.audioInputService.listDevices();
-			if (lifecycleId !== this.lifecycleId) return;
-			getAppState().setAudioInput({
-				status: 'active',
-				permission: 'granted',
-				isRefreshingDevices: false,
-				devices,
-				selectedDeviceId: activeDeviceId,
-				error: null,
-			});
-		} catch (error) {
-			if (lifecycleId !== this.lifecycleId) return;
-			this.audioInputService.stop({ emitSilence: true });
-			const errorState = this.toAudioErrorState(error);
-			getAppState().setAudioInput({
-				status: this.getAudioErrorStatus(errorState),
-				permission: errorState.kind === 'permission-denied' ? 'denied' : current.permission,
-				isRefreshingDevices: false,
-				level: 0,
-				error: errorState,
-			});
-		}
-	}
-
-	private disableAudioInput(): void {
-		this.audioInputService.stop({ emitSilence: true });
-		this.lastAudioLevelUiUpdateAt = 0;
-		getAppState().setAudioInput({
-			status: 'idle',
-			isRefreshingDevices: false,
-			level: 0,
-			error: null,
-		});
-	}
-
-	private async selectAudioInputDevice(deviceId: string): Promise<void> {
-		getAppState().setAudioInput({ selectedDeviceId: deviceId });
-		if (getAppState().audioInput.status !== 'active') return;
-		await this.enableAudioInput(deviceId);
-	}
-
-	private handleAudioInputFrame(frame: AudioInputFrame): void {
-		if (
-			this.lastAudioLevelUiUpdateAt === 0 ||
-			frame.timestamp - this.lastAudioLevelUiUpdateAt >= AUDIO_LEVEL_UI_INTERVAL_MS ||
-			frame.level === 0
-		) {
-			this.lastAudioLevelUiUpdateAt = frame.timestamp;
-			getAppState().setAudioInput({ level: frame.level });
-		}
-		this.textmodeEngine.sendAudioData({
-			fft: frame.fft,
-			waveform: frame.waveform,
-			timestamp: frame.timestamp,
-		});
-	}
-
-	private async queryAudioInputPermission(): Promise<AudioInputPermission> {
-		const permissions = navigator.permissions;
-		if (!permissions?.query) {
-			return 'unknown';
-		}
-
-		try {
-			const status = await permissions.query({ name: 'microphone' as PermissionName });
-			if (status.state === 'granted' || status.state === 'denied' || status.state === 'prompt') {
-				return status.state;
-			}
-		} catch {
-			// Some browsers expose Permissions but not the microphone descriptor.
-		}
-
-		return 'unknown';
-	}
-
-	private toAudioErrorState(error: unknown): AudioInputErrorState {
-		const name = error instanceof DOMException ? error.name : error instanceof Error ? error.name : '';
-		const message = error instanceof Error ? error.message : '';
-		const normalized = `${name} ${message}`.toLowerCase();
-
-		if (name === 'NotAllowedError' || name === 'SecurityError') {
-			return {
-				kind: 'permission-denied',
-				message: 'microphone permission is blocked',
-				retryable: true,
-			};
-		}
-
-		if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-			return {
-				kind: 'no-device',
-				message: 'no audio input device found',
-				retryable: true,
-			};
-		}
-
-		if (name === 'NotReadableError' || name === 'TrackStartError' || name === 'AbortError') {
-			return {
-				kind: 'device-busy',
-				message: 'audio input is unavailable or already in use',
-				retryable: true,
-			};
-		}
-
-		if (
-			name === 'OverconstrainedError' ||
-			name === 'ConstraintError' ||
-			normalized.includes('invalid constraint') ||
-			normalized.includes('constraint')
-		) {
-			return {
-				kind: 'constraint',
-				message: 'selected audio input is unavailable',
-				retryable: true,
-			};
-		}
-
-		if (normalized.includes('not supported')) {
-			return {
-				kind: 'unsupported',
-				message: 'audio input is not supported in this browser',
-				retryable: false,
-			};
-		}
-
-		return {
-			kind: 'unknown',
-			message: 'could not start audio input',
-			retryable: true,
-		};
-	}
-
-	private getAudioErrorStatus(
-		error: AudioInputErrorState
-	): 'permission-denied' | 'no-device' | 'unavailable' | 'error' {
-		if (error.kind === 'permission-denied') return 'permission-denied';
-		if (error.kind === 'no-device') return 'no-device';
-		if (error.kind === 'unsupported') return 'unavailable';
-		return 'error';
 	}
 
 	private handleTextmodePaneReady(container: HTMLElement): void {

@@ -39,21 +39,23 @@ export interface AudioSlice {
 	setAudioInput: (state: Partial<AudioInputState>) => void;
 }
 
+export const INITIAL_AUDIO_INPUT_STATE: AudioInputState = {
+	status: 'idle',
+	permission: 'unknown',
+	isRefreshingDevices: false,
+	devices: [],
+	selectedDeviceId: '',
+	level: 0,
+	error: null,
+};
+
 export const createAudioSlice: StateCreator<
 	AppState,
 	[['zustand/devtools', never], ['zustand/subscribeWithSelector', never]],
 	[],
 	AudioSlice
 > = (set) => ({
-	audioInput: {
-		status: 'idle',
-		permission: 'unknown',
-		isRefreshingDevices: false,
-		devices: [],
-		selectedDeviceId: '',
-		level: 0,
-		error: null,
-	},
+	audioInput: { ...INITIAL_AUDIO_INPUT_STATE },
 	setAudioInput: (state) =>
 		set((current) => ({
 			audioInput: {
