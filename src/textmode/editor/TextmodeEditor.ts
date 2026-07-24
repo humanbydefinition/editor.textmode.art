@@ -15,6 +15,34 @@ import tsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
 	},
 };
 
+const editorThemeName = 'textmode-dark';
+
+// Monaco theme colors cannot resolve CSS variables. These states mirror --primary
+// (#4BA3F7), with stronger fills and borders reserved for the active match.
+monaco.editor.defineTheme(editorThemeName, {
+	base: 'vs-dark',
+	inherit: true,
+	rules: [],
+	colors: {
+		'editorBracketMatch.background': '#4BA3F733',
+		'editorBracketMatch.border': '#9ACEFF',
+		'editor.wordHighlightBackground': '#4BA3F733',
+		'editor.wordHighlightBorder': '#4BA3F780',
+		'editor.wordHighlightStrongBackground': '#4BA3F74D',
+		'editor.wordHighlightStrongBorder': '#9ACEFFB3',
+		'editor.wordHighlightTextBackground': '#4BA3F733',
+		'editor.wordHighlightTextBorder': '#4BA3F780',
+		'editor.selectionHighlightBackground': '#4BA3F733',
+		'editor.selectionHighlightBorder': '#4BA3F780',
+		'editor.findMatchBackground': '#4BA3F799',
+		'editor.findMatchBorder': '#D8ECFF',
+		'editor.findMatchHighlightBackground': '#4BA3F752',
+		'editor.findMatchHighlightBorder': '#9ACEFFCC',
+		'editor.findRangeHighlightBackground': '#4BA3F726',
+		'editor.findRangeHighlightBorder': '#4BA3F766',
+	},
+});
+
 export interface TextmodeEditorOptions {
 	container: HTMLElement;
 	initialValue: string;
@@ -40,7 +68,7 @@ export class TextmodeEditor {
 		this.model = monaco.editor.createModel(options.initialValue, 'javascript');
 		this.editor = monaco.editor.create(options.container, {
 			model: this.model,
-			theme: 'vs-dark',
+			theme: editorThemeName,
 			...this.getEditorOptions(),
 			readOnly: options.readOnly,
 		});
@@ -137,9 +165,9 @@ export class TextmodeEditor {
 			renderWhitespace: 'none',
 			renderControlCharacters: false,
 			renderLineHighlightOnlyWhenFocus: true,
-			matchBrackets: 'never',
-			occurrencesHighlight: 'off',
-			selectionHighlight: false,
+			matchBrackets: 'near',
+			occurrencesHighlight: 'singleFile',
+			selectionHighlight: true,
 			links: true,
 			colorDecorators: true,
 			defaultColorDecorators: 'always',
