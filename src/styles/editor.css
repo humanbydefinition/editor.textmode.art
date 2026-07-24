@@ -126,10 +126,11 @@
 	opacity: 0.3;
 }
 
-/* Remove Monaco's default blue focus border */
+/* Keep Monaco's textarea and Chromium EditContext input surfaces visually silent. */
 .monaco-editor,
 .monaco-editor-background,
-.monaco-editor .inputarea.ime-input {
+.monaco-editor .inputarea.ime-input,
+.monaco-editor .native-edit-context {
 	outline: none !important;
 	border: none !important;
 }
