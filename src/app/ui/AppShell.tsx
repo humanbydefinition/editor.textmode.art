@@ -5,16 +5,6 @@ import { SystemMenu } from '@/features/system-menu';
 import { Toaster } from '@/shared/ui/sonner';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
-import {
-	selectAudioInput,
-	selectEditorBackdrop,
-	selectError,
-	selectGallerySketch,
-	selectShareConsented,
-	selectSharePayload,
-	selectSharePromptOpen,
-	selectTextmodeRunnerStatus,
-} from '@/platform/state/selectors';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gallery-sketches';
 import { ExamplesTab } from '@/features/examples';
@@ -40,20 +30,20 @@ export function AppShell() {
 	const { actions, layout } = useAppRuntime();
 
 	// Store State
-	const editorBackdrop = useAppStore(selectEditorBackdrop);
-	const error = useAppStore(selectError);
+	const editorBackdrop = useAppStore((state) => state.settings.editorBackdrop);
+	const error = useAppStore((state) => state.error);
 	const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
-	const clearError = useAppStore((state) => state.clearError);
-	const sharePayload = useAppStore(selectSharePayload);
-	const shareConsented = useAppStore(selectShareConsented);
-	const sharePromptOpen = useAppStore(selectSharePromptOpen);
-	const gallerySketch = useAppStore(selectGallerySketch);
+	const setError = useAppStore((state) => state.setError);
+	const sharePayload = useAppStore((state) => state.share.payload);
+	const shareConsented = useAppStore((state) => state.share.consented);
+	const sharePromptOpen = useAppStore((state) => state.share.promptOpen);
+	const gallerySketch = useAppStore((state) => state.gallerySketch);
 	const gallerySketchSummary = useMemo(
 		() => (gallerySketch ? toGallerySketchSummary(gallerySketch) : null),
 		[gallerySketch]
 	);
-	const textmodeRunnerStatus = useAppStore(selectTextmodeRunnerStatus);
-	const audioInput = useAppStore(selectAudioInput);
+	const textmodeRunnerStatus = useAppStore((state) => state.runnerStatus);
+	const audioInput = useAppStore((state) => state.audioInput);
 	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
 
 	useEffect(() => {
@@ -78,10 +68,10 @@ export function AppShell() {
 					}
 				: undefined,
 			onDismiss: () => {
-				clearError();
+				setError(null);
 			},
 		});
-	}, [error, textmodeHasLastWorking, clearError]);
+	}, [error, textmodeHasLastWorking, setError]);
 
 	const handleShare = () => {
 		const data = actions.getShareExportData();

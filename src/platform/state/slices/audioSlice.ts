@@ -1,6 +1,5 @@
-import type { StateCreator } from 'zustand';
 import type { AudioInputDevice } from '@/platform/audio/AudioInputService';
-import type { AppState } from '../appStore';
+import type { AppSlice } from '../appStore';
 
 export type AudioInputStatus =
 	| 'idle'
@@ -49,12 +48,7 @@ export const INITIAL_AUDIO_INPUT_STATE: AudioInputState = {
 	error: null,
 };
 
-export const createAudioSlice: StateCreator<
-	AppState,
-	[['zustand/devtools', never], ['zustand/subscribeWithSelector', never]],
-	[],
-	AudioSlice
-> = (set) => ({
+export const createAudioSlice: AppSlice<AudioSlice> = (set) => ({
 	audioInput: { ...INITIAL_AUDIO_INPUT_STATE },
 	setAudioInput: (state) =>
 		set((current) => ({

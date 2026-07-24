@@ -65,7 +65,7 @@ export class AppRuntime {
 			getGallerySketch: () => getAppState().gallerySketch,
 			getOriginalGallerySketch: () => getAppState().originalGallerySketch,
 			setGallerySketch: (sketch) => getAppState().setGallerySketch(sketch),
-			clearGallerySketches: () => getAppState().clearOriginalGallerySketch(),
+			clearGallerySketches: () => getAppState().clearGallerySketches(),
 			setSharePayload: (payload) => getAppState().setSharePayload(payload),
 			setError: (error) => getAppState().setError(error),
 			applyGallerySketch: (sketch) => this.applyGallerySketch(sketch),
@@ -171,7 +171,7 @@ export class AppRuntime {
 			visualContainer: document.body,
 			getSettings: () => getAppState().settings,
 			controllerState: {
-				clearError: () => getAppState().clearError(),
+				clearError: () => getAppState().setError(null),
 				setError: (error) => getAppState().setError(error),
 				getLastWorkingCode: () => getAppState().lastWorkingCode,
 				setLastWorkingCode: (code) => getAppState().setLastWorkingCode(code),

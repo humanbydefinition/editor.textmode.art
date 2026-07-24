@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { RotateCcw } from 'lucide-react';
-import type { RunnerStatus } from '@/platform/state/slices/runtimeSlice';
+import type { RunnerStatus } from '@/platform/state/appStore';
 
 const SHOW_GRACE_MS = 750;
 

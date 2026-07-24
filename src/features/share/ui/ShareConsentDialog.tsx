@@ -5,7 +5,6 @@ import { Button } from '@/shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { buildLegalHref } from '@/shared/config/appMeta';
 import { useAppStore } from '@/platform/state/appStore';
-import { selectShareConsented, selectSharePayload, selectSharePromptOpen } from '@/platform/state/selectors';
 import { X } from 'lucide-react';
 
 interface ShareConsentDialogProps {
@@ -16,9 +15,9 @@ interface ShareConsentDialogProps {
 }
 
 export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard, onKeepLocked }: ShareConsentDialogProps) {
-	const sharePayload = useAppStore(selectSharePayload);
-	const shareConsented = useAppStore(selectShareConsented);
-	const sharePromptOpen = useAppStore(selectSharePromptOpen);
+	const sharePayload = useAppStore((state) => state.share.payload);
+	const shareConsented = useAppStore((state) => state.share.consented);
+	const sharePromptOpen = useAppStore((state) => state.share.promptOpen);
 	const isOpen = Boolean(sharePayload && !shareConsented && sharePromptOpen);
 	const [checked, setChecked] = useState(false);
 

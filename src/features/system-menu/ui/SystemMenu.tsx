@@ -20,7 +20,6 @@ import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { AudioTab } from './tabs/AudioTab';
 
 import { useAppStore } from '@/platform/state/appStore';
-import { selectSettings } from '@/platform/state/selectors';
 import type { AudioInputState } from '@/platform/state/slices/audioSlice';
 
 interface SystemMenuProps {
@@ -51,7 +50,7 @@ export function SystemMenu({
 	renderExamplesTab,
 }: SystemMenuProps) {
 	const currentYear = new Date().getFullYear();
-	const settings = useAppStore(selectSettings);
+	const settings = useAppStore((state) => state.settings);
 	const updateSettings = useAppStore((state) => state.updateSettings);
 
 	const [open, setOpen] = useState(false);
