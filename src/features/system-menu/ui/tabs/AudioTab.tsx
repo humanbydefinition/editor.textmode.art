@@ -3,6 +3,7 @@ import { CheckCircle2, Loader2, Mic2, RefreshCw, Volume2, XCircle } from 'lucide
 import { Button } from '@/shared/ui/button';
 import { Label } from '@/shared/ui/label';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Switch } from '@/shared/ui/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import type { AudioInputState, AudioInputStatus } from '@/platform/state/slices/audioSlice';
 
@@ -69,8 +70,8 @@ export function AudioTab({ audioInput, onEnable, onDisable, onRefreshDevices, on
 				<h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Audio Input</h3>
 
 				<section className="p-3 rounded-lg bg-zinc-900/30 border border-white/5">
-					<div className="flex items-start justify-between gap-3">
-						<div className="flex min-w-0 items-start gap-3">
+					<div className="flex items-center justify-between gap-3">
+						<div className="flex min-w-0 items-center gap-4">
 							<div
 								className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}
 							>
@@ -78,39 +79,34 @@ export function AudioTab({ audioInput, onEnable, onDisable, onRefreshDevices, on
 							</div>
 							<div className="min-w-0">
 								<div className="flex flex-wrap items-center gap-2">
-									<p className="text-sm font-medium text-white">audio input</p>
+									<Label
+										htmlFor="audio-input-enabled"
+										className="cursor-pointer text-sm font-medium leading-none text-white"
+									>
+										audio input
+									</Label>
 									<span
 										className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${tone.badge}`}
 									>
 										{status.label}
 									</span>
 								</div>
-								<p className="mt-1 text-xs leading-5 text-zinc-500">
-									{audioInput.error?.message ?? status.text}
-								</p>
+								<p className="text-xs text-zinc-500">{audioInput.error?.message ?? status.text}</p>
 							</div>
 						</div>
-						<Button
-							type="button"
-							size="sm"
-							variant={isActive ? 'ghost' : 'default'}
-							className={
-								isActive
-									? 'text-zinc-200 hover:bg-zinc-800 hover:text-white'
-									: 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400'
-							}
+						<Switch
+							id="audio-input-enabled"
+							checked={isActive}
 							disabled={isRequesting || isUnavailable}
-							onClick={() => {
-								if (isActive) {
-									onDisable();
-								} else {
+							aria-busy={isRequesting}
+							onCheckedChange={(checked) => {
+								if (checked) {
 									void onEnable(audioInput.selectedDeviceId || undefined);
+								} else {
+									onDisable();
 								}
 							}}
-						>
-							{isRequesting && <Loader2 className="w-4 h-4 animate-spin" />}
-							{getActionLabel(audioInput)}
-						</Button>
+						/>
 					</div>
 				</section>
 
@@ -193,13 +189,6 @@ function getStatusIcon(status: AudioInputStatus) {
 	if (status === 'permission-denied' || status === 'unavailable' || status === 'error')
 		return <XCircle className="w-4 h-4" />;
 	return <Mic2 className="w-4 h-4" />;
-}
-
-function getActionLabel(audioInput: AudioInputState): string {
-	if (audioInput.status === 'requesting') return 'Enabling...';
-	if (audioInput.status === 'active') return 'Stop input';
-	if (audioInput.error?.retryable) return 'Retry';
-	return 'Enable input';
 }
 
 function getSelectedDeviceLabel(audioInput: AudioInputState): string {
