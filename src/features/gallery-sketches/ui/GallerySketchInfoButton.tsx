@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
-import { cn } from '@/shared/lib/cn';
-import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import type { GallerySketchSummary } from '../types';
 import { SketchMetaCard } from './SketchMetaCard';
 
@@ -64,45 +62,31 @@ export function GallerySketchInfoButton({
 
 	if (!sketch) {
 		return (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						type="button"
-						className={cn(floatingIconButtonVariants(), className)}
-						aria-label="Share sketch"
-						onClick={onShare}
-						onMouseDown={(event) => event.preventDefault()}
-					>
-						<Share2 className="h-[14px] w-[14px]" />
-					</button>
-				</TooltipTrigger>
-				<TooltipContent>
-					<p>share sketch</p>
-				</TooltipContent>
-			</Tooltip>
+			<FloatingActionButton
+				className={className}
+				aria-label="Share sketch"
+				onClick={onShare}
+				onMouseDown={(event) => event.preventDefault()}
+				tooltip="share sketch"
+			>
+				<Share2 className="h-[14px] w-[14px]" />
+			</FloatingActionButton>
 		);
 	}
 
 	return (
 		<>
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						ref={buttonRef}
-						type="button"
-						className={cn(floatingIconButtonVariants(), className)}
-						aria-label="Gallery sketch info"
-						aria-expanded={open}
-						onClick={() => setOpen((value) => !value)}
-						onMouseDown={(event) => event.preventDefault()}
-					>
-						<Info className="h-[14px] w-[14px]" />
-					</button>
-				</TooltipTrigger>
-				<TooltipContent>
-					<p>sketch info</p>
-				</TooltipContent>
-			</Tooltip>
+			<FloatingActionButton
+				ref={buttonRef}
+				className={className}
+				aria-label="Gallery sketch info"
+				aria-expanded={open}
+				onClick={() => setOpen((value) => !value)}
+				onMouseDown={(event) => event.preventDefault()}
+				tooltip="sketch info"
+			>
+				<Info className="h-[14px] w-[14px]" />
+			</FloatingActionButton>
 
 			{open && (
 				<div

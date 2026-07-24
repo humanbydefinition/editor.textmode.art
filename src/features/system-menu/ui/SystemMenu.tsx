@@ -12,7 +12,8 @@ import {
 } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import { APP_META, buildLegalHref } from '@/shared/config/appMeta';
+import { APP_META, buildLegalHref, LEGAL_LINKS } from '@/shared/config/appMeta';
+import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
@@ -35,6 +36,14 @@ interface SystemMenuProps {
 	onSelectAudioInputDevice: (deviceId: string) => Promise<void>;
 	renderExamplesTab: (onClose: () => void) => ReactNode;
 }
+
+const MENU_TABS = [
+	{ value: 'settings', label: 'settings' },
+	{ value: 'audio', label: 'audio' },
+	{ value: 'examples', label: 'examples' },
+	{ value: 'shortcuts', label: 'controls' },
+	{ value: 'about', label: 'about' },
+] as const;
 
 export function SystemMenu({
 	onShare,
@@ -66,36 +75,24 @@ export function SystemMenu({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						onClick={onMakeRandomChange}
-						onMouseDown={(e) => e.preventDefault()}
-						className={`${floatingIconButtonVariants()} fixed top-2 right-[4.5rem] z-50 pointer-events-auto`}
-						aria-label="Make random change"
-					>
-						<Dices className="w-[14px] h-[14px]" />
-					</button>
-				</TooltipTrigger>
-				<TooltipContent>
-					<p>make random change</p>
-				</TooltipContent>
-			</Tooltip>
+			<FloatingActionButton
+				onClick={onMakeRandomChange}
+				onMouseDown={(event) => event.preventDefault()}
+				className="fixed top-2 right-[4.5rem] z-50 pointer-events-auto"
+				aria-label="Make random change"
+				tooltip="make random change"
+			>
+				<Dices className="w-[14px] h-[14px]" />
+			</FloatingActionButton>
 
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						onClick={handleRandomize}
-						className={`${floatingIconButtonVariants()} fixed top-2 right-[2.5rem] z-50 pointer-events-auto`}
-						aria-label="Load random sketch"
-					>
-						<Shuffle className="w-[14px] h-[14px]" />
-					</button>
-				</TooltipTrigger>
-				<TooltipContent>
-					<p>load random sketch</p>
-				</TooltipContent>
-			</Tooltip>
+			<FloatingActionButton
+				onClick={handleRandomize}
+				className="fixed top-2 right-[2.5rem] z-50 pointer-events-auto"
+				aria-label="Load random sketch"
+				tooltip="load random sketch"
+			>
+				<Shuffle className="w-[14px] h-[14px]" />
+			</FloatingActionButton>
 
 			<Tooltip>
 				<TooltipTrigger asChild>
@@ -178,36 +175,15 @@ export function SystemMenu({
 						{/* Scroll indicator gradient on the right */}
 						<div className="absolute right-6 top-2 bottom-0 w-8 bg-gradient-to-l from-zinc-950/80 to-transparent pointer-events-none z-10 sm:hidden" />
 						<TabsList className="flex w-full justify-start bg-zinc-900/50 p-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-							<TabsTrigger
-								value="settings"
-								className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
-							>
-								settings
-							</TabsTrigger>
-							<TabsTrigger
-								value="audio"
-								className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
-							>
-								audio
-							</TabsTrigger>
-							<TabsTrigger
-								value="examples"
-								className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
-							>
-								examples
-							</TabsTrigger>
-							<TabsTrigger
-								value="shortcuts"
-								className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
-							>
-								controls
-							</TabsTrigger>
-							<TabsTrigger
-								value="about"
-								className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
-							>
-								about
-							</TabsTrigger>
+							{MENU_TABS.map((tab) => (
+								<TabsTrigger
+									key={tab.value}
+									value={tab.value}
+									className="flex-shrink-0 snap-start data-[state=active]:bg-zinc-800 data-[state=active]:text-white px-4"
+								>
+									{tab.label}
+								</TabsTrigger>
+							))}
 						</TabsList>
 					</div>
 
@@ -248,30 +224,17 @@ export function SystemMenu({
 					<div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 text-[11px] text-zinc-500">
 						<span className="whitespace-nowrap">textmode.art (c) {currentYear}</span>
 						<div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-right">
-							<a
-								href={buildLegalHref('imprint')}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="transition-colors hover:text-zinc-300"
-							>
-								imprint
-							</a>
-							<a
-								href={buildLegalHref('terms')}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="transition-colors hover:text-zinc-300"
-							>
-								terms
-							</a>
-							<a
-								href={buildLegalHref('privacy')}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="transition-colors hover:text-zinc-300"
-							>
-								privacy
-							</a>
+							{LEGAL_LINKS.map((link) => (
+								<a
+									key={link.route}
+									href={buildLegalHref(link.route)}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="transition-colors hover:text-zinc-300"
+								>
+									{link.label}
+								</a>
+							))}
 						</div>
 					</div>
 				</div>

@@ -23,34 +23,73 @@ export function PreferencesTab({
 	onClearStorage,
 	onClose,
 }: PreferencesTabProps) {
+	const togglePreferences = [
+		{
+			id: 'auto-execute',
+			label: 'auto execute',
+			description: 'run code automatically on changes',
+			icon: settings.autoExecute ? Zap : ZapOff,
+			iconClassName: 'bg-blue-500/10 text-blue-400',
+			checked: settings.autoExecute,
+			onCheckedChange: (checked: boolean) => onSettingsChange({ autoExecute: checked }),
+		},
+		{
+			id: 'editor-backdrop',
+			label: 'text background',
+			description: 'dark backdrop behind code text',
+			icon: Type,
+			iconClassName: 'bg-zinc-800 text-zinc-400',
+			checked: settings.editorBackdrop,
+			onCheckedChange: (checked: boolean) => onSettingsChange({ editorBackdrop: checked }),
+		},
+		{
+			id: 'line-numbers',
+			label: 'line numbers',
+			description: 'show line numbers in editor',
+			icon: ListOrdered,
+			iconClassName: 'bg-indigo-500/10 text-indigo-400',
+			checked: settings.lineNumbers,
+			onCheckedChange: (checked: boolean) => onSettingsChange({ lineNumbers: checked }),
+		},
+	];
+
 	return (
 		<ScrollArea className="h-full">
 			<div className="p-6 space-y-6">
 				<div className="space-y-4">
 					<h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Preferences</h3>
 
-					{/* Auto Execute Toggle */}
-					<div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
-						<div className="flex items-center gap-4">
-							<div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400">
-								{settings.autoExecute ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
+					{togglePreferences.slice(0, 1).map((preference) => {
+						const Icon = preference.icon;
+						return (
+							<div
+								key={preference.id}
+								className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5"
+							>
+								<div className="flex items-center gap-4">
+									<div
+										className={`flex items-center justify-center w-8 h-8 rounded-lg ${preference.iconClassName}`}
+									>
+										<Icon className="w-4 h-4" />
+									</div>
+									<div>
+										<Label
+											htmlFor={preference.id}
+											className="text-sm font-medium text-white cursor-pointer block"
+										>
+											{preference.label}
+										</Label>
+										<p className="text-xs text-zinc-500">{preference.description}</p>
+									</div>
+								</div>
+								<Switch
+									id={preference.id}
+									checked={preference.checked}
+									onCheckedChange={preference.onCheckedChange}
+								/>
 							</div>
-							<div>
-								<Label
-									htmlFor="auto-execute"
-									className="text-sm font-medium text-white cursor-pointer block"
-								>
-									auto execute
-								</Label>
-								<p className="text-xs text-zinc-500">run code automatically on changes</p>
-							</div>
-						</div>
-						<Switch
-							id="auto-execute"
-							checked={settings.autoExecute}
-							onCheckedChange={(checked) => onSettingsChange({ autoExecute: checked })}
-						/>
-					</div>
+						);
+					})}
 
 					{/* Auto Execute Delay (only visible when auto-execute is on) */}
 					{settings.autoExecute && (
@@ -77,51 +116,37 @@ export function PreferencesTab({
 						</div>
 					)}
 
-					{/* Text Background Toggle */}
-					<div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
-						<div className="flex items-center gap-4">
-							<div className="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 text-zinc-400">
-								<Type className="w-4 h-4" />
+					{togglePreferences.slice(1).map((preference) => {
+						const Icon = preference.icon;
+						return (
+							<div
+								key={preference.id}
+								className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5"
+							>
+								<div className="flex items-center gap-4">
+									<div
+										className={`flex items-center justify-center w-8 h-8 rounded-lg ${preference.iconClassName}`}
+									>
+										<Icon className="w-4 h-4" />
+									</div>
+									<div>
+										<Label
+											htmlFor={preference.id}
+											className="text-sm font-medium text-white cursor-pointer block"
+										>
+											{preference.label}
+										</Label>
+										<p className="text-xs text-zinc-500">{preference.description}</p>
+									</div>
+								</div>
+								<Switch
+									id={preference.id}
+									checked={preference.checked}
+									onCheckedChange={preference.onCheckedChange}
+								/>
 							</div>
-							<div>
-								<Label
-									htmlFor="editor-backdrop"
-									className="text-sm font-medium text-white cursor-pointer block"
-								>
-									text background
-								</Label>
-								<p className="text-xs text-zinc-500">dark backdrop behind code text</p>
-							</div>
-						</div>
-						<Switch
-							id="editor-backdrop"
-							checked={settings.editorBackdrop}
-							onCheckedChange={(checked) => onSettingsChange({ editorBackdrop: checked })}
-						/>
-					</div>
-
-					{/* Line Numbers Toggle */}
-					<div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
-						<div className="flex items-center gap-4">
-							<div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400">
-								<ListOrdered className="w-4 h-4" />
-							</div>
-							<div>
-								<Label
-									htmlFor="line-numbers"
-									className="text-sm font-medium text-white cursor-pointer block"
-								>
-									line numbers
-								</Label>
-								<p className="text-xs text-zinc-500">show line numbers in editor</p>
-							</div>
-						</div>
-						<Switch
-							id="line-numbers"
-							checked={settings.lineNumbers}
-							onCheckedChange={(checked) => onSettingsChange({ lineNumbers: checked })}
-						/>
-					</div>
+						);
+					})}
 
 					{/* Font Size Control */}
 					<div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">

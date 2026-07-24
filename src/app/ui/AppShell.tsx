@@ -9,8 +9,7 @@ import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/f
 import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gallery-sketches';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
+import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 import { toast } from 'sonner';
@@ -107,24 +106,15 @@ export function AppShell() {
 				/>
 
 				{showShareLock && (
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<button
-								onClick={actions.openSharePrompt}
-								className={cn(
-									floatingIconButtonVariants({ tone: 'warning' }),
-									'fixed bottom-2 right-2 z-50 pointer-events-auto',
-									'duration-200'
-								)}
-								aria-label="Sketch locked (click to unlock)"
-							>
-								<Lock className="w-[14px] h-[14px]" />
-							</button>
-						</TooltipTrigger>
-						<TooltipContent>
-							<p>sketch locked - click to unlock</p>
-						</TooltipContent>
-					</Tooltip>
+					<FloatingActionButton
+						onClick={actions.openSharePrompt}
+						tone="warning"
+						className={cn('fixed bottom-2 right-2 z-50 pointer-events-auto', 'duration-200')}
+						aria-label="Sketch locked (click to unlock)"
+						tooltip="sketch locked - click to unlock"
+					>
+						<Lock className="w-[14px] h-[14px]" />
+					</FloatingActionButton>
 				)}
 
 				{/* Main UI - hidden when welcome modal is open, with smooth transition */}

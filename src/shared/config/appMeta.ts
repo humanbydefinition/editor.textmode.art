@@ -15,6 +15,12 @@ const LEGAL_PATHS: Record<LegalRoute, string> = {
 	privacy: 'privacy',
 };
 
+export const LEGAL_LINKS = [
+	{ label: 'imprint', route: 'imprint' },
+	{ label: 'terms', route: 'terms' },
+	{ label: 'privacy', route: 'privacy' },
+] as const satisfies ReadonlyArray<{ label: string; route: LegalRoute }>;
+
 export const APP_META = {
 	name: 'editor.textmode.art',
 	description: 'a browser-based textmode.js editor for live coding, ASCII art, and textmode synthesis.',
