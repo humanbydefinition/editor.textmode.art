@@ -18,7 +18,6 @@ const PALETTE = [
 ];
 
 const RECTANGLE_COUNT = 8;
-const GLYPH_CAPACITY = 256;
 
 const SEED_SHADER = `#version 300 es
 precision highp float;
@@ -197,9 +196,8 @@ function pushFrame() {
 t.fontSize(16);
 
 t.setup(async () => {
-	const availableGlyphs = t.font.characters.slice(0, GLYPH_CAPACITY);
-	glyphs = availableGlyphs.flatMap((glyph) => glyph.color.slice(0, 2));
-	glyphCount = availableGlyphs.length;
+	glyphs = t.font.characters.flatMap((glyph) => glyph.color.slice(0, 2));
+	glyphCount = t.font.characters.length;
 	palette = PALETTE.flatMap((color) => t.color(color).normalized.slice(0, 3));
 	[seedShader, pushShader] = await Promise.all([
 		t.createMaterialShader(SEED_SHADER),
