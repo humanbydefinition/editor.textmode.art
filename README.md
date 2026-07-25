@@ -7,73 +7,56 @@
 
 </div>
 
-`editor.textmode.art` is a browser-based web editor for the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) creative coding ecosystem. It supports live coding, procedural text generation, and ASCII/textmode synthesis with real-time execution.
+`editor.textmode.art` is a browser-based creative-coding environment for
+[textmode.js](https://github.com/humanbydefinition/textmode.js). Write a
+sketch, see it run as you type, and shape moving text, characters, colours,
+layers, filters, and synthesis without setting up a local toolchain. Your work
+and editor preferences stay in your browser, so returning to an idea is as
+simple as reopening the editor.
 
 ## Features
 
-- **Visual synthesis**: Driven by `textmode.js`, offering a rich set of ASCII/textmode graphics tools and a modern WebGL2 pipeline.
-- **High-performance editor**: Built on Monaco Editor (the power behind VS Code) with custom syntax highlighting and tailored type definitions.
-- **Local persistence**: Automatically saves your work and settings to your browser's local storage.
-- **Responsive layout**: Designed for both desktop and mobile devices, ensuring your sketches look great everywhere.
+- **Graphics engine:** [textmode.js](https://github.com/humanbydefinition/textmode.js) provides the tools for drawing and animating textmode graphics in the browser.
+- **High-performance editor:** Monaco Editor *(the engine behind VS Code)* with
+  custom syntax highlighting and tailored type definitions.
+- **Audio input:** Browser microphone and line-input analysis supplies FFT and
+  waveform data to audio-reactive sketches.
+- **Local persistence:** Code and editor settings are saved automatically in
+  browser storage.
+- **Gallery:** Discover reviewed community sketches at random or through stable
+  `/s/<slug>/` links, then use their source as a starting point.
+- **Share links:** Package a sketch’s code and settings in a URL. Recipients
+  choose whether to run shared code.
+- **Responsive workspace:** Create on desktop or mobile without a separate app.
 
-> [!NOTE]
-> Performance depends on the complexity of your scripts and device capabilities.
+## Make something
 
-## Getting started
+- Visit [editor.textmode.art](https://editor.textmode.art).
+- Start from **Examples**, a random gallery sketch, or a blank editor.
+- Plug in sound if the sketch calls for it.
+- Keep iterating; the workspace saves as you go.
 
-Visit **[editor.textmode.art](https://editor.textmode.art)** to start coding immediately - no installation required.
+## Share something
 
-1. **Start coding**: Write your scripts in the integrated editors. The environment will auto-execute your changes by default.
-2. **Explore examples**: Check the `Examples` menu to see what's possible and learn from pre-made sketches.
-3. **Customize**: Use the `Preferences` menu to toggle UI visibility, adjust font sizes, or change editor settings.
+Use the **Share** button to create a URL for your sketch.
 
-## Development
+- The URL includes your code and editor settings.
+- Shared code stays locked until the recipient chooses to run it.
+- Recipients can open the link in the browser - no installation required.
 
-To run the project locally:
+## Contribute a gallery sketch
 
-```bash
-# Requires Node.js 24 or newer
+Have a sketch worth sharing more widely? Submit it to the repository-backed
+gallery. Gallery entries can be loaded from stable `/s/<slug>/` links and from
+the editor’s random-sketch action.
 
-# Install dependencies
-npm install
-
-# Start dev server (Vite)
-npm run dev
-
-# Run fast tests
-npm test
-
-# Run scoped coverage and its quality gates
-npm run test:coverage
-
-# Run formatting, dependency policy, linting, types, coverage, and the production build
-npm run check
-```
-
-Gallery contributors can install Playwright Chromium once and generate a sketch's social preview locally:
-
-```bash
-npm run playwright:install
-npm run generate:og -- your-sketch-slug
-```
-
-See [`sketches/README.md`](sketches/README.md) for the complete gallery contribution workflow.
-
-The client loads the hosted sandbox runner from `https://runner.textmode.art/` by default.
-Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate deployments.
+Start with the [gallery contribution guide](sketches/README.md) for the sketch
+format, metadata, deterministic-rendering requirements, and Open Graph preview
+workflow. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing
+terms.
 
 ## License
 
 This application is licensed under the **GNU Affero General Public License v3.0 or later** - see the [LICENSE](LICENSE) file for details.
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
-
-### Acknowledgements
-
-This project targets the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) sketch API.
-
-Monogram Extended is a CC0 pixel font by Vinicius Menezio and is used by the gallery Open Graph image generator.
-
-AGPL-licensed dependency acknowledgement:
-
-- **[textmode.synth.js](https://github.com/humanbydefinition/textmode.synth.js)** - AGPL-3.0
