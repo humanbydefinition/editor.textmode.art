@@ -17,7 +17,7 @@ const PALETTE = [
 	'#ffffff',
 ];
 
-const RECTANGLE_COUNT = 8;
+const RECTANGLE_COUNT = 32;
 
 const SEED_SHADER = `#version 300 es
 precision highp float;
@@ -49,7 +49,9 @@ precision highp float;
 uniform vec2 u_gridSize;
 uniform float u_hasHistory;
 uniform float u_frame;
-uniform vec4 u_rects[8];
+uniform int u_rectCount;
+uniform vec4 u_rects[64];
+uniform int u_rules[64];
 uniform sampler2D u_seedCharacter;
 uniform sampler2D u_seedPrimaryColor;
 uniform sampler2D u_seedSecondaryColor;
@@ -87,7 +89,9 @@ void main() {
 	ivec2 cell = ivec2(gl_FragCoord.xy);
 	ivec2 size = ivec2(u_gridSize);
 	int rule = 0;
-	for (int i = 0; i < 8; i++) if (inside(vec2(cell), u_rects[i])) rule = i;
+	for (int i = 0; i < u_rectCount; i++) {
+		if (inside(vec2(cell), u_rects[i])) rule = u_rules[i];
+	}
 	bool border = cell.x == 0 || cell.y == 0 || cell.x == size.x - 1 || cell.y == size.y - 1;
 	ivec2 movement = random(vec2(cell)) < 0.15 ? ivec2(0) : direction(rule);
 	ivec2 source = clamp(cell - movement, ivec2(0), size - 1);
@@ -109,11 +113,14 @@ function createRectangles(cols, rows, seed) {
 		const rect = rectangles.splice(largest, 1)[0];
 		rectangles.push(...splitRectangle(rect));
 	}
-	for (let i = RECTANGLE_COUNT - 1; i > 0; i--) {
+	for (let i = rectangles.length - 1; i > 0; i--) {
 		const j = Math.floor(t.random() * (i + 1));
 		[rectangles[i], rectangles[j]] = [rectangles[j], rectangles[i]];
 	}
-	return rectangles;
+	return rectangles.map((rect) => ({
+		...rect,
+		rule: Math.floor(t.random() * 8),
+	}));
 }
 
 function splitRectangle(rect) {
@@ -143,6 +150,7 @@ let hasHistory = false;
 let rectangles;
 const framebufferSize = () => ({ width: t.grid.cols + 2, height: t.grid.rows + 2 });
 const rectangleUniforms = () => rectangles.flatMap(({ x, y, width, height }) => [x, y, width, height]);
+const ruleUniforms = () => rectangles.map(({ rule }) => rule);
 
 function renderSeed(frame) {
 	const size = framebufferSize();
@@ -180,7 +188,9 @@ function pushFrame() {
 	t.setUniform('u_gridSize', [size.width, size.height]);
 	t.setUniform('u_hasHistory', hasHistory ? 1 : 0);
 	t.setUniform('u_frame', t.frameCount);
+	t.setUniform('u_rectCount', rectangles.length);
 	t.setUniform('u_rects', rectangleUniforms());
+	t.setUniform('u_rules', ruleUniforms());
 	t.setUniform('u_seedCharacter', seedFramebuffer.textures[0]);
 	t.setUniform('u_seedPrimaryColor', seedFramebuffer.textures[1]);
 	t.setUniform('u_seedSecondaryColor', seedFramebuffer.textures[2]);
