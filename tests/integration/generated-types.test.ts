@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeJSDocLinks } from '../../scripts/lib/normalizeJSDocLinks.js';
-import { typeDefinitions } from '../../src/textmode/config/generatedTypes';
+import ts from 'typescript';
+import { typeDefinitions } from '../../src/textmode/config/generated/editorTypes';
 import { withTypeScriptProject } from '../support/typescript-project';
 
 const TEXTMODE_LAYER_PATH = 'file:///node_modules/textmode.js/dist/types/textmode/layers/TextmodeLayer.d.ts';
@@ -20,22 +20,64 @@ describe('generated editor declarations', () => {
 		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain('interface Textmodifier extends TextmodeExportAPI');
 	});
 
+	it('contains deterministic, parseable virtual declarations without internal members or examples', () => {
+		const virtualPaths = Object.keys(typeDefinitions);
+		expect(virtualPaths).toEqual([...virtualPaths].sort());
+		expect(virtualPaths).toContain('file:///src/live/globals.d.ts');
+
+		let prefixedConstructorParameters = 0;
+		for (const [virtualPath, content] of Object.entries(typeDefinitions)) {
+			const sourceFile = ts.createSourceFile(
+				virtualPath,
+				content,
+				ts.ScriptTarget.Latest,
+				true,
+				ts.ScriptKind.TS
+			);
+			const parseDiagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] })
+				.parseDiagnostics;
+			expect(parseDiagnostics, virtualPath).toEqual([]);
+			expect(content, virtualPath).not.toContain('@example');
+			expect(content, virtualPath).not.toMatch(/\{@(?:link|linkplain|linkcode)\b/);
+
+			visit(sourceFile, (node) => {
+				const name = (node as ts.NamedDeclaration).name;
+				if (!name || !ts.isIdentifier(name) || !/^[$_]/.test(name.text)) return;
+				if (ts.isParameter(node)) {
+					prefixedConstructorParameters++;
+					return;
+				}
+				if (
+					ts.isFunctionDeclaration(node) ||
+					ts.isMethodDeclaration(node) ||
+					ts.isMethodSignature(node) ||
+					ts.isPropertyDeclaration(node) ||
+					ts.isPropertySignature(node) ||
+					ts.isGetAccessorDeclaration(node) ||
+					ts.isSetAccessorDeclaration(node)
+				) {
+					throw new Error(`${virtualPath} retains prohibited declaration ${name.text}.`);
+				}
+			});
+		}
+
+		expect(prefixedConstructorParameters).toBeGreaterThan(0);
+	});
+
 	it('exposes normalized documentation through TypeScript quick info', () => {
 		withTypeScriptProject('textmode-doc-links-', (project) => {
-			const declarationSource = normalizeJSDocLinks(
-				`
+			const declarationSource = `
 export declare class Demo {
 	/**
-	 * Uses {@link other}.
-	 * @deprecated Prefer {@link newer}.
-	 * @see {@link https://example.com/docs | Demo.docs API reference}
+	 * Uses \`other\`.
+	 * @deprecated Prefer \`newer\`.
+	 * @see [Demo.docs API reference](https://example.com/docs)
 	 */
 	docs(): void;
 	other(): void;
 	newer(): void;
 }
-`.trimStart()
-			);
+`.trimStart();
 			const declarationPath = project.write('pkg.d.ts', declarationSource);
 			const source = "import { Demo } from './pkg';\nDemo.prototype.docs;\n";
 			const sourcePath = project.write('test.js', source);
@@ -88,4 +130,9 @@ const globalFigFontConstructor = TextmodeFigFont;
 function flattenDisplayParts(parts: readonly { text: string }[] | string | undefined): string {
 	if (!parts) return '';
 	return typeof parts === 'string' ? parts : parts.map((part) => part.text).join('');
+}
+
+function visit(node: ts.Node, visitor: (node: ts.Node) => void): void {
+	visitor(node);
+	ts.forEachChild(node, (child) => visit(child, visitor));
 }

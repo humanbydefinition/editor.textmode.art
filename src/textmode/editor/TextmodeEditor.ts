@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { typeDefinitions } from '../config/generatedTypes';
+import { typeDefinitions } from '../config/generated/editorTypes';
 
 // Import Monaco workers
 import editorWorker from 'monaco-editor/editor/editor.worker.js?worker';

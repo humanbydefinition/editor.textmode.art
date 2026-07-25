@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXAMPLE_LIBRARIES } from '../../src/features/examples/model/exampleCatalog';
 import type { Example, ExampleLibraryCatalog } from '../../src/features/examples/types';
-import { typeDefinitions } from '../../src/textmode/config/generatedTypes';
+import { typeDefinitions } from '../../src/textmode/config/generated/editorTypes';
 import { withTypeScriptProject } from '../support/typescript-project';
 
 const REQUESTED_LIBRARY_ORDER = ['textmode', 'synth', 'figlet', 'filters', 'export'] as const;

@@ -1,4 +1,5 @@
 coverage/
 playwright-report/
 test-results/
+src/textmode/config/generated/
 sketches/

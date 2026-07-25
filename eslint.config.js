@@ -3,7 +3,7 @@ import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default [
-	{ ignores: ['coverage/**', 'dist/**', 'sketches/**'] },
+	{ ignores: ['coverage/**', 'dist/**', 'sketches/**', 'src/textmode/config/generated/**'] },
 	{ files: ['**/*.{ts,js}'], languageOptions: { globals: globals.browser } },
 	pluginJs.configs.recommended,
 	...tseslint.configs.recommended,
