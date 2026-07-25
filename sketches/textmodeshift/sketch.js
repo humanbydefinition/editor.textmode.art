@@ -1,20 +1,20 @@
-const PICO8 = [
+const PALETTE = [
 	'#000000',
-	'#1d2b53',
-	'#7e2553',
-	'#008751',
-	'#ab5236',
-	'#5f574f',
-	'#c2c3c7',
-	'#fff1e8',
-	'#ff004d',
-	'#ffa300',
-	'#ffec27',
-	'#00e436',
-	'#29adff',
-	'#83769c',
-	'#ff77a8',
-	'#ffccaa',
+	'#181818',
+	'#282828',
+	'#383838',
+	'#474747',
+	'#565656',
+	'#646464',
+	'#717171',
+	'#7e7e7e',
+	'#8c8c8c',
+	'#9b9b9b',
+	'#ababab',
+	'#bdbdbd',
+	'#d1d1d1',
+	'#e7e7e7',
+	'#ffffff',
 ];
 
 const RECTANGLE_COUNT = 8;
@@ -200,7 +200,7 @@ t.setup(async () => {
 	const availableGlyphs = t.font.characters.slice(0, GLYPH_CAPACITY);
 	glyphs = availableGlyphs.flatMap((glyph) => glyph.color.slice(0, 2));
 	glyphCount = availableGlyphs.length;
-	palette = PICO8.flatMap((color) => t.color(color).normalized.slice(0, 3));
+	palette = PALETTE.flatMap((color) => t.color(color).normalized.slice(0, 3));
 	[seedShader, pushShader] = await Promise.all([
 		t.createMaterialShader(SEED_SHADER),
 		t.createMaterialShader(PUSH_SHADER),
