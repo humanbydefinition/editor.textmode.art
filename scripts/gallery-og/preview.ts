@@ -357,9 +357,9 @@ function buildGalleryOverlay(layout: GalleryOgLayout): SVGSVGElement {
 		</defs>
 		<rect width="1200" height="150" fill="url(#top-scrim)" />
 		<rect y="120" width="1200" height="510" fill="url(#bottom-scrim)" />
-		<g transform="translate(48 49) scale(${20 / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
-		<text x="82" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="36">editor.textmode.art</text>
-		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="28" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
+		<g transform="translate(48 49) scale(${SITE_BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
+		<text x="88" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="${SITE_BRAND_FONT_SIZE}">editor.textmode.art</text>
+		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
 		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeMarkup(layout.title)}</text>
 		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeMarkup(layout.description?.trim() ?? '')}</text>
 		<text id="gallery-og-author" x="${METADATA_LEFT}" y="0" fill="#8e8e88" font-family="Monogram Extended" font-size="${AUTHOR_FONT_SIZE}" letter-spacing="1"><tspan>by </tspan><tspan id="gallery-og-author-name" fill="#d8d8d2" font-style="italic">${escapeMarkup(displayAuthorName)}</tspan></text>
