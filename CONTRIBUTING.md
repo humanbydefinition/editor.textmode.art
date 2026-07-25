@@ -29,7 +29,7 @@ Before opening a pull request:
 - Initialize stateful sketches in `t.setup()` so each submitted execution can recreate its state; the runner automatically releases resources created through textmode APIs.
 - Install Chromium once with `npm run playwright:install`.
 - Generate `og.png` with `npm run generate:og -- your-sketch-slug`; use `--frame` while choosing the best frame and persist that value as `ogFrame`.
-- Run `npm test` and `npm run build`. The production build rejects missing, corrupt, or incorrectly sized gallery images.
+- Run `npm run check`. The production build rejects missing, corrupt, or incorrectly sized gallery images.
 
 Merged sketch PRs are treated as reviewed gallery entries. They may run automatically when users load their `/s/<slug>` URL or press the random sketch button.
 
