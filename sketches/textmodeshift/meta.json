@@ -4,7 +4,16 @@
 	"description": "ASCIISHIFT8 @ home",
 	"authorName": "humanbydefinition",
 	"license": "CC-BY-NC-SA-4.0",
-	"socialLinks": [{ "label": "GitHub", "url": "https://github.com/humanbydefinition" }],
+	"socialLinks": [
+		{
+			"label": "GitHub",
+			"url": "https://github.com/humanbydefinition"
+		},
+		{
+			"label": "Instagram",
+			"url": "https://www.instagram.com/humanbydefinition/"
+		}
+	],
 	"createdAt": "2026-07-19T00:00:00.000Z",
 	"ogFrame": 60
 }

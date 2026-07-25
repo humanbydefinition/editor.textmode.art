@@ -6,8 +6,12 @@
 	"license": "CC-BY-NC-ND-4.0",
 	"socialLinks": [
 		{
-			"label": "Original",
-			"url": "https://github.com/humanbydefinition/p5-cellular-asciimata"
+			"label": "GitHub",
+			"url": "https://github.com/humanbydefinition"
+		},
+		{
+			"label": "Instagram",
+			"url": "https://www.instagram.com/humanbydefinition/"
 		}
 	],
 	"createdAt": "2026-07-20T00:00:00.000Z",
