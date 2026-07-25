@@ -40,7 +40,13 @@ npm install
 # Start dev server (Vite)
 npm run dev
 
-# Run the complete validation and production build
+# Run fast tests
+npm test
+
+# Run scoped coverage and its quality gates
+npm run test:coverage
+
+# Run formatting, dependency policy, linting, types, coverage, and the production build
 npm run check
 ```
 

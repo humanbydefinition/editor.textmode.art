@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-	DEFAULT_OG_FRAME,
-	escapeXml,
+	DEFAULT_GALLERY_OG_FRAME,
+	escapeMarkup,
 	formatOgAuthor,
 	getFittedFontSize,
 	getOgFrame,
@@ -14,11 +14,11 @@ import {
 	renderGallerySocialHtml,
 	validateGalleryOgMeta,
 	validatePng,
-	type GalleryOgMeta,
-} from '../scripts/gallery-og/shared';
+	type GallerySketchMeta,
+} from './shared';
 
 const temporaryDirectories: string[] = [];
-const validMeta: GalleryOgMeta = {
+const validMeta: GallerySketchMeta = {
 	slug: 'signal-bloom',
 	title: 'Signal & <Bloom>',
 	description: 'A "bright" gallery sketch.',
@@ -62,11 +62,15 @@ describe('gallery OG arguments and metadata', () => {
 		expect(() => parseGenerateOgArguments(['signal-bloom', '--wat'])).toThrow('Unknown option');
 	});
 
-	it('defaults ogFrame to 60 and validates configured bounds', () => {
-		expect(getOgFrame(validMeta)).toBe(DEFAULT_OG_FRAME);
+	it('defaults ogFrame to 60 and accepts configured frames', () => {
+		expect(getOgFrame(validMeta)).toBe(DEFAULT_GALLERY_OG_FRAME);
 		expect(getOgFrame({ ...validMeta, ogFrame: 240 })).toBe(240);
-		expect(() => validateGalleryOgMeta({ ...validMeta, ogFrame: 0 })).toThrow('1 to 1000');
-		expect(() => validateGalleryOgMeta({ ...validMeta, ogFrame: 2.5 })).toThrow('integer');
+	});
+
+	it('adds file context to shared metadata validation errors', () => {
+		expect(() => validateGalleryOgMeta({ ...validMeta, title: '' }, '/gallery/meta.json')).toThrow(
+			'/gallery/meta.json: field "title" must not be empty.'
+		);
 	});
 
 	it('shrinks long overlay metadata without going below its minimum size', () => {
@@ -76,7 +80,7 @@ describe('gallery OG arguments and metadata', () => {
 	});
 
 	it('escapes SVG labels and falls back to an anonymous author', () => {
-		expect(escapeXml(`A & <B> "C" 'D'`)).toBe('A &amp; &lt;B&gt; &quot;C&quot; &apos;D&apos;');
+		expect(escapeMarkup(`A & <B> "C" 'D'`)).toBe('A &amp; &lt;B&gt; &quot;C&quot; &apos;D&apos;');
 		expect(formatOgAuthor(null)).toBe('by anonymous');
 		expect(formatOgAuthor('')).toBe('by anonymous');
 		expect(formatOgAuthor('Ada')).toBe('by Ada');

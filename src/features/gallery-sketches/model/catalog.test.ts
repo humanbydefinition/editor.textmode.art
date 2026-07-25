@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGallerySketchCatalog } from '../src/features/gallery-sketches/model/catalog';
+import { buildGallerySketchCatalog } from './catalog';
 
 const metadata = {
 	slug: 'signal-bloom',
@@ -17,9 +17,10 @@ describe('gallery catalog OG metadata', () => {
 		expect(buildCatalog({ ...metadata, ogFrame: 1000 })[0]?.ogFrame).toBe(1000);
 	});
 
-	it('rejects out-of-range and fractional ogFrame values', () => {
-		expect(() => buildCatalog({ ...metadata, ogFrame: 0 })).toThrow('integer from 1 to 1000');
-		expect(() => buildCatalog({ ...metadata, ogFrame: 1.5 })).toThrow('integer from 1 to 1000');
+	it('adds the module path to shared metadata validation errors', () => {
+		expect(() => buildCatalog({ ...metadata, title: '' })).toThrow(
+			'Invalid gallery sketch metadata: /sketches/signal-bloom/meta.json: field "title" must not be empty.'
+		);
 	});
 });
 

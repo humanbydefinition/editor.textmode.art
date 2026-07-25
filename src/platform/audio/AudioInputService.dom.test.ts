@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AudioInputService, type AudioInputFrame } from '../src/platform/audio/AudioInputService';
+import { AudioInputService, type AudioInputFrame } from './AudioInputService';
 
 describe('AudioInputService', () => {
 	let analyser: FakeAnalyserNode;
@@ -194,9 +194,11 @@ class FakeAudioContext {
 		this.state = 'running';
 	});
 	close = vi.fn(async () => {});
+	private readonly analyser: FakeAnalyserNode;
+	private readonly source: FakeMediaStreamAudioSourceNode;
 
-	constructor(
-		private readonly analyser: FakeAnalyserNode,
-		private readonly source: FakeMediaStreamAudioSourceNode
-	) {}
+	constructor(analyser: FakeAnalyserNode, source: FakeMediaStreamAudioSourceNode) {
+		this.analyser = analyser;
+		this.source = source;
+	}
 }

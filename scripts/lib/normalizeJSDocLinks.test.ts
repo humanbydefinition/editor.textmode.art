@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeJSDocLinks } from '../scripts/lib/normalizeJSDocLinks.js';
+import { normalizeJSDocLinks } from './normalizeJSDocLinks.js';
 
 describe('normalizeJSDocLinks', () => {
 	it('rewrites external @see links with labels into markdown links', () => {

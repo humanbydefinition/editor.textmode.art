@@ -47,7 +47,7 @@ export class TextmodeEngine {
 		this.runtime = runtime;
 		this.controller = controller;
 
-		runtime.init(initialCode);
+		runtime.init(context.isExecutionLocked() ? '' : initialCode);
 		this.initialized = true;
 	}
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-const gallerySketches = import.meta.glob<string>('../sketches/*/sketch.js', {
+const gallerySketches = import.meta.glob<string>('../../sketches/*/sketch.js', {
 	eager: true,
 	import: 'default',
 	query: '?raw',

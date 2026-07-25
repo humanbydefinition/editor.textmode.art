@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getGallerySlugFromPathname } from '../src/features/gallery-sketches/model/slug';
+import { getGallerySlugFromPathname } from './slug';
 
 describe('gallery slug paths', () => {
 	it('accepts canonical and legacy gallery URLs', () => {

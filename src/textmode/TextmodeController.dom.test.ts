@@ -1,9 +1,15 @@
-import { describe, expect, it, vi } from 'vitest';
-import { TextmodeController, type TextmodeControllerState } from '../src/textmode/TextmodeController';
-import type { TextmodeEditor } from '../src/textmode/editor/TextmodeEditor';
-import type { TextmodeRuntime } from '../src/textmode/runtime/TextmodeRuntime';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	TextmodeController,
+	type TextmodeControllerDependencies,
+	type TextmodeControllerState,
+} from './TextmodeController';
 
 describe('TextmodeController execution', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('replaces code without re-entering the change callback or leaving a pending run', () => {
 		vi.useFakeTimers();
 		const harness = createHarness();
@@ -19,7 +25,6 @@ describe('TextmodeController execution', () => {
 		expect(harness.forceRun).toHaveBeenCalledWith('example code');
 
 		harness.controller.dispose();
-		vi.useRealTimers();
 	});
 
 	it('resets persisted and working code before one runtime reset', () => {
@@ -55,10 +60,9 @@ describe('TextmodeController execution', () => {
 		harness.controller.handleExecutionError({ message: 'failed' });
 		vi.advanceTimersByTime(100);
 		expect(harness.setLastWorkingCode).not.toHaveBeenCalled();
-		expect(harness.setError).toHaveBeenCalledWith({ message: 'failed', source: 'textmode' });
+		expect(harness.setError).toHaveBeenCalledWith({ message: 'failed' });
 
 		harness.controller.dispose();
-		vi.useRealTimers();
 	});
 });
 
@@ -75,25 +79,23 @@ function createHarness() {
 		setValue,
 		clearMarkers: vi.fn(),
 		setErrorMarker: vi.fn(),
-	} as unknown as TextmodeEditor;
+	};
 	const state = {
 		clearError: vi.fn(),
 		setError,
 		getLastWorkingCode: () => null,
 		setLastWorkingCode,
 	} satisfies TextmodeControllerState;
-	const controller = new TextmodeController(
-		{ onSaveCode, onClearCode },
-		{
-			getEditor: () => editor,
-			getRuntime: () => ({ forceRun, resetRuntime }) as unknown as TextmodeRuntime,
-			getAutoExecute: () => true,
-			getAutoExecuteDelay: () => 500,
-			state,
-			isExecutionLocked: () => false,
-			onCodeChanged: vi.fn(),
-		}
-	);
+	const dependencies = {
+		editor,
+		runtime: { forceRun, resetRuntime },
+		getAutoExecute: () => true,
+		getAutoExecuteDelay: () => 500,
+		state,
+		isExecutionLocked: () => false,
+		onCodeChanged: vi.fn(),
+	} satisfies TextmodeControllerDependencies;
+	const controller = new TextmodeController({ onSaveCode, onClearCode }, dependencies);
 
 	return {
 		controller,

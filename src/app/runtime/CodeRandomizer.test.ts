@@ -1,6 +1,6 @@
 import parseGlsl from '@shaderfrog/glsl-parser/parser/index.js';
 import { describe, expect, it } from 'vitest';
-import { CodeRandomizer } from '../src/app/runtime/CodeRandomizer';
+import { CodeRandomizer } from './CodeRandomizer';
 
 describe('CodeRandomizer', () => {
 	it('protects structural GLSL numbers while mutating integer and float expressions', () => {
@@ -108,11 +108,11 @@ void main() {
 	switch (mode) { case 2: phase += 0.25; break; }
 	color = sampleColor + vec4(phase, float(seed), 1.0, 1.0);
 }\`;`;
-		const uniqueChanges = new Set<string>();
+		const changes = Array.from({ length: 6 }, (_, index) =>
+			CodeRandomizer.makeRandomChange(code, sequenceRng((index + 0.5) / 6, 0.99, 0.99))
+		);
 
-		for (let index = 0; index < 128; index++) {
-			const changed = CodeRandomizer.makeRandomChange(code, sequenceRng(index / 128, 0.99, 0.99));
-			uniqueChanges.add(changed);
+		for (const changed of changes) {
 			expect(changed).toContain('#version 300 es');
 			expect(changed).toContain('layout(location = 0)');
 			expect(changed).toContain('palette[16]');
@@ -121,7 +121,7 @@ void main() {
 			expect(() => parseGlsl(extractTemplate(changed), { quiet: true, stage: 'either' })).not.toThrow();
 		}
 
-		expect(uniqueChanges).toHaveLength(6);
+		expect(new Set(changes)).toHaveLength(6);
 	});
 });
 

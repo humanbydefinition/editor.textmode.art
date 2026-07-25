@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TextmodeRuntime } from '../src/textmode/runtime/TextmodeRuntime';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { TextmodeRuntime } from './TextmodeRuntime';
 
 type RuntimeOptions = {
 	onHardReset?: () => void;
 	onReady?: () => void;
+	onRunError?: (error: { message: string; line?: number; column?: number }) => void;
 	onRunOk?: (message: { timestamp: number }) => void;
 	onUnavailable?: () => void;
 	onUserActivationRequired?: () => void;
@@ -22,17 +23,18 @@ type FakeFrame = {
 };
 
 type MockRuntime = {
-	dispose: ReturnType<typeof vi.fn>;
+	dispose: Mock<() => void>;
 	frame: FakeFrame;
-	init: ReturnType<typeof vi.fn>;
+	init: Mock<(container?: HTMLElement) => Promise<boolean>>;
 	isReady: boolean;
-	reconnect: ReturnType<typeof vi.fn>;
-	resetRuntime: ReturnType<typeof vi.fn>;
-	runCode: ReturnType<typeof vi.fn>;
-	sendAudioData: ReturnType<typeof vi.fn>;
-	triggerHardReset: ReturnType<typeof vi.fn>;
-	triggerUserActivationRequired: ReturnType<typeof vi.fn>;
-	triggerUserInteraction: ReturnType<typeof vi.fn>;
+	reconnect: Mock<(options?: { rerun?: boolean }) => Promise<boolean>>;
+	resetRuntime: Mock<(code: string) => Promise<boolean>>;
+	runCode: Mock<(code: string) => Promise<boolean>>;
+	sendAudioData: Mock<(frame: unknown) => boolean>;
+	triggerHardReset: Mock<() => void>;
+	triggerRunError: Mock<(error: { message: string; line?: number; column?: number }) => void>;
+	triggerUserActivationRequired: Mock<() => void>;
+	triggerUserInteraction: Mock<() => void>;
 };
 
 const runnerClientMock = vi.hoisted(() => ({
@@ -40,11 +42,13 @@ const runnerClientMock = vi.hoisted(() => ({
 }));
 
 function createFrame(): FakeFrame {
-	const style = {
+	const style: FakeFrame['style'] = {
 		opacity: '',
 		transition: '',
 		setProperty(name: string, value: string) {
-			(this as unknown as Record<string, string>)[name] = value;
+			if (name === 'opacity' || name === 'transition') {
+				style[name] = value;
+			}
 		},
 	};
 
@@ -61,6 +65,7 @@ vi.mock('@textmode/runner-client', () => {
 		frame = createFrame();
 		isReady = false;
 		private pendingRejecter: ((reason: Error) => void) | null = null;
+		private readonly options: RuntimeOptions;
 
 		readonly init = vi.fn(async () => {
 			return new Promise<boolean>((resolve, reject) => {
@@ -99,11 +104,15 @@ vi.mock('@textmode/runner-client', () => {
 
 		readonly sendAudioData = vi.fn(() => this.isReady);
 		readonly triggerHardReset = vi.fn(() => this.options.onHardReset?.());
+		readonly triggerRunError = vi.fn((error: { message: string; line?: number; column?: number }) =>
+			this.options.onRunError?.(error)
+		);
 		readonly triggerUserActivationRequired = vi.fn(() => this.options.onUserActivationRequired?.());
 		readonly triggerUserInteraction = vi.fn(() => this.options.onUserInteraction?.());
 
-		constructor(private readonly options: RuntimeOptions) {
-			runnerClientMock.instances.push(this as unknown as MockRuntime);
+		constructor(options: RuntimeOptions) {
+			this.options = options;
+			runnerClientMock.instances.push(this);
 		}
 	}
 

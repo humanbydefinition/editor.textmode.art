@@ -1,6 +1,4 @@
 import type { CodeError } from '@/types';
-import type { TextmodeEditor } from './editor/TextmodeEditor';
-import type { TextmodeRuntime } from './runtime/TextmodeRuntime';
 
 const CONFIRMATION_DELAY_MS = 100;
 
@@ -16,9 +14,21 @@ export interface TextmodeControllerState {
 	setLastWorkingCode: (code: string | null) => void;
 }
 
+export interface TextmodeControllerEditor {
+	getValue(): string;
+	setValue(value: string, options?: { silent?: boolean }): void;
+	clearMarkers(): void;
+	setErrorMarker(error: CodeError): void;
+}
+
+export interface TextmodeControllerRuntime {
+	forceRun(code: string): void;
+	resetRuntime(code: string): void;
+}
+
 export interface TextmodeControllerDependencies {
-	editor: TextmodeEditor;
-	runtime: TextmodeRuntime;
+	editor: TextmodeControllerEditor;
+	runtime: TextmodeControllerRuntime;
 	getAutoExecute: () => boolean;
 	getAutoExecuteDelay: () => number;
 	state: TextmodeControllerState;

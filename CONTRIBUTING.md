@@ -6,6 +6,12 @@ Application and project source contributions outside [`sketches/`](sketches/) ar
 
 Gallery sketch contributions use the additional licensing terms below so authors can keep clear reuse choices for their own work while the editor remains AGPL-compatible.
 
+## Testing changes
+
+- Run `npm test` while developing.
+- Run `npm run test:coverage` when changing owned decision-making logic.
+- Run `npm run check` before opening a pull request. It checks formatting, dependency policy, linting, test-inclusive types, scoped coverage, and the production build.
+
 ## Contributing gallery sketches
 
 User-contributed gallery sketches are stored directly in this repository under [`sketches/`](sketches/). They power the random sketch button and `/s/<slug>/` gallery links.
