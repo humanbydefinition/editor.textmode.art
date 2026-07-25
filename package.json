@@ -26,6 +26,7 @@
 		"extract-types": "tsx scripts/extractTypes.ts",
 		"playwright:install": "playwright install chromium",
 		"generate:og": "tsx scripts/generateGalleryOg.ts",
+		"generate:og:site": "tsx scripts/generateSiteOg.ts",
 		"test:og": "tsx scripts/smokeGalleryOg.ts",
 		"prepare": "install-git-hooks"
 	},

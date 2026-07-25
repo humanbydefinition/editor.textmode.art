@@ -385,7 +385,7 @@ function buildSiteOverlay(): SVGSVGElement {
 			<text id="site-og-hook-primary" x="${SITE_SAFE_INSET}" y="295" font-size="${SITE_PRIMARY_FONT_SIZE}" letter-spacing="2"><tspan>CREATE </tspan><tspan font-style="italic" letter-spacing="0">TEXTMODE</tspan></text>
 			<text id="site-og-hook-secondary" x="${SITE_SAFE_INSET}" y="420" font-size="${SITE_SECONDARY_FONT_SIZE}" letter-spacing="2">IN YOUR BROWSER</text>
 		</g>
-		<text id="site-og-bottom-left" x="${SITE_SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODING / ASCII + TEXTMODE</text>
+		<text id="site-og-bottom-left" x="${SITE_SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODE / CHARACTER GRAPHICS</text>
 		<text id="site-og-bottom-right" x="${OG_WIDTH - SITE_SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">BROWSER-BASED / TEXTMODE.JS</text>
 	`;
 	return svg;

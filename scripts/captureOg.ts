@@ -147,7 +147,7 @@ function assertExpectedOverlayText(overlayText: string, layout: OgLayout, slug: 
 		'CREATE TEXTMODE',
 		'IN YOUR BROWSER',
 		'FREE + OPEN SOURCE',
-		'LIVE CODING / ASCII + TEXTMODE',
+		'LIVE CODE / CHARACTER GRAPHICS',
 		'BROWSER-BASED / TEXTMODE.JS',
 	]) {
 		if (!overlayText.includes(expected)) {
