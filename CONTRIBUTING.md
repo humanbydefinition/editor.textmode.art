@@ -1,11 +1,12 @@
 # Contributing to editor.textmode.art
 
-Thanks for sharing a sketch with the editor.textmode.art gallery.
+Thanks for contributing to editor.textmode.art. This guide explains how to
+submit a sketch to the repository-backed gallery.
 
-Every merged entry lives in [`sketches/`](sketches/), has a shareable
-`/s/<slug>/` page, and may appear through the editor's random-sketch action.
-This guide covers the three required files, preview image, and pull-request
-workflow.
+Every merged gallery sketch lives in [`sketches/`](sketches/), has a
+shareable `/s/<slug>/` page, and may appear through the editor's
+random-sketch action. The guide covers the required files, preview image, and
+pull-request workflow.
 
 ## Structure
 
