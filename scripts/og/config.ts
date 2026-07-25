@@ -4,7 +4,7 @@ export const OG_CAPTURE_TIMEOUT_MS = 30_000;
 export const OG_PREVIEW_PATH = '/scripts/og/preview/index.html';
 
 export const SITE_OG_CONFIG = {
-	sketch: 'textmodemata',
+	sketch: 'textmodeshift',
 	frame: 60,
 	output: 'public/og.png',
 } as const;

@@ -23,7 +23,6 @@ export function mountSiteOverlay(): MountedSiteOverlay {
 	svg.setAttribute('height', String(OG_HEIGHT));
 	svg.setAttribute('viewBox', `0 0 ${OG_WIDTH} ${OG_HEIGHT}`);
 	svg.innerHTML = `
-		<rect id="site-og-backdrop" width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="#000" opacity="0.45" />
 		<g id="site-og-brand" transform="translate(${SAFE_INSET} 47)">
 			<g transform="scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
 			<text x="40" y="20" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>
@@ -79,13 +78,10 @@ function assertSiteMetadataLayout(): void {
 		}
 	}
 	if (
-		overlay?.querySelectorAll('#site-og-backdrop').length !== 1 ||
-		overlay?.querySelectorAll('rect').length !== 1 ||
-		overlay?.querySelector('#site-og-backdrop')?.getAttribute('fill') !== '#000' ||
-		overlay?.querySelector('#site-og-backdrop')?.getAttribute('opacity') !== '0.45' ||
-		overlay?.querySelectorAll('linearGradient, radialGradient, filter').length !== 0
+		overlay?.querySelectorAll('#site-og-backdrop').length !== 0 ||
+		overlay?.querySelectorAll('rect, linearGradient, radialGradient, filter').length !== 0
 	) {
-		throw new Error('Site OG overlay must contain one black, 45%-opacity backdrop and no effects.');
+		throw new Error('Site OG overlay must contain no backdrop and no effects.');
 	}
 
 	const elements = [
