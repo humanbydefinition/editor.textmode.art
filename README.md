@@ -2,7 +2,7 @@
 
 <div align="center">
 
-| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-editor.textmode.art-646cff?logo=web&logoColor=white)](https://editor.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
+| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-editor.textmode.art-646cff?logo=web&logoColor=white)](https://editor.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![GitHub-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
 |:-------------|:-------------|:-------------|
 
 </div>
@@ -17,7 +17,7 @@
 - **Responsive layout**: Designed for both desktop and mobile devices, ensuring your sketches look great everywhere.
 
 > [!NOTE]
-> Performance depends on the complexity of your scripts and device capabilities. 
+> Performance depends on the complexity of your scripts and device capabilities.
 
 ## Getting started
 
@@ -32,14 +32,16 @@ Visit **[editor.textmode.art](https://editor.textmode.art)** to start coding imm
 To run the project locally:
 
 ```bash
+# Requires Node.js 24 or newer
+
 # Install dependencies
 npm install
 
 # Start dev server (Vite)
 npm run dev
 
-# Build for production
-npm run build
+# Run the complete validation and production build
+npm run check
 ```
 
 Gallery contributors can install Playwright Chromium once and generate a sketch's social preview locally:
@@ -60,11 +62,11 @@ This application is licensed under the **GNU Affero General Public License v3.0 
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
 
-Monogram Extended is a CC0 pixel font by Vinicius Menezio and is used by the gallery Open Graph image generator. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
 ### Acknowledgements
 
 This project targets the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) sketch API.
+
+Monogram Extended is a CC0 pixel font by Vinicius Menezio and is used by the gallery Open Graph image generator.
 
 AGPL-licensed dependency acknowledgement:
 
