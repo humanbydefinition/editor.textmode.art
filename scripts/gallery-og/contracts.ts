@@ -1,6 +1,32 @@
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
+export interface GalleryOgLayout {
+	kind: 'gallery';
+	title: string;
+	description: string | null;
+	authorName: string | null;
+}
+
+export interface SiteOgLayout {
+	kind: 'site';
+}
+
+export type OgLayout = GalleryOgLayout | SiteOgLayout;
+
+export interface OgPreviewRequest {
+	code: string;
+	frame: number;
+	layout: OgLayout;
+}
+
+export interface OgCaptureResult {
+	frame: number;
+	seconds: number;
+	descriptionLines: number;
+	layout: OgLayout['kind'];
+}
+
 export function escapeMarkup(value: string): string {
 	return value
 		.replaceAll('&', '&amp;')

@@ -131,36 +131,40 @@ export function validateGalleryOgMeta(value: unknown, source = 'meta.json'): Gal
 	return validation.metadata;
 }
 
-export async function validatePng(filePath: string): Promise<{ width: number; height: number }> {
+export async function validateOgPng(filePath: string): Promise<{ width: number; height: number }> {
 	let buffer: Buffer;
 	try {
 		buffer = await readFile(filePath);
 	} catch (error) {
-		throw new Error(`Missing gallery OG image: ${filePath}`, { cause: error });
+		throw new Error(`Missing OG image: ${filePath}`, { cause: error });
 	}
 	if (
 		buffer.length < 24 ||
 		!buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE) ||
 		buffer.toString('ascii', 12, 16) !== 'IHDR'
 	) {
-		throw new Error(`Gallery OG image is not a valid PNG: ${filePath}`);
+		throw new Error(`OG image is not a valid PNG: ${filePath}`);
 	}
 	const width = buffer.readUInt32BE(16);
 	const height = buffer.readUInt32BE(20);
 	if (width !== OG_WIDTH || height !== OG_HEIGHT) {
-		throw new Error(`Gallery OG image must be ${OG_WIDTH}x${OG_HEIGHT}, got ${width}x${height}: ${filePath}`);
+		throw new Error(`OG image must be ${OG_WIDTH}x${OG_HEIGHT}, got ${width}x${height}: ${filePath}`);
 	}
 	return { width, height };
 }
 
 export async function publishGallerySocialPages(root: string): Promise<number> {
 	const entries = await readGalleryOgEntries(root);
+	const distDirectory = path.resolve(root, 'dist');
+	await Promise.all([
+		validateOgPng(path.resolve(root, 'public', 'og.png')),
+		validateOgPng(path.join(distDirectory, 'og.png')),
+	]);
 	if (entries.length === 0) return 0;
 
-	const distDirectory = path.resolve(root, 'dist');
 	const baseHtml = await readFile(path.join(distDirectory, 'index.html'), 'utf8');
 	const ogDirectory = path.join(distDirectory, 'og');
-	await Promise.all(entries.map((entry) => validatePng(entry.ogPath)));
+	await Promise.all(entries.map((entry) => validateOgPng(entry.ogPath)));
 	await mkdir(ogDirectory, { recursive: true });
 
 	for (const entry of entries) {

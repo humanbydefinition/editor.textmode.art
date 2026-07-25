@@ -34,7 +34,16 @@ import {
 	type TextmodeLayerManager,
 	type TextmodePlugin,
 } from 'textmode.js';
-import { escapeMarkup, getFittedFontSize, OG_HEIGHT, OG_WIDTH } from './contracts';
+import {
+	escapeMarkup,
+	getFittedFontSize,
+	OG_HEIGHT,
+	OG_WIDTH,
+	type GalleryOgLayout,
+	type OgCaptureResult,
+	type OgLayout,
+	type OgPreviewRequest,
+} from './contracts';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const BRAND_MARK_PATH =
@@ -53,31 +62,25 @@ const DESCRIPTION_MIN_FONT_SIZE = 24;
 const DESCRIPTION_LINE_HEIGHT = 0.88;
 const AUTHOR_FONT_SIZE = 32;
 const AUTHOR_MIN_FONT_SIZE = 20;
-
-interface PreviewRequest {
-	code: string;
-	frame: number;
-	title: string;
-	description: string | null;
-	authorName: string | null;
-}
-
-interface PreviewResult {
-	frame: number;
-	seconds: number;
-	descriptionLines: number;
-}
+const SITE_SAFE_INSET = 48;
+const SITE_VERTICAL_SAFE_INSET = 30;
+const SITE_HOOK_MAX_WIDTH = OG_WIDTH - SITE_SAFE_INSET * 2;
+const SITE_PRIMARY_FONT_SIZE = 158;
+const SITE_SECONDARY_FONT_SIZE = 150;
+const SITE_BRAND_FONT_SIZE = 40;
+const SITE_BRAND_MARK_SIZE = 24;
+const SITE_CORNER_LABEL_FONT_SIZE = 36;
 
 declare global {
 	interface Window {
-		renderGalleryOg(request: PreviewRequest): Promise<PreviewResult>;
+		renderOg(request: OgPreviewRequest): Promise<OgCaptureResult>;
 	}
 }
 
-window.renderGalleryOg = async (request) => {
+window.renderOg = async (request) => {
 	document.body.dataset.status = 'running';
 	delete document.body.dataset.error;
-	document.querySelectorAll('canvas, #gallery-og-overlay').forEach((element) => element.remove());
+	document.querySelectorAll('canvas, #og-overlay').forEach((element) => element.remove());
 
 	let runtimeError: Error | null = null;
 	const disposers: Array<() => void> = [];
@@ -198,17 +201,18 @@ window.renderGalleryOg = async (request) => {
 			throw new Error(`Preview rendered frame ${instance.frameCount}; expected ${request.frame}.`);
 		}
 		instance.noLoop();
-		buildOverlay(request.title, request.description, request.authorName);
+		buildOverlay(request.layout);
 		await document.fonts.ready;
-		const descriptionLines = fitMetadata();
+		const descriptionLines = request.layout.kind === 'gallery' ? fitGalleryMetadata() : fitSiteMetadata();
 		await nextPaint();
-		assertMetadataLayout();
+		assertOverlayLayout(request.layout.kind);
 
 		document.body.dataset.status = 'ready';
 		return {
 			frame: instance.frameCount,
 			seconds: runtime.capturedSeconds() ?? getFrameSeconds(instance),
 			descriptionLines,
+			layout: request.layout.kind,
 		};
 	} catch (error) {
 		markError(error);
@@ -325,10 +329,16 @@ function getFrameSeconds(instance: Textmodifier): number {
 	return Math.max(0, instance.frameCount - 1) / framesPerSecond;
 }
 
-function buildOverlay(title: string, description: string | null, authorName: string | null): void {
-	const displayAuthorName = authorName?.trim() || 'anonymous';
+function buildOverlay(layout: OgLayout): void {
+	const svg = layout.kind === 'gallery' ? buildGalleryOverlay(layout) : buildSiteOverlay();
+	document.body.appendChild(svg);
+}
+
+function buildGalleryOverlay(layout: GalleryOgLayout): SVGSVGElement {
+	const displayAuthorName = layout.authorName?.trim() || 'anonymous';
 	const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
-	svg.id = 'gallery-og-overlay';
+	svg.id = 'og-overlay';
+	svg.dataset.layout = 'gallery';
 	svg.setAttribute('width', String(OG_WIDTH));
 	svg.setAttribute('height', String(OG_HEIGHT));
 	svg.setAttribute('viewBox', `0 0 ${OG_WIDTH} ${OG_HEIGHT}`);
@@ -350,14 +360,38 @@ function buildOverlay(title: string, description: string | null, authorName: str
 		<g transform="translate(48 49) scale(${20 / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
 		<text x="82" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="36">editor.textmode.art</text>
 		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="28" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
-		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeMarkup(title)}</text>
-		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeMarkup(description?.trim() ?? '')}</text>
+		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeMarkup(layout.title)}</text>
+		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeMarkup(layout.description?.trim() ?? '')}</text>
 		<text id="gallery-og-author" x="${METADATA_LEFT}" y="0" fill="#8e8e88" font-family="Monogram Extended" font-size="${AUTHOR_FONT_SIZE}" letter-spacing="1"><tspan>by </tspan><tspan id="gallery-og-author-name" fill="#d8d8d2" font-style="italic">${escapeMarkup(displayAuthorName)}</tspan></text>
 	`;
-	document.body.appendChild(svg);
+	return svg;
 }
 
-function fitMetadata(): number {
+function buildSiteOverlay(): SVGSVGElement {
+	const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
+	svg.id = 'og-overlay';
+	svg.dataset.layout = 'site';
+	svg.setAttribute('width', String(OG_WIDTH));
+	svg.setAttribute('height', String(OG_HEIGHT));
+	svg.setAttribute('viewBox', `0 0 ${OG_WIDTH} ${OG_HEIGHT}`);
+	svg.innerHTML = `
+		<rect id="site-og-backdrop" width="${OG_WIDTH}" height="${OG_HEIGHT}" fill="#000" opacity="0.45" />
+		<g id="site-og-brand" transform="translate(${SITE_SAFE_INSET} 47)">
+			<g transform="scale(${SITE_BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${BRAND_MARK_PATH}" /></g>
+			<text x="40" y="20" fill="#f2f2ec" font-family="Monogram Extended" font-size="${SITE_BRAND_FONT_SIZE}">editor.textmode.art</text>
+		</g>
+		<text id="site-og-top-right" x="${OG_WIDTH - SITE_SAFE_INSET}" y="66" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">FREE + OPEN SOURCE</text>
+		<g id="site-og-hook" fill="#f2f2ec" font-family="Monogram Extended" text-anchor="start">
+			<text id="site-og-hook-primary" x="${SITE_SAFE_INSET}" y="295" font-size="${SITE_PRIMARY_FONT_SIZE}" letter-spacing="2"><tspan>CREATE </tspan><tspan font-style="italic" letter-spacing="0">TEXTMODE</tspan></text>
+			<text id="site-og-hook-secondary" x="${SITE_SAFE_INSET}" y="420" font-size="${SITE_SECONDARY_FONT_SIZE}" letter-spacing="2">IN YOUR BROWSER</text>
+		</g>
+		<text id="site-og-bottom-left" x="${SITE_SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODING / ASCII + TEXTMODE</text>
+		<text id="site-og-bottom-right" x="${OG_WIDTH - SITE_SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${SITE_CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">BROWSER-BASED / TEXTMODE.JS</text>
+	`;
+	return svg;
+}
+
+function fitGalleryMetadata(): number {
 	const title = getSvgText('gallery-og-title');
 	const description = getSvgText('gallery-og-description');
 	const author = getSvgText('gallery-og-author');
@@ -398,6 +432,27 @@ function fitMetadata(): number {
 	description.dataset.lineCount = String(descriptionLines);
 
 	return descriptionLines;
+}
+
+function fitSiteMetadata(): number {
+	const primary = getSvgText('site-og-hook-primary');
+	const secondary = getSvgText('site-og-hook-secondary');
+	if (!primary || !secondary) return 0;
+
+	fitSvgTextPreservingChildren(primary, SITE_HOOK_MAX_WIDTH, SITE_PRIMARY_FONT_SIZE, 112);
+	fitSvgTextPreservingChildren(secondary, SITE_HOOK_MAX_WIDTH, SITE_SECONDARY_FONT_SIZE, 112);
+
+	return 0;
+}
+
+function fitSvgTextPreservingChildren(
+	text: SVGTextElement,
+	maxWidth: number,
+	initialFontSize: number,
+	minimumFontSize: number
+): void {
+	const fontSize = getFittedFontSize(text.getComputedTextLength(), maxWidth, initialFontSize, minimumFontSize);
+	text.setAttribute('font-size', String(fontSize));
 }
 
 function fitAuthorText(text: SVGTextElement, maxWidth: number, initialFontSize: number, minimumFontSize: number): void {
@@ -495,7 +550,15 @@ function getSvgText(id: string): SVGTextElement | null {
 	return element instanceof SVGTextElement ? element : null;
 }
 
-function assertMetadataLayout(): void {
+function assertOverlayLayout(layout: 'gallery' | 'site'): void {
+	if (layout === 'gallery') {
+		assertGalleryMetadataLayout();
+		return;
+	}
+	assertSiteMetadataLayout();
+}
+
+function assertGalleryMetadataLayout(): void {
 	const title = getSvgText('gallery-og-title');
 	const description = getSvgText('gallery-og-description');
 	const author = getSvgText('gallery-og-author');
@@ -528,6 +591,47 @@ function assertMetadataLayout(): void {
 		}
 	} else if (titleBounds.bottom > authorBounds.top - TITLE_DESCRIPTION_GAP + tolerance) {
 		throw new Error('Gallery OG title and author overlap.');
+	}
+}
+
+function assertSiteMetadataLayout(): void {
+	const brand = document.getElementById('site-og-brand');
+	const topRight = getSvgText('site-og-top-right');
+	const hook = document.getElementById('site-og-hook');
+	const bottomLeft = getSvgText('site-og-bottom-left');
+	const bottomRight = getSvgText('site-og-bottom-right');
+	if (!brand || !topRight || !hook || !bottomLeft || !bottomRight) {
+		throw new Error('Site OG metadata overlay is incomplete.');
+	}
+
+	const elements = [
+		['brand', brand],
+		['top-right label', topRight],
+		['hook', hook],
+		['bottom-left label', bottomLeft],
+		['bottom-right label', bottomRight],
+	] as const;
+	const tolerance = 1;
+
+	for (const [label, element] of elements) {
+		const bounds = element.getBoundingClientRect();
+		if (
+			bounds.left < SITE_SAFE_INSET - tolerance ||
+			bounds.right > OG_WIDTH - SITE_SAFE_INSET + tolerance ||
+			bounds.top < SITE_VERTICAL_SAFE_INSET - tolerance ||
+			bounds.bottom > OG_HEIGHT - SITE_VERTICAL_SAFE_INSET + tolerance
+		) {
+			throw new Error(
+				`Site OG ${label} escaped its safe area (${Math.round(bounds.left)},${Math.round(bounds.top)} ${Math.round(bounds.width)}x${Math.round(bounds.height)}).`
+			);
+		}
+	}
+
+	const topBottom = Math.max(brand.getBoundingClientRect().bottom, topRight.getBoundingClientRect().bottom);
+	const hookBounds = hook.getBoundingClientRect();
+	const bottomTop = Math.min(bottomLeft.getBoundingClientRect().top, bottomRight.getBoundingClientRect().top);
+	if (hookBounds.top < topBottom + 48 - tolerance || hookBounds.bottom > bottomTop - 48 + tolerance) {
+		throw new Error('Site OG hook overlaps its corner labels.');
 	}
 }
 

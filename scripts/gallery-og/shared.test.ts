@@ -13,7 +13,7 @@ import {
 	readGalleryOgEntries,
 	renderGallerySocialHtml,
 	validateGalleryOgMeta,
-	validatePng,
+	validateOgPng,
 	type GallerySketchMeta,
 } from './shared';
 
@@ -105,10 +105,10 @@ describe('gallery OG assets and social pages', () => {
 		await writePngHeader(wrongSizePath, 600, 315);
 		await writeFile(corruptPath, Buffer.from('not a png'));
 
-		await expect(validatePng(validPath)).resolves.toEqual({ width: 1200, height: 630 });
-		await expect(validatePng(wrongSizePath)).rejects.toThrow('must be 1200x630');
-		await expect(validatePng(corruptPath)).rejects.toThrow('not a valid PNG');
-		await expect(validatePng(path.join(directory, 'missing.png'))).rejects.toThrow('Missing gallery OG image');
+		await expect(validateOgPng(validPath)).resolves.toEqual({ width: 1200, height: 630 });
+		await expect(validateOgPng(wrongSizePath)).rejects.toThrow('must be 1200x630');
+		await expect(validateOgPng(corruptPath)).rejects.toThrow('not a valid PNG');
+		await expect(validateOgPng(path.join(directory, 'missing.png'))).rejects.toThrow('Missing OG image');
 	});
 
 	it('escapes metadata and emits stable gallery social tags', () => {
@@ -121,7 +121,23 @@ describe('gallery OG assets and social pages', () => {
 		expect(html).toContain('https://editor.textmode.art/s/signal-bloom/');
 		expect(html).toContain('https://editor.textmode.art/og/signal-bloom.png');
 		expect(html).toContain('summary_large_image');
+		expect(html).not.toContain('https://editor.textmode.art/og.png');
+		expect(html.match(/property="og:image"/g)).toHaveLength(1);
+		expect(html.match(/name="twitter:image"/g)).toHaveLength(1);
 		expect(html).not.toContain('<title>Root</title>');
+	});
+
+	it('defines a complete general image card in the base editor HTML', async () => {
+		const rootHtml = await readFile(path.resolve(import.meta.dirname, '../..', 'index.html'), 'utf8');
+
+		expect(rootHtml).toContain('<meta name="twitter:card" content="summary_large_image" />');
+		expect(rootHtml).toContain('<meta property="og:image" content="https://editor.textmode.art/og.png" />');
+		expect(rootHtml).toContain('<meta property="og:image:type" content="image/png" />');
+		expect(rootHtml).toContain('<meta property="og:image:width" content="1200" />');
+		expect(rootHtml).toContain('<meta property="og:image:height" content="630" />');
+		expect(rootHtml).toContain('property="og:image:alt"');
+		expect(rootHtml).toContain('<meta name="twitter:image" content="https://editor.textmode.art/og.png" />');
+		expect(rootHtml).toContain('name="twitter:image:alt"');
 	});
 
 	it('publishes validated images and per-sketch HTML', async () => {
@@ -129,9 +145,12 @@ describe('gallery OG assets and social pages', () => {
 		const sketchDirectory = path.join(root, 'sketches', validMeta.slug);
 		await mkdir(sketchDirectory, { recursive: true });
 		await mkdir(path.join(root, 'dist'), { recursive: true });
+		await mkdir(path.join(root, 'public'), { recursive: true });
 		await writeFile(path.join(sketchDirectory, 'meta.json'), JSON.stringify(validMeta), 'utf8');
 		await writeFile(path.join(sketchDirectory, 'sketch.js'), 't.draw(() => {});', 'utf8');
 		await writePngHeader(path.join(sketchDirectory, 'og.png'), 1200, 630);
+		await writePngHeader(path.join(root, 'public', 'og.png'), 1200, 630);
+		await writePngHeader(path.join(root, 'dist', 'og.png'), 1200, 630);
 		await writeFile(
 			path.join(root, 'dist', 'index.html'),
 			'<html><head><title>Root</title></head><body></body></html>'
@@ -141,6 +160,19 @@ describe('gallery OG assets and social pages', () => {
 		await expect(readFile(path.join(root, 'dist', 'og', 'signal-bloom.png'))).resolves.toBeDefined();
 		const routeHtml = await readFile(path.join(root, 'dist', 's', 'signal-bloom', 'index.html'), 'utf8');
 		expect(routeHtml).toContain('summary_large_image');
+	});
+
+	it('requires the general source and built images even when the gallery is empty', async () => {
+		const root = await createTemporaryDirectory();
+		await Promise.all([
+			mkdir(path.join(root, 'sketches'), { recursive: true }),
+			mkdir(path.join(root, 'public'), { recursive: true }),
+			mkdir(path.join(root, 'dist'), { recursive: true }),
+		]);
+		await writePngHeader(path.join(root, 'public', 'og.png'), 600, 315);
+		await writePngHeader(path.join(root, 'dist', 'og.png'), 1200, 630);
+
+		await expect(publishGallerySocialPages(root)).rejects.toThrow('must be 1200x630');
 	});
 });
 
