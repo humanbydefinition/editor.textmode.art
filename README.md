@@ -52,10 +52,9 @@ Have a sketch worth sharing more widely? Submit it to the repository-backed
 gallery. Gallery entries can be loaded from stable `/s/<slug>/` links and from
 the editor’s random-sketch action.
 
-Start with the [gallery contribution guide](sketches/README.md) for the sketch
-format, metadata, deterministic-rendering requirements, and Open Graph preview
-workflow. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and licensing
-terms.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the sketch format, metadata,
+deterministic-rendering requirements, Open Graph preview workflow, and
+contribution terms.
 
 ## License
 

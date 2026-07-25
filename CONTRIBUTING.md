@@ -1,22 +1,15 @@
 # Contributing to editor.textmode.art
 
-## License
+Thanks for sharing a sketch with the editor.textmode.art gallery.
 
-Application and project source contributions outside [`sketches/`](sketches/) are licensed under the [GNU Affero General Public License v3.0 or later](LICENSE).
+Every merged entry lives in [`sketches/`](sketches/), has a shareable
+`/s/<slug>/` page, and may appear through the editor's random-sketch action.
+This guide covers the three required files, preview image, and pull-request
+workflow.
 
-Gallery sketch contributions use the additional licensing terms below so authors can keep clear reuse choices for their own work while the editor remains AGPL-compatible.
+## Structure
 
-## Testing changes
-
-- Run `npm test` while developing.
-- Run `npm run test:coverage` when changing owned decision-making logic.
-- Run `npm run check` before opening a pull request. It checks formatting, dependency policy, linting, test-inclusive types, scoped coverage, and the production build.
-
-## Contributing gallery sketches
-
-User-contributed gallery sketches are stored directly in this repository under [`sketches/`](sketches/). They power the random sketch button and `/s/<slug>/` gallery links.
-
-Create one folder per sketch:
+Add one folder per sketch:
 
 ```text
 sketches/
@@ -26,23 +19,100 @@ sketches/
     og.png
 ```
 
-Before opening a pull request:
+## `meta.json`
 
-- Pick a unique slug with lowercase letters, numbers, and hyphens only.
-- Keep the slug between 3 and 32 characters.
-- Make sure `meta.json` follows the schema documented in [`sketches/README.md`](sketches/README.md).
-- Keep `sketch.js` self-contained and compatible with `editor.textmode.art`.
-- Initialize stateful sketches in `t.setup()` so each submitted execution can recreate its state; the runner automatically releases resources created through textmode APIs.
-- Install Chromium once with `npm run playwright:install`.
-- Generate `og.png` with `npm run generate:og -- your-sketch-slug`; use `--frame` while choosing the best frame and persist that value as `ogFrame`.
-- Run `npm run check`. The production build rejects missing, corrupt, or incorrectly sized gallery images.
+Use this shape:
 
-Merged sketch PRs are treated as reviewed gallery entries. They may run automatically when users load their `/s/<slug>` URL or press the random sketch button.
+```json
+{
+  "slug": "your-sketch-slug",
+  "title": "Your Sketch Title",
+  "description": "A short description of the sketch.",
+  "authorName": "Your Name",
+  "license": "MIT",
+  "socialLinks": [{ "label": "Website", "url": "https://example.com" }],
+  "createdAt": "2026-05-16T00:00:00.000Z",
+  "ogFrame": 60
+}
+```
 
-## Gallery sketch licensing
+- `slug` must match the folder name and use 3–32 lowercase letters, numbers,
+  and hyphens.
+- `description`, `authorName`, `license`, and `socialLinks` can be `null`.
+- `ogFrame` is optional, must be an integer from 1 to 1000, and defaults to
+  60.
+- Prefer SPDX identifiers such as `MIT`, `Apache-2.0`, or `CC-BY-4.0` for a
+  standalone sketch license when one applies.
+- Social links must use HTTPS.
 
-The `editor.textmode.art` application remains licensed under the [GNU Affero General Public License v3.0 or later](LICENSE), including when it includes, hosts, or runs merged gallery sketches.
+## `sketch.js`
 
-You retain your copyright in sketches you submit. By submitting files under [`sketches/`](sketches/), you confirm that you have the rights to contribute them and that you grant this project permission to include, host, run, modify, and distribute the submitted sketch under the AGPL-3.0-or-later terms as part of this repository and website.
+Keep the code self-contained and compatible with the live editor, including
+names such as `t`, `osc`, `noise`, `gradient`, `char`, and `shape`. It must not
+be empty or exceed 300,000 characters.
 
-You may also choose an additional standalone license for the sketch itself in `meta.json` using the `license` field. That license describes how others may reuse the sketch as an independent creative/code work outside the bundled `editor.textmode.art` application. If you set `license` to `null`, no additional standalone license is declared; the AGPL gallery inclusion grant above still applies.
+Gallery sketches must render deterministically. Do not use `Math.random()`,
+`Date.now()`, `performance.now()`, or crypto randomness. Seed textmode random
+and noise before using them:
+
+```javascript
+t.randomSeed('your-sketch-v1');
+t.noiseSeed('your-sketch-v1');
+```
+
+The test suite rejects ambient entropy and unseeded textmode random or noise
+usage. Review also checks metadata validity, compatibility with the live
+editor, and gallery suitability.
+
+## `og.png`
+
+Every gallery sketch includes a committed 1200×630 Open Graph image:
+
+```bash
+npm run playwright:install
+npm run generate:og -- your-sketch-slug
+```
+
+Try another capture frame without editing metadata:
+
+```bash
+npm run generate:og -- your-sketch-slug --frame 120
+```
+
+Persist the selected frame as `ogFrame` and regenerate without the override.
+The renderer runs from the initial frame through the selected frame before it
+captures the image. Audio input is silence; remote images, fonts, and video
+must still be reachable.
+
+Run `npm run generate:og -- --all` to regenerate all gallery images, or
+`npm run generate:og -- --help` for the full CLI reference. The preview uses
+this repository's installed textmode.js, synth, filters, figlet, and export
+packages directly; it does not contact the hosted runner or editor backend.
+
+Production builds validate each PNG, copy it to `/og/<slug>.png`, and emit
+crawler-readable HTML at `/s/<slug>/`.
+
+## Pull request workflow
+
+1. Create `meta.json` and a self-contained, deterministic `sketch.js` in a new
+   `sketches/<slug>/` folder.
+2. Check the slug and metadata, then test the sketch in the editor.
+3. Install Chromium once with `npm run playwright:install`.
+4. Choose a preview frame with
+   `npm run generate:og -- your-sketch-slug --frame <n>`. This override does
+   not edit `meta.json`.
+5. Save the frame as `ogFrame`, generate the committed `og.png`, and inspect
+   its artwork, title, description, and author label.
+6. Run `npm run check`, then open a pull request containing `meta.json`,
+   `sketch.js`, and `og.png`.
+
+## Review expectations and licensing
+
+You retain copyright in your sketch. By submitting it, you confirm that you
+have the right to contribute it and grant permission for it to be included,
+hosted, run, modified, and distributed as part of editor.textmode.art under
+the repository's [AGPL-3.0](LICENSE) terms.
+
+You may declare an additional standalone license in `meta.json`. It governs
+independent reuse of the sketch outside the bundled application; use `null`
+when no additional license is declared.

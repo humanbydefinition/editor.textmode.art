@@ -36,8 +36,7 @@ export const APP_META = {
 	urls: {
 		support: 'https://code.textmode.art/docs/support',
 		repo: 'https://github.com/humanbydefinition/editor.textmode.art',
-		galleryContributionGuide:
-			'https://github.com/humanbydefinition/editor.textmode.art/blob/main/sketches/README.md',
+		galleryContributionGuide: 'https://github.com/humanbydefinition/editor.textmode.art/blob/main/CONTRIBUTING.md',
 		galleryPullRequest: 'https://github.com/humanbydefinition/editor.textmode.art/compare',
 		license: 'https://github.com/humanbydefinition/editor.textmode.art/blob/main/LICENSE',
 		discord: 'https://discord.gg/sjrw8QXNks',
