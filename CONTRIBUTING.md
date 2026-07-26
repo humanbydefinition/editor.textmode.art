@@ -33,7 +33,8 @@ Use this shape:
 	"license": "MIT",
 	"socialLinks": [{ "label": "Website", "url": "https://example.com" }],
 	"createdAt": "2026-05-16T00:00:00.000Z",
-	"ogFrame": 60
+	"ogFrame": 60,
+	"ogDarken": 70
 }
 ```
 
@@ -41,6 +42,8 @@ Use this shape:
   and hyphens.
 - `description`, `authorName`, `license`, and `socialLinks` can be `null`.
 - `ogFrame` is optional, must be an integer from 1 to 1000, and defaults to 60.
+- `ogDarken` is optional, must be an integer from 0 to 100, and defaults to 55.
+  It controls the opacity how much the sketch is darkened in the Open Graph preview image.
 - Prefer SPDX identifiers such as `MIT`, `Apache-2.0`, or `CC-BY-4.0` for a
   standalone sketch license when one applies.
 - Social links must use HTTPS.
@@ -73,13 +76,14 @@ npm run playwright:install
 npm run generate:og -- your-sketch-slug
 ```
 
-Try another capture frame without editing metadata:
+Try another capture frame or darken level without editing metadata:
 
 ```bash
-npm run generate:og -- your-sketch-slug --frame 120
+npm run generate:og -- your-sketch-slug --frame 120 --darken 70
 ```
 
-Persist the selected frame as `ogFrame` and regenerate without the override.
+Persist the selected frame as `ogFrame` and the darken as `ogDarken`, then
+regenerate without the overrides.
 The renderer runs from the initial frame through the selected frame before it
 captures the image. Audio input is silence; remote images, fonts, and video
 must still be reachable.
