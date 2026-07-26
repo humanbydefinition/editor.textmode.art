@@ -15,18 +15,23 @@ const METADATA_TOP = 164;
 const METADATA_BOTTOM = OG_HEIGHT - 48;
 const METADATA_MAX_WIDTH = OG_WIDTH - METADATA_LEFT * 2;
 const DESCRIPTION_MAX_WIDTH = 720;
-const TITLE_DESCRIPTION_GAP = 14;
-const DESCRIPTION_AUTHOR_GAP = 12;
-const TITLE_FONT_SIZE = 96;
-const TITLE_MIN_FONT_SIZE = 48;
-const DESCRIPTION_FONT_SIZE = 44;
-const DESCRIPTION_MIN_FONT_SIZE = 24;
+const TITLE_DESCRIPTION_GAP = 18;
+const DESCRIPTION_AUTHOR_GAP = 16;
+const TITLE_FONT_SIZE = 112;
+const TITLE_MIN_FONT_SIZE = 60;
+const DESCRIPTION_FONT_SIZE = 56;
+const DESCRIPTION_MIN_FONT_SIZE = 40;
 const DESCRIPTION_LINE_HEIGHT = 0.88;
-const AUTHOR_FONT_SIZE = 32;
-const AUTHOR_MIN_FONT_SIZE = 20;
-const BRAND_FONT_SIZE = 40;
-const BRAND_MARK_SIZE = 24;
-const CORNER_LABEL_FONT_SIZE = 36;
+const AUTHOR_FONT_SIZE = 44;
+const AUTHOR_MIN_FONT_SIZE = 40;
+const BRAND_FONT_SIZE = 52;
+const BRAND_MARK_SIZE = 32;
+const BRAND_MARK_Y_OFFSET = -9;
+const BRAND_TEXT_OFFSET = 48;
+const CORNER_LABEL_FONT_SIZE = 44;
+const HEADER_SAFE_TOP = 30;
+const HEADER_SAFE_BOTTOM = METADATA_TOP - 48;
+const MIN_CORNER_LABEL_GAP = 64;
 
 export interface MountedGalleryOverlay {
 	fit(): number;
@@ -56,9 +61,11 @@ export function mountGalleryOverlay(card: GalleryOgCard): MountedGalleryOverlay 
 		</defs>
 		<rect width="1200" height="150" fill="url(#top-scrim)" />
 		<rect y="120" width="1200" height="510" fill="url(#bottom-scrim)" />
-		<g transform="translate(48 49) scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
-		<text x="88" y="67" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>
-		<text x="1152" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
+		<g id="gallery-og-brand" transform="translate(${METADATA_LEFT} 49)">
+			<g transform="translate(0 ${BRAND_MARK_Y_OFFSET}) scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
+			<text x="${BRAND_TEXT_OFFSET}" y="18" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>
+		</g>
+		<text id="gallery-og-top-right" x="${OG_WIDTH - METADATA_LEFT}" y="67" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">GALLERY SKETCH</text>
 		<text id="gallery-og-title" x="${METADATA_LEFT}" y="0" fill="#f2f2ec" font-family="Monogram Extended" font-size="${TITLE_FONT_SIZE}" font-style="italic">${escapeMarkup(card.title)}</text>
 		<text id="gallery-og-description" x="${METADATA_LEFT}" y="0" fill="#b8b8b2" font-family="Monogram Extended" font-size="${DESCRIPTION_FONT_SIZE}">${escapeMarkup(card.description?.trim() ?? '')}</text>
 		<text id="gallery-og-author" x="${METADATA_LEFT}" y="0" fill="#8e8e88" font-family="Monogram Extended" font-size="${AUTHOR_FONT_SIZE}" letter-spacing="1"><tspan>by </tspan><tspan id="gallery-og-author-name" fill="#d8d8d2" font-style="italic">${escapeMarkup(displayAuthorName)}</tspan></text>
@@ -197,16 +204,39 @@ function assertGalleryMetadataContent(card: GalleryOgCard): void {
 }
 
 function assertGalleryMetadataLayout(): void {
+	const brand = document.getElementById('gallery-og-brand');
+	const topRight = getSvgText('gallery-og-top-right');
 	const title = getSvgText('gallery-og-title');
 	const description = getSvgText('gallery-og-description');
 	const author = getSvgText('gallery-og-author');
-	if (!title || !description || !author) throw new Error('Gallery OG metadata overlay is incomplete.');
+	if (!brand || !topRight || !title || !description || !author) {
+		throw new Error('Gallery OG metadata overlay is incomplete.');
+	}
 
+	const brandBounds = brand.getBoundingClientRect();
+	const topRightBounds = topRight.getBoundingClientRect();
 	const titleBounds = title.getBoundingClientRect();
 	const descriptionBounds = description.getBoundingClientRect();
 	const authorBounds = author.getBoundingClientRect();
 	const descriptionLines = Number(description.dataset.lineCount ?? 0);
 	const tolerance = 1;
+
+	for (const [label, bounds] of [
+		['brand', brandBounds],
+		['top-right label', topRightBounds],
+	] as const) {
+		if (
+			bounds.left < METADATA_LEFT - tolerance ||
+			bounds.right > OG_WIDTH - METADATA_LEFT + tolerance ||
+			bounds.top < HEADER_SAFE_TOP - tolerance ||
+			bounds.bottom > HEADER_SAFE_BOTTOM + tolerance
+		) {
+			throw new Error(`Gallery OG ${label} escaped its header safe area.`);
+		}
+	}
+	if (brandBounds.right + MIN_CORNER_LABEL_GAP > topRightBounds.left + tolerance) {
+		throw new Error('Gallery OG header labels do not have enough horizontal separation.');
+	}
 
 	if (titleBounds.top < METADATA_TOP - tolerance || authorBounds.bottom > METADATA_BOTTOM + tolerance) {
 		throw new Error('Gallery OG metadata escaped its vertical safe area.');

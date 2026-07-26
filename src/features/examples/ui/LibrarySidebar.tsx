@@ -1,6 +1,6 @@
 import { useCallback, type KeyboardEvent } from 'react';
+import { cn } from '@/shared/lib/cn';
 import type { ExampleLibraryCatalog, ExampleLibraryId } from '@/features/examples/types';
-import { LibrarySidebarItem } from './LibrarySidebarItem';
 
 interface LibrarySidebarProps {
 	libraries: readonly ExampleLibraryCatalog[];
@@ -42,17 +42,26 @@ export function LibrarySidebar({ libraries, selectedId, onSelect }: LibrarySideb
 			className="grid shrink-0 grid-cols-1 gap-1.5 border-b border-white/5 px-4 py-3 min-[420px]:grid-cols-6 sm:px-6"
 		>
 			{libraries.map((library, index) => (
-				<LibrarySidebarItem
+				<button
 					key={library.id}
-					id={library.id}
-					label={library.displayName}
-					isActive={library.id === selectedId}
-					onSelect={onSelect}
-					onKeyDown={(e) => handleKeyDown(e, index)}
+					role="tab"
+					aria-selected={library.id === selectedId}
+					aria-controls={`examples-panel-${library.id}`}
+					id={`tab-${library.id}`}
 					tabIndex={library.id === selectedId ? 0 : -1}
-					panelId={`examples-panel-${library.id}`}
-					className={index < 3 ? 'min-[420px]:col-span-2' : 'min-[420px]:col-span-3'}
-				/>
+					onClick={() => onSelect(library.id)}
+					onKeyDown={(e) => handleKeyDown(e, index)}
+					className={cn(
+						'flex min-h-8 w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors',
+						'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70',
+						library.id === selectedId
+							? 'bg-zinc-800 text-white'
+							: 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+						index < 3 ? 'min-[420px]:col-span-2' : 'min-[420px]:col-span-3'
+					)}
+				>
+					{library.displayName}
+				</button>
 			))}
 		</div>
 	);

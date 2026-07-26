@@ -6,9 +6,12 @@ const VERTICAL_SAFE_INSET = 30;
 const HOOK_MAX_WIDTH = OG_WIDTH - SAFE_INSET * 2;
 const PRIMARY_FONT_SIZE = 158;
 const SECONDARY_FONT_SIZE = 150;
-const BRAND_FONT_SIZE = 40;
-const BRAND_MARK_SIZE = 24;
-const CORNER_LABEL_FONT_SIZE = 36;
+const BRAND_FONT_SIZE = 52;
+const BRAND_MARK_SIZE = 32;
+const BRAND_MARK_Y_OFFSET = -9;
+const BRAND_TEXT_OFFSET = 48;
+const CORNER_LABEL_FONT_SIZE = 44;
+const MIN_CORNER_LABEL_GAP = 64;
 
 export interface MountedSiteOverlay {
 	fit(): number;
@@ -27,16 +30,16 @@ export function mountSiteOverlay(): MountedSiteOverlay {
 	svg.setAttribute('viewBox', `0 0 ${OG_WIDTH} ${OG_HEIGHT}`);
 	svg.innerHTML = `
 		<g id="site-og-brand" transform="translate(${SAFE_INSET} 47)">
-			<g transform="scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
-			<text x="40" y="20" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>
+			<g transform="translate(0 ${BRAND_MARK_Y_OFFSET}) scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
+			<text x="${BRAND_TEXT_OFFSET}" y="20" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>
 		</g>
 		<text id="site-og-top-right" x="${OG_WIDTH - SAFE_INSET}" y="66" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">FREE + OPEN SOURCE</text>
 		<g id="site-og-hook" fill="#f2f2ec" font-family="Monogram Extended" text-anchor="start">
 			<text id="site-og-hook-primary" x="${SAFE_INSET}" y="295" font-size="${PRIMARY_FONT_SIZE}" letter-spacing="2" xml:space="preserve">CREATE </text><g id="site-og-hook-wave"><text font-size="${PRIMARY_FONT_SIZE}" font-style="italic">TEXTMODE</text></g>
 			<text id="site-og-hook-secondary" x="${SAFE_INSET}" y="420" font-size="${SECONDARY_FONT_SIZE}" letter-spacing="2">IN YOUR BROWSER</text>
 		</g>
-		<text id="site-og-bottom-left" x="${SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODE / CHARACTER GRAPHICS</text>
-		<text id="site-og-bottom-right" x="${OG_WIDTH - SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">BROWSER-BASED / TEXTMODE.JS</text>
+		<text id="site-og-bottom-left" x="${SAFE_INSET}" y="594" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODE / CHARACTER GRAPHICS</text>
+		<text id="site-og-bottom-right" x="${OG_WIDTH - SAFE_INSET}" y="594" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">BROWSER-BASED / TEXTMODE.JS</text>
 	`;
 	document.body.appendChild(svg);
 
@@ -148,9 +151,20 @@ function assertSiteMetadataLayout(): void {
 		}
 	}
 
-	const topBottom = Math.max(brand.getBoundingClientRect().bottom, topRight.getBoundingClientRect().bottom);
+	const brandBounds = brand.getBoundingClientRect();
+	const topRightBounds = topRight.getBoundingClientRect();
+	const bottomLeftBounds = bottomLeft.getBoundingClientRect();
+	const bottomRightBounds = bottomRight.getBoundingClientRect();
+	if (
+		brandBounds.right + MIN_CORNER_LABEL_GAP > topRightBounds.left + tolerance ||
+		bottomLeftBounds.right + MIN_CORNER_LABEL_GAP > bottomRightBounds.left + tolerance
+	) {
+		throw new Error('Site OG opposing corner labels do not have enough horizontal separation.');
+	}
+
+	const topBottom = Math.max(brandBounds.bottom, topRightBounds.bottom);
 	const hookBounds = hook.getBoundingClientRect();
-	const bottomTop = Math.min(bottomLeft.getBoundingClientRect().top, bottomRight.getBoundingClientRect().top);
+	const bottomTop = Math.min(bottomLeftBounds.top, bottomRightBounds.top);
 	if (hookBounds.top < topBottom + 48 - tolerance || hookBounds.bottom > bottomTop - 48 + tolerance) {
 		throw new Error('Site OG hook overlaps its corner labels.');
 	}
