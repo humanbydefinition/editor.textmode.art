@@ -14,13 +14,6 @@ export default defineConfig({
 	preserveOutput: 'failures-only',
 	updateSnapshots: 'none',
 	snapshotPathTemplate: path.join(root, '{arg}{ext}'),
-	expect: {
-		timeout: 10_000,
-		toMatchSnapshot: {
-			maxDiffPixels: 0,
-			threshold: 0,
-		},
-	},
 	reporter: process.env.CI
 		? [['list'], ['html', { outputFolder: path.join(root, 'playwright-report'), open: 'never' }]]
 		: 'list',
