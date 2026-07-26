@@ -15,9 +15,6 @@ export default defineConfig({
 	},
 	server: {
 		cors: true,
-		headers: {
-			'Access-Control-Allow-Origin': '*',
-		},
 	},
 	build: {
 		rolldownOptions: {

@@ -40,16 +40,6 @@ export function fitSvgText(
 	}
 }
 
-export function fitSvgTextPreservingChildren(
-	text: SVGTextElement,
-	maxWidth: number,
-	initialFontSize: number,
-	minimumFontSize: number
-): void {
-	const fontSize = getFittedFontSize(text.getComputedTextLength(), maxWidth, initialFontSize, minimumFontSize);
-	text.setAttribute('font-size', String(fontSize));
-}
-
 export function measureSvgText(text: SVGTextElement, value: string): number {
 	text.textContent = value;
 	return text.getComputedTextLength();

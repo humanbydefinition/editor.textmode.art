@@ -13,8 +13,6 @@ export interface GalleryManagerDependencies {
 	setError: (error: CodeError | null) => void;
 	applyGallerySketch: (sketch: GallerySketch) => void;
 	replaceUrl: (url: string) => void;
-	getSketchBySlug?: (slug: string) => GallerySketch | null;
-	getRandomSketch?: (excludeSlug?: string) => GallerySketch | null;
 }
 
 export class GalleryManager {
@@ -30,7 +28,7 @@ export class GalleryManager {
 		const detectedSlug = getGallerySlugFromPathname(location.pathname);
 		if (!detectedSlug) return;
 
-		const sketch = (this.deps.getSketchBySlug ?? getGallerySketchBySlug)(normalizeSlug(detectedSlug));
+		const sketch = getGallerySketchBySlug(normalizeSlug(detectedSlug));
 		if (!sketch) {
 			this.deps.replaceUrl('/');
 			return;
@@ -43,7 +41,7 @@ export class GalleryManager {
 
 	loadRandom(): boolean {
 		const currentSlug = this.deps.getGallerySketch()?.slug;
-		const sketch = (this.deps.getRandomSketch ?? getRandomGallerySketch)(currentSlug);
+		const sketch = getRandomGallerySketch(currentSlug);
 		if (!sketch) return false;
 
 		this.applyGallerySketch(sketch);

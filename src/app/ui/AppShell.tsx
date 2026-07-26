@@ -32,7 +32,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 	// Store State
 	const editorBackdrop = useAppStore((state) => state.settings.editorBackdrop);
 	const error = useAppStore((state) => state.error);
-	const textmodeHasLastWorking = useAppStore((state) => hasLastWorkingCode(state.lastWorkingCode));
+	const textmodeHasLastWorking = useAppStore((state) => state.lastWorkingCode !== null);
 	const setError = useAppStore((state) => state.setError);
 	const sharePayload = useAppStore((state) => state.share.payload);
 	const shareConsented = useAppStore((state) => state.share.consented);
@@ -180,8 +180,4 @@ function getErrorDescription(error: { message: string; line?: number; column?: n
 		error.line !== undefined ? `line ${error.line}${error.column !== undefined ? `:${error.column}` : ''}` : null;
 
 	return location ? `${location}: ${error.message}` : error.message;
-}
-
-function hasLastWorkingCode(code: string | null | undefined): boolean {
-	return code !== null && code !== undefined;
 }

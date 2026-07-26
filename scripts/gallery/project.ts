@@ -3,7 +3,6 @@ import path from 'node:path';
 import { validateGallerySketchMeta, type GallerySketchMeta } from '../../src/features/gallery-sketches/model/metadata';
 
 export interface GalleryEntry {
-	directory: string;
 	metaPath: string;
 	sketchPath: string;
 	ogPath: string;
@@ -42,7 +41,6 @@ export async function readGalleryEntries(projectRoot: string): Promise<GalleryEn
 
 		await readFile(sketchPath, 'utf8');
 		entries.push({
-			directory,
 			metaPath,
 			sketchPath,
 			ogPath,
