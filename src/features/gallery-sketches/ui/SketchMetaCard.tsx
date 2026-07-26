@@ -1,9 +1,9 @@
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import type { GallerySketchSummary } from '../types';
+import type { GallerySketch } from '../types';
 
 interface SketchMetaCardProps {
-	sketch: GallerySketchSummary;
+	sketch: Pick<GallerySketch, 'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks'>;
 	showDismiss?: boolean;
 	onDismiss?: () => void;
 	className?: string;
@@ -38,7 +38,6 @@ const LICENSE_LINKS: Record<string, string> = {
 
 export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, className }: SketchMetaCardProps) {
 	const socialLinks = sketch.socialLinks ?? [];
-	const socialLinkKeyCounts = new Map<string, number>();
 
 	return (
 		<section
@@ -73,38 +72,30 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 				</p>
 			)}
 
-			{(sketch.authorName || sketch.license || socialLinks.length > 0 || sketch.slug) && (
-				<div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
-					{sketch.authorName && (
-						<span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 max-w-[10rem]">
-							<User className="h-3 w-3 shrink-0" />
-							<span className="truncate">{sketch.authorName}</span>
-						</span>
-					)}
-					{sketch.license && <LicenseBadge license={sketch.license} />}
-					{socialLinks.map((link) => {
-						const baseKey = `${link.url}::${link.label}`;
-						const occurrenceCount = socialLinkKeyCounts.get(baseKey) ?? 0;
-						socialLinkKeyCounts.set(baseKey, occurrenceCount + 1);
-						const displayLabel = getDisplayLink(link.label, link.url);
-						return (
-							<a
-								key={`${baseKey}::${occurrenceCount}`}
-								href={link.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[9rem]"
-							>
-								<ExternalLink className="h-3 w-3 shrink-0" />
-								<span className="truncate">{displayLabel}</span>
-							</a>
-						);
-					})}
-					<span className="inline-flex min-w-0 max-w-full items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
-						<span className="break-all">/s/{sketch.slug}</span>
+			<div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
+				{sketch.authorName && (
+					<span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 max-w-[10rem]">
+						<User className="h-3 w-3 shrink-0" />
+						<span className="truncate">{sketch.authorName}</span>
 					</span>
-				</div>
-			)}
+				)}
+				{sketch.license && <LicenseBadge license={sketch.license} />}
+				{socialLinks.map((link) => (
+					<a
+						key={`${link.url}::${link.label}`}
+						href={link.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[9rem]"
+					>
+						<ExternalLink className="h-3 w-3 shrink-0" />
+						<span className="truncate">{link.label}</span>
+					</a>
+				))}
+				<span className="inline-flex min-w-0 max-w-full items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
+					<span className="break-all">/s/{sketch.slug}/</span>
+				</span>
+			</div>
 		</section>
 	);
 }
@@ -112,11 +103,7 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 function LicenseBadge({ license }: { license: string }) {
 	const url = LICENSE_LINKS[license];
 	if (!url) {
-		return (
-			<span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-				{license}
-			</span>
-		);
+		return <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">{license}</span>;
 	}
 
 	return (
@@ -130,15 +117,4 @@ function LicenseBadge({ license }: { license: string }) {
 			<span>{license}</span>
 		</a>
 	);
-}
-
-function getDisplayLink(label: string, url: string): string {
-	const cleanLabel = label.trim();
-	if (cleanLabel) return cleanLabel;
-
-	try {
-		return new URL(url).hostname.replace(/^www\./, '');
-	} catch {
-		return url;
-	}
 }

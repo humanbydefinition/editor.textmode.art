@@ -15,12 +15,9 @@ export default defineConfig({
 	},
 	server: {
 		cors: true,
-		headers: {
-			'Access-Control-Allow-Origin': '*',
-		},
 	},
 	build: {
-		rollupOptions: {
+		rolldownOptions: {
 			input: {
 				main: resolve(__dirname, 'index.html'),
 			},

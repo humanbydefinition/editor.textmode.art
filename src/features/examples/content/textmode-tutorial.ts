@@ -5,7 +5,6 @@ export const tutorials: Example[] = [
 		id: 'synth-tutorial-1',
 		name: 'tutorial #1',
 		description: 'introduction to editor.textmode.art',
-		category: 'tutorial',
 		code: `/**
  * Welcome to \`editor.textmode.art\`!
  * 
@@ -46,7 +45,6 @@ t.layers.base.synth(
 		id: 'synth-tutorial-2',
 		name: 'tutorial #2',
 		description: 'layering channels & composition',
-		category: 'tutorial',
 		code: `/**
  * @title editor.textmode.art - tutorial #2
  * @author humanbydefinition - https://github.com/humanbydefinition
@@ -100,7 +98,6 @@ t.layers.base.synth(
 		id: 'synth-tutorial-3',
 		name: 'tutorial #3',
 		description: 'custom character maps',
-		category: 'tutorial',
 		code: `/**
  * @title editor.textmode.art - tutorial #3
  * @author humanbydefinition - https://github.com/humanbydefinition
@@ -147,7 +144,6 @@ t.layers.base.synth(
 		id: 'synth-tutorial-4',
 		name: 'tutorial #4',
 		description: 'layering system & composition',
-		category: 'tutorial',
 		code: `/**
  * @title editor.textmode.art - tutorial #4
  * @author humanbydefinition - https://github.com/humanbydefinition

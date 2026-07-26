@@ -1,8 +1,5 @@
-# Build outputs
-dist/
-node_modules/
-
-# Shader files (special syntax)
-**/*.frag
-**/*.vert
-**/*.glsl
+coverage/
+playwright-report/
+test-results/
+src/textmode/config/generated/
+sketches/

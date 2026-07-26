@@ -1,1 +1,1 @@
-export { SystemMenu, type SystemMenuProps } from './ui/SystemMenu';
+export { SystemMenu } from './ui/SystemMenu';

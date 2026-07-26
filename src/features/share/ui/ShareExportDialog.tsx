@@ -24,12 +24,7 @@ function formatCount(value: number): string {
 	return new Intl.NumberFormat('en-US').format(value);
 }
 
-export function ShareExportDialog({
-	open,
-	data,
-	onOpenChange,
-	onCopyLink,
-}: ShareExportDialogProps) {
+export function ShareExportDialog({ open, data, onOpenChange, onCopyLink }: ShareExportDialogProps) {
 	const [copied, setCopied] = useState(false);
 
 	const computed = useMemo(() => {
@@ -136,9 +131,9 @@ export function ShareExportDialog({
 											contribute to the gallery
 										</h3>
 										<p className="text-[12px] leading-5 text-zinc-400">
-											to make this sketch discoverable through random gallery loading, add it under{' '}
-											<span className="font-mono text-zinc-300">sketches/&lt;slug&gt;</span> and
-											open a pull request on GitHub.
+											to make this sketch discoverable through random gallery loading, add it
+											under <span className="font-mono text-zinc-300">sketches/&lt;slug&gt;</span>{' '}
+											and open a pull request on GitHub.
 										</p>
 									</div>
 
@@ -147,7 +142,11 @@ export function ShareExportDialog({
 											asChild
 											className="h-8 bg-violet-500/15 border border-violet-300/20 px-3 text-xs text-violet-100 hover:bg-violet-500/25"
 										>
-											<a href={APP_META.urls.galleryPullRequest} target="_blank" rel="noopener noreferrer">
+											<a
+												href={APP_META.urls.galleryPullRequest}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
 												<GitPullRequest className="h-3.5 w-3.5" />
 												open PR
 											</a>
@@ -170,7 +169,6 @@ export function ShareExportDialog({
 								</div>
 							</div>
 						</div>
-
 					</div>
 				</ScrollArea>
 			</DialogContent>

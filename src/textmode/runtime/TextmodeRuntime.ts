@@ -1,214 +1,231 @@
 import { IframeTextmodeRuntime, type RunnerExecutionError } from '@textmode/runner-client';
-import type { IHostRuntime, HostRuntimeOptions } from './types';
 import type { CodeError } from '@/types';
 
-const HANDSHAKE_TIMEOUT_MS = 5000;
+export interface AudioDataFrame {
+	fft: Uint8Array;
+	waveform: Uint8Array;
+	timestamp: number;
+}
+
+export interface TextmodeRuntimeOptions {
+	runnerUrl: string;
+	container: HTMLElement;
+	onRunOk: (timestamp: number, code: string) => void;
+	onRunError: (error: CodeError) => void;
+	onSynthError?: (error: CodeError) => void;
+	onToggleUI?: () => void;
+	onHardReset?: () => void;
+	onRunnerConnected?: () => void;
+	onRunnerDisconnected?: () => void;
+}
 
 /**
- * TextmodeRuntime preserves synth's host runtime surface while delegating the
- * iframe transport and current runner protocol to the shared client package.
+ * Adapts the shared runner client to editor-specific execution errors, iframe
+ * presentation, and the latest code requested before the runner becomes ready.
  */
-export class TextmodeRuntime implements IHostRuntime {
-	readonly strategy = 'sandboxed' as const;
+export class TextmodeRuntime {
+	private static readonly CANDIDATE_TIMEOUT_MS = 2000;
+	private static readonly RENDER_CHECKPOINT_TIMEOUT_MS = 250;
+	private static readonly RENDER_CHECKPOINT_FRAMES = 2;
 
-	private readonly container: HTMLElement;
+	private readonly options: TextmodeRuntimeOptions;
 	private readonly runtime: IframeTextmodeRuntime;
-	private readonly options: HostRuntimeOptions;
-	private isRuntimeReady = false;
-	private pendingCode: string | null = null;
-	private pendingSoftReset = false;
-	private lastRequestedCode: string | null = null;
-	private runnerUnavailable = false;
+	private pendingExecution: { code: string; mode: 'run' | 'reset-runtime' } | null = null;
+	private activeCandidate: { error: CodeError | null } | null = null;
+	private candidatePromise: Promise<boolean> | null = null;
+	private userActivationRequired = false;
+	private disposed = false;
 
-	private onReadyCallback?: () => void;
-	private onRunOk?: (timestamp: number) => void;
-	private onRunError?: (error: CodeError) => void;
-	private onSynthError?: (error: CodeError) => void;
-	private onUserInteractionCallback?: () => void;
-	private onRunnerConnected?: () => void;
-	private onRunnerDisconnected?: () => void;
-
-	constructor(options: HostRuntimeOptions) {
+	constructor(options: TextmodeRuntimeOptions) {
 		this.options = options;
-		this.container = options.container;
-		this.onReadyCallback = options.onReady;
-		this.onRunOk = options.onRunOk;
-		this.onRunError = options.onRunError;
-		this.onSynthError = options.onSynthError;
-		this.onRunnerConnected = options.onRunnerConnected;
-		this.onRunnerDisconnected = options.onRunnerDisconnected;
-
 		this.runtime = new IframeTextmodeRuntime({
 			runnerUrl: options.runnerUrl,
 			mountMode: 'append',
-			handshakeTimeoutMs: HANDSHAKE_TIMEOUT_MS,
 			onReady: () => this.handleReady(),
-			onRunOk: (message) => {
-				this.onRunOk?.(message.timestamp);
-			},
-			onRunError: (error) => {
-				this.onRunError?.(this.toCodeError(error));
-			},
-			onSynthError: (message) => {
-				this.onSynthError?.({ message });
-			},
-			onToggleUI: () => {
-				this.options.onToggleUI?.();
-			},
-			onUserInteraction: () => {
-				this.onUserInteractionCallback?.();
-			},
-			onUnavailable: () => {
-				this.handleRunnerUnavailable();
-			},
+			onRunError: (error) => this.handleRuntimeError(toCodeError(error)),
+			onSynthError: (message) => this.handleSynthError({ message }),
+			onHardReset: options.onHardReset,
+			onToggleUI: options.onToggleUI,
+			onUserActivationRequired: () => this.handleUserActivationRequired(),
+			onUserInteraction: () => this.handleUserInteraction(),
+			onUnavailable: () => this.handleUnavailable(),
 		});
 	}
 
-	/**
-	 * Create and initialize the iframe.
-	 */
-	init(): void {
-		this.startRuntime();
-	}
-
-	/**
-	 * Check if iframe is ready to receive code.
-	 */
-	isReady(): boolean {
-		return this.isRuntimeReady && this.runtime.isReady;
-	}
-
-	/**
-	 * Run code immediately.
-	 */
-	forceRun(code: string): void {
-		this.lastRequestedCode = code;
-		if (!this.isReady()) {
-			this.setPendingCode(code, false);
-			return;
+	init(initialCode = ''): void {
+		if (initialCode) {
+			this.pendingExecution = { code: initialCode, mode: 'run' };
 		}
 
-		void this.runtime.runCode(code).catch((error) => {
-			this.onRunError?.(this.toCodeError(error));
-		});
-	}
-
-	/**
-	 * Soft reset - reset frameCount to 0 and re-run code.
-	 */
-	softReset(code: string): void {
-		this.lastRequestedCode = code;
-		if (!this.isReady()) {
-			this.setPendingCode(code, true);
-			return;
-		}
-
-		void this.runtime.runCode(code, { softReset: true }).catch((error) => {
-			this.onRunError?.(this.toCodeError(error));
-		});
-	}
-
-	setOnUserInteraction(callback: (() => void) | undefined): void {
-		this.onUserInteractionCallback = callback;
-	}
-
-	/**
-	 * Manually retry loading the runner iframe.
-	 */
-	reconnect(): void {
-		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode, false);
-		}
-		this.runtime.dispose();
-		this.startRuntime();
-	}
-
-	/**
-	 * Trigger iframe activation from a trusted user gesture (e.g. click).
-	 * Safari/WebKit may unlock full requestAnimationFrame cadence after this.
-	 */
-	activateFromUserGesture(): void {
-		this.runtime.activateFromUserGesture();
-	}
-
-	/**
-	 * Cleanup.
-	 */
-	dispose(): void {
-		this.isRuntimeReady = false;
-		this.pendingCode = null;
-		this.runtime.dispose();
-	}
-
-	private startRuntime(): void {
-		this.isRuntimeReady = false;
-
-		void this.runtime
-			.init(this.container)
-			.then(() => {
-				this.decorateIframe();
-			})
-			.catch(() => {
-				this.handleRunnerUnavailable();
-			});
-
+		const initialization = this.runtime.init(this.options.container);
 		this.decorateIframe();
+		void initialization.catch(() => undefined);
+	}
+
+	forceRun(code: string): void {
+		this.execute(code, 'run');
+	}
+
+	resetRuntime(code: string): void {
+		this.execute(code, 'reset-runtime');
+	}
+
+	tryCandidate(code: string, baseline: string): Promise<boolean> {
+		if (this.disposed || !this.runtime.isReady || this.candidatePromise) {
+			return Promise.resolve(false);
+		}
+
+		const candidatePromise = this.performCandidateProbe(code, baseline);
+		this.candidatePromise = candidatePromise;
+		const clearCandidatePromise = () => {
+			if (this.candidatePromise === candidatePromise) {
+				this.candidatePromise = null;
+			}
+		};
+		void candidatePromise.then(clearCandidatePromise, clearCandidatePromise);
+		return candidatePromise;
+	}
+
+	reloadSandbox(code: string): void {
+		if (this.disposed) return;
+		this.pendingExecution = { code, mode: 'run' };
+		this.setUserActivationRequired(false);
+
+		const reconnection = this.runtime.reconnect({ rerun: false });
+		this.decorateIframe();
+		void reconnection.catch(() => undefined);
+	}
+
+	sendAudioData(data: AudioDataFrame): boolean {
+		return this.runtime.sendAudioData(data);
+	}
+
+	dispose(): void {
+		this.disposed = true;
+		this.pendingExecution = null;
+		this.activeCandidate = null;
+		this.setUserActivationRequired(false);
+		this.runtime.dispose();
+	}
+
+	private execute(code: string, mode: 'run' | 'reset-runtime'): void {
+		if (this.disposed) return;
+		if (!this.runtime.isReady) {
+			this.pendingExecution = { code, mode };
+			return;
+		}
+
+		this.pendingExecution = null;
+		const execution = mode === 'reset-runtime' ? this.runtime.resetRuntime(code) : this.runtime.runCode(code);
+		void execution.then(
+			(success) => {
+				if (success && !this.disposed) {
+					this.options.onRunOk(Date.now(), code);
+				}
+			},
+			(error: unknown) => this.handleRuntimeError(toCodeError(error))
+		);
+	}
+
+	private async performCandidateProbe(code: string, baseline: string): Promise<boolean> {
+		const candidate = { error: null as CodeError | null };
+		this.activeCandidate = candidate;
+
+		try {
+			try {
+				await this.runtime.probeCode(code, { timeoutMs: TextmodeRuntime.CANDIDATE_TIMEOUT_MS });
+			} catch (error) {
+				const reconnect = isRequestTimeout(error) || !this.runtime.isReady;
+				await this.restoreBaseline(baseline, reconnect);
+				return false;
+			}
+
+			const rendered = await waitForRenderCheckpoint(
+				TextmodeRuntime.RENDER_CHECKPOINT_FRAMES,
+				TextmodeRuntime.RENDER_CHECKPOINT_TIMEOUT_MS
+			);
+			if (!rendered || candidate.error) {
+				await this.restoreBaseline(baseline, false);
+				return false;
+			}
+
+			return true;
+		} finally {
+			if (this.activeCandidate === candidate) {
+				this.activeCandidate = null;
+			}
+		}
+	}
+
+	private async restoreBaseline(code: string, reconnect: boolean): Promise<boolean> {
+		if (this.disposed) return false;
+
+		try {
+			if (reconnect) {
+				const reconnected = await this.runtime.reconnect({ rerun: false });
+				this.decorateIframe();
+				if (!reconnected) throw new Error('runner did not reconnect');
+			}
+
+			await this.runtime.runCode(code);
+			return true;
+		} catch (error) {
+			if (!this.disposed) {
+				this.options.onRunError(toCodeError(error));
+			}
+			return false;
+		}
+	}
+
+	private handleRuntimeError(error: CodeError): void {
+		const candidate = this.activeCandidate;
+		if (candidate) {
+			candidate.error ??= error;
+			return;
+		}
+		this.options.onRunError(error);
+	}
+
+	private handleSynthError(error: CodeError): void {
+		const candidate = this.activeCandidate;
+		if (candidate) {
+			candidate.error ??= error;
+			return;
+		}
+		this.options.onSynthError?.(error);
 	}
 
 	private handleReady(): void {
-		const wasUnavailable = this.runnerUnavailable;
-		this.isRuntimeReady = true;
+		if (this.disposed) return;
 		this.decorateIframe();
-		this.runtime.frame?.style.setProperty('opacity', '1');
-		this.setRunnerUnavailable(false);
-
-		if (!wasUnavailable) {
-			this.onRunnerConnected?.();
-		}
-
-		this.onReadyCallback?.();
+		this.options.onRunnerConnected?.();
 		this.flushPendingCode();
 	}
 
-	private handleRunnerUnavailable(): void {
-		this.isRuntimeReady = false;
-
-		if (this.pendingCode === null && this.lastRequestedCode !== null) {
-			this.setPendingCode(this.lastRequestedCode, false);
-		}
-
-		this.setRunnerUnavailable(true);
+	private handleUnavailable(): void {
+		if (this.disposed) return;
+		this.options.onRunnerDisconnected?.();
 	}
 
-	private setPendingCode(code: string, softReset: boolean): void {
-		this.pendingCode = code;
-		this.pendingSoftReset = softReset;
+	private handleUserActivationRequired(): void {
+		if (this.disposed) return;
+		this.setUserActivationRequired(true);
+	}
+
+	private handleUserInteraction(): void {
+		if (this.disposed) return;
+		this.setUserActivationRequired(false);
 	}
 
 	private flushPendingCode(): void {
-		if (this.pendingCode === null) return;
-
-		const code = this.pendingCode;
-		const softReset = this.pendingSoftReset;
-		this.pendingCode = null;
-		this.pendingSoftReset = false;
-
-		if (softReset) {
-			this.softReset(code);
-			return;
-		}
-
-		this.forceRun(code);
+		const pending = this.pendingExecution;
+		if (!pending) return;
+		this.execute(pending.code, pending.mode);
 	}
 
-	private setRunnerUnavailable(isUnavailable: boolean): void {
-		if (this.runnerUnavailable === isUnavailable) return;
-		this.runnerUnavailable = isUnavailable;
-		if (isUnavailable) {
-			this.onRunnerDisconnected?.();
-			return;
-		}
-		this.onRunnerConnected?.();
+	private setUserActivationRequired(required: boolean): void {
+		this.userActivationRequired = required;
+		this.updateActivationPresentation();
 	}
 
 	private decorateIframe(): void {
@@ -216,27 +233,70 @@ export class TextmodeRuntime implements IHostRuntime {
 		if (!frame) return;
 
 		frame.id = 'runner-frame';
-		frame.style.opacity = this.isRuntimeReady ? '1' : '0';
+		frame.style.opacity = this.runtime.isReady ? '1' : '0';
 		frame.style.transition = 'opacity 140ms ease';
+		this.updateActivationPresentation();
 	}
 
-	private toCodeError(error: unknown): CodeError {
-		if (this.isRunnerExecutionError(error)) {
-			return {
-				message: error.message,
-				stack: error.stack,
-				line: error.line,
-				column: error.column,
-			};
-		}
+	private updateActivationPresentation(): void {
+		document.body.classList.toggle('runner-activation-required', this.userActivationRequired);
 
+		const frame = this.runtime.frame;
+		if (!frame) return;
+		if (this.userActivationRequired) {
+			frame.dataset.userActivation = 'required';
+		} else {
+			delete frame.dataset.userActivation;
+		}
+	}
+}
+
+function toCodeError(error: unknown): CodeError {
+	if (isRunnerExecutionError(error)) {
 		return {
-			message: error instanceof Error ? error.message : String(error),
-			stack: error instanceof Error ? error.stack : undefined,
+			message: error.message,
+			line: error.line,
+			column: error.column,
 		};
 	}
 
-	private isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
-		return typeof error === 'object' && error !== null && 'message' in error;
-	}
+	return {
+		message: error instanceof Error ? error.message : String(error),
+	};
+}
+
+function isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
+	return typeof error === 'object' && error !== null && 'message' in error;
+}
+
+function isRequestTimeout(error: unknown): boolean {
+	return error instanceof Error && error.message.startsWith('runner request timed out:');
+}
+
+function waitForRenderCheckpoint(frames: number, timeoutMs: number): Promise<boolean> {
+	if (typeof requestAnimationFrame !== 'function') return Promise.resolve(false);
+
+	return new Promise((resolve) => {
+		let frameCount = 0;
+		let frameId: number | null = null;
+		let settled = false;
+
+		const finish = (success: boolean) => {
+			if (settled) return;
+			settled = true;
+			window.clearTimeout(timeoutId);
+			if (frameId !== null) cancelAnimationFrame(frameId);
+			resolve(success);
+		};
+		const onFrame = () => {
+			frameCount += 1;
+			if (frameCount >= frames) {
+				finish(true);
+				return;
+			}
+			frameId = requestAnimationFrame(onFrame);
+		};
+		const timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+		frameId = requestAnimationFrame(onFrame);
+	});
 }

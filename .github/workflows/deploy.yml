@@ -1,70 +1,74 @@
 name: Deploy editor.textmode.art to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
 
 permissions:
-  contents: read
+    contents: read
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+    group: pages
+    cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-24.04
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
+            - name: Setup Node
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24
+                  cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Type check
-        run: npm run check-types
+            - name: Install Chromium
+              run: npx playwright install chromium --with-deps --no-shell
 
-      - name: Lint
-        run: npm run lint
+            - name: Check
+              run: npm run check
+              env:
+                  VITE_RUNNER_URL: https://runner.textmode.art/
 
-      - name: Test
-        run: npm run test
+            - name: Upload OG test artifacts
+              if: failure()
+              uses: actions/upload-artifact@v7
+              with:
+                  name: og-playwright-report
+                  path: |
+                      playwright-report/
+                      test-results/og/
+                  if-no-files-found: ignore
 
-      - name: Build
-        run: npm run build
-        env:
-          VITE_RUNNER_URL: https://runner.textmode.art/
+            - name: Create SPA fallback
+              run: cp dist/index.html dist/404.html
 
-      - name: Create SPA fallback
-        run: cp dist/index.html dist/404.html
+            - name: Upload Pages artifact
+              uses: actions/upload-pages-artifact@v5
+              with:
+                  path: dist
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: dist
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+        permissions:
+            pages: write
+            id-token: write
 
-    permissions:
-      pages: write
-      id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v5

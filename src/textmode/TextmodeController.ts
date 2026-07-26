@@ -1,7 +1,4 @@
 import type { CodeError } from '@/types';
-import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
-import type { TextmodeEditor } from './editor/TextmodeEditor';
-import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 
 const CONFIRMATION_DELAY_MS = 100;
 
@@ -9,12 +6,34 @@ export interface TextmodeControllerCallbacks {
 	onSaveCode: (code: string) => void;
 }
 
+export interface TextmodeControllerState {
+	clearError: () => void;
+	setError: (error: CodeError) => void;
+	getLastWorkingCode: () => string | null;
+	setLastWorkingCode: (code: string | null) => void;
+}
+
+export interface TextmodeControllerEditor {
+	getValue(): string;
+	setValue(value: string, options?: { silent?: boolean }): void;
+	clearMarkers(): void;
+	setErrorMarker(error: CodeError): void;
+}
+
+export interface TextmodeControllerRuntime {
+	forceRun(code: string): void;
+	resetRuntime(code: string): void;
+	tryCandidate(code: string, baseline: string): Promise<boolean>;
+}
+
 export interface TextmodeControllerDependencies {
-	getEditor: () => TextmodeEditor | null;
-	getRuntime: () => TextmodeRuntime | null;
+	editor: TextmodeControllerEditor;
+	runtime: TextmodeControllerRuntime;
 	getAutoExecute: () => boolean;
 	getAutoExecuteDelay: () => number;
-	store: AppStoreAdapter;
+	state: TextmodeControllerState;
+	isExecutionLocked: () => boolean;
+	onCodeChanged: (code: string) => void;
 }
 
 /**
@@ -25,6 +44,9 @@ export class TextmodeController {
 	private readonly deps: TextmodeControllerDependencies;
 	private debounceTimer: number | null = null;
 	private confirmationTimer: number | null = null;
+	private pendingWorkingCode: string | null = null;
+	private candidateInFlight = false;
+	private editorVersion = 0;
 
 	constructor(callbacks: TextmodeControllerCallbacks, deps: TextmodeControllerDependencies) {
 		this.callbacks = callbacks;
@@ -38,110 +60,100 @@ export class TextmodeController {
 
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
-		this.clearGallerySketchIfCustomized(code);
+		this.editorVersion += 1;
+		this.deps.onCodeChanged(code);
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
 
 		if (!this.deps.getAutoExecute()) return;
 
 		this.debounceTimer = window.setTimeout(() => {
-			this.deps.getRuntime()?.forceRun(code);
 			this.debounceTimer = null;
+			this.deps.runtime.forceRun(code);
 		}, this.deps.getAutoExecuteDelay());
 	}
 
 	handleForceRun(): void {
 		if (this.isExecutionLocked()) return;
-		this.clearDebounce();
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
-
-		this.callbacks.onSaveCode(code);
-		this.deps.store.engine.clearError();
-		editor?.clearMarkers();
-
-		this.deps.getRuntime()?.forceRun(code);
+		this.execute(this.deps.editor.getValue(), 'run');
 	}
 
-	handleRevertToLastWorking(): void {
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' = 'run'): void {
 		if (this.isExecutionLocked()) return;
-		const lastWorkingCode = this.deps.store.engine.getLastWorkingCode();
-		if (!lastWorkingCode) return;
-
-		const editor = this.deps.getEditor();
-		editor?.setValue(lastWorkingCode);
-		this.callbacks.onSaveCode(lastWorkingCode);
-		this.deps.store.engine.clearError();
-		editor?.clearMarkers();
-
-		this.deps.getRuntime()?.forceRun(lastWorkingCode);
+		this.replaceCode(code);
+		this.execute(code, reason, reason !== 'reset-runtime');
 	}
 
-	handleSoftReset(): void {
-		if (this.isExecutionLocked()) return;
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
+	async tryReplaceAndRun(code: string): Promise<boolean> {
+		if (this.isExecutionLocked() || this.candidateInFlight) return false;
 
-		this.callbacks.onSaveCode(code);
-		this.deps.store.engine.clearError();
-		this.deps.store.engine.setStatus('ready');
-		editor?.clearMarkers();
-		this.deps.getRuntime()?.softReset(code);
-	}
+		const baseline = this.deps.editor.getValue();
+		const baselineVersion = this.editorVersion;
+		if (code === baseline) return false;
 
-	handleRuntimeReady(): void {
-		this.deps.store.engine.setStatus('ready');
-		this.deps.store.engine.setIsInitialized(true);
+		this.candidateInFlight = true;
+		try {
+			const accepted = await this.deps.runtime.tryCandidate(code, baseline);
+			if (!accepted) return false;
 
-		if (this.isExecutionLocked()) return;
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
-		if (code) {
-			this.deps.getRuntime()?.forceRun(code);
+			const currentCode = this.deps.editor.getValue();
+			if (currentCode !== baseline || this.editorVersion !== baselineVersion) {
+				this.deps.runtime.forceRun(currentCode);
+				return false;
+			}
+
+			this.cancelPendingWorkingCode();
+			this.replaceCode(code);
+			this.callbacks.onSaveCode(code);
+			this.deps.state.setLastWorkingCode(code);
+			this.deps.state.clearError();
+			this.deps.editor.clearMarkers();
+			return true;
+		} finally {
+			this.candidateInFlight = false;
 		}
 	}
 
-	handleRunOk(): void {
-		const editor = this.deps.getEditor();
-		const code = editor?.getValue() ?? '';
+	handleRevertToLastWorking(): void {
+		const lastWorkingCode = this.deps.state.getLastWorkingCode();
+		if (lastWorkingCode) this.replaceAndRun(lastWorkingCode);
+	}
 
+	handleHardReset(): void {
+		if (this.isExecutionLocked()) return;
+		this.execute(this.deps.editor.getValue(), 'reset-runtime');
+	}
+
+	handleRunOk(code: string): void {
 		this.setPendingWorkingCode(code);
 
-		this.deps.store.engine.setStatus('running');
-		this.deps.store.engine.clearError();
-		editor?.clearMarkers();
+		this.deps.state.clearError();
+		this.deps.editor.clearMarkers();
 	}
 
-	handleRunError(error: CodeError): void {
-		this.deps.store.engine.setStatus('error');
-		this.handleError(error);
-	}
-
-	handleSynthError(error: CodeError): void {
+	handleExecutionError(error: CodeError): void {
 		this.cancelPendingWorkingCode();
-		const formattedError = {
-			...error,
-			message: this.formatErrorMessage(error.message),
-			source: 'textmode',
-		};
-
-		this.deps.store.engine.setStatus('error');
-		this.deps.store.engine.setError(formattedError);
-		this.deps.getEditor()?.setErrorMarker(formattedError);
+		this.deps.state.setError(error);
+		this.deps.editor.setErrorMarker(error);
 	}
 
-	private handleError(error: CodeError): void {
-		this.cancelPendingWorkingCode();
-		const formattedError = {
-			message: this.formatErrorMessage(error.message),
-			stack: error.stack,
-			line: error.line,
-			column: error.column,
-			source: 'textmode',
-		};
+	private execute(code: string, mode: 'run' | 'reset-runtime', persist = true): void {
+		this.clearDebounce();
+		if (persist) this.callbacks.onSaveCode(code);
+		this.deps.state.clearError();
+		this.deps.editor.clearMarkers();
 
-		this.deps.store.engine.setError(formattedError);
-		this.deps.getEditor()?.setErrorMarker(formattedError);
+		if (mode === 'reset-runtime') {
+			this.deps.runtime.resetRuntime(code);
+		} else {
+			this.deps.runtime.forceRun(code);
+		}
+	}
+
+	private replaceCode(code: string): void {
+		this.editorVersion += 1;
+		this.deps.editor.setValue(code, { silent: true });
+		this.deps.onCodeChanged(code);
 	}
 
 	private clearDebounce(): void {
@@ -153,20 +165,20 @@ export class TextmodeController {
 	private setPendingWorkingCode(code: string): void {
 		this.clearConfirmationTimer();
 
-		this.deps.store.engine.setPendingWorkingCode(code);
+		this.pendingWorkingCode = code;
 
 		this.confirmationTimer = window.setTimeout(() => {
 			this.confirmationTimer = null;
-			const pending = this.deps.store.engine.getPendingWorkingCode();
+			const pending = this.pendingWorkingCode;
 			if (!pending) return;
-			this.deps.store.engine.setLastWorkingCode(pending);
-			this.deps.store.engine.cancelPendingWorkingCode();
+			this.deps.state.setLastWorkingCode(pending);
+			this.pendingWorkingCode = null;
 		}, CONFIRMATION_DELAY_MS);
 	}
 
 	private cancelPendingWorkingCode(): void {
 		this.clearConfirmationTimer();
-		this.deps.store.engine.cancelPendingWorkingCode();
+		this.pendingWorkingCode = null;
 	}
 
 	private clearConfirmationTimer(): void {
@@ -175,40 +187,7 @@ export class TextmodeController {
 		this.confirmationTimer = null;
 	}
 
-	private formatErrorMessage(message: string): string {
-		return message;
-	}
-
 	private isExecutionLocked(): boolean {
-		const payload = this.deps.store.share.getPayload();
-		const consented = this.deps.store.share.getConsented();
-		const promptOpen = this.deps.store.share.getPromptOpen();
-		if (payload && !consented) {
-			if (!promptOpen) {
-				this.deps.store.share.setPromptOpen(true);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	private clearGallerySketchIfCustomized(code: string): void {
-		const activeSketch = this.deps.store.gallery.getActiveSketch();
-		if (activeSketch) {
-			if (code !== activeSketch.textmodeCode) {
-				this.deps.store.gallery.setActiveSketch(null);
-				this.deps.store.gallery.setSketchSummary(null);
-			}
-			return;
-		}
-
-		const originalSketch = this.deps.store.gallery.getOriginalSketch();
-		if (!originalSketch || code !== originalSketch.textmodeCode) return;
-
-		this.deps.store.gallery.setActiveSketch(originalSketch);
-		const originalSummary = this.deps.store.gallery.getOriginalSketchSummary();
-		if (originalSummary) {
-			this.deps.store.gallery.setSketchSummary(originalSummary);
-		}
+		return this.deps.isExecutionLocked();
 	}
 }

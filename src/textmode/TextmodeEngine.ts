@@ -1,11 +1,11 @@
 import type { AppSettings } from '@/types';
-import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
 import {
 	TextmodeController,
 	type TextmodeControllerCallbacks,
 	type TextmodeControllerDependencies,
+	type TextmodeControllerState,
 } from './TextmodeController';
 
 /**
@@ -15,7 +15,9 @@ export interface TextmodeEngineContext {
 	editorContainer: HTMLElement;
 	visualContainer?: HTMLElement;
 	getSettings: () => AppSettings;
-	store: AppStoreAdapter;
+	controllerState: TextmodeControllerState;
+	isExecutionLocked: () => boolean;
+	onCodeChanged: (code: string) => void;
 	callbacks: TextmodeControllerCallbacks;
 	getInitialCode: () => string;
 	toggleUI: () => void;
@@ -32,24 +34,21 @@ export class TextmodeEngine {
 	private runtime: TextmodeRuntime | null = null;
 	private controller: TextmodeController | null = null;
 	private initialized = false;
-	private initializing = false;
 
-	async init(context: TextmodeEngineContext): Promise<void> {
-		if (this.initialized || this.initializing) return;
-		this.initializing = true;
+	init(context: TextmodeEngineContext): void {
+		if (this.initialized) return;
 
 		const initialCode = context.getInitialCode();
+		const editor = this.createEditor(context, initialCode);
+		const runtime = this.createRuntime(context);
+		const controller = this.createController(context, editor, runtime);
 
-		try {
-			this.editor = this.createEditor(context, initialCode);
-			this.runtime = this.createRuntime(context);
-			this.controller = this.createController(context);
+		this.editor = editor;
+		this.runtime = runtime;
+		this.controller = controller;
 
-			this.runtime.init();
-			this.initialized = true;
-		} finally {
-			this.initializing = false;
-		}
+		runtime.init(context.isExecutionLocked() ? '' : initialCode);
+		this.initialized = true;
 	}
 
 	dispose(): void {
@@ -62,23 +61,30 @@ export class TextmodeEngine {
 		this.editor?.dispose();
 		this.editor = null;
 		this.initialized = false;
-		this.initializing = false;
-	}
-
-	getEditor(): TextmodeEditor | null {
-		return this.editor;
-	}
-
-	getController(): TextmodeController | null {
-		return this.controller;
-	}
-
-	getRuntime(): TextmodeRuntime | null {
-		return this.runtime;
 	}
 
 	isInitialized(): boolean {
 		return this.initialized;
+	}
+
+	run(): void {
+		this.controller?.handleForceRun();
+	}
+
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' = 'run'): void {
+		this.controller?.replaceAndRun(code, reason);
+	}
+
+	tryReplaceAndRun(code: string): Promise<boolean> {
+		return this.controller?.tryReplaceAndRun(code) ?? Promise.resolve(false);
+	}
+
+	resetRuntime(): void {
+		this.controller?.handleHardReset();
+	}
+
+	revertToLastWorking(): void {
+		this.controller?.handleRevertToLastWorking();
 	}
 
 	getCode(): string {
@@ -89,8 +95,29 @@ export class TextmodeEngine {
 		this.editor?.setValue(code, options);
 	}
 
-	reconnectRuntime(): void {
-		this.runtime?.reconnect();
+	updateSettings(settings: Pick<AppSettings, 'fontSize' | 'lineNumbers'>): void {
+		this.editor?.updateOptions({
+			fontSize: settings.fontSize,
+			lineNumbers: settings.lineNumbers ? 'on' : 'off',
+			lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
+			lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
+		});
+	}
+
+	setReadOnly(readOnly: boolean): void {
+		this.editor?.updateOptions({ readOnly });
+	}
+
+	focus(): void {
+		this.editor?.focus();
+	}
+
+	sendAudioData(data: { fft: Uint8Array; waveform: Uint8Array; timestamp: number }): boolean {
+		return this.runtime?.sendAudioData(data) ?? false;
+	}
+
+	reloadSandbox(code = this.getCode()): void {
+		this.runtime?.reloadSandbox(code);
 	}
 
 	private createEditor(context: TextmodeEngineContext, initialCode: string): TextmodeEditor {
@@ -101,40 +128,40 @@ export class TextmodeEngine {
 			lineNumbers: context.getSettings().lineNumbers,
 			onChange: (value) => this.controller?.handleCodeChange(value),
 			onRun: () => this.controller?.handleForceRun(),
-			onSoftReset: () => this.controller?.handleSoftReset(),
 		};
 		return new TextmodeEditor(options);
 	}
 
 	private createRuntime(context: TextmodeEngineContext): TextmodeRuntime {
-		this.runtime = new TextmodeRuntime({
+		return new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
-			onReady: () => this.controller?.handleRuntimeReady(),
-			onRunOk: () => this.controller?.handleRunOk(),
-			onRunError: (error) => this.controller?.handleRunError(error),
-			onSynthError: (error) => this.controller?.handleSynthError(error),
+			onRunOk: (_timestamp, code) => this.controller?.handleRunOk(code),
+			onRunError: (error) => this.controller?.handleExecutionError(error),
+			onSynthError: (error) => this.controller?.handleExecutionError(error),
+			onHardReset: () => this.controller?.handleHardReset(),
 			onToggleUI: () => context.toggleUI(),
 			onRunnerConnected: () => context.onRunnerConnected?.(),
 			onRunnerDisconnected: () => context.onRunnerDisconnected?.(),
 		});
-		return this.runtime;
 	}
 
-	private createController(context: TextmodeEngineContext): TextmodeController {
-		const callbacks: TextmodeControllerCallbacks = {
-			onSaveCode: context.callbacks.onSaveCode,
-		};
-
+	private createController(
+		context: TextmodeEngineContext,
+		editor: TextmodeEditor,
+		runtime: TextmodeRuntime
+	): TextmodeController {
 		const deps: TextmodeControllerDependencies = {
-			getEditor: () => this.editor,
-			getRuntime: () => this.runtime,
+			editor,
+			runtime,
 			getAutoExecute: () => context.getSettings().autoExecute,
 			getAutoExecuteDelay: () => context.getSettings().autoExecuteDelay,
-			store: context.store,
+			state: context.controllerState,
+			isExecutionLocked: context.isExecutionLocked,
+			onCodeChanged: context.onCodeChanged,
 		};
 
-		return new TextmodeController(callbacks, deps);
+		return new TextmodeController(context.callbacks, deps);
 	}
 }
 
@@ -143,5 +170,7 @@ function getRunnerUrl(): string {
 	if (explicit && typeof explicit === 'string' && explicit.trim().length > 0) {
 		return explicit.trim();
 	}
-	return 'https://runner.textmode.art/';
+	return import.meta.env.DEV
+		? `${window.location.protocol}//${window.location.hostname}:5181/`
+		: 'https://runner.textmode.art/';
 }

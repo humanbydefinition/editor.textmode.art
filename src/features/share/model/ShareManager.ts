@@ -1,15 +1,16 @@
-import type { AppStoreAdapter } from '@/platform/state/adapters/appStoreAdapter';
 import type { SharePayload } from '../types';
 import { ShareService } from './ShareService';
 
 export interface ShareManagerDependencies {
-	store: AppStoreAdapter;
+	getShare: () => { payload: SharePayload | null; consented: boolean; promptOpen: boolean };
+	setSharePayload: (payload: SharePayload | null) => void;
+	setShareConsented: (consented: boolean) => void;
+	setSharePromptOpen: (open: boolean) => void;
 	setEditorReadOnly: (readOnly: boolean) => void;
 	applyPayload: (payload: SharePayload) => void;
 	focusEditor: () => void;
-	restoreLocalSketches: () => void;
-	runRestoredSketches: () => void;
-	runSharedSketch: () => void;
+	restoreMainSketch: () => void;
+	runCode: () => void;
 	replaceUrl: (url: string) => void;
 }
 
@@ -29,56 +30,58 @@ export class ShareManager {
 
 		const payload = ShareService.getFromLocation(location);
 		if (payload) {
-			this.deps.store.share.setPayload(payload);
+			this.deps.setSharePayload(payload);
 		}
 	}
 
-	getInitialCodeOverride(): string | null {
-		const payload = this.deps.store.share.getPayload();
-		return payload?.engines.textmode ?? null;
-	}
+	setInitialReadOnlyIfNeeded(): void {
+		const { payload, consented } = this.deps.getShare();
+		if (!payload || consented) return;
 
-	applyInitialShareIfPresent(): void {
-		const payload = this.deps.store.share.getPayload();
-		if (!payload || this.deps.store.share.getConsented()) return;
-
-		this.deps.applyPayload(payload);
 		this.deps.setEditorReadOnly(true);
 	}
 
 	unlockAndRun(): void {
 		const payload = this.unlockInternal();
 		if (!payload) return;
-		this.deps.runSharedSketch();
+		this.deps.runCode();
 	}
 
 	unlockOnly(): void {
-		const payload = this.deps.store.share.getPayload();
+		const payload = this.deps.getShare().payload;
 		if (!payload) return;
-		this.deps.store.share.setPromptOpen(false);
+		this.deps.setSharePromptOpen(false);
 		this.deps.setEditorReadOnly(true);
 		this.deps.applyPayload(payload);
 	}
 
 	keepLocked(): void {
-		this.deps.store.share.setPromptOpen(false);
+		this.deps.setSharePromptOpen(false);
 	}
 
 	discard(): void {
-		const payload = this.deps.store.share.getPayload();
+		const payload = this.deps.getShare().payload;
 		if (!payload) return;
 
-		this.deps.store.share.setPayload(null);
+		this.deps.setSharePayload(null);
 		this.deps.replaceUrl('/');
 		this.deps.setEditorReadOnly(false);
-		this.deps.restoreLocalSketches();
-		this.deps.runRestoredSketches();
+		this.deps.restoreMainSketch();
 	}
 
 	openPrompt(): void {
-		const payload = this.deps.store.share.getPayload();
-		if (!payload || this.deps.store.share.getConsented()) return;
-		this.deps.store.share.setPromptOpen(true);
+		const { payload, consented } = this.deps.getShare();
+		if (!payload || consented) return;
+		this.deps.setSharePromptOpen(true);
+	}
+
+	lockExecutionIfNeeded(): boolean {
+		const { payload, consented, promptOpen } = this.deps.getShare();
+		if (!payload || consented) return false;
+		if (!promptOpen) {
+			this.deps.setSharePromptOpen(true);
+		}
+		return true;
 	}
 
 	attachInteractionGuards(): void {
@@ -96,10 +99,10 @@ export class ShareManager {
 	}
 
 	private unlockInternal(): SharePayload | null {
-		const payload = this.deps.store.share.getPayload();
+		const payload = this.deps.getShare().payload;
 		if (!payload) return null;
 
-		this.deps.store.share.setConsented(true);
+		this.deps.setShareConsented(true);
 		this.deps.setEditorReadOnly(false);
 		this.deps.applyPayload(payload);
 		this.deps.focusEditor();
@@ -109,27 +112,27 @@ export class ShareManager {
 	private shouldPromptForInteraction(target: HTMLElement | null): boolean {
 		if (!target) return false;
 
-		const payload = this.deps.store.share.getPayload();
-		if (!payload || this.deps.store.share.getConsented() || this.deps.store.share.getPromptOpen()) return false;
+		const { payload, consented, promptOpen } = this.deps.getShare();
+		if (!payload || consented || promptOpen) return false;
 		return Boolean(target.closest('.monaco-editor'));
 	}
 
 	private handleShareInteraction = (event: MouseEvent): void => {
 		const target = event.target as HTMLElement | null;
 		if (this.shouldPromptForInteraction(target)) {
-			this.deps.store.share.setPromptOpen(true);
+			this.deps.setSharePromptOpen(true);
 		}
 	};
 
 	private handleShareKeydown = (event: KeyboardEvent): void => {
 		const target = event.target as HTMLElement | null;
 		if (this.shouldPromptForInteraction(target)) {
-			this.deps.store.share.setPromptOpen(true);
+			this.deps.setSharePromptOpen(true);
 		}
 	};
 
 	private resetHydratedState(): void {
-		this.deps.store.share.setPayload(null);
+		this.deps.setSharePayload(null);
 		this.deps.setEditorReadOnly(false);
 	}
 }

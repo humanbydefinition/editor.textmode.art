@@ -1,60 +1,63 @@
 # editor.textmode.art (✿◠‿◠)
 
+<img alt="editor.textmode.art: create textmode in your browser" src="./public/og.png" />
+
 <div align="center">
 
-| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-editor.textmode.art-646cff?logo=web&logoColor=white)](https://editor.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
+| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) | [![website](https://img.shields.io/badge/website-editor.textmode.art-646cff?logo=web&logoColor=white)](https://editor.textmode.art/) [![Discord](https://img.shields.io/discord/1357070706181017691?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/sjrw8QXNks) | [![ko-fi](https://shields.io/badge/ko--fi-donate-ff5f5f?logo=ko-fi)](https://ko-fi.com/V7V8JG2FY) [![GitHub-sponsors](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/humanbydefinition) |
 |:-------------|:-------------|:-------------|
 
 </div>
 
-`editor.textmode.art` is a browser-based web editor for the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) creative coding ecosystem. It supports live coding, procedural text generation, and ASCII/textmode synthesis with real-time execution.
+`editor.textmode.art` is a browser-based creative-coding environment for
+[textmode.js](https://github.com/humanbydefinition/textmode.js). Write a
+sketch, see it run as you type, and shape moving text, characters, colours,
+layers, filters, and synthesis without setting up a local toolchain. Your work
+and editor preferences stay in your browser, so returning to an idea is as
+simple as reopening the editor.
 
 ## Features
 
-- **Visual synthesis**: Driven by `textmode.js`, offering a rich set of ASCII/textmode graphics tools and a modern WebGL2 pipeline.
-- **High-performance editor**: Built on Monaco Editor (the power behind VS Code) with custom syntax highlighting and tailored type definitions.
-- **Local persistence**: Automatically saves your work and settings to your browser's local storage.
-- **Responsive layout**: Designed for both desktop and mobile devices, ensuring your sketches look great everywhere.
+- **Graphics engine:** [textmode.js](https://github.com/humanbydefinition/textmode.js) provides the tools for drawing and animating textmode graphics in the browser.
+- **High-performance editor:** Monaco Editor *(the engine behind VS Code)* with
+  custom syntax highlighting and tailored type definitions.
+- **Audio input:** Browser microphone and line-input analysis supplies FFT and
+  waveform data to audio-reactive sketches.
+- **Local persistence:** Code and editor settings are saved automatically in
+  browser storage.
+- **Gallery:** Discover reviewed community sketches at random or through stable
+  `/s/<slug>/` links, then use their source as a starting point.
+- **Share links:** Package a sketch’s code and settings in a URL. Recipients
+  choose whether to run shared code.
+- **Responsive workspace:** Create on desktop or mobile without a separate app.
 
-> [!NOTE]
-> Performance depends on the complexity of your scripts and device capabilities. 
+## Make something
 
-## Getting started
+- Visit [editor.textmode.art](https://editor.textmode.art).
+- Start from **Examples**, a random gallery sketch, or a blank editor.
+- Plug in sound if the sketch calls for it.
+- Keep iterating; the workspace saves as you go.
 
-Visit **[editor.textmode.art](https://editor.textmode.art)** to start coding immediately - no installation required.
+## Share something
 
-1. **Start coding**: Write your scripts in the integrated editors. The environment will auto-execute your changes by default.
-2. **Explore examples**: Check the `Examples` menu to see what's possible and learn from pre-made sketches.
-3. **Customize**: Use the `Preferences` menu to toggle UI visibility, adjust font sizes, or change editor settings.
+Use the **Share** button to create a URL for your sketch.
 
-## Development
+- The URL includes your code and editor settings.
+- Shared code stays locked until the recipient chooses to run it.
+- Recipients can open the link in the browser - no installation required.
 
-To run the project locally:
+## Contribute a gallery sketch
 
-```bash
-# Install dependencies
-npm install
+Have a sketch worth sharing more widely? Submit it to the repository-backed
+gallery. Gallery entries can be loaded from stable `/s/<slug>/` links and from
+the editor’s random-sketch action.
 
-# Start dev server (Vite)
-npm run dev
-
-# Build for production
-npm run build
-```
-
-The client loads the hosted sandbox runner from `https://runner.textmode.art/` by default.
-Set `VITE_RUNNER_URL` to override the iframe URL for local testing or alternate deployments.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the sketch format, metadata,
+deterministic-rendering requirements, Open Graph preview workflow, and
+contribution terms.
 
 ## License
 
 This application is licensed under the **GNU Affero General Public License v3.0 or later** - see the [LICENSE](LICENSE) file for details.
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
-
-### Acknowledgements
-
-This project targets the [`textmode.js`](https://github.com/humanbydefinition/textmode.js) sketch API.
-
-AGPL-licensed dependency acknowledgement:
-
-- **[textmode.synth.js](https://github.com/humanbydefinition/textmode.synth.js)** - AGPL-3.0

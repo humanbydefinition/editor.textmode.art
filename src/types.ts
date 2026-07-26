@@ -40,24 +40,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export interface CodeError {
 	/** Error message */
 	message: string;
-	/** Full stack trace */
-	stack?: string;
 	/** Line number in user code (1-indexed) */
 	line?: number;
 	/** Column number in user code (1-indexed) */
 	column?: number;
-	/** Source of the error (e.g., 'textmode') */
-	source?: string;
 }
-
-/**
- * Status indicator states for the application.
- * - ready: waiting for code changes
- * - running: sketch is actively running
- * - updated: code executed successfully (transient state)
- * - error: execution failed
- */
-export type StatusState = 'ready' | 'running' | 'updated' | 'error';
 
 /**
  * Mobile breakpoint in pixels.

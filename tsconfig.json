@@ -1,62 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "skipLibCheck": true,
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    /* Path alias */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/platform/*": [
-        "./src/platform/*"
-      ],
-      "@/features/*": [
-        "./src/features/*"
-      ],
-      "@/shared/*": [
-        "./src/shared/*"
-      ],
-      "@/app/*": [
-        "./src/app/*"
-      ]
-    },
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "erasableSyntaxOnly": true,
-    /* Types */
-    "types": [
-      "vite/client",
-      "node"
-    ]
-  },
-  "include": [
-    "src",
-    "vite.config.ts",
-    "scripts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+	"extends": "@textmode/tsconfig/typecheck.json",
+	"compilerOptions": {
+		"skipLibCheck": true,
+		"jsx": "react-jsx",
+		"verbatimModuleSyntax": true,
+		"erasableSyntaxOnly": true,
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": ["src", "scripts", "tests", "vite.config.ts", "vitest.config.ts"],
+	"exclude": ["node_modules", "dist"]
 }

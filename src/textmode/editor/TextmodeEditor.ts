@@ -1,12 +1,12 @@
 import * as monaco from 'monaco-editor';
-import { typeDefinitions } from '../config/generatedTypes';
+import { typeDefinitions } from '../config/generated/editorTypes';
 
 // Import Monaco workers
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import editorWorker from 'monaco-editor/editor/editor.worker.js?worker';
+import tsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
 
 // Configure Monaco environment for web workers
-self.MonacoEnvironment = {
+(self as typeof globalThis & { MonacoEnvironment?: monaco.Environment }).MonacoEnvironment = {
 	getWorker(_: unknown, label: string) {
 		if (label === 'typescript' || label === 'javascript') {
 			return new tsWorker();
@@ -14,6 +14,34 @@ self.MonacoEnvironment = {
 		return new editorWorker();
 	},
 };
+
+const editorThemeName = 'textmode-dark';
+
+// Monaco theme colors cannot resolve CSS variables. These states mirror --primary
+// (#4BA3F7), with stronger fills and borders reserved for the active match.
+monaco.editor.defineTheme(editorThemeName, {
+	base: 'vs-dark',
+	inherit: true,
+	rules: [],
+	colors: {
+		'editorBracketMatch.background': '#4BA3F733',
+		'editorBracketMatch.border': '#9ACEFF',
+		'editor.wordHighlightBackground': '#4BA3F733',
+		'editor.wordHighlightBorder': '#4BA3F780',
+		'editor.wordHighlightStrongBackground': '#4BA3F74D',
+		'editor.wordHighlightStrongBorder': '#9ACEFFB3',
+		'editor.wordHighlightTextBackground': '#4BA3F733',
+		'editor.wordHighlightTextBorder': '#4BA3F780',
+		'editor.selectionHighlightBackground': '#4BA3F733',
+		'editor.selectionHighlightBorder': '#4BA3F780',
+		'editor.findMatchBackground': '#4BA3F799',
+		'editor.findMatchBorder': '#D8ECFF',
+		'editor.findMatchHighlightBackground': '#4BA3F752',
+		'editor.findMatchHighlightBorder': '#9ACEFFCC',
+		'editor.findRangeHighlightBackground': '#4BA3F726',
+		'editor.findRangeHighlightBorder': '#4BA3F766',
+	},
+});
 
 export interface TextmodeEditorOptions {
 	container: HTMLElement;
@@ -23,14 +51,13 @@ export interface TextmodeEditorOptions {
 	readOnly?: boolean;
 	onChange?: (value: string) => void;
 	onRun?: () => void;
-	onSoftReset?: () => void;
 }
 
 /**
  * TextmodeEditor - Monaco-based editor for textmode.js live coding.
  */
 export class TextmodeEditor {
-	readonly editor: monaco.editor.IStandaloneCodeEditor;
+	private readonly editor: monaco.editor.IStandaloneCodeEditor;
 	private readonly model: monaco.editor.ITextModel;
 	private readonly options: TextmodeEditorOptions;
 	private disposables: monaco.IDisposable[] = [];
@@ -41,7 +68,7 @@ export class TextmodeEditor {
 		this.model = monaco.editor.createModel(options.initialValue, 'javascript');
 		this.editor = monaco.editor.create(options.container, {
 			model: this.model,
-			theme: 'vs-dark',
+			theme: editorThemeName,
 			...this.getEditorOptions(),
 			readOnly: options.readOnly,
 		});
@@ -49,7 +76,6 @@ export class TextmodeEditor {
 		this.setupSubscriptions();
 		this.registerCommonKeybindings();
 		this.configureTypeScript();
-		this.registerTextmodeKeybindings();
 	}
 
 	getValue(): string {
@@ -65,10 +91,6 @@ export class TextmodeEditor {
 		this.model.setValue(value);
 	}
 
-	layout(): void {
-		this.editor.layout();
-	}
-
 	focus(): void {
 		this.editor.focus();
 	}
@@ -77,15 +99,7 @@ export class TextmodeEditor {
 		this.editor.updateOptions(options);
 	}
 
-	updateEnvironment(env: { backdrop: boolean }): void {
-		if (env.backdrop) {
-			this.options.container.classList.add('editor-backdrop');
-		} else {
-			this.options.container.classList.remove('editor-backdrop');
-		}
-	}
-
-	setMarkers(markers: monaco.editor.IMarkerData[]): void {
+	private setMarkers(markers: monaco.editor.IMarkerData[]): void {
 		monaco.editor.setModelMarkers(this.model, 'textmode', markers);
 	}
 
@@ -151,11 +165,14 @@ export class TextmodeEditor {
 			renderWhitespace: 'none',
 			renderControlCharacters: false,
 			renderLineHighlightOnlyWhenFocus: true,
-			matchBrackets: 'never',
-			occurrencesHighlight: 'off',
-			selectionHighlight: false,
+			matchBrackets: 'near',
+			occurrencesHighlight: 'singleFile',
+			selectionHighlight: true,
 			links: true,
-			colorDecorators: false,
+			colorDecorators: true,
+			defaultColorDecorators: 'always',
+			colorDecoratorsActivatedOn: 'click',
+			colorDecoratorsLimit: 500,
 			automaticLayout: true,
 			fontSize: this.options.fontSize ?? 14,
 			fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
@@ -190,21 +207,15 @@ export class TextmodeEditor {
 		});
 	}
 
-	private registerTextmodeKeybindings(): void {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR, () => {
-			this.options.onSoftReset?.();
-		});
-	}
-
 	private configureTypeScript(): void {
-		const tsDefaults = monaco.languages.typescript.javascriptDefaults;
+		const tsDefaults = monaco.typescript.javascriptDefaults;
 
 		// Compiler options
 		tsDefaults.setCompilerOptions({
-			target: monaco.languages.typescript.ScriptTarget.ES2020,
+			target: monaco.typescript.ScriptTarget.ES2020,
 			allowNonTsExtensions: true,
-			moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-			module: monaco.languages.typescript.ModuleKind.ESNext,
+			moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
+			module: monaco.typescript.ModuleKind.ESNext,
 			noEmit: true,
 			checkJs: true,
 			strict: false,
