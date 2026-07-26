@@ -1,5 +1,5 @@
 import { OG_HEIGHT, OG_WIDTH } from '../config';
-import { SVG_NAMESPACE, fitSvgTextPreservingChildren, getBrandMarkPath, getSvgText } from './svg-text';
+import { SVG_NAMESPACE, getBrandMarkPath, getFittedFontSize, getSvgText } from './svg-text';
 
 const SAFE_INSET = 48;
 const VERTICAL_SAFE_INSET = 30;
@@ -15,6 +15,9 @@ export interface MountedSiteOverlay {
 	assert(): void;
 }
 
+const WAVE_WORD = 'TEXTMODE';
+const WAVE_OFFSETS = [8, -2, -9, -4, 7, 13, 5, -4];
+
 export function mountSiteOverlay(): MountedSiteOverlay {
 	const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
 	svg.id = 'og-overlay';
@@ -29,7 +32,7 @@ export function mountSiteOverlay(): MountedSiteOverlay {
 		</g>
 		<text id="site-og-top-right" x="${OG_WIDTH - SAFE_INSET}" y="66" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" text-anchor="end" letter-spacing="1">FREE + OPEN SOURCE</text>
 		<g id="site-og-hook" fill="#f2f2ec" font-family="Monogram Extended" text-anchor="start">
-			<text id="site-og-hook-primary" x="${SAFE_INSET}" y="295" font-size="${PRIMARY_FONT_SIZE}" letter-spacing="2"><tspan>CREATE </tspan><tspan font-style="italic" letter-spacing="0">TEXTMODE</tspan></text>
+			<text id="site-og-hook-primary" x="${SAFE_INSET}" y="295" font-size="${PRIMARY_FONT_SIZE}" letter-spacing="2" xml:space="preserve">CREATE </text><g id="site-og-hook-wave"><text font-size="${PRIMARY_FONT_SIZE}" font-style="italic">TEXTMODE</text></g>
 			<text id="site-og-hook-secondary" x="${SAFE_INSET}" y="420" font-size="${SECONDARY_FONT_SIZE}" letter-spacing="2">IN YOUR BROWSER</text>
 		</g>
 		<text id="site-og-bottom-left" x="${SAFE_INSET}" y="596" fill="#d8d8d2" font-family="Monogram Extended" font-size="${CORNER_LABEL_FONT_SIZE}" letter-spacing="1">LIVE CODE / CHARACTER GRAPHICS</text>
@@ -44,12 +47,50 @@ export function mountSiteOverlay(): MountedSiteOverlay {
 }
 
 function fitSiteMetadata(): number {
-	const primary = getSvgText('site-og-hook-primary');
-	const secondary = getSvgText('site-og-hook-secondary');
-	if (!primary || !secondary) return 0;
+	const createText = getSvgText('site-og-hook-primary');
+	const secondaryText = getSvgText('site-og-hook-secondary');
+	const waveGroup = document.getElementById('site-og-hook-wave');
+	if (!createText || !secondaryText || !waveGroup) return 0;
 
-	fitSvgTextPreservingChildren(primary, HOOK_MAX_WIDTH, PRIMARY_FONT_SIZE, 112);
-	fitSvgTextPreservingChildren(secondary, HOOK_MAX_WIDTH, SECONDARY_FONT_SIZE, 112);
+	createText.setAttribute('font-size', String(PRIMARY_FONT_SIZE));
+	secondaryText.setAttribute('font-size', String(SECONDARY_FONT_SIZE));
+
+	const stepAtInitialSize = 70;
+	const createWidth = createText.getComputedTextLength();
+	const waveWidth = WAVE_WORD.length * stepAtInitialSize;
+	const totalPrimaryWidth = createWidth + waveWidth;
+
+	const fontSize = getFittedFontSize(totalPrimaryWidth, HOOK_MAX_WIDTH, PRIMARY_FONT_SIZE, 112);
+	const secondaryFontSize = getFittedFontSize(
+		secondaryText.getComputedTextLength(),
+		HOOK_MAX_WIDTH,
+		SECONDARY_FONT_SIZE,
+		112
+	);
+
+	createText.setAttribute('font-size', String(fontSize));
+	secondaryText.setAttribute('font-size', String(secondaryFontSize));
+
+	const fittedCreateWidth = createText.getComputedTextLength();
+	const scale = fontSize / PRIMARY_FONT_SIZE;
+	const step = stepAtInitialSize * scale;
+	const startX = SAFE_INSET + fittedCreateWidth;
+	const baseline = 295;
+
+	waveGroup.replaceChildren(
+		...Array.from(WAVE_WORD).map((glyph, index) => {
+			const text = document.createElementNS(SVG_NAMESPACE, 'text');
+			text.setAttribute('x', String(startX + index * step));
+			text.setAttribute('y', String(baseline + WAVE_OFFSETS[index % WAVE_OFFSETS.length] * scale));
+			text.setAttribute('fill', '#f2f2ec');
+			text.setAttribute('font-family', 'Monogram Extended');
+			text.setAttribute('font-size', String(fontSize));
+			text.setAttribute('font-style', 'italic');
+			text.textContent = glyph;
+			return text;
+		})
+	);
+
 	return 0;
 }
 
