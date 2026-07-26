@@ -47,7 +47,6 @@ void main() {
 const PUSH_SHADER = `#version 300 es
 precision highp float;
 uniform vec2 u_gridSize;
-uniform float u_hasHistory;
 uniform float u_frame;
 uniform int u_rectCount;
 uniform vec4 u_rects[64];
@@ -82,7 +81,7 @@ ivec2 direction(int rule) {
 }
 
 vec4 sampleState(sampler2D history, sampler2D seed, ivec2 cell, bool inject) {
-	return u_hasHistory > 0.5 && !inject ? texelFetch(history, cell, 0) : texelFetch(seed, cell, 0);
+	return inject ? texelFetch(seed, cell, 0) : texelFetch(history, cell, 0);
 }
 
 void main() {
@@ -146,7 +145,6 @@ let nextFramebuffer;
 let glyphs;
 let glyphCount;
 let palette;
-let hasHistory = false;
 let rectangles;
 const framebufferSize = () => ({ width: t.grid.cols + 2, height: t.grid.rows + 2 });
 const rectangleUniforms = () => rectangles.flatMap(({ x, y, width, height }) => [x, y, width, height]);
@@ -176,8 +174,10 @@ function createState() {
 
 function resetSimulation(size) {
 	rectangles = createRectangles(size.width, size.height, t.frameCount);
-	hasHistory = false;
 	renderSeed(t.frameCount);
+	previousFramebuffer.begin();
+	t.image(seedFramebuffer);
+	previousFramebuffer.end();
 }
 
 function pushFrame() {
@@ -186,7 +186,6 @@ function pushFrame() {
 	t.background(0);
 	t.shader(pushShader);
 	t.setUniform('u_gridSize', [size.width, size.height]);
-	t.setUniform('u_hasHistory', hasHistory ? 1 : 0);
 	t.setUniform('u_frame', t.frameCount);
 	t.setUniform('u_rectCount', rectangles.length);
 	t.setUniform('u_rects', rectangleUniforms());
@@ -199,8 +198,6 @@ function pushFrame() {
 	t.setUniform('u_previousSecondaryColor', previousFramebuffer.textures[2]);
 	t.rect(size.width, size.height);
 	nextFramebuffer.end();
-	[previousFramebuffer, nextFramebuffer] = [nextFramebuffer, previousFramebuffer];
-	hasHistory = true;
 }
 
 t.fontSize(16);
@@ -225,7 +222,8 @@ t.draw(() => {
 	}
 	pushFrame();
 	t.background(0);
-	t.image(previousFramebuffer);
+	t.image(nextFramebuffer);
+	[previousFramebuffer, nextFramebuffer] = [nextFramebuffer, previousFramebuffer];
 });
 
 t.windowResized(() => {
