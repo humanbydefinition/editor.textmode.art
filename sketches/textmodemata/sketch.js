@@ -1,4 +1,4 @@
-const WORLD_SIZE = 128;
+const WORLD_SIZE = 256;
 const STATE_COUNT = 16;
 
 const PALETTE = [
