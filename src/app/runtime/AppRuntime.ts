@@ -2,7 +2,6 @@ import { ShareManager, type ShareExportData } from '@/features/share';
 import { GalleryManager, type GallerySketch } from '@/features/gallery-sketches';
 import { ShortcutsManager } from '@/platform/input/ShortcutsManager';
 import { CodeRandomizer } from './CodeRandomizer';
-import { defaultTextmodeSketch } from '@/features/examples/content/default-sketches';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import { useAppStore } from '@/platform/state/appStore';
 import { EditorStorage, editorStorage } from '@/platform/storage/EditorStorage';
@@ -53,7 +52,7 @@ export class AppRuntime {
 			setEditorReadOnly: (readOnly) => this.setEditorReadOnly(readOnly),
 			applyPayload: (payload) => this.applySharePayload(payload),
 			focusEditor: () => this.focusEditor(),
-			restoreLocalSketches: () => this.restoreLocalSketches(),
+			restoreMainSketch: () => this.restoreMainSketch(),
 			runCode: () => this.textmodeEngine.run(),
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
@@ -73,7 +72,8 @@ export class AppRuntime {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
 			reloadSandbox: () => this.reloadTextmodeSandbox(),
-			clearStorage: () => this.clearStorage(),
+			hasLocalSketch: () => this.hasLocalSketch(),
+			restoreLocalSketch: () => this.restoreLocalSketch(),
 			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => this.textmodeEngine.revertToLastWorking(),
 			enableAudioInput: (deviceId?: string) => this.audioInput.enable(deviceId),
@@ -177,7 +177,6 @@ export class AppRuntime {
 			onCodeChanged: (code) => this.galleryManager.syncActiveSketchWithCode(code),
 			callbacks: {
 				onSaveCode: (code: string) => this.storage.saveCode(code),
-				onClearCode: () => this.storage.clearCode(),
 			},
 			getInitialCode: () => this.getInitialCode(),
 			toggleUI: () => this.toggleUIVisibility(),
@@ -202,6 +201,7 @@ export class AppRuntime {
 		if (!getAppState().share.payload) {
 			this.galleryManager.hydrateFromLocation(window.location);
 			this.replaceUnknownEditorPath(window.location);
+			this.loadInitialRandomGallerySketchIfNeeded();
 		} else {
 			this.galleryManager.clear();
 		}
@@ -214,7 +214,8 @@ export class AppRuntime {
 		return (
 			this.shareManager.getInitialCodeOverride() ??
 			this.galleryManager.getInitialCodeOverride() ??
-			this.storage.loadCode(defaultTextmodeSketch)
+			this.storage.loadCode() ??
+			''
 		);
 	}
 
@@ -247,13 +248,6 @@ export class AppRuntime {
 		window.prompt('Copy this link to share your sketch:', value);
 	}
 
-	private clearStorage(): void {
-		if (!this.textmodeEngine.isInitialized()) return;
-		this.galleryManager.clear();
-		this.replaceEditorUrl('/');
-		this.textmodeEngine.replaceAndRun(defaultTextmodeSketch, 'reset');
-	}
-
 	private toggleUIVisibility(): void {
 		getAppState().updateSettings({ uiVisible: !this.settings.uiVisible });
 	}
@@ -272,11 +266,34 @@ export class AppRuntime {
 		this.textmodeEngine.setCode(code, { silent: true });
 	}
 
-	private restoreLocalSketches(): void {
-		if (!this.textmodeEngine.isInitialized()) return;
+	private hasLocalSketch(): boolean {
+		return this.storage.loadCode() !== null;
+	}
+
+	private restoreLocalSketch(): boolean {
+		if (!this.textmodeEngine.isInitialized() || !getAppState().gallerySketch) return false;
+		const code = this.storage.loadCode();
+		if (code === null) return false;
+
 		this.galleryManager.clear();
-		const code = this.storage.loadCode(defaultTextmodeSketch);
-		this.textmodeEngine.setCode(code, { silent: true });
+		this.replaceEditorUrl('/');
+		this.textmodeEngine.replaceAndRun(code, 'reset-runtime');
+		return true;
+	}
+
+	private restoreMainSketch(): void {
+		if (!this.textmodeEngine.isInitialized()) return;
+
+		const code = this.storage.loadCode();
+		if (code !== null) {
+			this.galleryManager.clear();
+			this.replaceEditorUrl('/');
+			this.textmodeEngine.replaceAndRun(code, 'reset-runtime');
+			return;
+		}
+
+		this.galleryManager.clear();
+		this.loadRandomGallerySketch();
 	}
 
 	private setEditorReadOnly(readOnly: boolean): void {
@@ -382,6 +399,11 @@ export class AppRuntime {
 	private loadRandomGallerySketch(): boolean {
 		if (!this.textmodeEngine.isInitialized()) return false;
 		return this.galleryManager.loadRandom();
+	}
+
+	private loadInitialRandomGallerySketchIfNeeded(): void {
+		if (window.location.pathname !== '/' || getAppState().gallerySketch || this.hasLocalSketch()) return;
+		this.galleryManager.loadRandom();
 	}
 
 	private replaceUnknownEditorPath(location: Location): void {

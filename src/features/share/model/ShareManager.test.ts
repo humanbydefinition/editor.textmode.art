@@ -21,7 +21,7 @@ describe('ShareManager', () => {
 			setEditorReadOnly: vi.fn(),
 			applyPayload: vi.fn(),
 			focusEditor: vi.fn(),
-			restoreLocalSketches: vi.fn(),
+			restoreMainSketch: vi.fn(),
 			runCode: vi.fn(),
 			replaceUrl: vi.fn(),
 		} satisfies ShareManagerDependencies);

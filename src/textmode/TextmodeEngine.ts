@@ -71,7 +71,7 @@ export class TextmodeEngine {
 		this.controller?.handleForceRun();
 	}
 
-	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' | 'reset' = 'run'): void {
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' = 'run'): void {
 		this.controller?.replaceAndRun(code, reason);
 	}
 

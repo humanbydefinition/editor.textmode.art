@@ -9,7 +9,7 @@ export interface ShareManagerDependencies {
 	setEditorReadOnly: (readOnly: boolean) => void;
 	applyPayload: (payload: SharePayload) => void;
 	focusEditor: () => void;
-	restoreLocalSketches: () => void;
+	restoreMainSketch: () => void;
 	runCode: () => void;
 	replaceUrl: (url: string) => void;
 }
@@ -72,8 +72,7 @@ export class ShareManager {
 		this.deps.setSharePayload(null);
 		this.deps.replaceUrl('/');
 		this.deps.setEditorReadOnly(false);
-		this.deps.restoreLocalSketches();
-		this.deps.runCode();
+		this.deps.restoreMainSketch();
 	}
 
 	openPrompt(): void {

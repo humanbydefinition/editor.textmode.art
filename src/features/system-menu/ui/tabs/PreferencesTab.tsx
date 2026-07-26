@@ -1,4 +1,4 @@
-import { RotateCcw, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
+import { RotateCcw, Undo2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Switch } from '@/shared/ui/switch';
 import { Slider } from '@/shared/ui/slider';
@@ -12,7 +12,9 @@ interface PreferencesTabProps {
 	settings: AppSettings;
 	onSettingsChange: (settings: Partial<AppSettings>) => void;
 	onResetRunners: () => void;
-	onClearStorage: () => void;
+	isGallerySketchActive: boolean;
+	hasLocalSketch: boolean;
+	onRestoreLocalSketch: () => boolean;
 	onClose: () => void;
 }
 
@@ -20,9 +22,17 @@ export function PreferencesTab({
 	settings,
 	onSettingsChange,
 	onResetRunners,
-	onClearStorage,
+	isGallerySketchActive,
+	hasLocalSketch,
+	onRestoreLocalSketch,
 	onClose,
 }: PreferencesTabProps) {
+	const canRestoreLocalSketch = isGallerySketchActive && hasLocalSketch;
+	const restoreLocalTooltip = !isGallerySketchActive
+		? 'available while viewing an unmodified gallery sketch'
+		: !hasLocalSketch
+			? 'no locally saved sketch yet'
+			: 'replace the gallery sketch with your locally saved code';
 	const togglePreferences = [
 		{
 			id: 'auto-execute',
@@ -201,20 +211,28 @@ export function PreferencesTab({
 
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<Button
-									variant="destructive"
-									className="flex-1 justify-center gap-2 bg-red-950/30 border-red-900/50 hover:bg-red-900/50 text-red-400"
-									onClick={() => {
-										onClearStorage();
-										onClose();
-									}}
+								<span
+									className="flex-1"
+									tabIndex={canRestoreLocalSketch ? -1 : 0}
+									aria-label={canRestoreLocalSketch ? undefined : restoreLocalTooltip}
 								>
-									<Trash2 className="w-4 h-4" />
-									reset code
-								</Button>
+									<Button
+										variant="secondary"
+										disabled={!canRestoreLocalSketch}
+										className="w-full justify-center gap-2 bg-zinc-900/50 border-white/10 hover:bg-zinc-800/60 text-zinc-200"
+										onClick={() => {
+											if (onRestoreLocalSketch()) {
+												onClose();
+											}
+										}}
+									>
+										<Undo2 className="w-4 h-4" />
+										return to local
+									</Button>
+								</span>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>reset to the default sketch without reloading the iframe</p>
+								<p>{restoreLocalTooltip}</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>

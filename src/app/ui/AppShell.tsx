@@ -41,6 +41,7 @@ export function AppShell() {
 		() => (gallerySketch ? toGallerySketchSummary(gallerySketch) : null),
 		[gallerySketch]
 	);
+	const hasLocalSketch = actions.hasLocalSketch();
 	const textmodeRunnerStatus = useAppStore((state) => state.runnerStatus);
 	const audioInput = useAppStore((state) => state.audioInput);
 	const showShareLock = Boolean(sharePayload && !shareConsented && !sharePromptOpen);
@@ -138,7 +139,9 @@ export function AppShell() {
 								onRandomize={actions.randomize}
 								onMakeRandomChange={actions.makeRandomChange}
 								onResetRunners={actions.reloadSandbox}
-								onClearStorage={actions.clearStorage}
+								isGallerySketchActive={Boolean(gallerySketch)}
+								hasLocalSketch={hasLocalSketch}
+								onRestoreLocalSketch={actions.restoreLocalSketch}
 								audioInput={audioInput}
 								onEnableAudioInput={actions.enableAudioInput}
 								onDisableAudioInput={actions.disableAudioInput}

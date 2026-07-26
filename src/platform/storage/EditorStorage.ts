@@ -4,17 +4,16 @@ const SETTINGS_STORAGE_KEY = 'app_settings';
 const CODE_STORAGE_KEY = 'textmode_code';
 
 export class EditorStorage {
-	loadCode(fallback: string): string {
-		const storedCode = localStorage.getItem(CODE_STORAGE_KEY);
-		return storedCode ?? fallback;
+	loadCode(): string | null {
+		try {
+			return localStorage.getItem(CODE_STORAGE_KEY);
+		} catch {
+			return null;
+		}
 	}
 
 	saveCode(code: string): void {
 		localStorage.setItem(CODE_STORAGE_KEY, code);
-	}
-
-	clearCode(): void {
-		localStorage.removeItem(CODE_STORAGE_KEY);
 	}
 
 	loadSettings(): AppSettings {

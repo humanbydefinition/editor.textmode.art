@@ -11,14 +11,24 @@ describe('EditorStorage', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('uses the supplied fallback when no sketch has been saved', () => {
-		expect(new EditorStorage().loadCode('// fallback')).toBe('// fallback');
+	it('returns null when no sketch has been saved', () => {
+		expect(new EditorStorage().loadCode()).toBeNull();
 	});
 
 	it('preserves intentionally empty saved code', () => {
 		const storage = new EditorStorage();
 		storage.saveCode('');
 
-		expect(storage.loadCode('// fallback')).toBe('');
+		expect(storage.loadCode()).toBe('');
+	});
+
+	it('returns null when storage cannot be read', () => {
+		vi.stubGlobal('localStorage', {
+			getItem: () => {
+				throw new DOMException('Storage unavailable');
+			},
+		});
+
+		expect(new EditorStorage().loadCode()).toBeNull();
 	});
 });

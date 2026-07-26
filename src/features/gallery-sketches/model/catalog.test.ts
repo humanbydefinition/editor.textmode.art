@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGallerySketchCatalog } from './catalog';
+import { buildGallerySketchCatalog, getGallerySketchCatalog } from './catalog';
 
 const metadata = {
 	slug: 'signal-bloom',
@@ -12,6 +12,10 @@ const metadata = {
 };
 
 describe('gallery catalog OG metadata', () => {
+	it('contains at least one production sketch', () => {
+		expect(getGallerySketchCatalog().length).toBeGreaterThan(0);
+	});
+
 	it('accepts an omitted or bounded integer ogFrame', () => {
 		expect(buildCatalog(metadata)[0]?.ogFrame).toBeUndefined();
 		expect(buildCatalog({ ...metadata, ogFrame: 1000 })[0]?.ogFrame).toBe(1000);

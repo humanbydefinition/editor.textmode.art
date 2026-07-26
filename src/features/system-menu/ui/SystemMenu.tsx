@@ -28,7 +28,9 @@ interface SystemMenuProps {
 	onRandomize: () => boolean;
 	onMakeRandomChange?: () => void;
 	onResetRunners: () => void;
-	onClearStorage: () => void;
+	isGallerySketchActive: boolean;
+	hasLocalSketch: boolean;
+	onRestoreLocalSketch: () => boolean;
 	audioInput: AudioInputState;
 	onEnableAudioInput: (deviceId?: string) => Promise<void>;
 	onDisableAudioInput: () => void;
@@ -50,7 +52,9 @@ export function SystemMenu({
 	onRandomize,
 	onMakeRandomChange,
 	onResetRunners,
-	onClearStorage,
+	isGallerySketchActive,
+	hasLocalSketch,
+	onRestoreLocalSketch,
 	audioInput,
 	onEnableAudioInput,
 	onDisableAudioInput,
@@ -192,7 +196,9 @@ export function SystemMenu({
 							settings={settings}
 							onSettingsChange={updateSettings}
 							onResetRunners={onResetRunners}
-							onClearStorage={onClearStorage}
+							isGallerySketchActive={isGallerySketchActive}
+							hasLocalSketch={hasLocalSketch}
+							onRestoreLocalSketch={onRestoreLocalSketch}
 							onClose={() => setOpen(false)}
 						/>
 					</TabsContent>

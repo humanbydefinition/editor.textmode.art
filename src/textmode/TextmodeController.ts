@@ -4,7 +4,6 @@ const CONFIRMATION_DELAY_MS = 100;
 
 export interface TextmodeControllerCallbacks {
 	onSaveCode: (code: string) => void;
-	onClearCode: () => void;
 }
 
 export interface TextmodeControllerState {
@@ -75,14 +74,10 @@ export class TextmodeController {
 		this.execute(this.deps.editor.getValue(), 'run');
 	}
 
-	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' | 'reset' = 'run'): void {
+	replaceAndRun(code: string, reason: 'run' | 'reset-runtime' = 'run'): void {
 		if (this.isExecutionLocked()) return;
-		if (reason === 'reset') {
-			this.callbacks.onClearCode();
-			this.deps.state.setLastWorkingCode(null);
-		}
 		this.replaceCode(code);
-		this.execute(code, reason === 'run' ? 'run' : 'reset-runtime', reason !== 'reset-runtime');
+		this.execute(code, reason, reason !== 'reset-runtime');
 	}
 
 	handleRevertToLastWorking(): void {

@@ -104,7 +104,7 @@ export function ShareConsentDialog({ onUnlockAndRun, onUnlockOnly, onDiscard, on
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent side="top">
-								<p>loads your saved or the default sketch</p>
+								<p>loads your saved sketch or a random gallery sketch</p>
 							</TooltipContent>
 						</Tooltip>
 					</div>

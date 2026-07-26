@@ -27,15 +27,13 @@ describe('TextmodeController execution', () => {
 		harness.controller.dispose();
 	});
 
-	it('resets persisted and working code before one runtime reset', () => {
+	it('replaces gallery code through a runtime reset without persisting it', () => {
 		const harness = createHarness();
 
-		harness.controller.replaceAndRun('default code', 'reset');
+		harness.controller.replaceAndRun('gallery code', 'reset-runtime');
 
-		expect(harness.onClearCode).toHaveBeenCalledOnce();
-		expect(harness.setLastWorkingCode).toHaveBeenCalledWith(null);
-		expect(harness.onSaveCode).toHaveBeenCalledOnce();
-		expect(harness.resetRuntime).toHaveBeenCalledWith('default code');
+		expect(harness.onSaveCode).not.toHaveBeenCalled();
+		expect(harness.resetRuntime).toHaveBeenCalledWith('gallery code');
 	});
 
 	it('resets the current sketch runtime in place for the hard-reset shortcut', () => {
@@ -68,7 +66,6 @@ describe('TextmodeController execution', () => {
 
 function createHarness() {
 	const onSaveCode = vi.fn();
-	const onClearCode = vi.fn();
 	const setValue = vi.fn();
 	const forceRun = vi.fn();
 	const resetRuntime = vi.fn();
@@ -95,12 +92,11 @@ function createHarness() {
 		isExecutionLocked: () => false,
 		onCodeChanged: vi.fn(),
 	} satisfies TextmodeControllerDependencies;
-	const controller = new TextmodeController({ onSaveCode, onClearCode }, dependencies);
+	const controller = new TextmodeController({ onSaveCode }, dependencies);
 
 	return {
 		controller,
 		onSaveCode,
-		onClearCode,
 		setValue,
 		forceRun,
 		resetRuntime,
