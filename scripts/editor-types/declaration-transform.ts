@@ -58,20 +58,25 @@ export function transformDeclaration(fileName: string, sourceText: string): Decl
 		}
 	});
 
+	const seeEdits = collectDuplicateAccessorSeeEdits(sourceFile, normalizedSource);
+
 	const mergedDeclarationRanges = mergeRanges(declarationRanges);
 	const mergedExampleRanges = mergeRanges(
 		exampleRanges.filter(
 			(range) => !mergedDeclarationRanges.some((declaration) => rangesOverlap(range, declaration))
 		)
 	);
+	const mergedSeeEdits = mergeRanges(seeEdits);
 	const applicableLinkEdits = linkEdits.filter(
 		(edit) =>
 			!mergedDeclarationRanges.some((range) => rangesOverlap(edit, range)) &&
-			!mergedExampleRanges.some((range) => rangesOverlap(edit, range))
+			!mergedExampleRanges.some((range) => rangesOverlap(edit, range)) &&
+			!mergedSeeEdits.some((range) => rangesOverlap(edit, range))
 	);
 	const edits: TextEdit[] = [
 		...mergedDeclarationRanges.map((range) => ({ ...range, replacement: '' })),
 		...mergedExampleRanges.map((range) => ({ ...range, replacement: '' })),
+		...mergedSeeEdits.map((range) => ({ ...range, replacement: '' })),
 		...applicableLinkEdits,
 	];
 
@@ -111,6 +116,69 @@ function visitSyntaxNodes(node: ts.Node, visitor: (node: ts.Node) => void): void
 
 function getJSDocNodes(node: ts.Node): readonly ts.JSDoc[] {
 	return (node as ts.Node & { jsDoc?: ts.NodeArray<ts.JSDoc> }).jsDoc ?? [];
+}
+
+function getSeeTags(node: ts.Node): readonly ts.JSDocTag[] {
+	const tags: ts.JSDocTag[] = [];
+	for (const jsDoc of getJSDocNodes(node)) {
+		for (const tag of jsDoc.tags ?? []) {
+			if (tag.tagName.text === 'see') {
+				tags.push(tag);
+			}
+		}
+	}
+	return tags;
+}
+
+function collectDuplicateAccessorSeeEdits(sourceFile: ts.SourceFile, source: string): TextEdit[] {
+	const edits: TextEdit[] = [];
+
+	visitSyntaxNodes(sourceFile, (node) => {
+		if (!ts.isClassDeclaration(node) && !ts.isInterfaceDeclaration(node)) {
+			return;
+		}
+
+		const getAccessors = new Map<string, { seeTags: readonly ts.JSDocTag[] }>();
+		const setAccessors = new Map<string, { seeTags: readonly ts.JSDocTag[] }>();
+
+		for (const member of node.members) {
+			const name = member.name?.getText();
+			if (!name) continue;
+
+			if (ts.isGetAccessorDeclaration(member)) {
+				const seeTags = getSeeTags(member);
+				if (seeTags.length > 0) {
+					getAccessors.set(name, { seeTags });
+				}
+			} else if (ts.isSetAccessorDeclaration(member)) {
+				const seeTags = getSeeTags(member);
+				if (seeTags.length > 0) {
+					setAccessors.set(name, { seeTags });
+				}
+			}
+		}
+
+		for (const [name, getter] of getAccessors) {
+			const setter = setAccessors.get(name);
+			if (!setter) continue;
+
+			for (const setterTag of setter.seeTags) {
+				const tagText = source.slice(setterTag.pos, setterTag.end);
+				const isDuplicate = getter.seeTags.some(
+					(getterTag) => source.slice(getterTag.pos, getterTag.end) === tagText
+				);
+				if (isDuplicate) {
+					edits.push({
+						start: setterTag.pos,
+						end: setterTag.end,
+						replacement: '',
+					});
+				}
+			}
+		}
+	});
+
+	return edits;
 }
 
 function isDisallowedDeclaration(node: ts.Node): node is ts.NamedDeclaration {
