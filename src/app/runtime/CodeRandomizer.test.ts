@@ -203,7 +203,14 @@ void main() {
 		expect(makeRandomChange(glslUnsigned, sequenceRng(0, 0.99, 0.99))).toContain('4294967285u');
 	});
 
-	it('keeps seeded JavaScript and embedded GLSL mutations parseable', () => {
+	it.each([
+		['JavaScript integer', 0.5 / 6, 'amount: 22'],
+		['JavaScript float', 1.5 / 6, 'gain: 0.85'],
+		['short hex color', 2.5 / 6, "'#fff'"],
+		['long hex color with alpha', 3.5 / 6, "'#FFFFFF80'"],
+		['GLSL integer', 4.5 / 6, 'int amount = 14'],
+		['GLSL float', 5.5 / 6, 'float gain = 0.35'],
+	])('keeps %s mutations parseable', (_target, selection, expected) => {
 		const source = `const settings = { amount: 12, gain: 0.75 };
 const palette = ['#123', '#AABBCC80'];
 const shader = \`#version 300 es
@@ -215,16 +222,16 @@ void main() {
 	color = vec4(gain * float(amount));
 }\`;`;
 
-		for (let seed = 1; seed <= 250; seed++) {
-			const changed = makeRandomChange(source, seededRng(seed));
-			expect(() =>
-				parse(changed, {
-					ecmaVersion: 'latest',
-					sourceType: 'script',
-				})
-			).not.toThrow();
-			expect(() => parseGlsl(extractTemplate(changed), { quiet: true, stage: 'either' })).not.toThrow();
-		}
+		const changed = makeRandomChange(source, sequenceRng(selection, 0.999999, 0.999999, 0.999999));
+
+		expect(changed).toContain(expected);
+		expect(() =>
+			parse(changed, {
+				ecmaVersion: 'latest',
+				sourceType: 'script',
+			})
+		).not.toThrow();
+		expect(() => parseGlsl(extractTemplate(changed), { quiet: true, stage: 'either' })).not.toThrow();
 	});
 });
 
@@ -237,14 +244,6 @@ void main() { ${body} }
 function sequenceRng(...values: number[]): () => number {
 	let index = 0;
 	return () => values[index++] ?? 0;
-}
-
-function seededRng(seed: number): () => number {
-	let state = seed >>> 0;
-	return () => {
-		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-		return state / 0x1_0000_0000;
-	};
 }
 
 function extractTemplate(code: string): string {
