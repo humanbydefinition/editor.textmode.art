@@ -1,4 +1,4 @@
-import type { GallerySketch, GallerySketchMeta, GallerySketchSummary } from '../types';
+import type { GallerySketch, GallerySketchMeta } from '../types';
 import { validateGallerySketchMeta } from './metadata';
 
 export const MAX_SKETCH_CODE_CHARS = 300_000;
@@ -45,17 +45,6 @@ export function pickRandomGallerySketch(
 
 	const index = Math.min(candidates.length - 1, Math.floor(rng() * candidates.length));
 	return candidates[index] ?? null;
-}
-
-export function toGallerySketchSummary(sketch: GallerySketch): GallerySketchSummary {
-	return {
-		slug: sketch.slug,
-		title: sketch.title,
-		description: sketch.description,
-		authorName: sketch.authorName,
-		license: sketch.license,
-		socialLinks: sketch.socialLinks,
-	};
 }
 
 export function buildGallerySketchCatalog(metaModuleMap: ModuleMap, codeModuleMap: ModuleMap): GallerySketch[] {

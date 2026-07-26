@@ -1,9 +1,9 @@
 import { ExternalLink, User, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import type { GallerySketchSummary } from '../types';
+import type { GallerySketch } from '../types';
 
 interface SketchMetaCardProps {
-	sketch: GallerySketchSummary;
+	sketch: Pick<GallerySketch, 'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks'>;
 	showDismiss?: boolean;
 	onDismiss?: () => void;
 	className?: string;

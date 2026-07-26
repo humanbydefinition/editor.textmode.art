@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WelcomeDialog } from '@/features/onboarding';
 import { SystemMenu } from '@/features/system-menu';
 import { Toaster } from '@/shared/ui/sonner';
 import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
-import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gallery-sketches';
+import { GallerySketchInfoButton } from '@/features/gallery-sketches';
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { FloatingActionButton } from '@/shared/ui/floating-action-button';
@@ -38,10 +38,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 	const shareConsented = useAppStore((state) => state.share.consented);
 	const sharePromptOpen = useAppStore((state) => state.share.promptOpen);
 	const gallerySketch = useAppStore((state) => state.gallerySketch);
-	const gallerySketchSummary = useMemo(
-		() => (gallerySketch ? toGallerySketchSummary(gallerySketch) : null),
-		[gallerySketch]
-	);
 	const hasLocalSketch = actions.hasLocalSketch();
 	const textmodeRunnerStatus = useAppStore((state) => state.runnerStatus);
 	const audioInput = useAppStore((state) => state.audioInput);
@@ -137,7 +133,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 					{!showShareLock && (
 						<>
 							<GallerySketchInfoButton
-								sketch={gallerySketchSummary}
+								sketch={gallerySketch}
 								autoOpenEnabled={!welcomeOpen}
 								onShare={handleShare}
 								className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"

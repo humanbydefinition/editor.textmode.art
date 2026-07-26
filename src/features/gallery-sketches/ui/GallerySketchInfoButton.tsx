@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Info, Share2 } from 'lucide-react';
 import { FloatingActionButton } from '@/shared/ui/floating-action-button';
-import type { GallerySketchSummary } from '../types';
+import type { GallerySketch } from '../types';
 import { SketchMetaCard } from './SketchMetaCard';
 
 interface GallerySketchInfoButtonProps {
-	sketch: GallerySketchSummary | null;
+	sketch: Pick<GallerySketch, 'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks'> | null;
 	className?: string;
 	autoOpenEnabled?: boolean;
 	onShare: () => void;
