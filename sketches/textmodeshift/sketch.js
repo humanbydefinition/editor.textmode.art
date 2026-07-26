@@ -230,8 +230,6 @@ t.draw(() => {
 
 t.windowResized(() => {
 	if (!seedFramebuffer) return;
-	if (t.width !== window.innerWidth || t.height !== window.innerHeight)
-		t.resizeCanvas(window.innerWidth, window.innerHeight);
 	const size = framebufferSize();
 	for (const framebuffer of [seedFramebuffer, previousFramebuffer, nextFramebuffer]) {
 		framebuffer.resize(size.width, size.height);
