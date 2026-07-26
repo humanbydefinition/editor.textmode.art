@@ -34,16 +34,10 @@ export class ShareManager {
 		}
 	}
 
-	getInitialCodeOverride(): string | null {
-		const payload = this.deps.getShare().payload;
-		return payload?.engines.textmode ?? null;
-	}
-
-	applyInitialShareIfPresent(): void {
+	setInitialReadOnlyIfNeeded(): void {
 		const { payload, consented } = this.deps.getShare();
 		if (!payload || consented) return;
 
-		this.deps.applyPayload(payload);
 		this.deps.setEditorReadOnly(true);
 	}
 

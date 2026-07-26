@@ -147,8 +147,7 @@ export class AppRuntime {
 		this.textmodeEngine.init(this.createEngineContext(container));
 		if (!this.initialized) return;
 
-		this.shareManager.applyInitialShareIfPresent();
-		this.galleryManager.applyPendingGallerySketchIfPresent();
+		this.shareManager.setInitialReadOnlyIfNeeded();
 		this.shareManager.attachInteractionGuards();
 
 		if (!this.shortcuts) {
@@ -212,8 +211,8 @@ export class AppRuntime {
 
 	private getInitialCode(): string {
 		return (
-			this.shareManager.getInitialCodeOverride() ??
-			this.galleryManager.getInitialCodeOverride() ??
+			getAppState().share.payload?.engines.textmode ??
+			getAppState().gallerySketch?.textmodeCode ??
 			this.storage.loadCode() ??
 			''
 		);

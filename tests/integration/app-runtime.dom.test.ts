@@ -20,7 +20,9 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 	class TextmodeEngine {
 		private initialized = false;
 
-		init = vi.fn(() => {
+		initialCode = '';
+		init = vi.fn((context?: FakeEngineContext) => {
+			this.initialCode = context?.getInitialCode() ?? '';
 			this.initialized = true;
 		});
 		dispose = vi.fn(() => {
@@ -145,7 +147,8 @@ describe('AppRuntime', () => {
 
 		initialize(runtime);
 
-		expect(getInitialCode(engine)).toBe(sketch.textmodeCode);
+		expect(engine.initialCode).toBe(sketch.textmodeCode);
+		expect(engine.replaceAndRun).not.toHaveBeenCalled();
 		expect(getRandomGallerySketch).not.toHaveBeenCalled();
 	});
 
@@ -294,6 +297,7 @@ interface FakeEngineContext {
 
 interface FakeTextmodeEngine {
 	init: Mock<(context?: FakeEngineContext) => void>;
+	initialCode: string;
 	dispose: Mock<() => void>;
 	isInitialized: Mock<() => boolean>;
 	replaceAndRun: Mock<(code: string, reason?: string) => void>;

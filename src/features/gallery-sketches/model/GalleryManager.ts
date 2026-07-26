@@ -19,7 +19,6 @@ export interface GalleryManagerDependencies {
 
 export class GalleryManager {
 	private readonly deps: GalleryManagerDependencies;
-	private pendingGallerySketch: GallerySketch | null = null;
 
 	constructor(deps: GalleryManagerDependencies) {
 		this.deps = deps;
@@ -37,21 +36,9 @@ export class GalleryManager {
 			return;
 		}
 
-		this.pendingGallerySketch = sketch;
 		this.deps.setGallerySketch(sketch);
 		const canonicalPath = `/s/${sketch.slug}/`;
 		if (location.pathname !== canonicalPath) this.deps.replaceUrl(canonicalPath);
-	}
-
-	getInitialCodeOverride(): string | null {
-		return this.pendingGallerySketch?.textmodeCode ?? this.deps.getGallerySketch()?.textmodeCode ?? null;
-	}
-
-	applyPendingGallerySketchIfPresent(): void {
-		if (!this.pendingGallerySketch) return;
-		const sketch = this.pendingGallerySketch;
-		this.pendingGallerySketch = null;
-		this.applyGallerySketch(sketch);
 	}
 
 	loadRandom(): boolean {
@@ -80,7 +67,6 @@ export class GalleryManager {
 	}
 
 	clear(): void {
-		this.pendingGallerySketch = null;
 		this.deps.clearGallerySketches();
 	}
 
