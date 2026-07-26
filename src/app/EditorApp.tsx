@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { AppRuntime } from '@/app/runtime/AppRuntime';
-import { AppRuntimeProvider } from '@/app/runtime/AppRuntimeContext';
 import { AppShell } from '@/app/ui/AppShell';
 
 /**
  * React wrapper that owns the AppRuntime lifecycle.
  * Creates the runtime once, initializes on mount, disposes on unmount,
- * and provides its stable actions/layout via context.
+ * and passes stable actions/layout references as props to AppShell.
  */
 export function EditorApp() {
 	const runtimeRef = useRef<AppRuntime | null>(null);
@@ -33,11 +32,5 @@ export function EditorApp() {
 		};
 	}, [runtime]);
 
-	const contextValue = { actions: runtime.actions, layout: runtime.layout };
-
-	return (
-		<AppRuntimeProvider value={contextValue}>
-			<AppShell />
-		</AppRuntimeProvider>
-	);
+	return <AppShell actions={runtime.actions} layout={runtime.layout} />;
 }

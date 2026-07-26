@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { EditorLayout } from '@/features/editor-layout';
 import { WelcomeDialog } from '@/features/onboarding';
 import { SystemMenu } from '@/features/system-menu';
 import { Toaster } from '@/shared/ui/sonner';
@@ -10,23 +9,25 @@ import { GallerySketchInfoButton, toGallerySketchSummary } from '@/features/gall
 import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { FloatingActionButton } from '@/shared/ui/floating-action-button';
-import { useAppRuntime } from '@/app/runtime/AppRuntimeContext';
+import type { AppRuntime } from '@/app/runtime/AppRuntime';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 import { toast } from 'sonner';
 
+interface AppShellProps {
+	actions: AppRuntime['actions'];
+	layout: AppRuntime['layout'];
+}
+
 /**
  * Root component for the application.
- * Renders both EditorLayout (editor panes) and the AppShell (UI layer).
+ * Renders the editor pane and the UI shell layer.
  */
-export function AppShell() {
+export function AppShell({ actions, layout }: AppShellProps) {
 	const [welcomeOpen, setWelcomeOpen] = useState(true);
 
 	// Local UI State for Share Export
 	const [shareExportOpen, setShareExportOpen] = useState(false);
 	const [shareExportData, setShareExportData] = useState<ShareExportData | null>(null);
-
-	// Runtime Context
-	const { actions, layout } = useAppRuntime();
 
 	// Store State
 	const editorBackdrop = useAppStore((state) => state.settings.editorBackdrop);
@@ -82,7 +83,15 @@ export function AppShell() {
 	return (
 		<>
 			{/* Layout layer - single editor pane */}
-			<EditorLayout editorBackdrop={editorBackdrop} onTextmodeReady={layout.onTextmodeReady} />
+			<div
+				ref={(container) => {
+					if (container) {
+						layout.onTextmodeReady(container);
+					}
+				}}
+				id="editor-panel-textmode"
+				className={`layout-pane panel-editor ${editorBackdrop ? 'editor-backdrop' : ''}`}
+			/>
 
 			{/* UI shell layer - elevated above editors */}
 			<div id="shell-container" className="fixed inset-0 z-[100] pointer-events-none">
