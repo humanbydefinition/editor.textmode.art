@@ -72,6 +72,7 @@ async function renderJob(browser: Browser, previewUrl: string, job: OgJob): Prom
 		const request: OgPreviewRequest = {
 			code,
 			frame: job.frame,
+			darken: job.darken,
 			card: job.card,
 		};
 		let previewResult: OgPreviewResult;

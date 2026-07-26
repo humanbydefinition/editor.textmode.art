@@ -2,8 +2,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
+	DEFAULT_GALLERY_OG_DARKEN,
 	DEFAULT_GALLERY_OG_FRAME,
+	MAX_GALLERY_OG_DARKEN,
 	MAX_GALLERY_OG_FRAME,
+	MIN_GALLERY_OG_DARKEN,
 	MIN_GALLERY_OG_FRAME,
 	validateSlug,
 } from '../../src/features/gallery-sketches/model/metadata';
@@ -19,11 +22,12 @@ const GALLERY_USAGE = `Generate gallery Open Graph images.
 Usage:
   npm run generate:og -- <slug>
   npm run generate:og -- <slug> --frame <1-1000>
+  npm run generate:og -- <slug> --darken <0-100>
   npm run generate:og -- --all
   npm run generate:og -- --help
 
-The image is written to sketches/<slug>/og.png. A --frame override does not
-update meta.json; persist the selected value as ogFrame before opening a PR.`;
+A --frame or --darken override does not update meta.json; persist the selected
+values as ogFrame and ogDarken before opening a PR.`;
 
 const SITE_USAGE = `Generate the general editor Open Graph image.
 
@@ -31,6 +35,7 @@ Usage:
   npm run generate:og:site
   npm run generate:og:site -- --sketch <gallery-slug>
   npm run generate:og:site -- --frame <1-1000>
+  npm run generate:og:site -- --darken <0-100>
   npm run generate:og:site -- --sketch <gallery-slug> --frame <1-1000>
   npm run generate:og:site -- --help
 
@@ -43,6 +48,7 @@ type GalleryCommand = {
 	all: boolean;
 	slug?: string;
 	frame?: number;
+	darken?: number;
 };
 
 type SiteCommand = {
@@ -50,6 +56,7 @@ type SiteCommand = {
 	help: boolean;
 	sketch?: string;
 	frame?: number;
+	darken?: number;
 };
 
 export type OgCommand = GalleryCommand | SiteCommand;
@@ -72,7 +79,7 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 	const entries = await readGalleryEntries(root);
 	if (command.kind === 'gallery') {
 		const selectedEntries = selectGalleryEntries(entries, command);
-		const jobs = selectedEntries.map((entry) => createGalleryJob(entry, command.frame));
+		const jobs = selectedEntries.map((entry) => createGalleryJob(entry, command.frame, command.darken));
 
 		for (const [index, job] of jobs.entries()) {
 			console.log(`Rendering ${job.slug} at frame ${job.frame} (${index + 1}/${jobs.length})...`);
@@ -83,6 +90,9 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 			if (command.frame !== undefined && entry.meta.ogFrame !== command.frame) {
 				console.log(`Remember to set "ogFrame": ${command.frame} in ${entry.metaPath}.`);
 			}
+			if (command.darken !== undefined && entry.meta.ogDarken !== command.darken) {
+				console.log(`Remember to set "ogDarken": ${command.darken} in ${entry.metaPath}.`);
+			}
 			if (index < selectedEntries.length - 1) console.log('');
 		}
 		return;
@@ -90,6 +100,7 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 
 	const sketch = command.sketch ?? SITE_OG_CONFIG.sketch;
 	const frame = command.frame ?? SITE_OG_CONFIG.frame;
+	const darken = command.darken ?? SITE_OG_CONFIG.darken;
 	const entry = entries.find((candidate) => candidate.meta.slug === sketch);
 	if (!entry) throw new Error(`Gallery sketch not found: ${sketch}`);
 	const outputPath = path.resolve(root, SITE_OG_CONFIG.output);
@@ -101,6 +112,7 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 				slug: entry.meta.slug,
 				codePath: entry.sketchPath,
 				frame,
+				darken,
 				outputPath,
 				card: { kind: 'site' },
 			},
@@ -108,8 +120,10 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 		{ projectRoot: root }
 	);
 	console.log(`Generated ${outputPath}`);
-	if (sketch !== SITE_OG_CONFIG.sketch || frame !== SITE_OG_CONFIG.frame) {
-		console.log(`Remember to update scripts/og/config.ts to sketch "${sketch}" at frame ${frame}.`);
+	if (sketch !== SITE_OG_CONFIG.sketch || frame !== SITE_OG_CONFIG.frame || darken !== SITE_OG_CONFIG.darken) {
+		console.log(
+			`Remember to update scripts/og/config.ts to sketch "${sketch}" at frame ${frame} with darken ${darken}.`
+		);
 	}
 }
 /* v8 ignore stop -- @preserve */
@@ -119,23 +133,29 @@ function parseGalleryCommand(args: string[]): GalleryCommand {
 		help: { type: 'boolean', short: 'h' },
 		all: { type: 'boolean' },
 		frame: { type: 'string' },
+		darken: { type: 'string' },
 	});
 	rejectDuplicateOption(tokens, 'frame');
+	rejectDuplicateOption(tokens, 'darken');
 
 	const help = values.help ?? false;
 	const all = values.all ?? false;
 	const slug = positionals[0];
 	const frame = values.frame === undefined ? undefined : parseOgFrame(values.frame, '--frame');
+	const darken = values.darken === undefined ? undefined : parseOgDarken(values.darken, '--darken');
 	if (positionals.length > 1) throw new CliUsageError(`Unexpected extra argument: ${positionals[1]}`);
-	if (help) return { kind: 'gallery', help: true, all, slug, frame };
+	if (help) return { kind: 'gallery', help: true, all, slug, frame, darken };
 	if (all && slug) throw new CliUsageError('Use either a sketch slug or --all, not both.');
 	if (all && frame !== undefined) {
 		throw new CliUsageError('--frame cannot be combined with --all; set ogFrame per sketch.');
 	}
+	if (all && darken !== undefined) {
+		throw new CliUsageError('--darken cannot be combined with --all; set ogDarken per sketch.');
+	}
 	if (!all && !slug) throw new CliUsageError('Provide a sketch slug or use --all.');
 	if (slug) assertSlug(slug);
 
-	return { kind: 'gallery', help: false, all, slug, frame };
+	return { kind: 'gallery', help: false, all, slug, frame, darken };
 }
 
 function parseSiteCommand(args: string[]): SiteCommand {
@@ -143,9 +163,11 @@ function parseSiteCommand(args: string[]): SiteCommand {
 		help: { type: 'boolean', short: 'h' },
 		sketch: { type: 'string' },
 		frame: { type: 'string' },
+		darken: { type: 'string' },
 	});
 	rejectDuplicateOption(tokens, 'sketch');
 	rejectDuplicateOption(tokens, 'frame');
+	rejectDuplicateOption(tokens, 'darken');
 
 	if (positionals.length > 0) throw new CliUsageError(`Unexpected argument: ${positionals[0]}`);
 	const sketch = values.sketch;
@@ -156,6 +178,7 @@ function parseSiteCommand(args: string[]): SiteCommand {
 		help: values.help ?? false,
 		sketch,
 		frame: values.frame === undefined ? undefined : parseOgFrame(values.frame, '--frame'),
+		darken: values.darken === undefined ? undefined : parseOgDarken(values.darken, '--darken'),
 	};
 }
 
@@ -189,6 +212,16 @@ function parseOgFrame(value: unknown, label: string): number {
 	return frame;
 }
 
+function parseOgDarken(value: unknown, label: string): number {
+	const darken = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
+	if (!Number.isInteger(darken) || darken < MIN_GALLERY_OG_DARKEN || darken > MAX_GALLERY_OG_DARKEN) {
+		throw new CliUsageError(
+			`${label} must be an integer from ${MIN_GALLERY_OG_DARKEN} to ${MAX_GALLERY_OG_DARKEN}.`
+		);
+	}
+	return darken;
+}
+
 function assertSlug(slug: string, prefix = ''): void {
 	const validation = validateSlug(slug);
 	if (!validation.valid) throw new CliUsageError(`${prefix}${validation.reason}`);
@@ -203,11 +236,16 @@ function selectGalleryEntries(entries: GalleryEntry[], command: GalleryCommand):
 	return selected;
 }
 
-function createGalleryJob(entry: GalleryEntry, frameOverride: number | undefined): OgJob {
+function createGalleryJob(
+	entry: GalleryEntry,
+	frameOverride: number | undefined,
+	darkenOverride: number | undefined
+): OgJob {
 	return {
 		slug: entry.meta.slug,
 		codePath: entry.sketchPath,
 		frame: frameOverride ?? entry.meta.ogFrame ?? DEFAULT_GALLERY_OG_FRAME,
+		darken: darkenOverride ?? entry.meta.ogDarken ?? DEFAULT_GALLERY_OG_DARKEN,
 		outputPath: entry.ogPath,
 		card: {
 			kind: 'gallery',

@@ -1,4 +1,5 @@
 import type { OgPreviewRequest, OgPreviewResult } from '../contracts';
+import { mountDarkenLayer } from './darken-layer';
 import { mountGalleryOverlay } from './gallery-overlay';
 import { mountSiteOverlay } from './site-overlay';
 import { renderSketchAtFrame, type RenderedSketch } from './sketch-runtime';
@@ -12,7 +13,7 @@ declare global {
 window.renderOg = async (request) => {
 	document.body.dataset.status = 'running';
 	delete document.body.dataset.error;
-	document.querySelectorAll('canvas, #og-overlay').forEach((element) => element.remove());
+	document.querySelectorAll('canvas, #og-overlay, #og-darken').forEach((element) => element.remove());
 
 	let renderedSketch: RenderedSketch | undefined;
 	const markError = (error: unknown): void => {
@@ -23,6 +24,7 @@ window.renderOg = async (request) => {
 
 	try {
 		renderedSketch = await renderSketchAtFrame(request.code, request.frame, markError);
+		mountDarkenLayer(request.darken);
 		const overlay = request.card.kind === 'gallery' ? mountGalleryOverlay(request.card) : mountSiteOverlay();
 
 		await document.fonts.ready;

@@ -15,6 +15,7 @@ export interface OgJob {
 	slug: string;
 	codePath: string;
 	frame: number;
+	darken: number;
 	outputPath: string;
 	card: OgCard;
 }
@@ -22,6 +23,7 @@ export interface OgJob {
 export interface OgPreviewRequest {
 	code: string;
 	frame: number;
+	darken: number;
 	card: OgCard;
 }
 

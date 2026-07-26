@@ -16,9 +16,11 @@ describe('gallery catalog OG metadata', () => {
 		expect(getGallerySketchCatalog().length).toBeGreaterThan(0);
 	});
 
-	it('accepts an omitted or bounded integer ogFrame', () => {
+	it('accepts an omitted or bounded integer ogFrame and ogDarken', () => {
 		expect(buildCatalog(metadata)[0]?.ogFrame).toBeUndefined();
+		expect(buildCatalog(metadata)[0]?.ogDarken).toBeUndefined();
 		expect(buildCatalog({ ...metadata, ogFrame: 1000 })[0]?.ogFrame).toBe(1000);
+		expect(buildCatalog({ ...metadata, ogDarken: 100 })[0]?.ogDarken).toBe(100);
 	});
 
 	it('adds the module path to shared metadata validation errors', () => {

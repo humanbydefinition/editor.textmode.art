@@ -11,6 +11,9 @@ export const GALLERY_SOCIAL_LINK_URL_MAX_LENGTH = 200;
 export const DEFAULT_GALLERY_OG_FRAME = 60;
 export const MIN_GALLERY_OG_FRAME = 1;
 export const MAX_GALLERY_OG_FRAME = 1000;
+export const DEFAULT_GALLERY_OG_DARKEN = 55;
+export const MIN_GALLERY_OG_DARKEN = 0;
+export const MAX_GALLERY_OG_DARKEN = 100;
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
@@ -28,6 +31,7 @@ export interface GallerySketchMeta {
 	socialLinks: SocialLink[] | null;
 	createdAt: string;
 	ogFrame?: number;
+	ogDarken?: number;
 }
 
 export type GalleryMetadataValidationResult =
@@ -76,6 +80,17 @@ export function validateGallerySketchMeta(value: unknown): GalleryMetadataValida
 		(!Number.isInteger(meta.ogFrame) || meta.ogFrame < MIN_GALLERY_OG_FRAME || meta.ogFrame > MAX_GALLERY_OG_FRAME)
 	) {
 		return invalid(`field "ogFrame" must be an integer from ${MIN_GALLERY_OG_FRAME} to ${MAX_GALLERY_OG_FRAME}.`);
+	}
+
+	if (
+		meta.ogDarken !== undefined &&
+		(!Number.isInteger(meta.ogDarken) ||
+			meta.ogDarken < MIN_GALLERY_OG_DARKEN ||
+			meta.ogDarken > MAX_GALLERY_OG_DARKEN)
+	) {
+		return invalid(
+			`field "ogDarken" must be an integer from ${MIN_GALLERY_OG_DARKEN} to ${MAX_GALLERY_OG_DARKEN}.`
+		);
 	}
 
 	if (meta.socialLinks !== null && !Array.isArray(meta.socialLinks)) {

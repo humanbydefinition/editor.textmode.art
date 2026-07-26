@@ -1,7 +1,10 @@
 import { copyFile, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { DEFAULT_GALLERY_OG_FRAME } from '../../../src/features/gallery-sketches/model/metadata';
+import {
+	DEFAULT_GALLERY_OG_DARKEN,
+	DEFAULT_GALLERY_OG_FRAME,
+} from '../../../src/features/gallery-sketches/model/metadata';
 import { readGalleryEntries } from '../../gallery/project';
 import { SITE_OG_CONFIG } from '../config';
 import type { OgJob } from '../contracts';
@@ -25,6 +28,7 @@ test('regenerates every committed OG image with zero pixel differences', async (
 			slug: siteEntry!.meta.slug,
 			codePath: siteEntry!.sketchPath,
 			frame: SITE_OG_CONFIG.frame,
+			darken: SITE_OG_CONFIG.darken,
 			outputPath: siteOutput,
 			card: { kind: 'site' },
 		},
@@ -32,6 +36,7 @@ test('regenerates every committed OG image with zero pixel differences', async (
 			slug: entry.meta.slug,
 			codePath: entry.sketchPath,
 			frame: entry.meta.ogFrame ?? DEFAULT_GALLERY_OG_FRAME,
+			darken: entry.meta.ogDarken ?? DEFAULT_GALLERY_OG_DARKEN,
 			outputPath: galleryOutputs.get(entry.meta.slug)!,
 			card: {
 				kind: 'gallery',
@@ -78,6 +83,7 @@ test('renders isolated multi-job frames, layouts, and long metadata', async ({ b
 				slug: 'frame-seek',
 				codePath,
 				frame: 1,
+				darken: 55,
 				outputPath: firstFrameOutput,
 				card: galleryCard,
 			},
@@ -85,6 +91,7 @@ test('renders isolated multi-job frames, layouts, and long metadata', async ({ b
 				slug: 'frame-seek',
 				codePath,
 				frame: 60,
+				darken: 55,
 				outputPath: laterFrameOutput,
 				card: galleryCard,
 			},
@@ -92,6 +99,7 @@ test('renders isolated multi-job frames, layouts, and long metadata', async ({ b
 				slug: 'frame-seek',
 				codePath,
 				frame: 60,
+				darken: SITE_OG_CONFIG.darken,
 				outputPath: siteOutput,
 				card: { kind: 'site' },
 			},
@@ -99,6 +107,7 @@ test('renders isolated multi-job frames, layouts, and long metadata', async ({ b
 				slug: 'frame-seek-long-metadata',
 				codePath,
 				frame: 1,
+				darken: 100,
 				outputPath: longMetadataOutput,
 				card: {
 					kind: 'gallery',
@@ -111,6 +120,7 @@ test('renders isolated multi-job frames, layouts, and long metadata', async ({ b
 				slug: 'frame-seek-anonymous',
 				codePath,
 				frame: 1,
+				darken: 0,
 				outputPath: anonymousOutput,
 				card: {
 					kind: 'gallery',
@@ -152,6 +162,7 @@ test('reports the failing stage and preserves the previous valid output', async 
 					slug: 'failing-sketch',
 					codePath: path.join(fixtures, 'failing-sketch.js'),
 					frame: 60,
+					darken: 40,
 					outputPath,
 					card: { kind: 'site' },
 				},

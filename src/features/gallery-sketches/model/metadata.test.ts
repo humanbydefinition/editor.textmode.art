@@ -8,6 +8,7 @@ import {
 	GALLERY_SOCIAL_LINK_URL_MAX_LENGTH,
 	GALLERY_SOCIAL_LINKS_MAX_COUNT,
 	GALLERY_TITLE_MAX_LENGTH,
+	MAX_GALLERY_OG_DARKEN,
 	MAX_GALLERY_OG_FRAME,
 	SLUG_MAX_LENGTH,
 	SLUG_MIN_LENGTH,
@@ -25,6 +26,7 @@ const validMetadata: GallerySketchMeta = {
 	socialLinks: [{ label: 'Website', url: 'https://example.com' }],
 	createdAt: '2026-05-16T00:00:00.000Z',
 	ogFrame: 60,
+	ogDarken: 55,
 };
 
 describe('gallery metadata contract', () => {
@@ -69,6 +71,8 @@ describe('gallery metadata contract', () => {
 		['an invalid creation date', { createdAt: 'not-a-date' }, 'must be an ISO date string'],
 		['a fractional OG frame', { ogFrame: 1.5 }, 'must be an integer from 1 to 1000'],
 		['an out-of-range OG frame', { ogFrame: MAX_GALLERY_OG_FRAME + 1 }, 'must be an integer from 1 to 1000'],
+		['a fractional OG darken', { ogDarken: 0.5 }, 'must be an integer from 0 to 100'],
+		['an out-of-range OG darken', { ogDarken: MAX_GALLERY_OG_DARKEN + 1 }, 'must be an integer from 0 to 100'],
 		['missing social links', { socialLinks: undefined }, 'must be an array or null'],
 		[
 			'too many social links',

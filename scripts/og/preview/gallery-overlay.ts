@@ -47,20 +47,6 @@ export function mountGalleryOverlay(card: GalleryOgCard): MountedGalleryOverlay 
 	svg.setAttribute('height', String(OG_HEIGHT));
 	svg.setAttribute('viewBox', `0 0 ${OG_WIDTH} ${OG_HEIGHT}`);
 	svg.innerHTML = `
-		<defs>
-			<linearGradient id="top-scrim" x1="0" y1="0" x2="0" y2="1">
-				<stop offset="0" stop-color="#000" stop-opacity="0.76" />
-				<stop offset="1" stop-color="#000" stop-opacity="0" />
-			</linearGradient>
-			<linearGradient id="bottom-scrim" x1="0" y1="0" x2="0" y2="1">
-				<stop offset="0" stop-color="#000" stop-opacity="0" />
-				<stop offset="0.25" stop-color="#000" stop-opacity="0.55" />
-				<stop offset="0.5" stop-color="#000" stop-opacity="0.78" />
-				<stop offset="1" stop-color="#000" stop-opacity="0.96" />
-			</linearGradient>
-		</defs>
-		<rect width="1200" height="150" fill="url(#top-scrim)" />
-		<rect y="120" width="1200" height="510" fill="url(#bottom-scrim)" />
 		<g id="gallery-og-brand" transform="translate(${METADATA_LEFT} 49)">
 			<g transform="translate(0 ${BRAND_MARK_Y_OFFSET}) scale(${BRAND_MARK_SIZE / 768})" fill="#f2f2ec"><path d="${getBrandMarkPath()}" /></g>
 			<text x="${BRAND_TEXT_OFFSET}" y="18" fill="#f2f2ec" font-family="Monogram Extended" font-size="${BRAND_FONT_SIZE}">editor.textmode.art</text>

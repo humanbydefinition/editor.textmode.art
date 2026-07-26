@@ -6,6 +6,7 @@ export const OG_PREVIEW_PATH = '/scripts/og/preview/index.html';
 export const SITE_OG_CONFIG = {
 	sketch: 'textmodeshift',
 	frame: 60,
+	darken: 40,
 	output: 'public/og.png',
 } as const;
 
