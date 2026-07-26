@@ -49,17 +49,76 @@ describe('TextmodeController execution', () => {
 		vi.useFakeTimers();
 		const harness = createHarness();
 
-		harness.controller.handleRunOk();
+		harness.controller.handleRunOk('current code');
 		vi.advanceTimersByTime(100);
 		expect(harness.setLastWorkingCode).toHaveBeenCalledWith('current code');
 
 		harness.setLastWorkingCode.mockClear();
-		harness.controller.handleRunOk();
+		harness.controller.handleRunOk('current code');
 		harness.controller.handleExecutionError({ message: 'failed' });
 		vi.advanceTimersByTime(100);
 		expect(harness.setLastWorkingCode).not.toHaveBeenCalled();
 		expect(harness.setError).toHaveBeenCalledWith({ message: 'failed' });
 
+		harness.controller.dispose();
+	});
+
+	it('commits a candidate only after the runtime probe succeeds', async () => {
+		const harness = createHarness();
+		harness.tryCandidate.mockResolvedValue(true);
+
+		await expect(harness.controller.tryReplaceAndRun('candidate code')).resolves.toBe(true);
+
+		expect(harness.tryCandidate).toHaveBeenCalledWith('candidate code', 'current code');
+		expect(harness.setValue).toHaveBeenCalledWith('candidate code', { silent: true });
+		expect(harness.onSaveCode).toHaveBeenCalledWith('candidate code');
+		expect(harness.setLastWorkingCode).toHaveBeenCalledWith('candidate code');
+	});
+
+	it('leaves editor and persistence untouched when the runtime probe rejects a candidate', async () => {
+		const harness = createHarness();
+		harness.tryCandidate.mockResolvedValue(false);
+
+		await expect(harness.controller.tryReplaceAndRun('broken code')).resolves.toBe(false);
+
+		expect(harness.tryCandidate).toHaveBeenCalledWith('broken code', 'current code');
+		expect(harness.setValue).not.toHaveBeenCalled();
+		expect(harness.onSaveCode).not.toHaveBeenCalled();
+		expect(harness.setLastWorkingCode).not.toHaveBeenCalled();
+	});
+
+	it('ignores concurrent candidate probes and refuses a stale commit after an edit', async () => {
+		let resolveProbe!: (value: boolean) => void;
+		const probe = new Promise<boolean>((resolve) => {
+			resolveProbe = resolve;
+		});
+		const harness = createHarness();
+		harness.tryCandidate.mockReturnValue(probe);
+
+		const first = harness.controller.tryReplaceAndRun('candidate code');
+		const second = harness.controller.tryReplaceAndRun('other code');
+		harness.editorValue.value = 'edited while probing';
+		harness.controller.handleCodeChange('edited while probing');
+		harness.editorValue.value = 'current code';
+		resolveProbe(true);
+
+		await expect(second).resolves.toBe(false);
+		await expect(first).resolves.toBe(false);
+		expect(harness.tryCandidate).toHaveBeenCalledOnce();
+		expect(harness.forceRun).toHaveBeenCalledWith('current code');
+		expect(harness.setValue).not.toHaveBeenCalled();
+		harness.controller.dispose();
+	});
+
+	it('confirms the acknowledged source rather than the current editor buffer', () => {
+		vi.useFakeTimers();
+		const harness = createHarness();
+		harness.editorValue.value = 'newer unacknowledged code';
+
+		harness.controller.handleRunOk('acknowledged code');
+		vi.advanceTimersByTime(100);
+
+		expect(harness.setLastWorkingCode).toHaveBeenCalledWith('acknowledged code');
 		harness.controller.dispose();
 	});
 });
@@ -69,10 +128,12 @@ function createHarness() {
 	const setValue = vi.fn();
 	const forceRun = vi.fn();
 	const resetRuntime = vi.fn();
+	const tryCandidate = vi.fn<(code: string, baseline: string) => Promise<boolean>>();
 	const setError = vi.fn();
 	const setLastWorkingCode = vi.fn();
+	const editorValue = { value: 'current code' };
 	const editor = {
-		getValue: () => 'current code',
+		getValue: () => editorValue.value,
 		setValue,
 		clearMarkers: vi.fn(),
 		setErrorMarker: vi.fn(),
@@ -85,7 +146,7 @@ function createHarness() {
 	} satisfies TextmodeControllerState;
 	const dependencies = {
 		editor,
-		runtime: { forceRun, resetRuntime },
+		runtime: { forceRun, resetRuntime, tryCandidate },
 		getAutoExecute: () => true,
 		getAutoExecuteDelay: () => 500,
 		state,
@@ -100,7 +161,9 @@ function createHarness() {
 		setValue,
 		forceRun,
 		resetRuntime,
+		tryCandidate,
 		setError,
 		setLastWorkingCode,
+		editorValue,
 	};
 }

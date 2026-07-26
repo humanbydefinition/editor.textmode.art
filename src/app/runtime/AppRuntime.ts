@@ -1,7 +1,7 @@
 import { ShareManager, type ShareExportData } from '@/features/share';
 import { GalleryManager, type GallerySketch } from '@/features/gallery-sketches';
 import { installShortcuts, type ShortcutActions } from '@/platform/input/shortcuts';
-import { CodeRandomizer } from './CodeRandomizer';
+import { makeRandomChange } from './CodeRandomizer';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import { useAppStore } from '@/platform/state/appStore';
 import { EditorStorage, editorStorage } from '@/platform/storage/EditorStorage';
@@ -378,18 +378,22 @@ export class AppRuntime {
 		this.storeUnsubscribers.push(settingsUnsubscribe, uiVisibilityUnsubscribe);
 	}
 
-	private makeRandomChange(): void {
+	private async makeRandomChange(): Promise<boolean> {
 		const code = this.textmodeEngine.getCode();
-		const newCode = CodeRandomizer.makeRandomChange(code);
+		const newCode = makeRandomChange(code);
 
-		if (code !== newCode) {
+		if (code === newCode) return false;
+
+		const accepted = await this.textmodeEngine.tryReplaceAndRun(newCode);
+		if (accepted) {
 			getAppState().setGallerySketch(null);
-			this.textmodeEngine.replaceAndRun(newCode);
 			// On mobile, avoid forcing editor focus to prevent opening the software keyboard.
 			if (window.innerWidth > MOBILE_BREAKPOINT) {
 				this.focusEditor();
 			}
 		}
+
+		return accepted;
 	}
 
 	private loadRandomGallerySketch(): boolean {

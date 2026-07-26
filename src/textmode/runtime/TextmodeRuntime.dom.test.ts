@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { TextmodeRuntime } from './TextmodeRuntime';
 
 type RuntimeOptions = {
@@ -6,6 +6,7 @@ type RuntimeOptions = {
 	onReady?: () => void;
 	onRunError?: (error: { message: string; line?: number; column?: number }) => void;
 	onRunOk?: (message: { timestamp: number }) => void;
+	onSynthError?: (message: string) => void;
 	onUnavailable?: () => void;
 	onUserActivationRequired?: () => void;
 	onUserInteraction?: () => void;
@@ -28,11 +29,13 @@ type MockRuntime = {
 	init: Mock<(container?: HTMLElement) => Promise<boolean>>;
 	isReady: boolean;
 	reconnect: Mock<(options?: { rerun?: boolean }) => Promise<boolean>>;
+	probeCode: Mock<(code: string, options?: { timeoutMs?: number }) => Promise<boolean>>;
 	resetRuntime: Mock<(code: string) => Promise<boolean>>;
 	runCode: Mock<(code: string) => Promise<boolean>>;
 	sendAudioData: Mock<(frame: unknown) => boolean>;
 	triggerHardReset: Mock<() => void>;
 	triggerRunError: Mock<(error: { message: string; line?: number; column?: number }) => void>;
+	triggerSynthError: Mock<(message: string) => void>;
 	triggerUserActivationRequired: Mock<() => void>;
 	triggerUserInteraction: Mock<() => void>;
 };
@@ -97,6 +100,7 @@ vi.mock('@textmode/runner-client', () => {
 			this.options.onRunOk?.({ timestamp: Date.now() });
 			return code.length > 0;
 		});
+		readonly probeCode = vi.fn(async (code: string) => code.length > 0);
 		readonly resetRuntime = vi.fn(async (code: string) => {
 			this.options.onRunOk?.({ timestamp: Date.now() });
 			return code.length > 0;
@@ -107,6 +111,7 @@ vi.mock('@textmode/runner-client', () => {
 		readonly triggerRunError = vi.fn((error: { message: string; line?: number; column?: number }) =>
 			this.options.onRunError?.(error)
 		);
+		readonly triggerSynthError = vi.fn((message: string) => this.options.onSynthError?.(message));
 		readonly triggerUserActivationRequired = vi.fn(() => this.options.onUserActivationRequired?.());
 		readonly triggerUserInteraction = vi.fn(() => this.options.onUserInteraction?.());
 
@@ -128,6 +133,11 @@ describe('TextmodeRuntime', () => {
 	beforeEach(() => {
 		runnerClientMock.instances = [];
 		document.body.classList.remove('runner-activation-required');
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.unstubAllGlobals();
 	});
 
 	it('resets the runtime without replacing the iframe', async () => {
@@ -331,4 +341,121 @@ describe('TextmodeRuntime', () => {
 		expect(iframeRuntime.resetRuntime).not.toHaveBeenCalled();
 		expect(iframeRuntime.reconnect.mock.calls.length).toBe(reconnectCallsBeforeRestart);
 	});
+
+	it('accepts a candidate only after two error-free animation frames', async () => {
+		vi.useFakeTimers();
+		installAnimationFrameStub();
+		const onRunOk = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk,
+			onRunError: vi.fn(),
+		});
+
+		runtime.init();
+		await flushPromises();
+		const result = runtime.tryCandidate('candidate sketch', 'working sketch');
+		await flushPromises();
+		await vi.advanceTimersByTimeAsync(40);
+
+		await expect(result).resolves.toBe(true);
+		expect(runnerClientMock.instances[0].probeCode).toHaveBeenCalledWith('candidate sketch', {
+			timeoutMs: 2000,
+		});
+		expect(onRunOk).not.toHaveBeenCalled();
+	});
+
+	it('suppresses a candidate draw error and restores the baseline before rejecting', async () => {
+		vi.useFakeTimers();
+		installAnimationFrameStub();
+		const onRunError = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError,
+		});
+
+		runtime.init();
+		await flushPromises();
+		const iframeRuntime = runnerClientMock.instances[0];
+		const result = runtime.tryCandidate('candidate sketch', 'working sketch');
+		await flushPromises();
+		iframeRuntime.triggerRunError({
+			message: "Cannot read properties of undefined (reading 'width')",
+		});
+		await vi.advanceTimersByTimeAsync(40);
+
+		await expect(result).resolves.toBe(false);
+		expect(iframeRuntime.runCode).toHaveBeenCalledWith('working sketch');
+		expect(onRunError).not.toHaveBeenCalled();
+	});
+
+	it('suppresses a candidate synth error and restores the baseline before rejecting', async () => {
+		vi.useFakeTimers();
+		installAnimationFrameStub();
+		const onSynthError = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+			onSynthError,
+		});
+
+		runtime.init();
+		await flushPromises();
+		const iframeRuntime = runnerClientMock.instances[0];
+		const result = runtime.tryCandidate('candidate sketch', 'working sketch');
+		await flushPromises();
+		iframeRuntime.triggerSynthError('invalid shader uniform');
+		await vi.advanceTimersByTimeAsync(40);
+
+		await expect(result).resolves.toBe(false);
+		expect(iframeRuntime.runCode).toHaveBeenCalledWith('working sketch');
+		expect(onSynthError).not.toHaveBeenCalled();
+	});
+
+	it('reconnects without the candidate and restores the baseline after a probe timeout', async () => {
+		const onRunError = vi.fn();
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError,
+		});
+
+		runtime.init();
+		await flushPromises();
+		const iframeRuntime = runnerClientMock.instances[0];
+		iframeRuntime.probeCode.mockRejectedValue(new Error('runner request timed out: RUN_CODE'));
+
+		await expect(runtime.tryCandidate('hung sketch', 'working sketch')).resolves.toBe(false);
+
+		expect(iframeRuntime.reconnect).toHaveBeenCalledWith({ rerun: false });
+		expect(iframeRuntime.runCode).toHaveBeenCalledWith('working sketch');
+		expect(onRunError).not.toHaveBeenCalled();
+	});
 });
+
+function installAnimationFrameStub(): void {
+	let nextId = 0;
+	const timers = new Map<number, ReturnType<typeof setTimeout>>();
+	vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+		const id = ++nextId;
+		timers.set(
+			id,
+			setTimeout(() => {
+				timers.delete(id);
+				callback(performance.now());
+			}, 16)
+		);
+		return id;
+	});
+	vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+		const timer = timers.get(id);
+		if (timer !== undefined) clearTimeout(timer);
+		timers.delete(id);
+	});
+}

@@ -4,6 +4,7 @@ import { makeGallerySketch } from '../support/gallery-fixtures';
 import { createMemoryStorage } from '../support/memory-storage';
 import { ShareService } from '../../src/features/share/model/ShareService';
 import type { SharePayload } from '../../src/features/share/model/sharePayload';
+import { useAppStore } from '../../src/platform/state/appStore';
 
 const { engineInstances, getGallerySketchBySlug, getRandomGallerySketch } = vi.hoisted(() => ({
 	engineInstances: [] as FakeTextmodeEngine[],
@@ -21,6 +22,7 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 		private initialized = false;
 
 		initialCode = '';
+		code = '';
 		init = vi.fn((context?: FakeEngineContext) => {
 			this.initialCode = context?.getInitialCode() ?? '';
 			this.initialized = true;
@@ -29,11 +31,12 @@ vi.mock('@/textmode/TextmodeEngine', () => {
 			this.initialized = false;
 		});
 		isInitialized = vi.fn(() => this.initialized);
-		getCode = vi.fn(() => '');
+		getCode = vi.fn(() => this.code);
 		setCode = vi.fn();
 		setReadOnly = vi.fn();
 		sendAudioData = vi.fn();
 		replaceAndRun = vi.fn();
+		tryReplaceAndRun = vi.fn(async () => true);
 		reloadSandbox = vi.fn();
 		updateSettings = vi.fn();
 		focus = vi.fn();
@@ -259,6 +262,28 @@ describe('AppRuntime', () => {
 		expect(engine.replaceAndRun).toHaveBeenCalledWith(gallerySketch.textmodeCode, 'reset-runtime');
 		expect(window.location.pathname).toBe('/s/textmodearray/');
 	});
+
+	it('clears gallery ownership only after a randomized candidate is accepted', async () => {
+		const runtime = track(new AppRuntime());
+		const engine = getEngine();
+		const sketch = makeGallerySketch({ slug: 'textmodeshift', textmodeCode: "const color = '#000000';" });
+		getRandomGallerySketch.mockReturnValue(sketch);
+		initialize(runtime);
+		engine.code = sketch.textmodeCode;
+		engine.tryReplaceAndRun.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+
+		await expect(runtime.actions.makeRandomChange()).resolves.toBe(false);
+		expect(useAppStore.getState().gallerySketch?.slug).toBe('textmodeshift');
+
+		await expect(runtime.actions.makeRandomChange()).resolves.toBe(true);
+		expect(useAppStore.getState().gallerySketch).toBeNull();
+		expect(engine.tryReplaceAndRun).toHaveBeenCalledTimes(2);
+		for (const [candidate] of engine.tryReplaceAndRun.mock.calls) {
+			expect(candidate).toMatch(/^const color = '#[0-9a-f]{6}';$/);
+			expect(candidate).not.toBe(sketch.textmodeCode);
+		}
+		expect(engine.replaceAndRun).not.toHaveBeenCalledWith(expect.stringContaining('const color'), 'run');
+	});
 });
 
 function track(runtime: AppRuntime): AppRuntime {
@@ -298,8 +323,10 @@ interface FakeEngineContext {
 interface FakeTextmodeEngine {
 	init: Mock<(context?: FakeEngineContext) => void>;
 	initialCode: string;
+	code: string;
 	dispose: Mock<() => void>;
 	isInitialized: Mock<() => boolean>;
 	replaceAndRun: Mock<(code: string, reason?: string) => void>;
+	tryReplaceAndRun: Mock<(code: string) => Promise<boolean>>;
 	reloadSandbox: Mock<() => void>;
 }

@@ -12,11 +12,14 @@ import {
 import type {
 	BlendModeMutationTarget,
 	GlslTemplateSource,
+	HexColorMutationTarget,
 	JavaScriptTargetCollection,
+	MutationTarget,
 	NumericMutationTarget,
 } from './types';
 
 const GLSL_HEADER = /^\s*#version\s+\d+\s+es\b/;
+const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 export function collectJavaScriptTargets(code: string, blendModes: ReadonlySet<string>): JavaScriptTargetCollection {
 	const program = parse(code, {
@@ -25,7 +28,7 @@ export function collectJavaScriptTargets(code: string, blendModes: ReadonlySet<s
 		allowAwaitOutsideFunction: true,
 		allowReturnOutsideFunction: true,
 	});
-	const targets: Array<NumericMutationTarget | BlendModeMutationTarget> = [];
+	const targets: MutationTarget[] = [];
 	const glslTemplates: GlslTemplateSource[] = [];
 
 	walk(program, undefined, (node, parent) => {
@@ -33,6 +36,9 @@ export function collectJavaScriptTargets(code: string, blendModes: ReadonlySet<s
 			const literal = node as Literal;
 			if (typeof literal.value === 'number' && Number.isFinite(literal.value)) {
 				targets.push(createNumericTarget(code, literal, parent));
+			} else if (typeof literal.value === 'string') {
+				const target = createQuotedHexColorTarget(code, literal);
+				if (target) targets.push(target);
 			}
 			return;
 		}
@@ -44,7 +50,13 @@ export function collectJavaScriptTargets(code: string, blendModes: ReadonlySet<s
 			const text = code.slice(template.start + 1, template.end - 1);
 			if (GLSL_HEADER.test(text)) {
 				glslTemplates.push({ start: template.start + 1, text });
+				return;
 			}
+
+			const value = template.quasis[0]?.value.cooked;
+			const target =
+				typeof value === 'string' ? createHexColorTarget(value, template.start + 1, template.end - 1) : null;
+			if (target) targets.push(target);
 			return;
 		}
 
@@ -61,6 +73,23 @@ export function collectJavaScriptTargets(code: string, blendModes: ReadonlySet<s
 	});
 
 	return { targets, glslTemplates };
+}
+
+function createQuotedHexColorTarget(code: string, literal: Literal): HexColorMutationTarget | null {
+	const quote = code[literal.start];
+	if ((quote !== "'" && quote !== '"') || code[literal.end - 1] !== quote) return null;
+	return createHexColorTarget(literal.value as string, literal.start + 1, literal.end - 1);
+}
+
+function createHexColorTarget(value: string, start: number, end: number): HexColorMutationTarget | null {
+	if (!HEX_COLOR.test(value)) return null;
+	return {
+		kind: 'hexColor',
+		language: 'javascript',
+		start,
+		end,
+		text: value,
+	};
 }
 
 function createNumericTarget(code: string, literal: Literal, parent: AnyNode | undefined): NumericMutationTarget {

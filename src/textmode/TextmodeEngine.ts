@@ -75,6 +75,10 @@ export class TextmodeEngine {
 		this.controller?.replaceAndRun(code, reason);
 	}
 
+	tryReplaceAndRun(code: string): Promise<boolean> {
+		return this.controller?.tryReplaceAndRun(code) ?? Promise.resolve(false);
+	}
+
 	resetRuntime(): void {
 		this.controller?.handleHardReset();
 	}
@@ -132,7 +136,7 @@ export class TextmodeEngine {
 		return new TextmodeRuntime({
 			container: context.visualContainer ?? document.body,
 			runnerUrl: getRunnerUrl(),
-			onRunOk: () => this.controller?.handleRunOk(),
+			onRunOk: (_timestamp, code) => this.controller?.handleRunOk(code),
 			onRunError: (error) => this.controller?.handleExecutionError(error),
 			onSynthError: (error) => this.controller?.handleExecutionError(error),
 			onHardReset: () => this.controller?.handleHardReset(),

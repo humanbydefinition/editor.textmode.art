@@ -23,6 +23,7 @@ export interface TextmodeControllerEditor {
 export interface TextmodeControllerRuntime {
 	forceRun(code: string): void;
 	resetRuntime(code: string): void;
+	tryCandidate(code: string, baseline: string): Promise<boolean>;
 }
 
 export interface TextmodeControllerDependencies {
@@ -44,6 +45,8 @@ export class TextmodeController {
 	private debounceTimer: number | null = null;
 	private confirmationTimer: number | null = null;
 	private pendingWorkingCode: string | null = null;
+	private candidateInFlight = false;
+	private editorVersion = 0;
 
 	constructor(callbacks: TextmodeControllerCallbacks, deps: TextmodeControllerDependencies) {
 		this.callbacks = callbacks;
@@ -57,6 +60,7 @@ export class TextmodeController {
 
 	handleCodeChange(code: string): void {
 		if (this.isExecutionLocked()) return;
+		this.editorVersion += 1;
 		this.deps.onCodeChanged(code);
 		this.callbacks.onSaveCode(code);
 		this.clearDebounce();
@@ -80,6 +84,36 @@ export class TextmodeController {
 		this.execute(code, reason, reason !== 'reset-runtime');
 	}
 
+	async tryReplaceAndRun(code: string): Promise<boolean> {
+		if (this.isExecutionLocked() || this.candidateInFlight) return false;
+
+		const baseline = this.deps.editor.getValue();
+		const baselineVersion = this.editorVersion;
+		if (code === baseline) return false;
+
+		this.candidateInFlight = true;
+		try {
+			const accepted = await this.deps.runtime.tryCandidate(code, baseline);
+			if (!accepted) return false;
+
+			const currentCode = this.deps.editor.getValue();
+			if (currentCode !== baseline || this.editorVersion !== baselineVersion) {
+				this.deps.runtime.forceRun(currentCode);
+				return false;
+			}
+
+			this.cancelPendingWorkingCode();
+			this.replaceCode(code);
+			this.callbacks.onSaveCode(code);
+			this.deps.state.setLastWorkingCode(code);
+			this.deps.state.clearError();
+			this.deps.editor.clearMarkers();
+			return true;
+		} finally {
+			this.candidateInFlight = false;
+		}
+	}
+
 	handleRevertToLastWorking(): void {
 		const lastWorkingCode = this.deps.state.getLastWorkingCode();
 		if (lastWorkingCode) this.replaceAndRun(lastWorkingCode);
@@ -90,9 +124,7 @@ export class TextmodeController {
 		this.execute(this.deps.editor.getValue(), 'reset-runtime');
 	}
 
-	handleRunOk(): void {
-		const code = this.deps.editor.getValue();
-
+	handleRunOk(code: string): void {
 		this.setPendingWorkingCode(code);
 
 		this.deps.state.clearError();
@@ -119,6 +151,7 @@ export class TextmodeController {
 	}
 
 	private replaceCode(code: string): void {
+		this.editorVersion += 1;
 		this.deps.editor.setValue(code, { silent: true });
 		this.deps.onCodeChanged(code);
 	}

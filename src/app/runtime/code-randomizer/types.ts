@@ -20,7 +20,15 @@ export interface BlendModeMutationTarget {
 	text: string;
 }
 
-export type MutationTarget = NumericMutationTarget | BlendModeMutationTarget;
+export interface HexColorMutationTarget {
+	kind: 'hexColor';
+	language: 'javascript';
+	start: number;
+	end: number;
+	text: string;
+}
+
+export type MutationTarget = NumericMutationTarget | BlendModeMutationTarget | HexColorMutationTarget;
 
 export interface GlslTemplateSource {
 	start: number;

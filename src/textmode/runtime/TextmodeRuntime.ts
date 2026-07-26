@@ -10,7 +10,7 @@ export interface AudioDataFrame {
 export interface TextmodeRuntimeOptions {
 	runnerUrl: string;
 	container: HTMLElement;
-	onRunOk: (timestamp: number) => void;
+	onRunOk: (timestamp: number, code: string) => void;
 	onRunError: (error: CodeError) => void;
 	onSynthError?: (error: CodeError) => void;
 	onToggleUI?: () => void;
@@ -24,9 +24,15 @@ export interface TextmodeRuntimeOptions {
  * presentation, and the latest code requested before the runner becomes ready.
  */
 export class TextmodeRuntime {
+	private static readonly CANDIDATE_TIMEOUT_MS = 2000;
+	private static readonly RENDER_CHECKPOINT_TIMEOUT_MS = 250;
+	private static readonly RENDER_CHECKPOINT_FRAMES = 2;
+
 	private readonly options: TextmodeRuntimeOptions;
 	private readonly runtime: IframeTextmodeRuntime;
 	private pendingExecution: { code: string; mode: 'run' | 'reset-runtime' } | null = null;
+	private activeCandidate: { error: CodeError | null } | null = null;
+	private candidatePromise: Promise<boolean> | null = null;
 	private userActivationRequired = false;
 	private disposed = false;
 
@@ -36,9 +42,8 @@ export class TextmodeRuntime {
 			runnerUrl: options.runnerUrl,
 			mountMode: 'append',
 			onReady: () => this.handleReady(),
-			onRunOk: (message) => options.onRunOk(message.timestamp),
-			onRunError: (error) => options.onRunError(toCodeError(error)),
-			onSynthError: (message) => options.onSynthError?.({ message }),
+			onRunError: (error) => this.handleRuntimeError(toCodeError(error)),
+			onSynthError: (message) => this.handleSynthError({ message }),
 			onHardReset: options.onHardReset,
 			onToggleUI: options.onToggleUI,
 			onUserActivationRequired: () => this.handleUserActivationRequired(),
@@ -65,6 +70,22 @@ export class TextmodeRuntime {
 		this.execute(code, 'reset-runtime');
 	}
 
+	tryCandidate(code: string, baseline: string): Promise<boolean> {
+		if (this.disposed || !this.runtime.isReady || this.candidatePromise) {
+			return Promise.resolve(false);
+		}
+
+		const candidatePromise = this.performCandidateProbe(code, baseline);
+		this.candidatePromise = candidatePromise;
+		const clearCandidatePromise = () => {
+			if (this.candidatePromise === candidatePromise) {
+				this.candidatePromise = null;
+			}
+		};
+		void candidatePromise.then(clearCandidatePromise, clearCandidatePromise);
+		return candidatePromise;
+	}
+
 	reloadSandbox(code: string): void {
 		if (this.disposed) return;
 		this.pendingExecution = { code, mode: 'run' };
@@ -82,6 +103,7 @@ export class TextmodeRuntime {
 	dispose(): void {
 		this.disposed = true;
 		this.pendingExecution = null;
+		this.activeCandidate = null;
 		this.setUserActivationRequired(false);
 		this.runtime.dispose();
 	}
@@ -95,9 +117,82 @@ export class TextmodeRuntime {
 
 		this.pendingExecution = null;
 		const execution = mode === 'reset-runtime' ? this.runtime.resetRuntime(code) : this.runtime.runCode(code);
-		void execution.catch((error) => {
-			this.options.onRunError(toCodeError(error));
-		});
+		void execution.then(
+			(success) => {
+				if (success && !this.disposed) {
+					this.options.onRunOk(Date.now(), code);
+				}
+			},
+			(error: unknown) => this.handleRuntimeError(toCodeError(error))
+		);
+	}
+
+	private async performCandidateProbe(code: string, baseline: string): Promise<boolean> {
+		const candidate = { error: null as CodeError | null };
+		this.activeCandidate = candidate;
+
+		try {
+			try {
+				await this.runtime.probeCode(code, { timeoutMs: TextmodeRuntime.CANDIDATE_TIMEOUT_MS });
+			} catch (error) {
+				const reconnect = isRequestTimeout(error) || !this.runtime.isReady;
+				await this.restoreBaseline(baseline, reconnect);
+				return false;
+			}
+
+			const rendered = await waitForRenderCheckpoint(
+				TextmodeRuntime.RENDER_CHECKPOINT_FRAMES,
+				TextmodeRuntime.RENDER_CHECKPOINT_TIMEOUT_MS
+			);
+			if (!rendered || candidate.error) {
+				await this.restoreBaseline(baseline, false);
+				return false;
+			}
+
+			return true;
+		} finally {
+			if (this.activeCandidate === candidate) {
+				this.activeCandidate = null;
+			}
+		}
+	}
+
+	private async restoreBaseline(code: string, reconnect: boolean): Promise<boolean> {
+		if (this.disposed) return false;
+
+		try {
+			if (reconnect) {
+				const reconnected = await this.runtime.reconnect({ rerun: false });
+				this.decorateIframe();
+				if (!reconnected) throw new Error('runner did not reconnect');
+			}
+
+			await this.runtime.runCode(code);
+			return true;
+		} catch (error) {
+			if (!this.disposed) {
+				this.options.onRunError(toCodeError(error));
+			}
+			return false;
+		}
+	}
+
+	private handleRuntimeError(error: CodeError): void {
+		const candidate = this.activeCandidate;
+		if (candidate) {
+			candidate.error ??= error;
+			return;
+		}
+		this.options.onRunError(error);
+	}
+
+	private handleSynthError(error: CodeError): void {
+		const candidate = this.activeCandidate;
+		if (candidate) {
+			candidate.error ??= error;
+			return;
+		}
+		this.options.onSynthError?.(error);
 	}
 
 	private handleReady(): void {
@@ -172,4 +267,36 @@ function toCodeError(error: unknown): CodeError {
 
 function isRunnerExecutionError(error: unknown): error is RunnerExecutionError {
 	return typeof error === 'object' && error !== null && 'message' in error;
+}
+
+function isRequestTimeout(error: unknown): boolean {
+	return error instanceof Error && error.message.startsWith('runner request timed out:');
+}
+
+function waitForRenderCheckpoint(frames: number, timeoutMs: number): Promise<boolean> {
+	if (typeof requestAnimationFrame !== 'function') return Promise.resolve(false);
+
+	return new Promise((resolve) => {
+		let frameCount = 0;
+		let frameId: number | null = null;
+		let settled = false;
+
+		const finish = (success: boolean) => {
+			if (settled) return;
+			settled = true;
+			window.clearTimeout(timeoutId);
+			if (frameId !== null) cancelAnimationFrame(frameId);
+			resolve(success);
+		};
+		const onFrame = () => {
+			frameCount += 1;
+			if (frameCount >= frames) {
+				finish(true);
+				return;
+			}
+			frameId = requestAnimationFrame(onFrame);
+		};
+		const timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+		frameId = requestAnimationFrame(onFrame);
+	});
 }
