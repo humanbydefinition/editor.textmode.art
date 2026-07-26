@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ShortcutsManager, type ShortcutActions } from './ShortcutsManager';
+import { installShortcuts, type ShortcutActions } from './shortcuts';
 
-describe('ShortcutsManager', () => {
-	const managers: ShortcutsManager[] = [];
+describe('installShortcuts', () => {
+	const removeShortcuts: Array<() => void> = [];
 
 	afterEach(() => {
-		managers.forEach((manager) => manager.dispose());
-		managers.length = 0;
+		removeShortcuts.splice(0).forEach((remove) => remove());
 	});
 
 	it.each([
@@ -17,8 +16,9 @@ describe('ShortcutsManager', () => {
 		['toggle backdrop', { ctrlKey: true, key: 'b' }, 'toggleEditorBackdrop', []],
 		['toggle UI', { ctrlKey: true, key: 'H', shiftKey: true }, 'toggleUIVisibility', []],
 	] as const)('dispatches %s', (_label, init, action, args) => {
-		const { actions } = createManager(managers);
+		const actions = createActions();
 		const event = new KeyboardEvent('keydown', { cancelable: true, ...init });
+		removeShortcuts.push(installShortcuts(actions));
 
 		window.dispatchEvent(event);
 
@@ -32,7 +32,8 @@ describe('ShortcutsManager', () => {
 		['reset with Alt', { altKey: true, code: 'KeyR', ctrlKey: true, key: 'R', shiftKey: true }],
 		['incomplete reset', { code: 'KeyR', ctrlKey: true, key: 'R' }],
 	] as const)('ignores %s', (_label, init) => {
-		const { actions } = createManager(managers);
+		const actions = createActions();
+		removeShortcuts.push(installShortcuts(actions));
 
 		window.dispatchEvent(new KeyboardEvent('keydown', init));
 
@@ -41,8 +42,19 @@ describe('ShortcutsManager', () => {
 		}
 	});
 
+	it('removes the capture listener', () => {
+		const actions = createActions();
+		const remove = installShortcuts(actions);
+		remove();
+
+		window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'e' }));
+
+		expect(actions.toggleAutoExecute).not.toHaveBeenCalled();
+	});
+
 	it('leaves Control+Enter in Monaco to its editor command', () => {
-		const { actions } = createManager(managers);
+		const actions = createActions();
+		removeShortcuts.push(installShortcuts(actions));
 
 		const editor = document.createElement('div');
 		editor.className = 'monaco-editor';
@@ -58,18 +70,20 @@ describe('ShortcutsManager', () => {
 	});
 });
 
-function createManager(managers: ShortcutsManager[]): {
-	actions: Record<keyof ShortcutActions, ReturnType<typeof vi.fn>>;
-} {
-	const actions = {
-		changeFontSize: vi.fn(),
-		hardReset: vi.fn(),
-		toggleAutoExecute: vi.fn(),
-		toggleEditorBackdrop: vi.fn(),
-		toggleUIVisibility: vi.fn(),
+type ShortcutActionSpies = {
+	changeFontSize: ReturnType<typeof vi.fn<(delta: number) => void>>;
+	hardReset: ReturnType<typeof vi.fn<() => void>>;
+	toggleAutoExecute: ReturnType<typeof vi.fn<() => void>>;
+	toggleEditorBackdrop: ReturnType<typeof vi.fn<() => void>>;
+	toggleUIVisibility: ReturnType<typeof vi.fn<() => void>>;
+};
+
+function createActions(): ShortcutActions & ShortcutActionSpies {
+	return {
+		changeFontSize: vi.fn<(delta: number) => void>(),
+		hardReset: vi.fn<() => void>(),
+		toggleAutoExecute: vi.fn<() => void>(),
+		toggleEditorBackdrop: vi.fn<() => void>(),
+		toggleUIVisibility: vi.fn<() => void>(),
 	};
-	const manager = new ShortcutsManager({ actions });
-	managers.push(manager);
-	manager.init();
-	return { actions };
 }

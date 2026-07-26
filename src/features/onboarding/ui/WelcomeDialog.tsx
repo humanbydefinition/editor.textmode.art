@@ -3,10 +3,13 @@ import { AlertTriangle, Github, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
 import { APP_META, buildLegalHref, LEGAL_LINKS } from '@/shared/config/appMeta';
+import { getShortcut } from '@/platform/input/shortcuts';
 import discordIconMarkup from '@/shared/assets/discord.svg?raw';
 
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const RUN_CODE_KEYS = getShortcut('run-code').keys.join('+');
+const RESET_RUNTIME_KEYS = getShortcut('reset-runtime').keys.join('+');
 
 interface WelcomeDialogProps {
 	onOpenChange?: (isOpen: boolean) => void;
@@ -120,13 +123,13 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
 					<div className="text-xs text-zinc-500 space-y-1.5">
 						<p>
 							<span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">
-								Ctrl+Enter
+								{RUN_CODE_KEYS}
 							</span>{' '}
 							to run your code
 						</p>
 						<p>
 							<span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">
-								Ctrl+Shift+R
+								{RESET_RUNTIME_KEYS}
 							</span>{' '}
 							to reset the sketch runtime
 						</p>

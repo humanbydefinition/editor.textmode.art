@@ -1,50 +1,6 @@
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Keyboard } from 'lucide-react';
-
-interface ShortcutGroup {
-	title: string;
-	shortcuts: {
-		keys: string[];
-		macKeys?: string[];
-		description: string;
-	}[];
-}
-
-const groups: ShortcutGroup[] = [
-	{
-		title: 'Editor Control',
-		shortcuts: [
-			{ keys: ['Ctrl', 'Enter'], macKeys: ['Cmd', 'Enter'], description: 'run code / apply changes' },
-			{ keys: ['Ctrl', 'Shift', 'R'], description: 'reset sketch runtime' },
-		],
-	},
-	{
-		title: 'Appearance',
-		shortcuts: [
-			{ keys: ['Ctrl', '+'], description: 'increase font size' },
-			{ keys: ['Ctrl', '-'], description: 'decrease font size' },
-			{ keys: ['Ctrl', 'B'], description: 'toggle text background' },
-			{ keys: ['Ctrl', 'Shift', 'H'], description: 'hide / show ui' },
-		],
-	},
-	{
-		title: 'Navigation & Editing',
-		shortcuts: [
-			{ keys: ['Ctrl', 'F'], macKeys: ['Cmd', 'F'], description: 'open find' },
-			{ keys: ['Ctrl', 'H'], macKeys: ['Option', 'Cmd', 'F'], description: 'open replace' },
-			{ keys: ['Esc'], description: 'close find / replace' },
-			{ keys: ['Ctrl', 'Z'], macKeys: ['Cmd', 'Z'], description: 'undo' },
-			{ keys: ['Ctrl', 'Y'], macKeys: ['Cmd', 'Shift', 'Z'], description: 'redo' },
-			{ keys: ['Ctrl', '/'], macKeys: ['Cmd', '/'], description: 'toggle comment' },
-			{ keys: ['Alt', 'Click'], macKeys: ['Option', 'Click'], description: 'add multi-cursor' },
-			{ keys: ['F1'], description: 'open command palette' },
-		],
-	},
-	{
-		title: 'Settings',
-		shortcuts: [{ keys: ['Ctrl', 'E'], description: 'toggle auto-execute' }],
-	},
-];
+import { SHORTCUT_GROUPS } from '@/platform/input/shortcuts';
 
 export function ShortcutsTab() {
 	const usesMacKeys = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
@@ -58,7 +14,7 @@ export function ShortcutsTab() {
 				</div>
 
 				<div className="grid gap-6">
-					{groups.map((group) => (
+					{SHORTCUT_GROUPS.map((group) => (
 						<div key={group.title} className="space-y-3">
 							<h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider px-1">
 								{group.title}

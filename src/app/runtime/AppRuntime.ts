@@ -1,6 +1,6 @@
 import { ShareManager, type ShareExportData } from '@/features/share';
 import { GalleryManager, type GallerySketch } from '@/features/gallery-sketches';
-import { ShortcutsManager } from '@/platform/input/ShortcutsManager';
+import { installShortcuts, type ShortcutActions } from '@/platform/input/shortcuts';
 import { CodeRandomizer } from './CodeRandomizer';
 import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeEngine';
 import { useAppStore } from '@/platform/state/appStore';
@@ -31,7 +31,7 @@ export class AppRuntime {
 	readonly layout;
 
 	private textmodeContainer: HTMLElement | null = null;
-	private shortcuts: ShortcutsManager | null = null;
+	private removeShortcuts: (() => void) | null = null;
 	private storeUnsubscribers: Array<() => void> = [];
 	private initialized = false;
 	private lifecycleId = 0;
@@ -114,8 +114,8 @@ export class AppRuntime {
 	dispose(): void {
 		this.lifecycleId += 1;
 		this.clearRunnerReconnectTimer();
-		this.shortcuts?.dispose();
-		this.shortcuts = null;
+		this.removeShortcuts?.();
+		this.removeShortcuts = null;
 		this.audioInput.dispose();
 		this.shareManager.dispose();
 
@@ -150,9 +150,8 @@ export class AppRuntime {
 		this.shareManager.setInitialReadOnlyIfNeeded();
 		this.shareManager.attachInteractionGuards();
 
-		if (!this.shortcuts) {
-			this.shortcuts = this.createShortcutsManager();
-			this.shortcuts.init();
+		if (!this.removeShortcuts) {
+			this.removeShortcuts = installShortcuts(this.createShortcutActions());
 		}
 
 		if (this.storeUnsubscribers.length === 0) {
@@ -341,22 +340,20 @@ export class AppRuntime {
 
 	// ----- End engine lifecycle -----
 
-	private createShortcutsManager(): ShortcutsManager {
-		return new ShortcutsManager({
-			actions: {
-				changeFontSize: (delta) => this.changeFontSize(delta),
-				toggleAutoExecute: () => {
-					const s = this.settings;
-					getAppState().updateSettings({ autoExecute: !s.autoExecute });
-				},
-				toggleEditorBackdrop: () => {
-					const s = this.settings;
-					getAppState().updateSettings({ editorBackdrop: !s.editorBackdrop });
-				},
-				hardReset: () => this.textmodeEngine.resetRuntime(),
-				toggleUIVisibility: () => this.toggleUIVisibility(),
+	private createShortcutActions(): ShortcutActions {
+		return {
+			changeFontSize: (delta) => this.changeFontSize(delta),
+			toggleAutoExecute: () => {
+				const s = this.settings;
+				getAppState().updateSettings({ autoExecute: !s.autoExecute });
 			},
-		});
+			toggleEditorBackdrop: () => {
+				const s = this.settings;
+				getAppState().updateSettings({ editorBackdrop: !s.editorBackdrop });
+			},
+			hardReset: () => this.textmodeEngine.resetRuntime(),
+			toggleUIVisibility: () => this.toggleUIVisibility(),
+		};
 	}
 
 	private registerStoreSubscriptions(): void {
