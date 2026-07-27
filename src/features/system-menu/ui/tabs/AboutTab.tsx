@@ -1,7 +1,8 @@
 import { ScrollArea } from '@/shared/ui/scroll-area';
-import { Github, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { APP_META } from '@/shared/config/appMeta';
-import discordIconMarkup from '@/shared/assets/discord.svg?raw';
+import { DiscordIcon } from '@/shared/assets/DiscordIcon';
+import { GithubIcon } from '@/shared/assets/GithubIcon';
 
 export function AboutTab() {
 	return (
@@ -60,11 +61,7 @@ export function AboutTab() {
 							rel="noopener noreferrer"
 							className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/30 border border-white/5 hover:bg-zinc-800/50 hover:border-white/10 transition-all group w-full"
 						>
-							<span
-								aria-hidden="true"
-								className="inline-flex w-4 h-4 fill-current text-zinc-500 group-hover:text-white shrink-0"
-								dangerouslySetInnerHTML={{ __html: discordIconMarkup }}
-							/>
+							<DiscordIcon className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0" />
 							<span className="text-sm text-zinc-400 group-hover:text-white">discord</span>
 						</a>
 						<a
@@ -73,7 +70,7 @@ export function AboutTab() {
 							rel="noopener noreferrer"
 							className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/30 border border-white/5 hover:bg-zinc-800/50 hover:border-white/10 transition-all group w-full"
 						>
-							<Github className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0" />
+							<GithubIcon className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0" />
 							<span className="text-sm text-zinc-400 group-hover:text-white">github</span>
 						</a>
 					</div>
@@ -92,7 +89,7 @@ export function AboutTab() {
 							>
 								<div className="flex items-center justify-between mb-2">
 									<div className="flex items-center gap-2">
-										<Github className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+										<GithubIcon className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0" />
 										<span className="text-sm font-medium text-zinc-300 group-hover:text-white">
 											{resource.name}
 										</span>
