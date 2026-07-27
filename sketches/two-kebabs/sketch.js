@@ -1,11 +1,16 @@
-const CHAIN_LENGTH = 256;
+const KEBAB_LENGTH = 256;
 const TAU = Math.PI * 2;
-const BACKGROUND = '#aaa';
-const COLORS = ['#111', '#4b4b4b', '#f3f3f3'];
+const BACKGROUND = '#e8d5b7';
+const COLORS = ['#2c1810', '#a0522d', '#f5deb3'];
+const CELLS = [
+	[196, 136, 90],
+	[224, 192, 144],
+	[107, 58, 32],
+];
 const PATTERNS = ['.:+*=', '/\\_-|', '(){}[]', '001101', '<>^v', 'xX#', '$s!?'];
 
-let chainA = [];
-let chainB = [];
+let leftKebab = [];
+let rightKebab = [];
 function integer(min, max) {
 	return Math.floor(t.random(min, max + 1));
 }
@@ -14,7 +19,7 @@ function modulo(value, length) {
 	return ((value % length) + length) % length;
 }
 
-function createBand() {
+function createMorsel() {
 	const shadeRoll = t.random();
 	return {
 		pattern: PATTERNS[integer(0, PATTERNS.length - 1)],
@@ -25,28 +30,28 @@ function createBand() {
 	};
 }
 
-function buildChain(seed) {
+function buildKebab(seed) {
 	t.randomSeed(seed);
-	const chain = [];
-	while (chain.length < CHAIN_LENGTH) {
-		const band = createBand();
+	const kebab = [];
+	while (kebab.length < KEBAB_LENGTH) {
+		const morsel = createMorsel();
 		const length = integer(2, 10);
-		for (let row = 0; row < length && chain.length < CHAIN_LENGTH; row++) chain.push(band);
+		for (let row = 0; row < length && kebab.length < KEBAB_LENGTH; row++) kebab.push(morsel);
 	}
-	return chain;
+	return kebab;
 }
 
-function projectRow(band, row, time, maxRadius) {
-	const pulse = Math.sin(time * 0.31 + row * 0.17 + band.phase) * 0.08;
-	const radius = Math.max(3, Math.round(maxRadius * (band.radius + pulse)));
+function skewerRow(morsel, row, time, maxRadius) {
+	const sizzle = Math.sin(time * 0.31 + row * 0.17 + morsel.phase) * 0.08;
+	const radius = Math.max(3, Math.round(maxRadius * (morsel.radius + sizzle)));
 	const twist =
-		time * 0.14 + band.phase + row * 0.015 + Math.sin(time * 0.21 + row * 0.11) * 0.11;
+		time * 0.14 + morsel.phase + row * 0.015 + Math.sin(time * 0.21 + row * 0.11) * 0.11;
 	const characters = new Array(radius * 2 + 1);
 
 	for (let column = -radius; column <= radius; column++) {
 		const surface = Math.acos(Math.max(-1, Math.min(1, column / radius))) / Math.PI;
-		const index = modulo(Math.floor((surface * band.repeats + twist) * band.pattern.length), band.pattern.length);
-		characters[column + radius] = Math.abs(column) === radius ? '|' : band.pattern[index];
+		const index = modulo(Math.floor((surface * morsel.repeats + twist) * morsel.pattern.length), morsel.pattern.length);
+		characters[column + radius] = morsel.pattern[index];
 	}
 	return characters.join('');
 }
@@ -54,21 +59,20 @@ function projectRow(band, row, time, maxRadius) {
 t.fontSize(16);
 
 t.setup(() => {
-	t.noiseSeed('textmodetower-v1');
-	chainA = buildChain('textmodetower-a');
-	chainB = buildChain('textmodetower-b');
+	t.noiseSeed('two-kebabs-v1');
+	leftKebab = buildKebab('two-kebabs-left');
+	rightKebab = buildKebab('two-kebabs-right');
 });
 
 t.draw(() => {
-	if (!chainA.length || !chainB.length) return;
+	if (!leftKebab.length || !rightKebab.length) return;
 	t.background(BACKGROUND);
 	t.printAlign('center', 'top');
-	t.cellColor(0, 0, 0, 0);
 
 	const time = t.secs;
 	const phase = time * 0.22 + 1.6 * (t.noise(time * 0.045) - 0.5);
-	const travelA = Math.sin(phase) * chainA.length * 0.38;
-	const travelB = Math.sin(phase + 1.8) * chainB.length * 0.38;
+	const leftSkewer = Math.sin(phase) * leftKebab.length * 0.38;
+	const rightSkewer = Math.sin(phase + 1.8) * rightKebab.length * 0.38;
 	const top = -Math.floor(t.grid.rows / 2);
 
 	const halfCols = Math.floor(t.grid.cols / 2);
@@ -76,16 +80,20 @@ t.draw(() => {
 	const offset = Math.floor(t.grid.cols / 4);
 
 	for (let row = 0; row < t.grid.rows; row++) {
-		const bandA = chainA[modulo(Math.floor(travelA) + row, chainA.length)];
-		const bandB = chainB[modulo(Math.floor(travelB) + row, chainB.length)];
+		const morselA = leftKebab[modulo(Math.floor(leftSkewer) + row, leftKebab.length)];
+		const morselB = rightKebab[modulo(Math.floor(rightSkewer) + row, rightKebab.length)];
 		const sway =
 			Math.sin(time * 0.19 + row * 0.09) * 0.9 +
 			Math.sin(time * 0.07 - row * 0.04) * 0.35;
 
-		t.charColor(COLORS[bandA.shade]);
-		t.print(projectRow(bandA, row, time, maxRadius), sway - offset, top + row);
+		const cellA = CELLS[morselA.shade];
+		t.cellColor(cellA[0], cellA[1], cellA[2], 255);
+		t.charColor(COLORS[morselA.shade]);
+		t.print(skewerRow(morselA, row, time, maxRadius), sway - offset, top + row);
 
-		t.charColor(COLORS[bandB.shade]);
-		t.print(projectRow(bandB, row, time, maxRadius), sway + offset, top + row);
+		const cellB = CELLS[morselB.shade];
+		t.cellColor(cellB[0], cellB[1], cellB[2], 255);
+		t.charColor(COLORS[morselB.shade]);
+		t.print(skewerRow(morselB, row, time, maxRadius), sway + offset, top + row);
 	}
 });
