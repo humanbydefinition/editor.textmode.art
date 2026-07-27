@@ -39,7 +39,7 @@
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-switch": "^1.3.7",
 		"@radix-ui/react-tabs": "^1.1.13",
-		"@radix-ui/react-tooltip": "^1.2.8",
+		"@radix-ui/react-tooltip": "^1.2.16",
 		"@shaderfrog/glsl-parser": "^7.0.1",
 		"@textmode/runner-client": "^0.5.0",
 		"acorn": "^8.17.0",
