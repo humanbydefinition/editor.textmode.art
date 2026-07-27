@@ -1,13 +1,9 @@
 const KEBAB_LENGTH = 256;
 const TAU = Math.PI * 2;
 const BACKGROUND = '#e8d5b7';
-const COLORS = ['#2c1810', '#a0522d', '#f5deb3'];
-const PRINT_OPTIONS = { markup: false };
-const CELLS = [
-	[196, 136, 90],
-	[224, 192, 144],
-	[107, 58, 32],
-];
+const CHAR_COLORS = ['#2c1810', '#a0522d', '#f5deb3'];
+const CELL_COLORS = ['#c4885a', '#e0c090', '#6b3a20'];
+const FONT_SIZE = 16;
 const PATTERNS = ['.:+*=', '/\\_-|', '(){}[]', '001101', '<>^v', 'xX#', '$s!?'];
 
 let leftKebab = [],
@@ -64,14 +60,14 @@ function drawKebab(kebab, travel, centerX, top, time, maxRadius) {
 	t.translate(centerX, -fraction);
 	for (let screenRow = 0; screenRow <= t.grid.rows; screenRow++) {
 		const { morsel, localRow } = kebab[modulo(startRow + screenRow, kebab.length)];
-		t.cellColor(...CELLS[morsel.shade], 255);
-		t.charColor(COLORS[morsel.shade]);
-		t.print(skewerRow(morsel, localRow, time, maxRadius), 0, top + screenRow, PRINT_OPTIONS);
+		t.cellColor(CELL_COLORS[morsel.shade]);
+		t.charColor(CHAR_COLORS[morsel.shade]);
+		t.print(skewerRow(morsel, localRow, time, maxRadius), 0, top + screenRow, { markup: false });
 	}
 	t.pop();
 }
 
-t.fontSize(16);
+t.fontSize(FONT_SIZE);
 
 t.setup(() => {
 	t.noiseSeed('two-kebabs-v1');
