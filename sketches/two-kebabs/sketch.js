@@ -6,8 +6,7 @@ const CELL_COLORS = ['#c4885a', '#e0c090', '#6b3a20'];
 const FONT_SIZE = 16;
 const PATTERNS = ['.:+*=', '/\\_-|', '(){}[]', '001101', '<>^v', 'xX#', '$s!?'];
 
-let leftKebab = [],
-	rightKebab = [];
+let leftKebab = [], rightKebab = [];
 
 const integer = (min, max) => Math.floor(t.random(min, max + 1));
 const modulo = (value, length) => ((value % length) + length) % length;
