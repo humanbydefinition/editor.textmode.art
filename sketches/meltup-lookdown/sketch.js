@@ -4,27 +4,23 @@ const STATIC_RULE = 8;
 
 const BUNDLE_URL = 'https://cdn.jsdelivr.net/npm/textmode.js@0.17.0/dist/textmode.umd.js';
 
-const THEME = {
-	error: [255, 120, 120],
-};
-
 const SOURCE_PALETTE = [
-	[255, 255, 255],
-	[109, 247, 193],
-	[17, 173, 193],
-	[96, 108, 129],
-	[57, 52, 87],
-	[30, 136, 117],
-	[91, 179, 97],
-	[161, 229, 90],
-	[247, 228, 118],
-	[249, 146, 82],
-	[203, 77, 104],
-	[106, 55, 113],
-	[201, 36, 100],
-	[244, 140, 182],
-	[247, 182, 158],
-	[155, 156, 130],
+	'#ffffff',
+	'#6df7c1',
+	'#11adc1',
+	'#606c81',
+	'#393457',
+	'#1e8875',
+	'#5bb361',
+	'#a1e55a',
+	'#f7e476',
+	'#f99252',
+	'#cb4d68',
+	'#6a3771',
+	'#c92464',
+	'#f48cb6',
+	'#f7b69e',
+	'#9b9c82',
 ];
 
 const SOURCE_REVEAL_CURVES = [
@@ -65,7 +61,6 @@ float random(vec2 cell) {
 }
 
 ivec2 direction(int rule) {
-	if (rule == 8) return ivec2(0);
 	if (rule == 0) return ivec2(-1,  1);
 	if (rule == 1) return ivec2( 0,  1);
 	if (rule == 2) return ivec2( 1,  1);
@@ -96,7 +91,6 @@ void main() {
 	o_secondaryColor = sampleState(u_previousSecondaryColor, u_seedSecondaryColor, selected, pinned);
 }`;
 
-let sourceText = '';
 let sourceLines = [];
 let sourceLoaded = false;
 let sourceReveals = [];
@@ -107,37 +101,36 @@ let seedFramebuffer;
 let previousFramebuffer;
 let nextFramebuffer;
 let rectangles;
-let sourceRectangles = [];
 
 function framebufferSize() {
-	return { width: t.grid.cols + 2, height: t.grid.rows + 2 };
+	return { width: t.grid.cols, height: t.grid.rows };
 }
 
 function rectangleUniforms() {
-	return rectangles.flatMap(({ x, y, width, height }) => [x, y, width, height]);
+	const { height: framebufferHeight } = framebufferSize();
+	return rectangles.flatMap(({ x, y, width, height }) => [x, framebufferHeight - y - height, width, height]);
 }
 
 function ruleUniforms() {
 	return rectangles.map(({ rule }) => rule);
 }
 
-function wrapForGrid(width) {
+function wrapLines(lines, width) {
 	const out = [];
-	for (let i = 0; i < sourceLines.length; i++) {
-		const line = sourceLines[i];
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
 		if (line.length <= width) {
-			out.push({ text: line });
+			out.push(line);
 			continue;
 		}
 		let start = 0;
 		while (start < line.length) {
-			out.push({ text: line.slice(start, start + width) });
+			out.push(line.slice(start, start + width));
 			start += width;
 		}
 	}
 	return out;
 }
-
 
 function chooseSourceSlice(lines, previousOffset, index) {
 	if (lines.length < 2) return 0;
@@ -147,22 +140,23 @@ function chooseSourceSlice(lines, previousOffset, index) {
 	return offset;
 }
 
-function chooseSourceReveals() {
+function takeRandom(available, choices) {
+	if (available.length === 0) available.push(...choices);
+	return available.splice(Math.floor(t.random() * available.length), 1)[0];
+}
+
+function chooseSourceReveals(sourceRectangles) {
 	const previousReveals = sourceReveals;
-	let availableColors = SOURCE_PALETTE.map((_, index) => index);
-	let availableCurves = SOURCE_REVEAL_CURVES.map((_, index) => index);
+	const availableColors = [...SOURCE_PALETTE];
+	const availableCurves = [...SOURCE_REVEAL_CURVES];
 	sourceReveals = sourceRectangles.map((rect, index) => {
-		if (availableColors.length === 0) availableColors = SOURCE_PALETTE.map((_, colorIndex) => colorIndex);
-		if (availableCurves.length === 0) availableCurves = SOURCE_REVEAL_CURVES.map((_, curveIndex) => curveIndex);
-		const colorIndex = availableColors.splice(Math.floor(t.random() * availableColors.length), 1)[0];
-		const curveIndex = availableCurves.splice(Math.floor(t.random() * availableCurves.length), 1)[0];
-		const lines = sourceLoaded ? wrapForGrid(rect.width) : [{ text: 'source offline' }];
+		const lines = wrapLines(sourceLoaded ? sourceLines : ['source offline'], rect.width);
 		return {
 			rect,
 			lines,
-			offset: chooseSourceSlice(lines, previousReveals[index]?.offset, index),
-			color: SOURCE_PALETTE[colorIndex],
-			curve: SOURCE_REVEAL_CURVES[curveIndex],
+			offset: sourceLoaded ? chooseSourceSlice(lines, previousReveals[index]?.offset, index) : 0,
+			color: takeRandom(availableColors, SOURCE_PALETTE),
+			curve: takeRandom(availableCurves, SOURCE_REVEAL_CURVES),
 		};
 	});
 }
@@ -179,7 +173,6 @@ function revealProgress(size) {
 
 function renderSeed(progress) {
 	const size = framebufferSize();
-	const { error } = THEME;
 
 	seedFramebuffer.begin();
 	t.resetShader();
@@ -195,16 +188,15 @@ function renderSeed(progress) {
 	t.printAlign('left', 'top');
 	for (const source of sourceReveals) {
 		const { rect, lines, offset, color, curve } = source;
-		const left = -size.width / 2 + rect.x;
-		const top = -size.height / 2 + rect.y;
-		const textColor = sourceLoaded ? color : error;
-		t.charColor(textColor[0], textColor[1], textColor[2]);
+		const left = -Math.floor(size.width / 2) + rect.x;
+		const top = -Math.floor(size.height / 2) + rect.y;
+		t.charColor(color);
 		const revealedCells = Math.floor(t.ease(curve, progress) * rect.width * rect.height);
 		for (let row = 0; row < rect.height; row++) {
 			const visibleColumns = Math.min(rect.width, Math.max(0, revealedCells - row * rect.width));
 			if (visibleColumns === 0) continue;
 			const item = lines[(offset + row) % lines.length];
-			if (item) t.print(item.text.slice(0, visibleColumns), left, top + row);
+			if (item) t.print(item.slice(0, visibleColumns), left, top + row);
 		}
 	}
 
@@ -217,9 +209,7 @@ async function loadSource() {
 	try {
 		const res = await fetch(BUNDLE_URL, { cache: 'no-cache', signal: controller.signal });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const text = await res.text();
-		sourceText = text;
-		sourceLines = sourceText.replace(/\r/g, '').replace(/\t/g, '  ').split('\n');
+		sourceLines = (await res.text()).replace(/\r/g, '').replace(/\t/g, '  ').split('\n');
 		sourceLoaded = true;
 	} catch (e) {
 		sourceLoaded = false;
@@ -295,8 +285,7 @@ function resetSimulation(size) {
 
 function startCycle(size) {
 	rectangles = createRectangles(size.width, size.height, t.frameCount);
-	sourceRectangles = rectangles.filter((r) => r.rule === STATIC_RULE);
-	chooseSourceReveals();
+	chooseSourceReveals(rectangles.filter((r) => r.rule === STATIC_RULE));
 	cycleStartFrame = t.frameCount;
 }
 
