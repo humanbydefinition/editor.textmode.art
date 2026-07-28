@@ -4,7 +4,12 @@
 	"description": "seeing my ingredients constantly appear in your work over the years is really painful, honestly.",
 	"authorName": "andi x juli",
 	"license": "",
-	"socialLinks": [],
+	"socialLinks": [
+		{
+			"label": "wtf",
+			"url": "https://www.instagram.com/p/DCcNGy1tzf5/"
+		}
+	],
 	"createdAt": "2026-07-28T00:00:00.000Z",
 	"ogFrame": 60,
 	"ogDarken": 70

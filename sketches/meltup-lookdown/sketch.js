@@ -75,13 +75,18 @@ vec4 sampleState(sampler2D history, sampler2D seed, ivec2 cell, bool inject) {
 	return inject ? texelFetch(seed, cell, 0) : texelFetch(history, cell, 0);
 }
 
-void main() {
-	ivec2 cell = ivec2(gl_FragCoord.xy);
-	ivec2 size = ivec2(u_gridSize);
+int ruleAtCell(ivec2 cell) {
 	int rule = 0;
 	for (int i = 0; i < u_rectCount; i++) {
 		if (inside(vec2(cell), u_rects[i])) rule = u_rules[i];
 	}
+	return rule;
+}
+
+void main() {
+	ivec2 cell = ivec2(gl_FragCoord.xy);
+	ivec2 size = ivec2(u_gridSize);
+	int rule = ruleAtCell(cell);
 	bool pinned = rule == 8;
 	ivec2 movement = pinned ? ivec2(0) : (random(vec2(cell)) < 0.15 ? ivec2(0) : direction(rule));
 	ivec2 source = (cell - movement + size) % size;
@@ -106,9 +111,17 @@ function framebufferSize() {
 	return { width: t.grid.cols, height: t.grid.rows };
 }
 
+function cellIndexToCentered(index, dimension) {
+	return index - (dimension - 1) / 2;
+}
+
+function shaderRectangle(rect, framebufferHeight) {
+	return [rect.x, framebufferHeight - rect.y - rect.height, rect.width, rect.height];
+}
+
 function rectangleUniforms() {
 	const { height: framebufferHeight } = framebufferSize();
-	return rectangles.flatMap(({ x, y, width, height }) => [x, framebufferHeight - y - height, width, height]);
+	return rectangles.flatMap((rect) => shaderRectangle(rect, framebufferHeight));
 }
 
 function ruleUniforms() {
@@ -116,9 +129,14 @@ function ruleUniforms() {
 }
 
 function wrapLines(lines, width) {
+	if (width < 1) return [];
 	const out = [];
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
+		const line = String(lines[i]);
+		if (line.length === 0) {
+			out.push('');
+			continue;
+		}
 		if (line.length <= width) {
 			out.push(line);
 			continue;
@@ -129,7 +147,11 @@ function wrapLines(lines, width) {
 			start += width;
 		}
 	}
-	return out;
+	return out.length > 0 ? out : [''];
+}
+
+function sourceRows(lines, offset, rect) {
+	return Array.from({ length: rect.height }, (_, row) => lines[(offset + row) % lines.length].slice(0, rect.width));
 }
 
 function chooseSourceSlice(lines, previousOffset, index) {
@@ -150,11 +172,12 @@ function chooseSourceReveals(sourceRectangles) {
 	const availableColors = [...SOURCE_PALETTE];
 	const availableCurves = [...SOURCE_REVEAL_CURVES];
 	sourceReveals = sourceRectangles.map((rect, index) => {
-		const lines = wrapLines(sourceLoaded ? sourceLines : ['source offline'], rect.width);
+		const lines = wrapLines(sourceLines, rect.width);
+		const offset = sourceLoaded ? chooseSourceSlice(lines, previousReveals[index]?.offset, index) : 0;
 		return {
 			rect,
-			lines,
-			offset: sourceLoaded ? chooseSourceSlice(lines, previousReveals[index]?.offset, index) : 0,
+			rows: sourceRows(lines, offset, rect),
+			offset,
 			color: takeRandom(availableColors, SOURCE_PALETTE),
 			curve: takeRandom(availableCurves, SOURCE_REVEAL_CURVES),
 		};
@@ -187,20 +210,27 @@ function renderSeed(progress) {
 	// Source rectangles layer their reveal over the current simulation state.
 	t.printAlign('left', 'top');
 	for (const source of sourceReveals) {
-		const { rect, lines, offset, color, curve } = source;
-		const left = -Math.floor(size.width / 2) + rect.x;
-		const top = -Math.floor(size.height / 2) + rect.y;
+		const { rect, rows, color, curve } = source;
+		const left = cellIndexToCentered(rect.x, size.width);
+		const top = cellIndexToCentered(rect.y, size.height);
 		t.charColor(color);
-		const revealedCells = Math.floor(t.ease(curve, progress) * rect.width * rect.height);
+		const area = rect.width * rect.height;
+		const revealedCells = Math.min(area, Math.max(0, Math.floor(t.ease(curve, progress) * area)));
 		for (let row = 0; row < rect.height; row++) {
 			const visibleColumns = Math.min(rect.width, Math.max(0, revealedCells - row * rect.width));
 			if (visibleColumns === 0) continue;
-			const item = lines[(offset + row) % lines.length];
-			if (item) t.print(item.slice(0, visibleColumns), left, top + row);
+			const item = rows[row];
+			if (item) t.print(item.slice(0, visibleColumns), left, top + row, { markup: false });
 		}
 	}
 
 	seedFramebuffer.end();
+}
+
+function sanitizeSource(text) {
+	const normalized = text.replace(/\r/g, '').replace(/\t/g, '  ');
+	if (normalized.trim().length === 0) return [];
+	return normalized.split('\n');
 }
 
 async function loadSource() {
@@ -209,9 +239,12 @@ async function loadSource() {
 	try {
 		const res = await fetch(BUNDLE_URL, { cache: 'no-cache', signal: controller.signal });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		sourceLines = (await res.text()).replace(/\r/g, '').replace(/\t/g, '  ').split('\n');
+		const loadedLines = sanitizeSource(await res.text());
+		if (loadedLines.length === 0) throw new Error('Empty source');
+		sourceLines = loadedLines;
 		sourceLoaded = true;
-	} catch (e) {
+	} catch {
+		sourceLines = ['source offline'];
 		sourceLoaded = false;
 	} finally {
 		clearTimeout(timer);
@@ -220,13 +253,20 @@ async function loadSource() {
 
 function createRectangles(cols, rows, seed) {
 	t.randomSeed(`meltup-v1:${seed}`);
+	const targetCount = Math.min(RECTANGLE_COUNT, cols * rows);
 	const rectangles = [{ x: 0, y: 0, width: cols, height: rows }];
-	while (rectangles.length < RECTANGLE_COUNT) {
-		let largest = 0;
-		for (let i = 1; i < rectangles.length; i++) {
-			if (rectangles[i].width * rectangles[i].height > rectangles[largest].width * rectangles[largest].height)
+	while (rectangles.length < targetCount) {
+		let largest = -1;
+		for (let i = 0; i < rectangles.length; i++) {
+			if (rectangles[i].width * rectangles[i].height <= 1) continue;
+			if (
+				largest === -1 ||
+				rectangles[i].width * rectangles[i].height > rectangles[largest].width * rectangles[largest].height
+			) {
 				largest = i;
+			}
 		}
+		if (largest === -1) break;
 		const rect = rectangles.splice(largest, 1)[0];
 		rectangles.push(...splitRectangle(rect));
 	}
@@ -238,18 +278,19 @@ function createRectangles(cols, rows, seed) {
 		rectangles
 			.map((rect, index) => ({ index, area: rect.width * rect.height }))
 			.sort((a, b) => b.area - a.area)
-			.slice(0, SOURCE_RECTANGLE_COUNT)
+			.slice(0, Math.min(SOURCE_RECTANGLE_COUNT, rectangles.length))
 			.map(({ index }) => index)
 	);
-	const result = rectangles.map((rect, i) => ({
+	return rectangles.map((rect, i) => ({
 		...rect,
 		rule: sourceIndices.has(i) ? STATIC_RULE : Math.floor(t.random() * 8),
 	}));
-	return result;
 }
 
 function splitRectangle(rect) {
-	const vertical = rect.width > 1 && (rect.height < 2 || t.random() < 0.5);
+	const canSplitVertically = rect.width > 1;
+	const canSplitHorizontally = rect.height > 1;
+	const vertical = canSplitVertically && (!canSplitHorizontally || t.random() < 0.5);
 	const length = vertical ? rect.width : rect.height;
 	const cut = Math.max(1, Math.min(length - 1, Math.round(length * (0.3 + t.random() * 0.4))));
 	return vertical
@@ -269,18 +310,30 @@ function createState() {
 	previousFramebuffer = t.createFramebuffer(size);
 	nextFramebuffer = t.createFramebuffer(size);
 	resetSimulation(size);
-	bootstrapPrevious();
 }
 
-function bootstrapPrevious() {
-	previousFramebuffer.begin();
-	t.image(seedFramebuffer);
-	previousFramebuffer.end();
+function clearFramebuffer(framebuffer) {
+	framebuffer.begin();
+	t.resetShader();
+	t.background(0);
+	framebuffer.end();
+}
+
+function copyFramebuffer(source, target) {
+	target.begin();
+	t.resetShader();
+	t.background(0);
+	t.image(source);
+	target.end();
 }
 
 function resetSimulation(size) {
+	for (const framebuffer of [seedFramebuffer, previousFramebuffer, nextFramebuffer]) {
+		clearFramebuffer(framebuffer);
+	}
 	startCycle(size);
 	renderSeed(0);
+	copyFramebuffer(seedFramebuffer, previousFramebuffer);
 }
 
 function startCycle(size) {
@@ -313,8 +366,8 @@ function pushFrame() {
 t.fontSize(16);
 
 t.setup(async () => {
-	await loadSource();
 	pushShader = await t.createMaterialShader(PUSH_SHADER);
+	await loadSource();
 	createState();
 });
 
@@ -336,5 +389,4 @@ t.windowResized(() => {
 		framebuffer.resize(size.width, size.height);
 	}
 	resetSimulation(size);
-	bootstrapPrevious();
 });
