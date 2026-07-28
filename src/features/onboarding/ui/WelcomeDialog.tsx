@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Github, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip';
 import { APP_META, buildLegalHref, LEGAL_LINKS } from '@/shared/config/appMeta';
 import { getShortcut } from '@/platform/input/shortcuts';
-import discordIconMarkup from '@/shared/assets/discord.svg?raw';
+import { GithubIcon } from '@/shared/assets/GithubIcon';
+import { DiscordIcon } from '@/shared/assets/DiscordIcon';
 
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -66,7 +67,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
 										rel="noopener noreferrer"
 										className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
 									>
-										<Github className="w-4 h-4" />
+										<GithubIcon className="w-4 h-4" />
 									</a>
 								</TooltipTrigger>
 								<TooltipContent side="top">
@@ -82,11 +83,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
 										rel="noopener noreferrer"
 										className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
 									>
-										<span
-											aria-hidden="true"
-											className="inline-flex w-4 h-4 fill-current"
-											dangerouslySetInnerHTML={{ __html: discordIconMarkup }}
-										/>
+										<DiscordIcon className="w-4 h-4" />
 									</a>
 								</TooltipTrigger>
 								<TooltipContent side="top">
