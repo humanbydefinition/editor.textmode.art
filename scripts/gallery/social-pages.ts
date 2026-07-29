@@ -1,10 +1,8 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertOgPng, OG_HEIGHT, OG_WIDTH } from '@textmode/og';
 import type { GallerySketchMeta } from '../../src/features/gallery-sketches/model/metadata';
-import { escapeMarkup } from '../og/contracts';
-import { OG_HEIGHT, OG_WIDTH } from '../og/config';
-import { assertOgPng } from '../og/image';
 import { readGalleryEntries } from './project';
 
 const projectRoot = path.resolve(import.meta.dirname, '../..');
@@ -75,6 +73,15 @@ function renderGallerySocialHtml(baseHtml: string, meta: GallerySketchMeta): str
 
 	if (!stripped.includes('</head>')) throw new Error('Built index.html is missing </head>.');
 	return stripped.replace('</head>', `${dynamicHead}</head>`);
+}
+
+function escapeMarkup(value: string): string {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&apos;');
 }
 
 /* v8 ignore start -- @preserve */
