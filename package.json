@@ -20,8 +20,8 @@
 		"test": "npm run extract-types && vitest run",
 		"test:watch": "npm run extract-types && vitest",
 		"test:coverage": "npm run extract-types && vitest run --coverage",
-		"format": "prettier --write . --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore",
-		"check:format": "prettier --check . --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore",
+		"format": "prettier --write . --ignore-unknown",
+		"check:format": "prettier --check . --ignore-unknown",
 		"extract-types": "tsx scripts/editor-types/cli.ts",
 		"playwright:install": "playwright install chromium --no-shell",
 		"generate:og": "tsx scripts/og/cli.ts gallery",
@@ -95,7 +95,7 @@
 		]
 	},
 	"lint-staged": {
-		"*": "prettier --ignore-unknown --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore --write"
+		"*": "prettier --ignore-unknown --write"
 	},
 	"markdownlint-cli2": {
 		"globs": [
