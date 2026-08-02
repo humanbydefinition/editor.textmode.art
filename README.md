@@ -68,6 +68,6 @@ Gallery sketches under [`sketches/`](sketches/) are included under the contribut
 
 <br />
 
-**[↑ back to top](#editortextmodeart)**
+**[↑ back to top](#top)**
 
 </div>
