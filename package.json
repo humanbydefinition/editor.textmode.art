@@ -6,7 +6,19 @@
 	"type": "module",
 	"private": true,
 	"engines": {
-		"node": ">=24"
+		"node": ">=24 <25"
+	},
+	"devEngines": {
+		"runtime": {
+			"name": "node",
+			"version": "^24.0.0",
+			"onFail": "error"
+		},
+		"packageManager": {
+			"name": "npm",
+			"version": "^11.0.0",
+			"onFail": "error"
+		}
 	},
 	"scripts": {
 		"dev": "npm run extract-types && vite --host --port 5180",
