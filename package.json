@@ -6,7 +6,19 @@
 	"type": "module",
 	"private": true,
 	"engines": {
-		"node": ">=24"
+		"node": ">=24 <25"
+	},
+	"devEngines": {
+		"runtime": {
+			"name": "node",
+			"version": "^24.0.0",
+			"onFail": "error"
+		},
+		"packageManager": {
+			"name": "npm",
+			"version": "^11.0.0",
+			"onFail": "error"
+		}
 	},
 	"scripts": {
 		"dev": "npm run extract-types && vite --host --port 5180",
@@ -20,8 +32,8 @@
 		"test": "npm run extract-types && vitest run",
 		"test:watch": "npm run extract-types && vitest",
 		"test:coverage": "npm run extract-types && vitest run --coverage",
-		"format": "prettier --write . --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore",
-		"check:format": "prettier --check . --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore",
+		"format": "prettier --write . --ignore-unknown",
+		"check:format": "prettier --check . --ignore-unknown",
 		"extract-types": "tsx scripts/editor-types/cli.ts",
 		"playwright:install": "playwright install chromium --no-shell",
 		"generate:og": "tsx scripts/og/cli.ts gallery",
@@ -60,6 +72,7 @@
 		"@tailwindcss/vite": "^4.3.3",
 		"@textmode/commitlint-config": "^0.1.1",
 		"@textmode/markdownlint-config": "^0.1.1",
+		"@textmode/og": "^0.1.0",
 		"@textmode/prettier-config": "^0.1.0",
 		"@textmode/tooling-scripts": "^0.3.9",
 		"@textmode/tsconfig": "^0.1.0",
@@ -94,7 +107,7 @@
 		]
 	},
 	"lint-staged": {
-		"*": "prettier --ignore-unknown --ignore-path .prettierignore --ignore-path node_modules/@textmode/tooling-scripts/src/prettierignore --write"
+		"*": "prettier --ignore-unknown --write"
 	},
 	"markdownlint-cli2": {
 		"globs": [

@@ -85,13 +85,14 @@ npm run generate:og -- your-sketch-slug --frame 120 --darken 70
 Persist the selected frame as `ogFrame` and the darken as `ogDarken`, then
 regenerate without the overrides.
 The renderer runs from the initial frame through the selected frame before it
-captures the image. Audio input is silence; remote images, fonts, and video
-must still be reachable.
+captures the image. Audio input is silence. Relative images, fonts, video, and
+data resolve from the sketch folder; remote assets must still be reachable.
 
 Run `npm run generate:og -- --all` to regenerate all gallery images, or
-`npm run generate:og -- --help` for the full CLI reference. The preview uses
-this repository's installed textmode.js, synth, filters, figlet, and export
-packages directly; it does not contact the hosted runner or editor backend.
+`npm run generate:og -- --help` for the full CLI reference. Rendering is
+provided by [`@textmode/og`](https://www.npmjs.com/package/@textmode/og), which
+bundles compatible textmode.js, synth, filters, figlet, and export versions. It
+does not contact the hosted runner or editor backend.
 
 Production builds validate each PNG, copy it to `/og/<slug>.png`, and emit
 crawler-readable HTML at `/s/<slug>/`.

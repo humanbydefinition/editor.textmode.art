@@ -3,3 +3,9 @@ playwright-report/
 test-results/
 src/textmode/config/generated/
 sketches/
+
+# Markdown and shader files use dedicated tooling or hand-maintained formatting.
+**/*.md
+**/*.frag
+**/*.vert
+**/*.glsl

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { generateOgImages, type OgImageJob } from '@textmode/og';
 import {
 	DEFAULT_GALLERY_OG_DARKEN,
 	DEFAULT_GALLERY_OG_FRAME,
@@ -12,8 +13,6 @@ import {
 } from '../../src/features/gallery-sketches/model/metadata';
 import { readGalleryEntries, type GalleryEntry } from '../gallery/project';
 import { SITE_OG_CONFIG } from './config';
-import type { OgJob } from './contracts';
-import { generateOgImages } from './generator';
 
 const projectRoot = path.resolve(import.meta.dirname, '../..');
 
@@ -82,9 +81,9 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 		const jobs = selectedEntries.map((entry) => createGalleryJob(entry, command.frame, command.darken));
 
 		for (const [index, job] of jobs.entries()) {
-			console.log(`Rendering ${job.slug} at frame ${job.frame} (${index + 1}/${jobs.length})...`);
+			console.log(`Rendering ${job.id} at frame ${job.frame} (${index + 1}/${jobs.length})...`);
 		}
-		await generateOgImages(jobs, { projectRoot: root });
+		await generateOgImages({ jobs });
 		for (const [index, entry] of selectedEntries.entries()) {
 			console.log(`Generated ${entry.ogPath}`);
 			if (command.frame !== undefined && entry.meta.ogFrame !== command.frame) {
@@ -106,19 +105,18 @@ async function runOgCli(args: string[], root: string): Promise<void> {
 	const outputPath = path.resolve(root, SITE_OG_CONFIG.output);
 
 	console.log(`Rendering site OG with ${entry.meta.slug} at frame ${frame}...`);
-	await generateOgImages(
-		[
+	await generateOgImages({
+		jobs: [
 			{
-				slug: entry.meta.slug,
-				codePath: entry.sketchPath,
+				id: entry.meta.slug,
+				source: { kind: 'file', path: entry.sketchPath },
 				frame,
 				darken,
 				outputPath,
-				card: { kind: 'site' },
+				layout: { kind: 'main' },
 			},
 		],
-		{ projectRoot: root }
-	);
+	});
 	console.log(`Generated ${outputPath}`);
 	if (sketch !== SITE_OG_CONFIG.sketch || frame !== SITE_OG_CONFIG.frame || darken !== SITE_OG_CONFIG.darken) {
 		console.log(
@@ -240,14 +238,14 @@ function createGalleryJob(
 	entry: GalleryEntry,
 	frameOverride: number | undefined,
 	darkenOverride: number | undefined
-): OgJob {
+): OgImageJob {
 	return {
-		slug: entry.meta.slug,
-		codePath: entry.sketchPath,
+		id: entry.meta.slug,
+		source: { kind: 'file', path: entry.sketchPath },
 		frame: frameOverride ?? entry.meta.ogFrame ?? DEFAULT_GALLERY_OG_FRAME,
 		darken: darkenOverride ?? entry.meta.ogDarken ?? DEFAULT_GALLERY_OG_DARKEN,
 		outputPath: entry.ogPath,
-		card: {
+		layout: {
 			kind: 'gallery',
 			title: entry.meta.title,
 			description: entry.meta.description,
