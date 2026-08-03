@@ -1,11 +1,11 @@
 {
-  "slug": "entity-wave-prop",
-  "title": "Entity Based Wave Displacement",
+  "slug": "whale-pond",
+  "title": "WHALE POND",
   "description": "A Lissajous-curve entity floating around water, causing wave displacement.",
   "authorName": "trintlermint",
   "license": "",
   "socialLinks": [],
   "createdAt": "2026-07-25T00:00:00.000Z",
-  "ogFrame": 60,
-  "ogDarken": 70
+  "ogFrame": 265,
+  "ogDarken": 30
 }
