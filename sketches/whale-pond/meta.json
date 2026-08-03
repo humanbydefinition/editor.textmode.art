@@ -3,8 +3,17 @@
   "title": "WHALE POND",
   "description": "A Lissajous-curve entity floating around water, causing wave displacement.",
   "authorName": "trintlermint",
-  "license": "",
-  "socialLinks": [],
+  "license": "CC-BY-NC-SA-4.0",
+  "socialLinks": [
+		{
+			"label": "GitHub",
+			"url": "https://github.com/trintlermint"
+		},
+		{
+			"label": "Portfolio",
+			"url": "https://trintler.me"
+		}
+	],
   "createdAt": "2026-07-25T00:00:00.000Z",
   "ogFrame": 265,
   "ogDarken": 30
