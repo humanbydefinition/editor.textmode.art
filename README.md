@@ -62,12 +62,3 @@ This application is licensed under the **GNU Affero General Public License v3.0*
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
 
----
-
-<div align="center">
-
-<br />
-
-**[↑ back to top](#top)**
-
-</div>
