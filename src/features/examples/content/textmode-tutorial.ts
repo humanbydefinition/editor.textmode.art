@@ -166,8 +166,8 @@ t.layers.base.synth(
  * - \`layer.draw(callback)\` - Draw using the textmode.js API
  *
  * Available blend modes:
- * 'normal', 'additive', 'multiply', 'screen', 'difference', 
- * 'overlay', 'softLight', 'hardLight', 'colorDodge', 'colorBurn', etc.
+ * t.BLEND_NORMAL, t.BLEND_ADDITIVE, t.BLEND_MULTIPLY, t.BLEND_SCREEN, t.BLEND_DIFFERENCE,
+ * t.BLEND_OVERLAY, t.BLEND_SOFT_LIGHT, t.BLEND_HARD_LIGHT, t.BLEND_COLOR_DODGE, t.BLEND_COLOR_BURN, etc.
  *
  * In this example:
  * 1. The BASE layer renders a kaleidoscopic oscillator as the background.
@@ -188,7 +188,7 @@ t.layers.base.synth(
 );
 
 // === LAYER 2: Screen Blend with Voronoi ===
-const layer2 = t.layers.add({ blendMode: 'screen', opacity: 0.7 });
+const layer2 = t.layers.add({ blendMode: t.BLEND_SCREEN, opacity: 0.7 });
 layer2.synth(
   char(voronoi(12, 0.2))
     .charColor(osc(5, 0.1).colorama(0.3))
@@ -207,7 +207,7 @@ layer2.draw(() => {
 });
 
 // === LAYER 3: Difference Blend with Rotation ===
-const layer3 = t.layers.add({ blendMode: 'difference', opacity: 0.6 });
+const layer3 = t.layers.add({ blendMode: t.BLEND_DIFFERENCE, opacity: 0.6 });
 layer3.synth(
   char(noise(2, 0.1).pixelate(20))
     .charColor(solid(1, 0.5, 0))
@@ -221,7 +221,7 @@ layer3.draw(() => {
 });
 
 // === LAYER 4: Custom Drawing with textmode.js API ===
-const layer4 = t.layers.add({ fontSize: 32, blendMode: 'additive', opacity: 0.8 });
+const layer4 = t.layers.add({ fontSize: 32, blendMode: t.BLEND_ADDITIVE, opacity: 0.8 });
 
 layer4.draw(() => {
   t.clear(); // Clear this layer each frame
