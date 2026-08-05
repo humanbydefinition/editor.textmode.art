@@ -61,4 +61,3 @@ contribution terms.
 This application is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
 Gallery sketches under [`sketches/`](sketches/) are included under the contribution terms in [`CONTRIBUTING.md`](CONTRIBUTING.md) and may declare an additional standalone license in their `meta.json`.
-
