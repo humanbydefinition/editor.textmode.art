@@ -28,9 +28,7 @@ declare global {
   const FiltersPlugin: typeof import('textmode.filters.js').FiltersPlugin;
   const ExportPlugin: typeof import('textmode.export.js').ExportPlugin;
   const FigletPlugin: typeof import('textmode.figlet.js').FigletPlugin;
-  const createFiltersPlugin: typeof import('textmode.filters.js').createFiltersPlugin;
-  const createTextmodeExportPlugin: typeof import('textmode.export.js').createTextmodeExportPlugin;
-
+  
   // Bundled library globals
   const SynthSource: typeof import('textmode.synth.js').SynthSource;
   const TextmodeFigFont: typeof import('textmode.figlet.js').TextmodeFigFont;
