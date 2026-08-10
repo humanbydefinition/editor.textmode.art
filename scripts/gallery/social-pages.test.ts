@@ -38,6 +38,11 @@ describe('gallery social pages', () => {
 		expect(routeHtml.match(/name="twitter:image"/g)).toHaveLength(1);
 		expect(routeHtml).not.toContain('<title>Root</title>');
 		await expect(readFile(path.join(root, 'dist', 'og', `${validMeta.slug}.png`))).resolves.toBeDefined();
+		const sitemap = await readFile(path.join(root, 'dist', 'sitemap.xml'), 'utf8');
+		expect(sitemap).toContain('https://editor.textmode.art/');
+		expect(sitemap).toContain(`https://editor.textmode.art/s/${validMeta.slug}/`);
+		expect(sitemap).toContain('</urlset>');
+		expect(sitemap).not.toContain('http://editor.textmode.art');
 	});
 
 	it('uses the anonymous fallback and requires a complete base HTML document', async () => {
@@ -67,6 +72,18 @@ describe('gallery social pages', () => {
 		await copyFile(baselineImage, path.join(root, 'dist', 'og.png'));
 
 		await expect(publishGallerySocialPages(root)).rejects.toThrow('not a valid PNG');
+	});
+
+	it('publishes a homepage-only sitemap for an empty gallery', async () => {
+		const root = await createTemporaryProject(validMeta);
+		await rm(path.join(root, 'sketches', validMeta.slug), { recursive: true, force: true });
+
+		await expect(publishGallerySocialPages(root)).resolves.toBe(0);
+		const sitemap = await readFile(path.join(root, 'dist', 'sitemap.xml'), 'utf8');
+		expect(sitemap).toContain('https://editor.textmode.art/');
+		expect(sitemap).not.toContain('/s/');
+		expect(sitemap).toContain('</urlset>');
+		expect(sitemap).not.toContain('http://editor.textmode.art');
 	});
 });
 
