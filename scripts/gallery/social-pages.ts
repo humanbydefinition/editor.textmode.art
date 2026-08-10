@@ -3,9 +3,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertOgPng, OG_HEIGHT, OG_WIDTH } from '@textmode/og';
 import type { GallerySketchMeta } from '../../src/features/gallery-sketches/model/metadata';
-import { readGalleryEntries } from './project';
+import { readGalleryEntries, type GalleryEntry } from './project';
 
 const projectRoot = path.resolve(import.meta.dirname, '../..');
+
+const SITE_BASE = 'https://editor.textmode.art';
 
 export async function publishGallerySocialPages(root: string): Promise<number> {
 	const entries = await readGalleryEntries(root);
@@ -15,6 +17,7 @@ export async function publishGallerySocialPages(root: string): Promise<number> {
 		assertOgPng(path.resolve(root, 'public', 'og.png')),
 		assertOgPng(path.join(distDirectory, 'og.png')),
 	]);
+	await publishSitemap(distDirectory, entries);
 	if (entries.length === 0) return 0;
 
 	const baseHtml = await readFile(path.join(distDirectory, 'index.html'), 'utf8');
@@ -33,8 +36,8 @@ export async function publishGallerySocialPages(root: string): Promise<number> {
 }
 
 function renderGallerySocialHtml(baseHtml: string, meta: GallerySketchMeta): string {
-	const canonicalUrl = `https://editor.textmode.art/s/${meta.slug}/`;
-	const imageUrl = `https://editor.textmode.art/og/${meta.slug}.png`;
+	const canonicalUrl = `${SITE_BASE}/s/${meta.slug}/`;
+	const imageUrl = `${SITE_BASE}/og/${meta.slug}.png`;
 	const title = `${meta.title} | editor.textmode.art`;
 	const authorName = meta.authorName?.trim() || null;
 	const description =
@@ -82,6 +85,28 @@ function escapeMarkup(value: string): string {
 		.replaceAll('>', '&gt;')
 		.replaceAll('"', '&quot;')
 		.replaceAll("'", '&apos;');
+}
+
+async function publishSitemap(distDirectory: string, entries: readonly GalleryEntry[]): Promise<void> {
+	const locations = [
+		{ loc: `${SITE_BASE}/`, changefreq: 'daily', priority: '1.0' },
+		...entries.map((entry) => ({
+			loc: `${SITE_BASE}/s/${entry.meta.slug}/`,
+			changefreq: 'weekly',
+			priority: '0.8',
+		})),
+	];
+	const urlElements = locations
+		.map(
+			({ loc, changefreq, priority }) =>
+				`	<url>\n		<loc>${loc}</loc>\n		<changefreq>${changefreq}</changefreq>\n		<priority>${priority}</priority>\n	</url>`
+		)
+		.join('\n');
+	await writeFile(
+		path.join(distDirectory, 'sitemap.xml'),
+		`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlElements}\n</urlset>\n`,
+		'utf8'
+	);
 }
 
 /* v8 ignore start -- @preserve */
