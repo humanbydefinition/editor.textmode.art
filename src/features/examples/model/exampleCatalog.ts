@@ -1,3 +1,4 @@
+import { figletExampleCategories } from '@/features/examples/content/textmode-figlet';
 import { synthExampleCategories } from '@/features/examples/content/textmode-synth';
 import type { ExampleCategory } from '@/features/examples/types';
 
@@ -15,7 +16,7 @@ export const EXAMPLE_LIBRARIES = [
 	{
 		id: 'figlet',
 		displayName: 'textmode.figlet.js',
-		categories: [],
+		categories: figletExampleCategories,
 	},
 	{
 		id: 'filters',
