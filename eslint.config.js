@@ -1,12 +1,8 @@
-import globals from 'globals';
-import pluginJs from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import shared from '@textmode/lint';
 
 export default [
 	{ ignores: ['coverage/**', 'dist/**', 'sketches/**', 'src/textmode/config/generated/**'] },
-	{ files: ['**/*.{ts,js}'], languageOptions: { globals: globals.browser } },
-	pluginJs.configs.recommended,
-	...tseslint.configs.recommended,
+	...shared,
 	{
 		files: ['src/{features,shared}/**/*.ts'],
 		rules: {

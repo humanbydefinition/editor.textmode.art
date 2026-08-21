@@ -1,4 +1,4 @@
-import { defineTextmodeProject } from '@textmode/vitest-config';
+import { defineTextmodeProject } from '@textmode/build';
 import type { UserWorkspaceConfig } from 'vitest/config';
 
 const projects: Array<UserWorkspaceConfig & { extends: true }> = [

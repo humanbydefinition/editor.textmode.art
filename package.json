@@ -26,20 +26,20 @@
 		"preview": "vite preview",
 		"check": "npm run check:format && npm run lint && npm run lint:md && npm run check:types && npm run test:coverage && npm run test:og && npm run build",
 		"check:types": "npm run extract-types && tsc --noEmit",
-		"lint": "eslint .",
-		"lint:md": "markdownlint-cli2 --config package.json --configPointer /markdownlint-cli2",
-		"lint:md:fix": "markdownlint-cli2 --config package.json --configPointer /markdownlint-cli2 --fix",
+		"lint": "textmode-lint lint .",
+		"lint:md": "textmode-lint lint:markdown",
+		"lint:md:fix": "textmode-lint lint:markdown --fix",
 		"test": "npm run extract-types && vitest run",
 		"test:watch": "npm run extract-types && vitest",
 		"test:coverage": "npm run extract-types && vitest run --coverage",
-		"format": "prettier --write . --ignore-unknown",
-		"check:format": "prettier --check . --ignore-unknown",
+		"format": "textmode-lint format",
+		"check:format": "textmode-lint format:check",
 		"extract-types": "tsx scripts/editor-types/cli.ts",
 		"playwright:install": "playwright install chromium --no-shell",
 		"generate:og": "tsx scripts/og/cli.ts gallery",
 		"generate:og:site": "tsx scripts/og/cli.ts site",
 		"test:og": "playwright test --config scripts/og/playwright.config.ts",
-		"prepare": "npm run extract-types && install-git-hooks"
+		"prepare": "npm run extract-types"
 	},
 	"dependencies": {
 		"@radix-ui/react-dialog": "^1.1.23",
@@ -67,27 +67,17 @@
 		"zustand": "^5.0.15"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^21.2.2",
-		"@eslint/js": "^10.0.1",
 		"@playwright/test": "1.62.1",
 		"@tailwindcss/vite": "^4.3.3",
-		"@textmode/commitlint-config": "^0.1.1",
-		"@textmode/markdownlint-config": "^0.1.1",
+		"@textmode/build": "^0.1.0",
+		"@textmode/lint": "^0.1.1",
 		"@textmode/og": "^0.1.0",
-		"@textmode/prettier-config": "^0.1.0",
-		"@textmode/tooling-scripts": "^0.5.0",
 		"@textmode/tsconfig": "^0.2.1",
-		"@textmode/vitest-config": "^0.2.1",
 		"@types/node": "^26.2.0",
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.4",
 		"@vitejs/plugin-react": "^6.1.0",
-		"eslint": "^10.9.0",
-		"globals": "^17.11.0",
 		"jsdom": "^30.0.1",
-		"lint-staged": "^17.3.0",
-		"markdownlint-cli2": "^0.23.2",
-		"prettier": "^3.9.6",
 		"tailwindcss": "^4.3.3",
 		"textmode.export.js": "1.8.0",
 		"textmode.figlet.js": "1.0.5",
@@ -96,36 +86,8 @@
 		"textmode.synth.js": "1.8.2",
 		"tsx": "^4.23.12",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.67.0",
 		"vite": "^8.2.2",
 		"vitest": "^4.1.11"
 	},
-	"prettier": "@textmode/prettier-config",
-	"commitlint": {
-		"extends": [
-			"@textmode/commitlint-config"
-		]
-	},
-	"lint-staged": {
-		"*": "prettier --ignore-unknown --write"
-	},
-	"markdownlint-cli2": {
-		"globs": [
-			"**/*.md"
-		],
-		"ignores": [
-			"node_modules/**",
-			"dist/**",
-			"sketches/**"
-		],
-		"fix": false,
-		"outputFormatters": [
-			[
-				"markdownlint-cli2-formatter-default"
-			]
-		],
-		"config": {
-			"extends": "@textmode/markdownlint-config"
-		}
-	}
+	"prettier": "@textmode/lint/prettier"
 }

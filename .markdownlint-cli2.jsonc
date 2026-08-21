@@ -1,0 +1,14 @@
+{
+	"ignores": [
+		"node_modules/**",
+		".output/**",
+		".wxt/**",
+		"dist/**",
+		"api/**",
+		"coverage/**",
+		"test-results/**",
+		"playwright-report/**",
+		"sketches/**",
+		"**/CHANGELOG.md",
+	],
+}
