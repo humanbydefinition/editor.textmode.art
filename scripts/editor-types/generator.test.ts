@@ -48,7 +48,7 @@ describe('editor type generation', () => {
 			definitions['file:///node_modules/textmode.export.js/dist/types/exporters/base/DataExtractor.d.ts']
 		).not.toContain('$extractFramebufferData');
 		expect(definitions['file:///node_modules/textmode.figlet.js/dist/types/augmentations/textmode.d.ts']).toContain(
-			"declare module 'textmode.js'"
+			"declare module 'textmode.js/addon'"
 		);
 		expect(Object.values(definitions).some((content) => content.includes('@example'))).toBe(false);
 		expect(Object.values(definitions).some((content) => /\{@(?:link|linkplain|linkcode)\b/.test(content))).toBe(
