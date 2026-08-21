@@ -67,7 +67,7 @@
 		"zustand": "^5.0.15"
 	},
 	"devDependencies": {
-		"@playwright/test": "1.62.1",
+		"@playwright/test": "1.61.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"@textmode/build": "^0.1.0",
 		"@textmode/lint": "^0.1.1",

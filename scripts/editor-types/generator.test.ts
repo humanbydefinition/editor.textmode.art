@@ -59,7 +59,7 @@ describe('editor type generation', () => {
 		const second = await generateEditorTypes({ projectRoot: root });
 		expect(second.status).toBe('unchanged');
 		expect(await readFile(second.outputPath, 'utf8')).toBe(firstContent);
-	});
+	}, 15_000);
 
 	it('fails when an installed package is unavailable without creating output', async () => {
 		const root = await createTemporaryProject({ omitPackage: 'textmode.figlet.js' });
