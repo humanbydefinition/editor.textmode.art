@@ -36,6 +36,7 @@ function createProject(root: string): TemporaryTypeScriptProject {
 		baseUrl: root,
 		paths: {
 			'textmode.js': ['node_modules/textmode.js/dist/types/index.d.ts'],
+			'textmode.js/addon': ['node_modules/textmode.js/dist/types/exports/addon.d.ts'],
 			'textmode.synth.js': ['node_modules/textmode.synth.js/dist/types/index.d.ts'],
 			'textmode.filters.js': ['node_modules/textmode.filters.js/dist/types/index.d.ts'],
 			'textmode.export.js': ['node_modules/textmode.export.js/dist/types/index.d.ts'],
