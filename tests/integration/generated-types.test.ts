@@ -12,12 +12,14 @@ describe('generated editor declarations', () => {
 	it('ships normalized documentation and semantic add-on augmentations', () => {
 		expect(typeDefinitions[TEXTMODE_LAYER_PATH]).not.toContain('{@link');
 		expect(typeDefinitions[FILTERS_INDEX_PATH]).not.toContain('{@link');
-		expect(typeDefinitions[FIGLET_AUGMENTATION_PATH]).toContain("declare module 'textmode.js'");
+		expect(typeDefinitions[FIGLET_AUGMENTATION_PATH]).toContain("declare module 'textmode.js/addon'");
 		expect(typeDefinitions[FIGLET_AUGMENTATION_PATH]).toContain(
-			'interface Textmodifier extends TextmodifierFigletExtensions'
+			'interface TextmodifierExtensions extends TextmodifierFigletExtensions'
 		);
-		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain("declare module 'textmode.js'");
-		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain('interface Textmodifier extends TextmodeExportAPI');
+		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain("declare module 'textmode.js/addon'");
+		expect(typeDefinitions[EXPORT_AUGMENTATION_PATH]).toContain(
+			'interface TextmodifierExtensions extends TextmodeExportAPI'
+		);
 	});
 
 	it('contains deterministic, parseable virtual declarations without internal members or examples', () => {
