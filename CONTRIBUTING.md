@@ -116,7 +116,7 @@ crawler-readable HTML at `/s/<slug>/`.
 You retain copyright in your sketch. By submitting it, you confirm that you
 have the right to contribute it and grant permission for it to be included,
 hosted, run, modified, and distributed as part of editor.textmode.art under
-the repository's [AGPL-3.0](LICENSE) terms.
+the repository's [AGPL-3.0-or-later](LICENSE) terms.
 
 You may declare an additional standalone license in `meta.json`. It governs
 independent reuse of the sketch outside the bundled application; use `null`
