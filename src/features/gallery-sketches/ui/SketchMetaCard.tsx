@@ -86,7 +86,7 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 						href={link.url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[9rem]"
+						className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-zinc-200 transition-colors hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 max-w-[16rem]"
 					>
 						<ExternalLink className="h-3 w-3 shrink-0" />
 						<span className="truncate">{link.label}</span>
