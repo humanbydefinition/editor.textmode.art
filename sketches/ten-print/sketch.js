@@ -1,6 +1,7 @@
 const FONT_SIZE = 16;
-const MAX_COLS = 40;
-const MAX_ROWS = 25;
+const SCREEN_COLS = 40;
+const SCREEN_ROWS = 25;
+const STREAM_LENGTH = 8192;
 const CHARS_PER_SECOND = 42;
 
 const C64_BORDER = '#867ade';
@@ -25,17 +26,11 @@ let cols = 0;
 let rows = 0;
 let blankRow = '';
 let bootRows = [];
-
-function mazeGlyph(index) {
-	let value = index + 0x9e3779b9;
-	value = Math.imul(value ^ (value >>> 16), 0x21f0aaad);
-	value = Math.imul(value ^ (value >>> 15), 0x735a2d97);
-	return MAZE_GLYPHS[value >>> 31];
-}
+let maze = [];
 
 function updateScreen() {
-	const nextCols = Math.max(1, Math.min(MAX_COLS, t.grid.cols));
-	const nextRows = Math.max(1, Math.min(MAX_ROWS, t.grid.rows));
+	const nextCols = Math.max(1, Math.min(SCREEN_COLS, t.grid.cols));
+	const nextRows = Math.max(1, Math.min(SCREEN_ROWS, t.grid.rows));
 	if (nextCols === cols && nextRows === rows) return;
 
 	cols = nextCols;
@@ -46,13 +41,12 @@ function updateScreen() {
 
 function mazeRow(row) {
 	const start = (row - bootRows.length) * cols;
-	let text = '';
-	for (let col = 0; col < cols; col++) text += mazeGlyph(start + col);
-	return text;
+	return Array.from({ length: cols }, (_, col) => maze[(start + col) % maze.length]).join('');
 }
 
 function contentRow(row, cursor) {
 	if (row < bootRows.length) return bootRows[row];
+
 	const written = Math.max(0, Math.min(cols, cursor - row * cols));
 	const text = mazeRow(row);
 	return text.slice(0, written) + blankRow.slice(written);
@@ -60,25 +54,29 @@ function contentRow(row, cursor) {
 
 t.fontSize(FONT_SIZE);
 
+t.setup(() => {
+	t.randomSeed('c64-ten-print-v1');
+	maze = Array.from({ length: STREAM_LENGTH }, () => t.random(MAZE_GLYPHS) ?? MAZE_GLYPHS[0]);
+});
+
 t.draw(() => {
+	if (!maze.length) return;
 	updateScreen();
 
 	const cursor = bootRows.length * cols + Math.floor(t.secs * CHARS_PER_SECOND);
 	const cursorRow = Math.floor(cursor / cols);
 	const scroll = Math.max(0, cursorRow - rows + 1);
+	const left = -Math.floor(cols / 2);
+	const top = -Math.floor(rows / 2);
 
 	t.background(C64_BORDER);
 	t.printAlign('left', 'top');
 	t.cellColor(C64_SCREEN);
 	t.charColor(C64_TEXT);
-	for (let row = 0; row < rows; row++) {
-		t.print(contentRow(row + scroll, cursor), -Math.floor(cols / 2), -Math.floor(rows / 2) + row, { markup: false });
-	}
+	for (let row = 0; row < rows; row++) t.print(contentRow(row + scroll, cursor), left, top + row, { markup: false });
 
 	if (Math.floor(t.secs * 3.5) % 2 === 0) {
 		t.charColor(C64_CURSOR);
-		t.print(CURSOR_GLYPH, -Math.floor(cols / 2) + (cursor % cols), -Math.floor(rows / 2) + cursorRow - scroll, {
-			markup: false,
-		});
+		t.print(CURSOR_GLYPH, left + (cursor % cols), top + cursorRow - scroll, { markup: false });
 	}
 });
