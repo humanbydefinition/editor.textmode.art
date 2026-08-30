@@ -1,0 +1,16 @@
+{
+	"slug": "ten-print",
+	"title": "10 PRINT",
+	"description": "A classic Commodore 64 one-liner that builds a maze one character at a time.",
+	"authorName": "???",
+	"license": null,
+	"socialLinks": [
+		{
+			"label": "10 PRINT",
+			"url": "https://10print.org"
+		}
+	],
+	"createdAt": "2026-08-30T00:00:00.000Z",
+	"ogFrame": 60,
+	"ogDarken": 55
+}
