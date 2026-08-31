@@ -79,7 +79,7 @@
 		"@vitejs/plugin-react": "^6.1.0",
 		"jsdom": "^30.0.1",
 		"tailwindcss": "^4.3.3",
-		"textmode.export.js": "1.8.0",
+		"textmode.export.js": "1.8.1",
 		"textmode.figlet.js": "1.0.5",
 		"textmode.filters.js": "1.2.5",
 		"textmode.js": "0.18.0",
