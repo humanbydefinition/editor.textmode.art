@@ -12,6 +12,7 @@ import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import type { AppRuntime } from '@/app/runtime/AppRuntime';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 import { toast } from 'sonner';
+import { AnalyticsConsentBanner } from '@/features/analytics-consent/ui/AnalyticsConsentBanner';
 
 interface AppShellProps {
 	actions: AppRuntime['actions'];
@@ -169,6 +170,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 				offset={8}
 				className="pointer-events-auto"
 			/>
+			<AnalyticsConsentBanner />
 		</>
 	);
 }
