@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Menu, Shuffle, X, Share, Dices, Heart } from 'lucide-react';
+import { Menu, Shuffle, X, Share, Dices, Heart, Settings2 } from 'lucide-react';
 import {
 	Dialog,
 	DialogContent,
@@ -19,6 +19,7 @@ import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
 import { AudioTab } from './tabs/AudioTab';
+import { openAnalyticsConsentPreferences } from '@/features/analytics-consent/model/analytics-consent';
 
 import { useAppStore } from '@/platform/state/appStore';
 import type { AudioInputState } from '@/platform/state/slices/audioSlice';
@@ -75,6 +76,11 @@ export function SystemMenu({
 				position: 'bottom-right',
 			});
 		}
+	};
+
+	const handleOpenPrivacySettings = () => {
+		setOpen(false);
+		openAnalyticsConsentPreferences();
 	};
 
 	return (
@@ -241,6 +247,21 @@ export function SystemMenu({
 									{link.label}
 								</a>
 							))}
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<button
+										type="button"
+										onClick={handleOpenPrivacySettings}
+										aria-label="Open privacy settings"
+										className="inline-flex h-5 w-5 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-300"
+									>
+										<Settings2 aria-hidden="true" className="h-3.5 w-3.5" />
+									</button>
+								</TooltipTrigger>
+								<TooltipContent side="top">
+									<p>privacy settings</p>
+								</TooltipContent>
+							</Tooltip>
 						</div>
 					</div>
 				</div>
