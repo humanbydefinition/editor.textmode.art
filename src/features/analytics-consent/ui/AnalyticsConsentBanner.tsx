@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { buildLegalHref } from '@/shared/config/appMeta';
 import {
 	type AnalyticsConsentDecision,
-	disableGoogleAnalytics,
-	enableGoogleAnalytics,
+	loadGoogleAnalyticsAfterConsent,
 	onAnalyticsConsentPreferencesOpen,
-	readStoredAnalyticsConsent,
-	writeStoredAnalyticsConsent,
+	readAnalyticsConsent,
+	revokeGoogleAnalytics,
+	writeAnalyticsConsent,
 } from '../model/analytics-consent';
 import './AnalyticsConsentBanner.css';
 
 const TRANSITION_MS = 220;
 
 export function AnalyticsConsentBanner() {
-	const [initialDecision] = useState(() => readStoredAnalyticsConsent());
+	const [initialDecision] = useState(() => readAnalyticsConsent());
 	const [rendered, setRendered] = useState(() => initialDecision === null);
 	const [active, setActive] = useState(() => initialDecision === null);
 	const fallbackDecision = useRef<AnalyticsConsentDecision | null>(initialDecision);
@@ -52,12 +52,12 @@ export function AnalyticsConsentBanner() {
 
 	useEffect(() => {
 		const unsubscribe = onAnalyticsConsentPreferencesOpen(showBanner);
-		const decision = readStoredAnalyticsConsent() ?? fallbackDecision.current;
+		const decision = readAnalyticsConsent() ?? fallbackDecision.current;
 
 		if (decision === 'accepted') {
-			enableGoogleAnalytics();
+			loadGoogleAnalyticsAfterConsent();
 		} else if (decision === 'rejected') {
-			disableGoogleAnalytics();
+			revokeGoogleAnalytics();
 		}
 
 		return () => {
@@ -69,12 +69,12 @@ export function AnalyticsConsentBanner() {
 	const commitDecision = useCallback(
 		(decision: AnalyticsConsentDecision) => {
 			fallbackDecision.current = decision;
-			writeStoredAnalyticsConsent(decision);
+			writeAnalyticsConsent(decision);
 
 			if (decision === 'accepted') {
-				enableGoogleAnalytics();
+				loadGoogleAnalyticsAfterConsent();
 			} else {
-				disableGoogleAnalytics();
+				revokeGoogleAnalytics();
 			}
 
 			hideBanner();

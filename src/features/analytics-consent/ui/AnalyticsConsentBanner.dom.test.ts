@@ -6,6 +6,7 @@ import {
 	ANALYTICS_CONSENT_STORAGE_KEY,
 	GA_MEASUREMENT_ID,
 	openAnalyticsConsentPreferences,
+	writeAnalyticsConsent,
 } from '../model/analytics-consent';
 import { AnalyticsConsentBanner } from './AnalyticsConsentBanner';
 
@@ -33,15 +34,16 @@ describe('AnalyticsConsentBanner', () => {
 	});
 
 	it('shows on the first visit and grants analytics when accepted', () => {
-		const gtag = vi.fn();
-		(window as unknown as Record<string, unknown>).gtag = gtag;
 		const { container } = renderBanner();
 
 		expect(container.querySelector('[role="region"]')).not.toBeNull();
 		clickConsentButton(container, 'Allow analytics');
 
-		expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBe('accepted');
-		expect(gtag).toHaveBeenLastCalledWith('consent', 'update', { analytics_storage: 'granted' });
+		expect(JSON.parse(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)!)).toMatchObject({
+			decision: 'accepted',
+			version: 2,
+		});
+		expect(document.querySelector(`[data-google-analytics-id="${GA_MEASUREMENT_ID}"]`)).not.toBeNull();
 		expect((window as unknown as Record<string, unknown>)[`ga-disable-${GA_MEASUREMENT_ID}`]).toBeUndefined();
 	});
 
@@ -50,7 +52,10 @@ describe('AnalyticsConsentBanner', () => {
 		const { container } = renderBanner();
 
 		clickConsentButton(container, 'Reject analytics');
-		expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBe('rejected');
+		expect(JSON.parse(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)!)).toMatchObject({
+			decision: 'rejected',
+			version: 2,
+		});
 		expect((window as unknown as Record<string, unknown>)[`ga-disable-${GA_MEASUREMENT_ID}`]).toBe(true);
 
 		act(() => vi.advanceTimersByTime(220));
@@ -61,7 +66,7 @@ describe('AnalyticsConsentBanner', () => {
 	});
 
 	it('does not show again after an accepted decision is persisted', () => {
-		localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, 'accepted');
+		writeAnalyticsConsent('accepted');
 		const { container } = renderBanner();
 
 		expect(container.querySelector('[role="region"]')).toBeNull();
