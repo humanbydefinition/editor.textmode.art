@@ -15,6 +15,15 @@ export default defineConfig({
 	},
 	server: {
 		cors: true,
+		headers: {
+			// WebMCP registration requires an origin-keyed agent cluster.
+			'Origin-Agent-Cluster': '?1',
+		},
+	},
+	preview: {
+		headers: {
+			'Origin-Agent-Cluster': '?1',
+		},
 	},
 	build: {
 		rolldownOptions: {
