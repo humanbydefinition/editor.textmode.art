@@ -47,6 +47,7 @@ export class TextmodeController {
 	private pendingWorkingCode: string | null = null;
 	private candidateInFlight = false;
 	private editorVersion = 0;
+	private preview: { code: string; baseline: string; version: number } | null = null;
 
 	constructor(callbacks: TextmodeControllerCallbacks, deps: TextmodeControllerDependencies) {
 		this.callbacks = callbacks;
@@ -59,6 +60,7 @@ export class TextmodeController {
 	}
 
 	handleCodeChange(code: string): void {
+		this.preview = null;
 		if (this.isExecutionLocked()) return;
 		this.editorVersion += 1;
 		this.deps.onCodeChanged(code);
@@ -112,6 +114,62 @@ export class TextmodeController {
 		} finally {
 			this.candidateInFlight = false;
 		}
+	}
+
+	getRevision(): number {
+		return this.editorVersion;
+	}
+
+	async previewCandidate(code: string, baseline: string, revision: number): Promise<boolean> {
+		if (
+			this.isExecutionLocked() ||
+			this.candidateInFlight ||
+			this.editorVersion !== revision ||
+			this.deps.editor.getValue() !== baseline
+		)
+			return false;
+		this.candidateInFlight = true;
+		try {
+			const ready = await this.deps.runtime.tryCandidate(code, baseline);
+			if (!ready || this.editorVersion !== revision || this.deps.editor.getValue() !== baseline) {
+				if (this.deps.editor.getValue() === baseline) this.deps.runtime.forceRun(baseline);
+				return false;
+			}
+			this.preview = { code, baseline, version: revision };
+			return true;
+		} finally {
+			this.candidateInFlight = false;
+		}
+	}
+
+	acceptPreviewedCandidate(): boolean {
+		const preview = this.preview;
+		if (
+			!preview ||
+			this.isExecutionLocked() ||
+			this.editorVersion !== preview.version ||
+			this.deps.editor.getValue() !== preview.baseline
+		)
+			return false;
+		this.preview = null;
+		this.cancelPendingWorkingCode();
+		this.replaceCode(preview.code);
+		this.callbacks.onSaveCode(preview.code);
+		this.deps.state.setLastWorkingCode(preview.code);
+		this.deps.state.clearError();
+		this.deps.editor.clearMarkers();
+		return true;
+	}
+
+	restoreAcceptedCode(): void {
+		const preview = this.preview;
+		this.preview = null;
+		if (preview) this.deps.runtime.forceRun(preview.baseline);
+	}
+
+	setCodeSilently(code: string): void {
+		this.preview = null;
+		this.replaceCode(code);
 	}
 
 	handleRevertToLastWorking(): void {

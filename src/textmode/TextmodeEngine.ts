@@ -79,6 +79,43 @@ export class TextmodeEngine {
 		return this.controller?.tryReplaceAndRun(code) ?? Promise.resolve(false);
 	}
 
+	getRevision(): number {
+		return this.controller?.getRevision() ?? 0;
+	}
+
+	async validateCode(
+		code: string,
+		signal?: AbortSignal
+	): Promise<{ valid: boolean; diagnostic?: { message: string; line?: number; column?: number } }> {
+		return (
+			this.runtime?.validateCode(code, signal) ?? { valid: false, diagnostic: { message: 'Runner is not ready' } }
+		);
+	}
+
+	previewCandidate(code: string, baseline: string, revision: number): Promise<boolean> {
+		return this.controller?.previewCandidate(code, baseline, revision) ?? Promise.resolve(false);
+	}
+
+	acceptPreviewedCandidate(): boolean {
+		return this.controller?.acceptPreviewedCandidate() ?? false;
+	}
+
+	restoreAcceptedCode(): void {
+		this.controller?.restoreAcceptedCode();
+	}
+
+	getRunnerCapabilities(): Record<string, boolean> {
+		return this.runtime?.getCapabilities() ?? {};
+	}
+
+	inspectArtwork(input: unknown, signal?: AbortSignal): Promise<unknown> {
+		return this.runtime?.inspectArtwork(input, signal) ?? Promise.reject(new Error('Runner is not ready'));
+	}
+
+	prepareExport(input: unknown, signal?: AbortSignal): Promise<unknown> {
+		return this.runtime?.prepareExport(input, signal) ?? Promise.reject(new Error('Runner is not ready'));
+	}
+
 	resetRuntime(): void {
 		this.controller?.handleHardReset();
 	}
@@ -92,6 +129,10 @@ export class TextmodeEngine {
 	}
 
 	setCode(code: string, options?: { silent?: boolean }): void {
+		if (options?.silent) {
+			this.controller?.setCodeSilently(code);
+			return;
+		}
 		this.editor?.setValue(code, options);
 	}
 
