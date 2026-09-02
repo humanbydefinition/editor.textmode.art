@@ -3,10 +3,43 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="color-scheme" content="dark" />
-		<link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png" />
-		<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
-		<link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png" />
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="/icon-light-16.png"
+			media="(prefers-color-scheme: light)"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="/icon-light-32.png"
+			media="(prefers-color-scheme: light)"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="64x64"
+			href="/icon-light-64.png"
+			media="(prefers-color-scheme: light)"
+		/>
+		<link rel="icon" type="image/png" sizes="16x16" href="/icon-dark-16.png" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/icon-dark-32.png" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" type="image/png" sizes="64x64" href="/icon-dark-64.png" media="(prefers-color-scheme: dark)" />
 		<link rel="manifest" href="/site.webmanifest" />
+		<script>
+			(() => {
+				const m = window.matchMedia('(prefers-color-scheme: dark)');
+				const u = () => {
+					const mode = m.matches ? 'dark' : 'light';
+					document.querySelectorAll('link[rel*="icon"][sizes]').forEach((l) => {
+						l.href = l.href.replace(/-(light|dark)-/, `-${mode}-`);
+					});
+				};
+				m.addEventListener('change', u);
+			})();
+		</script>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
