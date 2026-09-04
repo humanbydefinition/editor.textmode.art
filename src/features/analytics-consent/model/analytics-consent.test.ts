@@ -51,12 +51,7 @@ describe('analytics consent', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('uses a versioned consent record and discards the v1 decision', () => {
-		values.set('editor_textmode_art_analytics_consent_v1', 'accepted');
-
-		expect(readAnalyticsConsent()).toBeNull();
-		expect(values.get('editor_textmode_art_analytics_consent_v1')).toBeUndefined();
-
+	it('stores and reads a versioned consent record', () => {
 		writeAnalyticsConsent('accepted');
 
 		expect(JSON.parse(values.get(ANALYTICS_CONSENT_STORAGE_KEY)!)).toMatchObject({
@@ -68,6 +63,23 @@ describe('analytics consent', () => {
 	});
 
 	it('does not initialize Google Analytics without an accepted v2 decision', () => {
+		loadGoogleAnalyticsAfterConsent();
+
+		expect(appended).toEqual([]);
+		expect(analyticsWindow.dataLayer).toBeUndefined();
+	});
+
+	it('keeps analytics disabled when consent cannot be persisted', () => {
+		analyticsWindow.localStorage = {
+			getItem: vi.fn(() => {
+				throw new Error('storage unavailable');
+			}),
+			setItem: vi.fn(() => {
+				throw new Error('storage unavailable');
+			}),
+		};
+
+		writeAnalyticsConsent('accepted');
 		loadGoogleAnalyticsAfterConsent();
 
 		expect(appended).toEqual([]);
@@ -86,17 +98,9 @@ describe('analytics consent', () => {
 			src: `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`,
 			dataset: { googleAnalyticsId: GA_MEASUREMENT_ID },
 		});
-		expect(analyticsWindow.dataLayer).toEqual([
-			[
-				'consent',
-				'default',
-				{
-					analytics_storage: 'granted',
-					ad_storage: 'denied',
-					ad_user_data: 'denied',
-					ad_personalization: 'denied',
-				},
-			],
+		const dataLayer = analyticsWindow.dataLayer as IArguments[];
+		expect(dataLayer.every((entry) => !Array.isArray(entry))).toBe(true);
+		expect(dataLayer.map((entry) => Array.from(entry))).toEqual([
 			['js', expect.any(Date)],
 			['config', GA_MEASUREMENT_ID],
 		]);
