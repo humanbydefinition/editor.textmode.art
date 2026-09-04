@@ -1,4 +1,3 @@
-import { EXAMPLE_LIBRARIES } from '@/features/examples/model/exampleCatalog';
 import { getGallerySketchCatalog } from '@/features/gallery-sketches/model/catalog';
 import type { AppState } from '@/platform/state/appStore';
 import type { ToolErrorCode, ToolName, ToolResult } from './contracts';
@@ -8,6 +7,9 @@ import { PreparedExportStore } from './PreparedExportStore';
 import { asRecord, cursorBoundary, integer, onlyKeys, text } from './validation';
 
 const MAX_RESULT_CHARS = 1500;
+const MAX_INSPECTION_CELLS = 64;
+const MAX_LAYER_ID_CHARS = 120;
+const NEVER_ABORTED_SIGNAL = new AbortController().signal;
 
 export interface EditorAgentCapabilities {
 	getCode(): string;
@@ -40,16 +42,18 @@ export class WebMcpToolService {
 		this.capabilities = capabilities;
 	}
 
-	async execute(name: ToolName, input: unknown, signal: AbortSignal): Promise<unknown> {
+	async execute(name: ToolName, input: unknown, maybeSignal?: AbortSignal): Promise<unknown> {
+		const signal = maybeSignal ?? NEVER_ABORTED_SIGNAL;
 		const startedAt = Date.now();
 		const id = crypto.randomUUID();
 		this.capabilities.log({ id, tool: name, status: 'pending', startedAt });
 		try {
+			if (signal.aborted) throw abortError();
 			const result = await this.dispatch(name, input, signal);
 			this.capabilities.log({ id, tool: name, status: 'success', startedAt, durationMs: Date.now() - startedAt });
 			return budget(result);
 		} catch (error) {
-			const aborted = error instanceof DOMException && error.name === 'AbortError';
+			const aborted = signal.aborted || isAbortError(error);
 			this.capabilities.log({
 				id,
 				tool: name,
@@ -198,10 +202,14 @@ export class WebMcpToolService {
 				(!category || example.category === category) &&
 				(!query || `${example.title} ${example.category} ${example.description}`.toLowerCase().includes(query))
 		);
-		return this.success({
-			items: examples.slice(cursor, cursor + limit),
-			nextCursor: cursor + limit < examples.length ? cursor + limit : null,
-		});
+		let items = examples.slice(cursor, cursor + limit);
+		while (items.length > 0) {
+			const nextCursor = cursor + items.length < examples.length ? cursor + items.length : null;
+			const result = this.success({ items, nextCursor });
+			if (fitsBudget(result)) return result;
+			items = items.slice(0, -1);
+		}
+		return this.success({ items: [], nextCursor: cursor < examples.length ? cursor : null });
 	}
 
 	private async stageSketch(input: unknown, signal: AbortSignal): Promise<ToolResult<unknown>> {
@@ -280,16 +288,23 @@ export class WebMcpToolService {
 		if (
 			!value ||
 			!onlyKeys(value, ['detail', 'layerId', 'region', 'cursor']) ||
-			(value.detail !== undefined && value.detail !== 'summary' && value.detail !== 'cells')
+			(value.detail !== undefined && value.detail !== 'summary' && value.detail !== 'cells') ||
+			(value.layerId !== undefined && !text(value.layerId, 1, MAX_LAYER_ID_CHARS)) ||
+			(value.cursor !== undefined && !integer(value.cursor, 0, MAX_INSPECTION_CELLS)) ||
+			(value.region !== undefined && !validInspectionRegion(value.region)) ||
+			((value.detail ?? 'summary') === 'cells' && value.region === undefined)
 		)
 			return this.failure('VALIDATION_ERROR', 'Invalid inspection input', false);
 		if (!this.capabilities.getRunnerCapabilities().artworkInspection)
 			return this.failure('UNSUPPORTED_CAPABILITY', 'Runner inspection is unavailable', true);
 		try {
-			return this.success(
-				await this.capabilities.inspectArtwork({ ...value, detail: value.detail ?? 'summary' }, signal)
+			const inspection = await this.capabilities.inspectArtwork(
+				{ ...value, detail: value.detail ?? 'summary' },
+				signal
 			);
-		} catch {
+			return this.boundedInspection(inspection, (value.cursor as number | undefined) ?? 0);
+		} catch (error) {
+			if (signal.aborted || isAbortError(error)) throw error;
 			return this.failure('RUNTIME_ERROR', 'Artwork inspection failed', true);
 		}
 	}
@@ -304,6 +319,8 @@ export class WebMcpToolService {
 			(value.fileName !== undefined && !text(value.fileName, 1, 80))
 		)
 			return this.failure('VALIDATION_ERROR', 'Invalid export input', false);
+		if (value.target === 'all' && value.format !== 'json')
+			return this.failure('UNSUPPORTED_FORMAT', 'Only JSON export supports all layers', false);
 		if (this.isLocked())
 			return this.failure('LOCKED_UNTRUSTED_SHARE', 'Unlock or discard the shared sketch first', false);
 		try {
@@ -323,7 +340,8 @@ export class WebMcpToolService {
 				expiresAt: prepared.expiresAt,
 				dialogOpen: true,
 			});
-		} catch {
+		} catch (error) {
+			if (signal.aborted || isAbortError(error)) throw error;
 			return this.failure('RUNTIME_ERROR', 'Export preparation failed', true);
 		}
 	}
@@ -346,6 +364,18 @@ export class WebMcpToolService {
 	private failure(code: ToolErrorCode, message: string, retryable: boolean): ToolResult<never> {
 		return { ok: false, error: { code, message, retryable }, stateRevision: this.capabilities.getRevision() };
 	}
+
+	private boundedInspection(inspection: unknown, cursor: number): ToolResult<unknown> {
+		const value = asRecord(inspection);
+		if (!value || !Array.isArray(value.cells)) return this.success(inspection);
+		for (let count = value.cells.length; count >= 0; count -= 1) {
+			const cells = value.cells.slice(0, count);
+			const nextCursor = count < value.cells.length ? cursor + count : (value.nextCursor ?? null);
+			const result = this.success({ ...value, cells, nextCursor });
+			if (fitsBudget(result)) return result;
+		}
+		return this.failure('LIMIT_EXCEEDED', 'Artwork summary is too large to return safely', true);
+	}
 }
 
 function validEmpty(input: unknown): boolean {
@@ -353,8 +383,7 @@ function validEmpty(input: unknown): boolean {
 	return record !== null && Object.keys(record).length === 0;
 }
 function budget(value: unknown): unknown {
-	const serialized = JSON.stringify(value);
-	return serialized.length <= MAX_RESULT_CHARS
+	return fitsBudget(value)
 		? value
 		: {
 				ok: false,
@@ -366,24 +395,36 @@ function budget(value: unknown): unknown {
 				stateRevision: 0,
 			};
 }
-function catalogExamples(): Array<{ id: string; title: string; category: string; description: string; code: string }> {
-	const builtIn = EXAMPLE_LIBRARIES.flatMap((library) =>
-		library.categories.flatMap((category) =>
-			category.examples.map((example) => ({
-				id: `example:${library.id}:${category.id}:${example.id}`,
-				title: example.name,
-				category: category.id,
-				description: example.description.slice(0, 160),
-				code: example.code,
-			}))
-		)
+function fitsBudget(value: unknown): boolean {
+	try {
+		return JSON.stringify(value).length <= MAX_RESULT_CHARS;
+	} catch {
+		return false;
+	}
+}
+function validInspectionRegion(value: unknown): boolean {
+	const region = asRecord(value);
+	if (!region || !onlyKeys(region, ['x', 'y', 'width', 'height'])) return false;
+	return (
+		integer(region.x, 0, Number.MAX_SAFE_INTEGER) &&
+		integer(region.y, 0, Number.MAX_SAFE_INTEGER) &&
+		integer(region.width, 1, MAX_INSPECTION_CELLS) &&
+		integer(region.height, 1, MAX_INSPECTION_CELLS) &&
+		region.width * region.height <= MAX_INSPECTION_CELLS
 	);
-	const gallery = getGallerySketchCatalog().map((sketch) => ({
+}
+function abortError(): DOMException {
+	return new DOMException('Operation aborted', 'AbortError');
+}
+function isAbortError(error: unknown): boolean {
+	return error instanceof DOMException && error.name === 'AbortError';
+}
+function catalogExamples(): Array<{ id: string; title: string; category: string; description: string; code: string }> {
+	return getGallerySketchCatalog().map((sketch) => ({
 		id: `gallery:${sketch.slug}`,
 		title: sketch.title,
 		category: 'gallery',
 		description: (sketch.description ?? '').slice(0, 160),
 		code: sketch.textmodeCode,
 	}));
-	return [...builtIn, ...gallery];
 }

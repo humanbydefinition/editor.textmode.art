@@ -32,9 +32,19 @@ const definitions: Record<ToolName, Omit<WebMcpTool, 'execute'>> = {
 			type: 'object',
 			properties: {
 				detail: { enum: ['summary', 'cells'] },
-				layerId: { type: 'string' },
-				region: { type: 'object' },
-				cursor: { type: 'integer', minimum: 0 },
+				layerId: { type: 'string', minLength: 1, maxLength: 120 },
+				region: {
+					type: 'object',
+					required: ['x', 'y', 'width', 'height'],
+					properties: {
+						x: { type: 'integer', minimum: 0 },
+						y: { type: 'integer', minimum: 0 },
+						width: { type: 'integer', minimum: 1, maximum: 64 },
+						height: { type: 'integer', minimum: 1, maximum: 64 },
+					},
+					additionalProperties: false,
+				},
+				cursor: { type: 'integer', minimum: 0, maximum: 64 },
 			},
 			additionalProperties: false,
 		},
@@ -59,7 +69,7 @@ const definitions: Record<ToolName, Omit<WebMcpTool, 'execute'>> = {
 	textmode_list_examples: {
 		name: 'textmode_list_examples',
 		title: 'List examples',
-		description: 'Find built-in and gallery sketch examples without returning their source.',
+		description: 'Find gallery sketch examples without returning their source.',
 		inputSchema: {
 			type: 'object',
 			properties: {

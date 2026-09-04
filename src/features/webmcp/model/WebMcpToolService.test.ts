@@ -2,8 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebMcpToolService, type EditorAgentCapabilities } from './WebMcpToolService';
 import type { AppState } from '@/platform/state/appStore';
 
+const mockGalleryCatalog = [
+	{
+		slug: 'demo',
+		title: 'Demo Sketch',
+		description: 'A demo sketch.',
+		textmodeCode: 't.print("hello")',
+		category: 'gallery',
+	},
+];
+
 vi.mock('@/features/gallery-sketches/model/catalog', () => ({
-	getGallerySketchCatalog: () => [],
+	getGallerySketchCatalog: () => mockGalleryCatalog,
 }));
 
 const signal = new AbortController().signal;
@@ -71,6 +81,13 @@ describe('WebMcpToolService', () => {
 		});
 	});
 
+	it('completes a read-only call when a WebMCP bridge omits the optional cancellation signal', async () => {
+		await expect(
+			service.execute('textmode_get_editor_state', {}, undefined as unknown as AbortSignal)
+		).resolves.toMatchObject({ ok: true, data: { revision: 4 } });
+		expect(state.agent.activity.at(-1)).toMatchObject({ status: 'success' });
+	});
+
 	it('stages inert code, then previews and accepts only from the human action', async () => {
 		const result = await service.execute(
 			'textmode_stage_sketch',
@@ -117,5 +134,89 @@ describe('WebMcpToolService', () => {
 			data: { dialogOpen: true },
 		});
 		expect(capabilities.openShare).toHaveBeenCalledOnce();
+	});
+
+	it('validates bounded inspection inputs and paginates a large cell result', async () => {
+		capabilities.inspectArtwork = vi.fn(async () => ({
+			sampledAt: 'now',
+			canvas: { width: 80, height: 25 },
+			grid: { columns: 80, rows: 25 },
+			layers: [],
+			cells: Array.from({ length: 64 }, (_, index) => ({
+				x: index,
+				y: 0,
+				ch: '█',
+				fg: '#ff00ff',
+				bg: '#000000',
+			})),
+			nextCursor: null,
+		}));
+
+		expect(
+			await service.execute(
+				'textmode_inspect_artwork',
+				{ detail: 'cells', region: { x: 0, y: 0, width: 65, height: 1 } },
+				signal
+			)
+		).toMatchObject({ ok: false, error: { code: 'VALIDATION_ERROR' } });
+
+		const result = await service.execute(
+			'textmode_inspect_artwork',
+			{ detail: 'cells', region: { x: 0, y: 0, width: 64, height: 1 } },
+			signal
+		);
+		expect(result).toMatchObject({ ok: true, data: { nextCursor: expect.any(Number) } });
+		if (result && typeof result === 'object' && 'data' in result) {
+			const data = result.data as { cells: unknown[] };
+			expect(data.cells.length).toBeLessThan(64);
+		}
+	});
+
+	it('reports runner cancellation as an aborted tool call', async () => {
+		const controller = new AbortController();
+		capabilities.inspectArtwork = vi.fn(
+			(_input, signal) =>
+				new Promise((_, reject) =>
+					signal?.addEventListener('abort', () => reject(signal.reason), { once: true })
+				)
+		);
+
+		const resultPromise = service.execute('textmode_inspect_artwork', { detail: 'summary' }, controller.signal);
+		controller.abort();
+
+		await expect(resultPromise).resolves.toMatchObject({ ok: false, error: { code: 'ABORTED' } });
+		expect(state.agent.activity.at(-1)).toMatchObject({ status: 'aborted' });
+	});
+
+	it('rejects unsupported export target combinations before contacting the runner', async () => {
+		expect(
+			await service.execute('textmode_prepare_export', { format: 'svg', target: 'all' }, signal)
+		).toMatchObject({ ok: false, error: { code: 'UNSUPPORTED_FORMAT' } });
+		expect(capabilities.prepareExport).not.toHaveBeenCalled();
+	});
+
+	it('lists gallery sketches through textmode_list_examples and stages through textmode_stage_example', async () => {
+		const listResult = await service.execute('textmode_list_examples', {}, signal);
+		expect(listResult).toMatchObject({
+			ok: true,
+			data: {
+				items: [
+					{
+						id: 'gallery:demo',
+						title: 'Demo Sketch',
+						category: 'gallery',
+						description: 'A demo sketch.',
+					},
+				],
+			},
+		});
+
+		const stageResult = await service.execute(
+			'textmode_stage_example',
+			{ exampleId: 'gallery:demo', baseRevision: 4 },
+			signal
+		);
+		expect(stageResult).toMatchObject({ ok: true, data: { status: 'awaiting_user_review' } });
+		expect(state.agent.proposal?.summary).toBe('Start from Demo Sketch.');
 	});
 });
