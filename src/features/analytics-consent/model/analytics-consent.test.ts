@@ -98,17 +98,9 @@ describe('analytics consent', () => {
 			src: `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`,
 			dataset: { googleAnalyticsId: GA_MEASUREMENT_ID },
 		});
-		expect(analyticsWindow.dataLayer).toEqual([
-			[
-				'consent',
-				'default',
-				{
-					analytics_storage: 'granted',
-					ad_storage: 'denied',
-					ad_user_data: 'denied',
-					ad_personalization: 'denied',
-				},
-			],
+		const dataLayer = analyticsWindow.dataLayer as IArguments[];
+		expect(dataLayer.every((entry) => !Array.isArray(entry))).toBe(true);
+		expect(dataLayer.map((entry) => Array.from(entry))).toEqual([
 			['js', expect.any(Date)],
 			['config', GA_MEASUREMENT_ID],
 		]);

@@ -15,7 +15,7 @@ type Gtag = (...args: unknown[]) => void;
 
 type AnalyticsWindow = Window & {
 	[key: string]: unknown;
-	dataLayer?: unknown[][];
+	dataLayer?: IArguments[];
 	gtag?: Gtag;
 	__editorTextmodeGoogleAnalyticsInitialized?: boolean;
 };
@@ -71,21 +71,12 @@ export function loadGoogleAnalyticsAfterConsent(): void {
 	analyticsWindow.__editorTextmodeGoogleAnalyticsInitialized = true;
 	delete analyticsWindow[`ga-disable-${GA_MEASUREMENT_ID}`];
 	analyticsWindow.dataLayer ??= [];
-	analyticsWindow.gtag ??= (...args: unknown[]) => {
-		analyticsWindow.dataLayer?.push(args);
+	analyticsWindow.gtag = function gtag(): void {
+		// eslint-disable-next-line prefer-rest-params -- Google tag requires queued Arguments objects.
+		analyticsWindow.dataLayer?.push(arguments);
 	};
-	analyticsWindow.gtag('consent', 'default', {
-		analytics_storage: 'granted',
-		ad_storage: 'denied',
-		ad_user_data: 'denied',
-		ad_personalization: 'denied',
-	});
 	analyticsWindow.gtag('js', new Date());
 	analyticsWindow.gtag('config', GA_MEASUREMENT_ID);
-
-	if (document.querySelector(`script[data-google-analytics-id="${GA_MEASUREMENT_ID}"]`)) {
-		return;
-	}
 
 	const tag = document.createElement('script');
 	tag.async = true;
