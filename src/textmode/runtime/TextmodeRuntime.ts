@@ -96,40 +96,6 @@ export class TextmodeRuntime {
 		void reconnection.catch(() => undefined);
 	}
 
-	getCapabilities(): Record<string, boolean> {
-		const advertised = (this.runtime.advertisedCapabilities ?? {}) as Record<string, boolean>;
-		const client = this.runtime as unknown as WebMcpRunnerClient;
-		return {
-			...advertised,
-			codeValidation: advertised.codeValidation === true && typeof client.validateCode === 'function',
-			artworkInspection: advertised.artworkInspection === true && typeof client.inspectArtwork === 'function',
-			exportPreparation: advertised.exportPreparation === true && typeof client.prepareExport === 'function',
-		};
-	}
-
-	async validateCode(
-		code: string,
-		signal?: AbortSignal
-	): Promise<{ valid: boolean; diagnostic?: { message: string; line?: number; column?: number } }> {
-		const client = this.runtime as unknown as WebMcpRunnerClient;
-		if (!client.validateCode)
-			return { valid: false, diagnostic: { message: 'Runner does not support code validation' } };
-		const result = await client.validateCode(code, { signal });
-		return { valid: result.valid, diagnostic: result.diagnostic };
-	}
-
-	inspectArtwork(input: unknown, signal?: AbortSignal): Promise<unknown> {
-		const client = this.runtime as unknown as WebMcpRunnerClient;
-		if (!client.inspectArtwork) return Promise.reject(new Error('Runner does not support artwork inspection'));
-		return client.inspectArtwork({ ...(input as object), signal });
-	}
-
-	prepareExport(input: unknown, signal?: AbortSignal): Promise<unknown> {
-		const client = this.runtime as unknown as WebMcpRunnerClient;
-		if (!client.prepareExport) return Promise.reject(new Error('Runner does not support export preparation'));
-		return client.prepareExport({ ...(input as object), signal });
-	}
-
 	sendAudioData(data: AudioDataFrame): boolean {
 		return this.runtime.sendAudioData(data);
 	}
@@ -284,15 +250,6 @@ export class TextmodeRuntime {
 		}
 	}
 }
-
-type WebMcpRunnerClient = {
-	validateCode?: (
-		code: string,
-		options: { signal?: AbortSignal }
-	) => Promise<{ valid: boolean; diagnostic?: { message: string; line?: number; column?: number } }>;
-	inspectArtwork?: (options: object & { signal?: AbortSignal }) => Promise<unknown>;
-	prepareExport?: (options: object & { signal?: AbortSignal }) => Promise<unknown>;
-};
 
 function toCodeError(error: unknown): CodeError {
 	if (isRunnerExecutionError(error)) {

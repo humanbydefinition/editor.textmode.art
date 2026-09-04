@@ -12,7 +12,6 @@ import type { AppRuntime } from '@/app/runtime/AppRuntime';
 import { RunnerUnavailableAlert } from './RunnerUnavailableAlert';
 import { toast } from 'sonner';
 import { AnalyticsConsentBanner } from '@/features/analytics-consent/ui/AnalyticsConsentBanner';
-import { AgentControls } from '@/features/webmcp/ui/AgentControls';
 
 interface AppShellProps {
 	actions: AppRuntime['actions'];
@@ -39,7 +38,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 	const shareConsented = useAppStore((state) => state.share.consented);
 	const sharePromptOpen = useAppStore((state) => state.share.promptOpen);
 	const gallerySketch = useAppStore((state) => state.gallerySketch);
-	const hasAgentActivity = useAppStore((state) => state.agent.support !== 'unsupported');
 	const hasLocalSketch = actions.hasLocalSketch();
 	const textmodeRunnerStatus = useAppStore((state) => state.runnerStatus);
 	const audioInput = useAppStore((state) => state.audioInput);
@@ -71,15 +69,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 			},
 		});
 	}, [error, textmodeHasLastWorking, setError]);
-
-	useEffect(
-		() =>
-			actions.onRequestShareExport(() => {
-				setShareExportData(actions.getShareExportData());
-				setShareExportOpen(true);
-			}),
-		[actions]
-	);
 
 	const handleShare = () => {
 		const data = actions.getShareExportData();
@@ -133,7 +122,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 						<Lock className="w-[14px] h-[14px]" />
 					</FloatingActionButton>
 				)}
-				{!showShareLock && hasAgentActivity && <AgentControls actions={actions} />}
 
 				{/* Main UI - hidden when welcome modal is open, with smooth transition */}
 				<div
@@ -148,10 +136,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 								sketch={gallerySketch}
 								autoOpenEnabled={!welcomeOpen}
 								onShare={handleShare}
-								className={cn(
-									'fixed top-2 z-50 pointer-events-auto',
-									hasAgentActivity ? 'right-[8.5rem]' : 'right-[6.5rem]'
-								)}
+								className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"
 							/>
 
 							<SystemMenu
@@ -167,7 +152,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 								onDisableAudioInput={actions.disableAudioInput}
 								onRefreshAudioInputDevices={actions.refreshAudioInputDevices}
 								onSelectAudioInputDevice={actions.selectAudioInputDevice}
-								hasAgentActivity={hasAgentActivity}
 							/>
 						</>
 					)}

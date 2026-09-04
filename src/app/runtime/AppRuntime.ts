@@ -6,7 +6,6 @@ import { TextmodeEngine, type TextmodeEngineContext } from '@/textmode/TextmodeE
 import { useAppStore } from '@/platform/state/appStore';
 import { EditorStorage, editorStorage } from '@/platform/storage/EditorStorage';
 import { AudioInputController } from '@/platform/audio/AudioInputController';
-import { WebMcpRegistrar, WebMcpToolService, type EditorAgentCapabilities } from '@/features/webmcp';
 
 import { MOBILE_BREAKPOINT, type AppSettings } from '@/types';
 import type { SharePayload } from '@/features/share/model/sharePayload';
@@ -25,9 +24,6 @@ export class AppRuntime {
 	private readonly shareManager: ShareManager;
 	private readonly galleryManager: GalleryManager;
 	private readonly audioInput: AudioInputController;
-	private readonly webMcpService: WebMcpToolService;
-	private readonly webMcpRegistrar: WebMcpRegistrar;
-	private readonly shareExportListeners = new Set<() => void>();
 
 	/** Stable action references for React context (never change after construction). */
 	readonly actions;
@@ -72,33 +68,6 @@ export class AppRuntime {
 			replaceUrl: (url) => window.history.replaceState(null, '', url),
 		});
 
-		const agentCapabilities: EditorAgentCapabilities = {
-			getCode: () => this.textmodeEngine.getCode(),
-			getRevision: () => this.agentEngine().getRevision?.() ?? 0,
-			validateCode: (code, signal) =>
-				this.agentEngine().validateCode?.(code, signal) ??
-				Promise.resolve({ valid: false, diagnostic: { message: 'Runner is not ready' } }),
-			previewCandidate: (code, baseline, revision) =>
-				this.agentEngine().previewCandidate?.(code, baseline, revision) ?? Promise.resolve(false),
-			acceptPreviewedCandidate: () => this.agentEngine().acceptPreviewedCandidate?.() ?? false,
-			restoreAcceptedCode: () => this.agentEngine().restoreAcceptedCode?.(),
-			getRunnerCapabilities: () => this.agentEngine().getRunnerCapabilities?.() ?? {},
-			inspectArtwork: (input, signal) =>
-				this.agentEngine().inspectArtwork?.(input, signal) ?? Promise.reject(new Error('Runner is not ready')),
-			prepareExport: (input, signal) =>
-				this.agentEngine().prepareExport?.(input, signal) ?? Promise.reject(new Error('Runner is not ready')),
-			openShare: () => this.requestShareExport(),
-			getState: () => getAppState(),
-			setProposal: (proposal) => getAppState().setAgentProposal(proposal),
-			setPreparedExport: (artifact) => getAppState().setPreparedExport(artifact),
-			log: (entry) => getAppState().appendAgentActivity(entry),
-		};
-		this.webMcpService = new WebMcpToolService(agentCapabilities);
-		this.webMcpRegistrar = new WebMcpRegistrar(this.webMcpService, (support, names) => {
-			getAppState().setAgentSupport(support);
-			getAppState().setRegisteredAgentTools(names);
-		});
-
 		this.actions = {
 			randomize: () => this.loadRandomGallerySketch(),
 			makeRandomChange: () => this.makeRandomChange(),
@@ -117,12 +86,6 @@ export class AppRuntime {
 			keepShareLocked: () => this.shareManager.keepLocked(),
 			copyShareExportUrl: (url: string) => this.copyShareExportUrl(url),
 			getShareExportData: () => this.getShareExportData(),
-			onRequestShareExport: (listener: () => void) => this.subscribeShareExport(listener),
-			previewAgentProposal: () => this.webMcpService.preview(),
-			acceptAgentProposal: () => this.webMcpService.accept(),
-			rejectAgentProposal: () => this.webMcpService.reject(),
-			downloadPreparedExport: () => this.webMcpService.download(),
-			closePreparedExport: () => this.webMcpService.closeExport(),
 		};
 
 		this.layout = {
@@ -154,9 +117,6 @@ export class AppRuntime {
 		this.removeShortcuts = null;
 		this.audioInput.dispose();
 		this.shareManager.dispose();
-		this.webMcpRegistrar.dispose();
-		this.webMcpService.dispose();
-		this.shareExportListeners.clear();
 
 		for (const unsubscribe of this.storeUnsubscribers) {
 			unsubscribe();
@@ -168,8 +128,6 @@ export class AppRuntime {
 			this.textmodeEngine.dispose();
 		}
 		getAppState().setRunnerStatus('connected');
-		getAppState().setAgentSupport('unsupported');
-		getAppState().setRegisteredAgentTools([]);
 
 		this.initialized = false;
 	}
@@ -186,7 +144,6 @@ export class AppRuntime {
 
 	private bootstrapEngine(container: HTMLElement): void {
 		this.textmodeEngine.init(this.createEngineContext(container));
-		this.reconcileWebMcp();
 		if (!this.initialized) return;
 
 		this.shareManager.setInitialReadOnlyIfNeeded();
@@ -214,10 +171,7 @@ export class AppRuntime {
 				setLastWorkingCode: (code) => getAppState().setLastWorkingCode(code),
 			},
 			isExecutionLocked: () => this.shareManager.lockExecutionIfNeeded(),
-			onCodeChanged: (code) => {
-				this.webMcpService.invalidate();
-				this.galleryManager.syncActiveSketchWithCode(code);
-			},
+			onCodeChanged: (code) => this.galleryManager.syncActiveSketchWithCode(code),
 			callbacks: {
 				onSaveCode: (code: string) => this.storage.saveCode(code),
 			},
@@ -227,12 +181,10 @@ export class AppRuntime {
 			onRunnerConnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
 				getAppState().setRunnerStatus('connected');
-				this.reconcileWebMcp();
 			},
 			onRunnerDisconnected: () => {
 				if (this.lifecycleId !== lifecycleId) return;
 				getAppState().setRunnerStatus('unavailable');
-				this.reconcileWebMcp();
 			},
 		};
 	}
@@ -269,40 +221,6 @@ export class AppRuntime {
 			createdAt: Date.now(),
 			textmodeCode: this.textmodeEngine.getCode(),
 		};
-	}
-
-	private subscribeShareExport(listener: () => void): () => void {
-		this.shareExportListeners.add(listener);
-		return () => this.shareExportListeners.delete(listener);
-	}
-
-	private requestShareExport(): void {
-		for (const listener of this.shareExportListeners) listener();
-	}
-
-	private reconcileWebMcp(): void {
-		const share = getAppState().share;
-		this.webMcpRegistrar.reconcile({
-			initialized: this.textmodeEngine.isInitialized(),
-			locked: Boolean(share.payload && !share.consented),
-			capabilities: this.agentEngine().getRunnerCapabilities?.() ?? {},
-		});
-	}
-
-	private agentEngine(): {
-		getRevision?: () => number;
-		validateCode?: (
-			code: string,
-			signal?: AbortSignal
-		) => Promise<{ valid: boolean; diagnostic?: { message: string; line?: number; column?: number } }>;
-		previewCandidate?: (code: string, baseline: string, revision: number) => Promise<boolean>;
-		acceptPreviewedCandidate?: () => boolean;
-		restoreAcceptedCode?: () => void;
-		getRunnerCapabilities?: () => Record<string, boolean>;
-		inspectArtwork?: (input: unknown, signal?: AbortSignal) => Promise<unknown>;
-		prepareExport?: (input: unknown, signal?: AbortSignal) => Promise<unknown>;
-	} {
-		return this.textmodeEngine as unknown as ReturnType<AppRuntime['agentEngine']>;
 	}
 
 	private copyShareExportUrl(url: string): void {
@@ -447,13 +365,6 @@ export class AppRuntime {
 		);
 
 		this.storeUnsubscribers.push(settingsUnsubscribe, uiVisibilityUnsubscribe);
-
-		this.storeUnsubscribers.push(
-			useAppStore.subscribe(
-				(state) => state.share,
-				() => this.reconcileWebMcp()
-			)
-		);
 	}
 
 	private async makeRandomChange(): Promise<boolean> {

@@ -31,21 +31,6 @@ simple as reopening the editor.
   choose whether to run shared code.
 - **Responsive workspace:** Create on desktop or mobile without a separate app.
 
-## WebMCP collaboration
-
-In browsers that expose the experimental WebMCP API, the editor registers
-application-native tools for reading bounded sketch state, inspecting semantic
-textmode artwork, discovering examples, staging a code proposal, and preparing
-exports or a share link. Proposed code is syntax-checked but never run or saved
-by an agent call: the artist previews it in the existing sandbox, then accepts
-or rejects it in the visible review dialog.
-
-The integration is progressive enhancement; unsupported browsers retain the
-normal editor. The runner must advertise the matching WebMCP capabilities before
-inspection and export tools are made available. See
-[tool contracts](docs/webmcp/TOOL_CONTRACTS.md),
-[security design](docs/webmcp/SECURITY.md), and [eval scenarios](docs/webmcp/EVALS.md).
-
 ## Make something
 
 - Visit [editor.textmode.art](https://editor.textmode.art).
