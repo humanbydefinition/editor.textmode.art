@@ -6,6 +6,7 @@ import { type WebMcpToolService } from './WebMcpToolService';
 export class WebMcpRegistrar {
 	private controller: AbortController | null = null;
 	private names: ToolName[] = [];
+	private generation = 0;
 
 	private readonly service: WebMcpToolService;
 	private readonly onChange: (
@@ -22,7 +23,8 @@ export class WebMcpRegistrar {
 	}
 
 	reconcile(input: { initialized: boolean; locked: boolean; capabilities: Record<string, boolean> }): void {
-		if (!document.modelContext) {
+		const modelContext = document.modelContext;
+		if (!modelContext) {
 			this.dispose();
 			this.onChange('unsupported', []);
 			return;
@@ -33,31 +35,57 @@ export class WebMcpRegistrar {
 			return;
 		}
 		const desired = TOOL_NAMES.filter((name) => available(name, input));
-		if (same(this.names, desired)) return;
+		if (this.controller && same(this.names, desired)) return;
 		this.dispose();
-		this.controller = new AbortController();
+		const controller = new AbortController();
+		const generation = this.generation;
+		this.controller = controller;
 		this.names = desired;
 		this.onChange('registering', desired);
-		try {
-			for (const name of desired) {
-				// This is intentionally a direct top-level document API call, never an iframe capability.
-				void document.modelContext.registerTool(
-					toolDefinition(name, (inputValue, context) =>
-						this.service.execute(name, inputValue, context.signal)
-					),
-					{ signal: this.controller.signal }
-				);
+
+		const registrations = desired.map((name) => this.register(modelContext, name, controller.signal));
+		void Promise.all(registrations).then(
+			() => {
+				if (!this.isCurrent(controller, generation)) return;
+				this.onChange(desired.length === TOOL_NAMES.length ? 'ready' : 'limited', desired);
+			},
+			() => {
+				// Disposal and a capability change deliberately abort the group. The draft API
+				// rejects every pending registration in that case, which is an expected cleanup.
+				if (!this.isCurrent(controller, generation) || controller.signal.aborted) return;
+				controller.abort();
+				this.controller = null;
+				this.names = [];
+				this.onChange('error', []);
 			}
-			this.onChange(desired.length === TOOL_NAMES.length ? 'ready' : 'limited', desired);
-		} catch {
-			this.onChange('error', []);
-		}
+		);
 	}
 
 	dispose(): void {
+		this.generation += 1;
 		this.controller?.abort();
 		this.controller = null;
 		this.names = [];
+	}
+
+	private register(modelContext: ModelContext, name: ToolName, signal: AbortSignal): Promise<void> {
+		try {
+			// This is intentionally a direct top-level document API call, never an iframe capability.
+				return Promise.resolve(
+					modelContext.registerTool(
+						toolDefinition(name, (inputValue, context) =>
+							this.service.execute(name, inputValue, context?.signal)
+						),
+					{ signal }
+				)
+			);
+		} catch (error) {
+			return Promise.reject(error);
+		}
+	}
+
+	private isCurrent(controller: AbortController, generation: number): boolean {
+		return this.controller === controller && this.generation === generation;
 	}
 }
 

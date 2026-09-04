@@ -5,11 +5,11 @@ interface WebMcpTool {
 	description: string;
 	inputSchema: Record<string, unknown>;
 	annotations?: { readOnlyHint?: boolean; untrustedContentHint?: boolean };
-	execute: (input: unknown, context: { signal: AbortSignal }) => Promise<unknown>;
+	execute: (input: unknown, context?: { signal?: AbortSignal }) => Promise<unknown>;
 }
 
 interface ModelContext {
-	registerTool(tool: WebMcpTool, options: { signal: AbortSignal }): void | Promise<void>;
+	registerTool(tool: WebMcpTool, options: { signal: AbortSignal }): Promise<void>;
 }
 
 interface Document {
