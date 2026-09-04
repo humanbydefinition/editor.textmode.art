@@ -6,7 +6,6 @@ import { cn } from '@/shared/lib/cn';
 import { useAppStore } from '@/platform/state/appStore';
 import { ShareConsentDialog, ShareExportDialog, type ShareExportData } from '@/features/share';
 import { GallerySketchInfoButton } from '@/features/gallery-sketches';
-import { ExamplesTab } from '@/features/examples';
 import { Lock } from 'lucide-react';
 import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import type { AppRuntime } from '@/app/runtime/AppRuntime';
@@ -164,9 +163,6 @@ export function AppShell({ actions, layout }: AppShellProps) {
 								onDisableAudioInput={actions.disableAudioInput}
 								onRefreshAudioInputDevices={actions.refreshAudioInputDevices}
 								onSelectAudioInputDevice={actions.selectAudioInputDevice}
-								renderExamplesTab={(onClose) => (
-									<ExamplesTab onLoadExample={actions.loadExample} onClose={onClose} />
-								)}
 							/>
 						</>
 					)}
