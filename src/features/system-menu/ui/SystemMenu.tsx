@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { APP_META, buildLegalHref, LEGAL_LINKS } from '@/shared/config/appMeta';
 import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import { floatingIconButtonVariants } from '@/shared/ui/floating-icon-button';
+import { cn } from '@/shared/lib/cn';
 import { PreferencesTab } from './tabs/PreferencesTab';
 import { AboutTab } from './tabs/AboutTab';
 import { ShortcutsTab } from './tabs/ShortcutsTab';
@@ -37,6 +38,7 @@ interface SystemMenuProps {
 	onDisableAudioInput: () => void;
 	onRefreshAudioInputDevices: () => Promise<void>;
 	onSelectAudioInputDevice: (deviceId: string) => Promise<void>;
+	hasAgentActivity: boolean;
 }
 
 const MENU_TABS = [
@@ -59,6 +61,7 @@ export function SystemMenu({
 	onDisableAudioInput,
 	onRefreshAudioInputDevices,
 	onSelectAudioInputDevice,
+	hasAgentActivity,
 }: SystemMenuProps) {
 	const currentYear = new Date().getFullYear();
 	const settings = useAppStore((state) => state.settings);
@@ -85,7 +88,10 @@ export function SystemMenu({
 			<FloatingActionButton
 				onClick={onMakeRandomChange}
 				onMouseDown={(event) => event.preventDefault()}
-				className="fixed top-2 right-[4.5rem] z-50 pointer-events-auto"
+				className={cn(
+					'fixed top-2 z-50 pointer-events-auto',
+					hasAgentActivity ? 'right-[6.5rem]' : 'right-[4.5rem]'
+				)}
 				aria-label="Make random change"
 				tooltip="make random change"
 			>
@@ -94,7 +100,10 @@ export function SystemMenu({
 
 			<FloatingActionButton
 				onClick={handleRandomize}
-				className="fixed top-2 right-[2.5rem] z-50 pointer-events-auto"
+				className={cn(
+					'fixed top-2 z-50 pointer-events-auto',
+					hasAgentActivity ? 'right-[4.5rem]' : 'right-[2.5rem]'
+				)}
 				aria-label="Load random sketch"
 				tooltip="load random sketch"
 			>

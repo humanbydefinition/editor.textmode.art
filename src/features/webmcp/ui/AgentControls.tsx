@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Bot, Download, Eye, X } from 'lucide-react';
 import { useAppStore } from '@/platform/state/appStore';
 import { Button } from '@/shared/ui/button';
+import { FloatingActionButton } from '@/shared/ui/floating-action-button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 
 type Actions = {
@@ -33,15 +34,14 @@ export function AgentControls({ actions }: { actions: Actions }) {
 
 	return (
 		<>
-			<Button
-				variant="outline"
-				size="icon"
-				className="fixed top-2 right-[10.75rem] z-50 pointer-events-auto border-white/10 bg-zinc-950/80 text-zinc-300"
+			<FloatingActionButton
+				className="fixed top-2 right-[2.5rem] z-50 pointer-events-auto"
 				onClick={() => setActivityOpen(true)}
 				aria-label={`Agent ${agent.support}${proposal ? ': proposal awaiting review' : ''}`}
+				tooltip="agent activity"
 			>
-				<Bot />
-			</Button>
+				<Bot className="h-[14px] w-[14px]" />
+			</FloatingActionButton>
 			<Dialog open={activityOpen} onOpenChange={setActivityOpen}>
 				<DialogContent className="max-w-md bg-zinc-950 border-white/10 text-zinc-100">
 					<DialogHeader>

@@ -39,6 +39,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 	const shareConsented = useAppStore((state) => state.share.consented);
 	const sharePromptOpen = useAppStore((state) => state.share.promptOpen);
 	const gallerySketch = useAppStore((state) => state.gallerySketch);
+	const hasAgentActivity = useAppStore((state) => state.agent.support !== 'unsupported');
 	const hasLocalSketch = actions.hasLocalSketch();
 	const textmodeRunnerStatus = useAppStore((state) => state.runnerStatus);
 	const audioInput = useAppStore((state) => state.audioInput);
@@ -132,7 +133,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 						<Lock className="w-[14px] h-[14px]" />
 					</FloatingActionButton>
 				)}
-				{!showShareLock && <AgentControls actions={actions} />}
+				{!showShareLock && hasAgentActivity && <AgentControls actions={actions} />}
 
 				{/* Main UI - hidden when welcome modal is open, with smooth transition */}
 				<div
@@ -147,7 +148,10 @@ export function AppShell({ actions, layout }: AppShellProps) {
 								sketch={gallerySketch}
 								autoOpenEnabled={!welcomeOpen}
 								onShare={handleShare}
-								className="fixed top-2 right-[6.5rem] z-50 pointer-events-auto"
+								className={cn(
+									'fixed top-2 z-50 pointer-events-auto',
+									hasAgentActivity ? 'right-[8.5rem]' : 'right-[6.5rem]'
+								)}
 							/>
 
 							<SystemMenu
@@ -163,6 +167,7 @@ export function AppShell({ actions, layout }: AppShellProps) {
 								onDisableAudioInput={actions.disableAudioInput}
 								onRefreshAudioInputDevices={actions.refreshAudioInputDevices}
 								onSelectAudioInputDevice={actions.selectAudioInputDevice}
+								hasAgentActivity={hasAgentActivity}
 							/>
 						</>
 					)}
