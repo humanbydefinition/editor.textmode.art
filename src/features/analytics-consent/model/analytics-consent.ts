@@ -9,7 +9,6 @@ export interface AnalyticsConsentRecord {
 export const ANALYTICS_CONSENT_STORAGE_KEY = 'editor.textmode.art:analytics-consent:v2';
 export const GA_MEASUREMENT_ID = 'G-T1XY1BP9TT';
 
-const LEGACY_ANALYTICS_CONSENT_STORAGE_KEY = 'editor_textmode_art_analytics_consent_v1';
 const ANALYTICS_CONSENT_OPEN_EVENT = 'editor.textmode.art:analytics-consent-open';
 
 type Gtag = (...args: unknown[]) => void;
@@ -19,7 +18,6 @@ type AnalyticsWindow = Window & {
 	dataLayer?: unknown[][];
 	gtag?: Gtag;
 	__editorTextmodeGoogleAnalyticsInitialized?: boolean;
-	__editorTextmodeAnalyticsConsent?: AnalyticsConsentDecision;
 };
 
 export function openAnalyticsConsentPreferences(): void {
@@ -36,12 +34,7 @@ export function onAnalyticsConsentPreferencesOpen(listener: () => void): () => v
 
 export function readAnalyticsConsent(): AnalyticsConsentDecision | null {
 	if (typeof window === 'undefined') return null;
-	removeLegacyAnalyticsConsent();
 	const raw = readLocalStorage(ANALYTICS_CONSENT_STORAGE_KEY);
-	const analyticsWindow = window as unknown as AnalyticsWindow;
-	if (raw === undefined) {
-		return analyticsWindow.__editorTextmodeAnalyticsConsent ?? null;
-	}
 	if (!raw) return null;
 
 	try {
@@ -52,11 +45,6 @@ export function readAnalyticsConsent(): AnalyticsConsentDecision | null {
 			typeof record.decidedAt === 'string'
 				? record.decision
 				: null;
-		if (decision) {
-			analyticsWindow.__editorTextmodeAnalyticsConsent = decision;
-		} else {
-			delete analyticsWindow.__editorTextmodeAnalyticsConsent;
-		}
 		return decision;
 	} catch {
 		return null;
@@ -64,9 +52,6 @@ export function readAnalyticsConsent(): AnalyticsConsentDecision | null {
 }
 
 export function writeAnalyticsConsent(decision: AnalyticsConsentDecision): void {
-	if (typeof window !== 'undefined') {
-		(window as unknown as AnalyticsWindow).__editorTextmodeAnalyticsConsent = decision;
-	}
 	const record: AnalyticsConsentRecord = {
 		decision,
 		version: 2,
@@ -117,10 +102,6 @@ export function revokeGoogleAnalytics(): void {
 	clearGoogleAnalyticsCookies();
 }
 
-function removeLegacyAnalyticsConsent(): void {
-	removeLocalStorage(LEGACY_ANALYTICS_CONSENT_STORAGE_KEY);
-}
-
 function clearGoogleAnalyticsCookies(): void {
 	if (typeof document === 'undefined') return;
 
@@ -130,11 +111,11 @@ function clearGoogleAnalyticsCookies(): void {
 	}
 }
 
-function readLocalStorage(key: string): string | null | undefined {
+function readLocalStorage(key: string): string | null {
 	try {
 		return window.localStorage.getItem(key);
 	} catch {
-		return undefined;
+		return null;
 	}
 }
 
@@ -142,14 +123,6 @@ function writeLocalStorage(key: string, value: string): void {
 	try {
 		window.localStorage.setItem(key, value);
 	} catch {
-		// The in-memory banner state still protects the current session.
-	}
-}
-
-function removeLocalStorage(key: string): void {
-	try {
-		window.localStorage.removeItem(key);
-	} catch {
-		// Storage may be unavailable; ignoring v1 data remains safe.
+		// Analytics remains disabled when consent cannot be persisted.
 	}
 }

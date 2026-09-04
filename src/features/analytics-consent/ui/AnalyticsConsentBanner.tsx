@@ -16,7 +16,6 @@ export function AnalyticsConsentBanner() {
 	const [initialDecision] = useState(() => readAnalyticsConsent());
 	const [rendered, setRendered] = useState(() => initialDecision === null);
 	const [active, setActive] = useState(() => initialDecision === null);
-	const fallbackDecision = useRef<AnalyticsConsentDecision | null>(initialDecision);
 	const transitionTimerRef = useRef<number | null>(null);
 	const animationFrameRef = useRef<number | null>(null);
 
@@ -52,7 +51,7 @@ export function AnalyticsConsentBanner() {
 
 	useEffect(() => {
 		const unsubscribe = onAnalyticsConsentPreferencesOpen(showBanner);
-		const decision = readAnalyticsConsent() ?? fallbackDecision.current;
+		const decision = readAnalyticsConsent();
 
 		if (decision === 'accepted') {
 			loadGoogleAnalyticsAfterConsent();
@@ -68,7 +67,6 @@ export function AnalyticsConsentBanner() {
 
 	const commitDecision = useCallback(
 		(decision: AnalyticsConsentDecision) => {
-			fallbackDecision.current = decision;
 			writeAnalyticsConsent(decision);
 
 			if (decision === 'accepted') {
