@@ -105,7 +105,6 @@ export class AppRuntime {
 			reloadSandbox: () => this.reloadTextmodeSandbox(),
 			hasLocalSketch: () => this.hasLocalSketch(),
 			restoreLocalSketch: () => this.restoreLocalSketch(),
-			loadExample: (code: string) => this.loadExample(code),
 			revertToLastWorking: () => this.textmodeEngine.revertToLastWorking(),
 			enableAudioInput: (deviceId?: string) => this.audioInput.enable(deviceId),
 			disableAudioInput: () => this.audioInput.disable(),
@@ -263,16 +262,6 @@ export class AppRuntime {
 			this.storage.loadCode() ??
 			''
 		);
-	}
-
-	private loadExample(code: string): boolean {
-		if (!this.textmodeEngine.isInitialized()) return false;
-
-		this.galleryManager.clear();
-		this.replaceEditorUrl('/');
-		this.textmodeEngine.replaceAndRun(code);
-
-		return true;
 	}
 
 	private getShareExportData(): ShareExportData {
