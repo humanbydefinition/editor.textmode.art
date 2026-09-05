@@ -5,7 +5,18 @@ import type { GallerySketch } from '../types';
 import { SketchMetaCard } from './SketchMetaCard';
 
 interface GallerySketchInfoButtonProps {
-	sketch: Pick<GallerySketch, 'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks'> | null;
+	sketch: Pick<
+		GallerySketch,
+		| 'slug'
+		| 'title'
+		| 'description'
+		| 'authorName'
+		| 'license'
+		| 'socialLinks'
+		| 'interactive'
+		| 'audio-reactive'
+		| 'audioReactive'
+	> | null;
 	className?: string;
 	autoOpenEnabled?: boolean;
 	onShare: () => void;

@@ -2,7 +2,7 @@ import { cva } from 'class-variance-authority';
 
 export const floatingIconButtonVariants = cva(
 	[
-		'flex items-center justify-center rounded-full backdrop-blur-md',
+		'flex items-center justify-center rounded-full backdrop-blur-xl',
 		'transition-all duration-300',
 		'focus-visible:outline-none focus-visible:ring-2',
 		'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',
