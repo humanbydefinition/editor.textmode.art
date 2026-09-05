@@ -1,9 +1,12 @@
-import { ExternalLink, User, X } from 'lucide-react';
+import { ExternalLink, MousePointerClick, User, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import type { GallerySketch } from '../types';
 
 interface SketchMetaCardProps {
-	sketch: Pick<GallerySketch, 'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks'>;
+	sketch: Pick<
+		GallerySketch,
+		'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks' | 'interactive'
+	>;
 	showDismiss?: boolean;
 	onDismiss?: () => void;
 	className?: string;
@@ -92,6 +95,12 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 						<span className="truncate">{link.label}</span>
 					</a>
 				))}
+				{sketch.interactive && (
+					<span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
+						<MousePointerClick className="h-3 w-3 shrink-0" />
+						<span>interactive</span>
+					</span>
+				)}
 				<span className="inline-flex min-w-0 max-w-full items-center rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-violet-200">
 					<span className="break-all">/s/{sketch.slug}/</span>
 				</span>
