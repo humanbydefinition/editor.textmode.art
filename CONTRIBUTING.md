@@ -45,6 +45,7 @@ Use this shape:
 - `ogDarken` is optional, must be an integer from 0 to 100, and defaults to 55.
   It controls the opacity how much the sketch is darkened in the Open Graph preview image.
 - `interactive` is optional and must be a boolean (e.g., `true` for sketches responding to mouse or user interaction).
+- `audio-reactive` is optional and must be a boolean (e.g., `true` for sketches reacting to microphone or audio input).
 - Prefer SPDX identifiers such as `MIT`, `Apache-2.0`, or `CC-BY-4.0` for a
   standalone sketch license when one applies.
 - Social links must use HTTPS.
