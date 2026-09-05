@@ -54,7 +54,7 @@ export function SketchMetaCard({ sketch, showDismiss = false, onDismiss, classNa
 	return (
 		<section
 			className={cn(
-				'relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950/95 p-3 shadow-lg shadow-black/40',
+				'relative overflow-hidden rounded-lg border border-white/10 bg-zinc-900/70 backdrop-blur-xl p-3 shadow-xl shadow-black/50',
 				className
 			)}
 			aria-label="Sketch information"
