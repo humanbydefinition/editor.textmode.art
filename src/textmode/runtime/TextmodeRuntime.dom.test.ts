@@ -33,6 +33,7 @@ type MockRuntime = {
 	resetRuntime: Mock<(code: string) => Promise<boolean>>;
 	runCode: Mock<(code: string) => Promise<boolean>>;
 	sendAudioData: Mock<(frame: unknown) => boolean>;
+	sendMouseEvent: Mock<(event: unknown) => boolean>;
 	triggerHardReset: Mock<() => void>;
 	triggerRunError: Mock<(error: { message: string; line?: number; column?: number }) => void>;
 	triggerSynthError: Mock<(message: string) => void>;
@@ -107,6 +108,7 @@ vi.mock('@textmode/runner-client', () => {
 		});
 
 		readonly sendAudioData = vi.fn(() => this.isReady);
+		readonly sendMouseEvent = vi.fn(() => this.isReady);
 		readonly triggerHardReset = vi.fn(() => this.options.onHardReset?.());
 		readonly triggerRunError = vi.fn((error: { message: string; line?: number; column?: number }) =>
 			this.options.onRunError?.(error)
@@ -280,6 +282,29 @@ describe('TextmodeRuntime', () => {
 
 		expect(runtime.sendAudioData(frame)).toBe(true);
 		expect(runnerClientMock.instances[0].sendAudioData).toHaveBeenCalledWith(frame);
+	});
+
+	it('sends mouse events through the runner client only after initialization', async () => {
+		const runtime = new TextmodeRuntime({
+			container: document.createElement('div'),
+			runnerUrl: 'https://runner.textmode.art/',
+			onRunOk: vi.fn(),
+			onRunError: vi.fn(),
+		});
+		const event = {
+			eventType: 'mousemove' as const,
+			clientX: 120,
+			clientY: 240,
+			buttons: 1,
+		};
+
+		expect(runtime.sendMouseEvent(event)).toBe(false);
+
+		runtime.init();
+		await flushPromises();
+
+		expect(runtime.sendMouseEvent(event)).toBe(true);
+		expect(runnerClientMock.instances[0].sendMouseEvent).toHaveBeenCalledWith(event);
 	});
 
 	it('forwards hard reset requests from the runner iframe', async () => {

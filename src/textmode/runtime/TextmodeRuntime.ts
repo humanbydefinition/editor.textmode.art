@@ -1,5 +1,11 @@
-import { IframeTextmodeRuntime, type RunnerExecutionError } from '@textmode/runner-client';
+import {
+	IframeTextmodeRuntime,
+	type RunnerExecutionError,
+	type RunnerMouseEventPayload,
+} from '@textmode/runner-client';
 import type { CodeError } from '@/types';
+
+export type { RunnerMouseEventPayload };
 
 export interface AudioDataFrame {
 	fft: Uint8Array;
@@ -98,6 +104,10 @@ export class TextmodeRuntime {
 
 	sendAudioData(data: AudioDataFrame): boolean {
 		return this.runtime.sendAudioData(data);
+	}
+
+	sendMouseEvent(event: RunnerMouseEventPayload): boolean {
+		return this.runtime.sendMouseEvent(event);
 	}
 
 	dispose(): void {
