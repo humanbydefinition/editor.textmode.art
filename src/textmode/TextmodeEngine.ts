@@ -1,6 +1,7 @@
 import type { AppSettings } from '@/types';
 import { TextmodeEditor, type TextmodeEditorOptions } from './editor/TextmodeEditor';
 import { TextmodeRuntime } from './runtime/TextmodeRuntime';
+import { EditorMouseForwarder } from './input/EditorMouseForwarder';
 import {
 	TextmodeController,
 	type TextmodeControllerCallbacks,
@@ -33,6 +34,7 @@ export class TextmodeEngine {
 	private editor: TextmodeEditor | null = null;
 	private runtime: TextmodeRuntime | null = null;
 	private controller: TextmodeController | null = null;
+	private mouseForwarder: EditorMouseForwarder | null = null;
 	private initialized = false;
 
 	init(context: TextmodeEngineContext): void {
@@ -42,10 +44,15 @@ export class TextmodeEngine {
 		const editor = this.createEditor(context, initialCode);
 		const runtime = this.createRuntime(context);
 		const controller = this.createController(context, editor, runtime);
+		const mouseForwarder = new EditorMouseForwarder({
+			container: context.editorContainer,
+			onSendMouseEvent: (event) => runtime.sendMouseEvent(event),
+		});
 
 		this.editor = editor;
 		this.runtime = runtime;
 		this.controller = controller;
+		this.mouseForwarder = mouseForwarder;
 
 		runtime.init(context.isExecutionLocked() ? '' : initialCode);
 		this.initialized = true;
@@ -54,6 +61,8 @@ export class TextmodeEngine {
 	dispose(): void {
 		if (!this.initialized) return;
 
+		this.mouseForwarder?.dispose();
+		this.mouseForwarder = null;
 		this.controller?.dispose();
 		this.controller = null;
 		this.runtime?.dispose();
