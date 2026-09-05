@@ -43,6 +43,14 @@ describe('gallery metadata contract', () => {
 			valid: true,
 			metadata: { ...validMetadata, interactive: false },
 		});
+		expect(validateGallerySketchMeta({ ...validMetadata, 'audio-reactive': true })).toEqual({
+			valid: true,
+			metadata: { ...validMetadata, 'audio-reactive': true },
+		});
+		expect(validateGallerySketchMeta({ ...validMetadata, audioReactive: true })).toEqual({
+			valid: true,
+			metadata: { ...validMetadata, audioReactive: true },
+		});
 	});
 
 	it.each([
@@ -84,6 +92,26 @@ describe('gallery metadata contract', () => {
 		['a string interactive property', { interactive: 'true' as unknown as boolean }, 'must be a boolean'],
 		['a numeric interactive property', { interactive: 1 as unknown as boolean }, 'must be a boolean'],
 		['a null interactive property', { interactive: null as unknown as boolean }, 'must be a boolean'],
+		[
+			'a string audio-reactive property',
+			{ 'audio-reactive': 'true' as unknown as boolean },
+			'field "audio-reactive" must be a boolean',
+		],
+		[
+			'a numeric audio-reactive property',
+			{ 'audio-reactive': 1 as unknown as boolean },
+			'field "audio-reactive" must be a boolean',
+		],
+		[
+			'a null audio-reactive property',
+			{ 'audio-reactive': null as unknown as boolean },
+			'field "audio-reactive" must be a boolean',
+		],
+		[
+			'a string audioReactive property',
+			{ audioReactive: 'true' as unknown as boolean },
+			'field "audioReactive" must be a boolean',
+		],
 		['missing social links', { socialLinks: undefined }, 'must be an array or null'],
 		[
 			'too many social links',

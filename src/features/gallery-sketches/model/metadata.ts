@@ -33,6 +33,8 @@ export interface GallerySketchMeta {
 	ogFrame?: number;
 	ogDarken?: number;
 	interactive?: boolean;
+	'audio-reactive'?: boolean;
+	audioReactive?: boolean;
 }
 
 export type GalleryMetadataValidationResult =
@@ -96,6 +98,14 @@ export function validateGallerySketchMeta(value: unknown): GalleryMetadataValida
 
 	if (meta.interactive !== undefined && typeof meta.interactive !== 'boolean') {
 		return invalid('field "interactive" must be a boolean.');
+	}
+
+	if (meta['audio-reactive'] !== undefined && typeof meta['audio-reactive'] !== 'boolean') {
+		return invalid('field "audio-reactive" must be a boolean.');
+	}
+
+	if (meta.audioReactive !== undefined && typeof meta.audioReactive !== 'boolean') {
+		return invalid('field "audioReactive" must be a boolean.');
 	}
 
 	if (meta.socialLinks !== null && !Array.isArray(meta.socialLinks)) {
