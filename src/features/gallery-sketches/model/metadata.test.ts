@@ -35,6 +35,14 @@ describe('gallery metadata contract', () => {
 			valid: true,
 			metadata: validMetadata,
 		});
+		expect(validateGallerySketchMeta({ ...validMetadata, interactive: true })).toEqual({
+			valid: true,
+			metadata: { ...validMetadata, interactive: true },
+		});
+		expect(validateGallerySketchMeta({ ...validMetadata, interactive: false })).toEqual({
+			valid: true,
+			metadata: { ...validMetadata, interactive: false },
+		});
 	});
 
 	it.each([
@@ -73,6 +81,9 @@ describe('gallery metadata contract', () => {
 		['an out-of-range OG frame', { ogFrame: MAX_GALLERY_OG_FRAME + 1 }, 'must be an integer from 1 to 1000'],
 		['a fractional OG darken', { ogDarken: 0.5 }, 'must be an integer from 0 to 100'],
 		['an out-of-range OG darken', { ogDarken: MAX_GALLERY_OG_DARKEN + 1 }, 'must be an integer from 0 to 100'],
+		['a string interactive property', { interactive: 'true' as unknown as boolean }, 'must be a boolean'],
+		['a numeric interactive property', { interactive: 1 as unknown as boolean }, 'must be a boolean'],
+		['a null interactive property', { interactive: null as unknown as boolean }, 'must be a boolean'],
 		['missing social links', { socialLinks: undefined }, 'must be an array or null'],
 		[
 			'too many social links',
