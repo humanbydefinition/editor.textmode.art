@@ -34,7 +34,7 @@ simple as reopening the editor.
 ## Make something
 
 - Visit [editor.textmode.art](https://editor.textmode.art).
-- Start from **Examples**, a random gallery sketch, or a blank editor.
+- Start from a random gallery sketch or a blank editor.
 - Plug in sound if the sketch calls for it.
 - Keep iterating; the workspace saves as you go.
 

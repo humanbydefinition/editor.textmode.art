@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Menu, Shuffle, X, Share, Dices, Heart, Settings2 } from 'lucide-react';
 import {
@@ -37,13 +37,11 @@ interface SystemMenuProps {
 	onDisableAudioInput: () => void;
 	onRefreshAudioInputDevices: () => Promise<void>;
 	onSelectAudioInputDevice: (deviceId: string) => Promise<void>;
-	renderExamplesTab: (onClose: () => void) => ReactNode;
 }
 
 const MENU_TABS = [
 	{ value: 'settings', label: 'settings' },
 	{ value: 'audio', label: 'audio' },
-	{ value: 'examples', label: 'examples' },
 	{ value: 'shortcuts', label: 'controls' },
 	{ value: 'about', label: 'about' },
 ] as const;
@@ -61,7 +59,6 @@ export function SystemMenu({
 	onDisableAudioInput,
 	onRefreshAudioInputDevices,
 	onSelectAudioInputDevice,
-	renderExamplesTab,
 }: SystemMenuProps) {
 	const currentYear = new Date().getFullYear();
 	const settings = useAppStore((state) => state.settings);
@@ -217,10 +214,6 @@ export function SystemMenu({
 							onRefreshDevices={onRefreshAudioInputDevices}
 							onSelectDevice={onSelectAudioInputDevice}
 						/>
-					</TabsContent>
-
-					<TabsContent value="examples" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-						{renderExamplesTab(() => setOpen(false))}
 					</TabsContent>
 
 					<TabsContent value="shortcuts" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
