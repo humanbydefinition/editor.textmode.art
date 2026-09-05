@@ -47,6 +47,49 @@ describe('SketchMetaCard', () => {
 		const { container: container2 } = renderCard(falseSketch);
 		expect(container2.textContent?.toLowerCase()).not.toContain('interactive');
 	});
+
+	it('renders the audio-reactive badge with icon and label when audio-reactive is true', () => {
+		const sketch = makeGallerySketch({
+			title: 'Audio Sketch',
+			'audio-reactive': true,
+		});
+
+		const { container } = renderCard(sketch);
+
+		const badges = Array.from(container.querySelectorAll('span'));
+		const audioBadge = badges.find((span) => span.textContent?.toLowerCase().includes('audio-reactive'));
+		expect(audioBadge).not.toBeUndefined();
+		expect(audioBadge?.querySelector('svg')).not.toBeNull();
+	});
+
+	it('renders the audio-reactive badge when audioReactive camelCase is true', () => {
+		const sketch = makeGallerySketch({
+			title: 'Audio Sketch',
+			audioReactive: true,
+		});
+
+		const { container } = renderCard(sketch);
+
+		const badges = Array.from(container.querySelectorAll('span'));
+		const audioBadge = badges.find((span) => span.textContent?.toLowerCase().includes('audio-reactive'));
+		expect(audioBadge).not.toBeUndefined();
+		expect(audioBadge?.querySelector('svg')).not.toBeNull();
+	});
+
+	it('does not render the audio-reactive badge when audio-reactive is false or omitted', () => {
+		const omittedSketch = makeGallerySketch({
+			title: 'Silent Sketch',
+		});
+		const { container: container1 } = renderCard(omittedSketch);
+		expect(container1.textContent?.toLowerCase()).not.toContain('audio-reactive');
+
+		const falseSketch = makeGallerySketch({
+			title: 'Explicitly Non-Audio Sketch',
+			'audio-reactive': false,
+		});
+		const { container: container2 } = renderCard(falseSketch);
+		expect(container2.textContent?.toLowerCase()).not.toContain('audio-reactive');
+	});
 });
 
 function renderCard(sketch: Parameters<typeof SketchMetaCard>[0]['sketch']): { container: HTMLDivElement } {

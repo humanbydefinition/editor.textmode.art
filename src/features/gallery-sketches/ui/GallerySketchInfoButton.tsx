@@ -7,7 +7,15 @@ import { SketchMetaCard } from './SketchMetaCard';
 interface GallerySketchInfoButtonProps {
 	sketch: Pick<
 		GallerySketch,
-		'slug' | 'title' | 'description' | 'authorName' | 'license' | 'socialLinks' | 'interactive'
+		| 'slug'
+		| 'title'
+		| 'description'
+		| 'authorName'
+		| 'license'
+		| 'socialLinks'
+		| 'interactive'
+		| 'audio-reactive'
+		| 'audioReactive'
 	> | null;
 	className?: string;
 	autoOpenEnabled?: boolean;
