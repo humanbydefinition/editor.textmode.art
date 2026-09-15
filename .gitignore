@@ -5,3 +5,4 @@ test-results
 src/textmode/config/generated/
 .DS_Store
 .env
+indexnow.log
