@@ -67,10 +67,10 @@
 		"zustand": "^5.0.15"
 	},
 	"devDependencies": {
-		"@playwright/test": "1.62.1",
-		"playwright": "1.62.1",
+		"@playwright/test": "1.63.0",
+		"playwright": "1.63.0",
 		"@tailwindcss/vite": "^4.3.3",
-		"@textmode/build": "^0.1.1",
+		"@textmode/build": "^0.1.2",
 		"@textmode/lint": "^0.1.2",
 		"@textmode/og": "^1.0.1",
 		"@textmode/tsconfig": "^0.2.2",
@@ -88,7 +88,7 @@
 		"tsx": "^4.23.13",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.1"
 	},
 	"prettier": "@textmode/lint/prettier"
 }
