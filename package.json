@@ -58,7 +58,7 @@
 		"clsx": "^2.1.1",
 		"lucide-react": "^1.48.0",
 		"lz-string": "^1.5.0",
-		"monaco-editor": "^0.56.0",
+		"monaco-editor": "^0.57.0",
 		"react": "^19.2.8",
 		"react-dom": "^19.3.0",
 		"sonner": "^2.0.8",
