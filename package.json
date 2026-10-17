@@ -23,6 +23,7 @@
 	"scripts": {
 		"dev": "npm run extract-types && vite --host --port 5180",
 		"build": "npm run extract-types && tsc && vite build && tsx scripts/gallery/social-pages.ts",
+		"build:pages": "npm run build && cp dist/index.html dist/404.html",
 		"preview": "vite preview",
 		"check": "npm run check:format && npm run lint && npm run lint:md && npm run check:types && npm run test:coverage && npm run test:og && npm run build",
 		"check:types": "npm run extract-types && tsc --noEmit",
