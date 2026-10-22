@@ -169,6 +169,7 @@ t.draw(() => {
 	const eye = orbitCamera();
 	t.ambientLight(ambient);
 	t.pointLight(white, eye);
+	t.lightFalloff(0.1, 0.002, 0.000006);
 	t.cellColor(black);
 
 	for (let i = 0; i < worms.length; i++) {
