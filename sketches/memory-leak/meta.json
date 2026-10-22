@@ -1,0 +1,16 @@
+{
+	"slug": "memory-leak",
+	"title": "Memory Leak",
+	"description": "Someone paid four figures for this on mainnet.",
+	"authorName": "tregfdbvc",
+	"license": null,
+	"socialLinks": [
+		{
+			"label": "the expensive one",
+			"url": "https://www.raster.art/artwork/memory-array-by-andreas-gysin"
+		}
+	],
+	"createdAt": "2026-07-22T00:00:00.000Z",
+	"ogFrame": 60,
+	"ogDarken": 30
+}
