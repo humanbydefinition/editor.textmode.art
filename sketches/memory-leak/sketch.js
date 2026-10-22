@@ -1,5 +1,5 @@
-const EXTENT = 48;
-const WORM_COUNT = 32;
+const EXTENT = 32;
+const WORM_COUNT = 16;
 const SYMBOLS = '#%*+=:.@';
 const CAMERA_INTERVAL = 180;
 const CAMERA_TRAVEL = 90;
@@ -88,7 +88,7 @@ function prism(center, size, glyphs) {
 	face(glyphs[5], [x, y, z - d / 2], w, h, 0, 180);
 }
 
-function drawWorm(worm, scale) {
+function drawWorm(worm) {
 	t.charColor(...worm.color);
 	t.cellColor(0);
 	for (let i = 1; i < worm.route.length; i++) {
@@ -100,12 +100,12 @@ function drawWorm(worm, scale) {
 		const length = b.distance - a.distance;
 		const start = a.point.map((v, axis) => v + ((b.point[axis] - v) * (from - a.distance)) / length);
 		const end = a.point.map((v, axis) => v + ((b.point[axis] - v) * (to - a.distance)) / length);
-		const size = start.map((v, axis) => (Math.abs(end[axis] - v) + worm.width) * scale[axis]);
+		const size = start.map((v, axis) => (Math.abs(end[axis] - v) + worm.width));
 
 		for (let copy = 0; copy < worm.copies; copy++) {
 			const center = start.map((v, axis) => {
 				const offset = axis === worm.spreadAxis ? (copy - (worm.copies - 1) / 2) * worm.spacing : 0;
-				return ((v + end[axis]) / 2 + offset) * scale[axis];
+				return ((v + end[axis]) / 2 + offset);
 			});
 			prism(center, size, worm.glyphs);
 		}
@@ -147,12 +147,9 @@ t.draw(() => {
 	t.ambientLight(100);
 	t.pointLight(255, 255, 255, ...eye);
 
-	const zoom = Math.max(0.05, Math.min(1, (t.grid.cols - 8) / 130, (t.grid.rows - 8) / 130));
-	// Compensate for the camera basis so upright and diagonal runs match the old view.
-	const scale = [Math.SQRT2 * zoom, (2 / Math.sqrt(3)) * zoom, Math.SQRT2 * zoom];
 	for (let i = 0; i < worms.length; i++) {
 		advance(worms[i]);
 		if (worms[i].tail >= worms[i].head) worms[i] = createWorm();
-		drawWorm(worms[i], scale);
+		drawWorm(worms[i]);
 	}
 });
