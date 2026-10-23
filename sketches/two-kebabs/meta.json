@@ -1,12 +1,12 @@
 {
 	"slug": "two-kebabs",
 	"title": "TWO KEBABS",
-	"description": "wtf",
-	"authorName": "uiohjkbnm",
+	"description": "Two delicacies inspired by Andreas Gysin's „Towers“.",
+	"authorName": null,
 	"license": null,
 	"socialLinks": [
 		{
-			"label": "𓅰 𓅬 𓅭 𓅮 𓅯",
+			"label": "Towers - Andreas Gysin",
 			"url": "https://www.raster.art/artwork/towers-by-andreas-gysin"
 		}
 	],

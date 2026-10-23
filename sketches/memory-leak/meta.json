@@ -1,12 +1,12 @@
 {
 	"slug": "memory-leak",
 	"title": "Memory Leak",
-	"description": "Someone paid four figures for this on mainnet.",
-	"authorName": "tregfdbvc",
+	"description": "Voxel trails inspired by Andreas Gysin's „Memory Array“.",
+	"authorName": null,
 	"license": null,
 	"socialLinks": [
 		{
-			"label": "the expensive one",
+			"label": "Memory Array - Andreas Gysin",
 			"url": "https://www.raster.art/artwork/memory-array-by-andreas-gysin"
 		}
 	],

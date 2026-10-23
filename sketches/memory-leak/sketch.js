@@ -1,4 +1,4 @@
-const EXTENT = 32;
+const EXTENT = 48;
 const WORM_COUNT = 16;
 const SYMBOLS = '#%*+=:.@';
 const CAMERA_INTERVAL = 180;
