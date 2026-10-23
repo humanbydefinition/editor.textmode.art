@@ -1,13 +1,13 @@
 {
 	"slug": "meltup-lookdown",
 	"title": "MELTUP LOOKDOWN",
-	"description": "seeing my ingredients constantly appear in your work over the years is really painful, honestly.",
-	"authorName": "andi x juli",
+	"description": "Source code in motion, inspired by Andreas Gysin's „Meltdown“.",
+	"authorName": null,
 	"license": "",
 	"socialLinks": [
 		{
-			"label": "wtf",
-			"url": "https://www.instagram.com/p/DCcNGy1tzf5/"
+			"label": "Meltdown - Andreas Gysin",
+			"url": "https://www.raster.art/artwork/meltdown-by-andreas-gysin"
 		}
 	],
 	"createdAt": "2026-07-28T00:00:00.000Z",
