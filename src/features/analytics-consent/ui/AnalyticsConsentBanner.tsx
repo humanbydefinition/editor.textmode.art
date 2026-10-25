@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { buildLegalHref } from '@/shared/config/appMeta';
 import {
 	type AnalyticsConsentDecision,
@@ -82,7 +83,8 @@ export function AnalyticsConsentBanner() {
 
 	if (!rendered) return null;
 
-	return (
+	// Escape the editor's activation cutout so consent stays above the runner prompt.
+	return createPortal(
 		<section
 			role="region"
 			aria-live="polite"
@@ -123,6 +125,7 @@ export function AnalyticsConsentBanner() {
 					Allow analytics
 				</button>
 			</div>
-		</section>
+		</section>,
+		document.body
 	);
 }
