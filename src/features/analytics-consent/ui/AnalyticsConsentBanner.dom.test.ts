@@ -31,6 +31,17 @@ describe('AnalyticsConsentBanner', () => {
 		delete (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
 		vi.unstubAllGlobals();
 		vi.useRealTimers();
+		document.body.classList.remove('runner-activation-required');
+	});
+
+	it('keeps consent outside the clipped editor while runner activation is required', () => {
+		document.body.classList.add('runner-activation-required');
+		const { container, appContainer } = renderBanner();
+		const banner = container.querySelector('[role="region"]');
+
+		expect(banner).not.toBeNull();
+		expect(appContainer.contains(banner)).toBe(false);
+		expect(banner?.parentElement).toBe(document.body);
 	});
 
 	it('shows on the first visit and grants analytics when accepted', () => {
@@ -73,18 +84,19 @@ describe('AnalyticsConsentBanner', () => {
 	});
 });
 
-function renderBanner(): { container: HTMLDivElement } {
+function renderBanner(): { container: HTMLElement; appContainer: HTMLDivElement } {
 	const container = document.createElement('div');
+	container.id = 'app-container';
 	document.body.append(container);
 	const root = createRoot(container);
 	mountedRoots.push({ container, root });
 
 	act(() => root.render(createElement(AnalyticsConsentBanner)));
 
-	return { container };
+	return { container: document.body, appContainer: container };
 }
 
-function clickConsentButton(container: HTMLDivElement, label: string): void {
+function clickConsentButton(container: HTMLElement, label: string): void {
 	const button = Array.from(container.querySelectorAll('button')).find(
 		(candidate) => candidate.textContent === label
 	);
