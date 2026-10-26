@@ -57,7 +57,7 @@
 		"acorn": "^8.19.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"lucide-react": "^1.58.0",
+		"lucide-react": "^1.61.0",
 		"lz-string": "^1.5.0",
 		"monaco-editor": "^0.57.0",
 		"react": "^19.3.1",
@@ -65,7 +65,7 @@
 		"sonner": "^2.0.8",
 		"tailwind-merge": "^3.7.0",
 		"tailwindcss-animate": "^1.0.7",
-		"zustand": "^5.0.15"
+		"zustand": "^5.0.16"
 	},
 	"devDependencies": {
 		"@playwright/test": "1.64.1",
