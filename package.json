@@ -79,7 +79,7 @@
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^6.2.1",
-		"jsdom": "^30.1.3",
+		"jsdom": "^31.0.0",
 		"tailwindcss": "^4.3.3",
 		"textmode.export.js": "1.10.0",
 		"textmode.figlet.js": "1.0.5",
